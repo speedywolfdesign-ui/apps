@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Passport Size Photo Maker</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <nav class="topbar">
+      <a class="topbar-back" href="index.html" aria-label="Back to home">←</a>
+      <span class="topbar-title">Photo Booth</span>
+    </nav>
+    <header class="app-header">
+      <h1>Passport Size Photo Maker</h1>
+      <p>Create printable sheets with proper spacing and cut guides.</p>
+    </header>
+
+    <main class="app">
+      <section class="controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="fileInput">Upload photo</label>
+          <input id="fileInput" type="file" accept="image/*">
+        </div>
+
+        <div class="control-group">
+          <label for="passportSizeSelect">Passport size</label>
+          <select id="passportSizeSelect"></select>
+        </div>
+
+        <div class="control-group">
+          <label for="paperSizeSelect">Paper size</label>
+          <select id="paperSizeSelect"></select>
+        </div>
+
+        <div class="control-group">
+          <span class="label">Orientation</span>
+          <div class="radio-row" role="radiogroup" aria-label="Paper orientation">
+            <label class="radio">
+              <input type="radio" name="orientation" value="portrait" checked>
+              <span>Portrait</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="orientation" value="landscape">
+              <span>Landscape</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="dpiSelect">Print DPI</label>
+          <select id="dpiSelect">
+            <option value="300" selected>300 DPI (standard)</option>
+            <option value="600">600 DPI (fine)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="spacingInput">Spacing between photos (mm)</label>
+          <input id="spacingInput" type="number" inputmode="decimal" min="0" step="0.5" value="5">
+        </div>
+
+        <div class="control-group">
+          <label for="marginInput">Outer margins (mm)</label>
+          <input id="marginInput" type="number" inputmode="decimal" min="0" step="0.5" value="10">
+        </div>
+
+        <div class="control-group">
+          <label class="checkbox">
+            <input id="innerBorderCheckbox" type="checkbox" checked>
+            <span>Add inner border (1 mm)</span>
+          </label>
+        </div>
+
+        <div class="control-actions">
+          <button id="renderBtn" class="primary">Update Preview</button>
+          <button id="bgRemoveBtn" class="secondary" disabled>Remove Background</button>
+          <button id="cropBtn" class="secondary" disabled>Crop</button>
+          <button id="downloadBtn" class="secondary" disabled>Download PNG</button>
+        </div>
+      </section>
+
+      <section class="preview" aria-label="Preview">
+        <div class="preview-header">
+          <div id="fitInfo" class="fit-info">No image loaded.</div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="canvas"></canvas>
+        </div>
+        <p class="tip">Tip: Use 300 DPI for most photo labs. Ensure your printer uses “Actual size” (no scaling).</p>
+      </section>
+    </main>
+
+    <!-- Crop Modal -->
+    <div id="cropModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2 id="cropTitle">Upload click picture</h2>
+          <div style="display:flex; gap:8px; align-items:center; margin-left:auto;">
+            <select id="cropSizeSelect" aria-label="Passport size for crop"></select>
+            <button id="modalBgRemoveBtn" class="secondary" type="button">Remove Background</button>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="crop-canvas-wrap">
+            <canvas id="cropCanvas"></canvas>
+          </div>
+          <div class="crop-controls">
+            <label for="zoomRange">Zoom</label>
+            <input id="zoomRange" type="range" min="0.5" max="5" step="0.01" value="1">
+            <button id="fitBtn" type="button">Fit</button>
+          </div>
+          <p class="tip">Drag to pan. Use mouse wheel or Zoom slider to adjust. The clear rectangle defines the crop area constrained to the selected passport size.</p>
+        </div>
+        <div class="modal-footer">
+          <div id="cropFooter" class="crop-footer">
+            <button id="cropCancelBtn" class="secondary">Cancel</button>
+            <button id="cropApplyBtn" class="primary">Apply Crop</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <small>Made with HTML, CSS, and JS • Light theme</small>
+      <small>create by: 🐺speedywolfdesign</small>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+  </html>
+

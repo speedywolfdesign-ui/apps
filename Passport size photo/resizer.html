@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Photo Resizer</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <nav class="topbar">
+      <a class="topbar-back" href="index.html" aria-label="Back to home">←</a>
+      <span class="topbar-title">Photo Resizer</span>
+    </nav>
+    <header class="app-header">
+      <h1>Photo Resizer</h1>
+      <p>Resize photos to exact dimensions. Maintain aspect ratio if needed.</p>
+    </header>
+
+    <main class="app">
+      <section class="controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="resizerFile">Upload photo</label>
+          <input id="resizerFile" type="file" accept="image/*">
+        </div>
+
+        <div class="control-group">
+          <label for="resizerSizeSelect">Photo size (mm)</label>
+          <select id="resizerSizeSelect"></select>
+        </div>
+
+        <div class="control-group">
+          <label>Custom size (mm)</label>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <input id="widthMmInput" type="number" min="1" step="0.5" placeholder="Width (mm)">
+            <input id="heightMmInput" type="number" min="1" step="0.5" placeholder="Height (mm)">
+          </div>
+          <div style="margin-top:6px;">
+            <label class="checkbox">
+              <input id="maintainAspect" type="checkbox" checked>
+              <span>Maintain aspect ratio</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="resizerDpiSelect">DPI (pixels per inch)</label>
+          <select id="resizerDpiSelect">
+            <option value="300" selected>300 (standard)</option>
+            <option value="600">600 (fine)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="formatSelect">Output format & compression</label>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:center;">
+            <select id="formatSelect">
+              <option value="image/jpeg" selected>JPEG</option>
+              <option value="image/png">PNG (no compression control)</option>
+            </select>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span style="font-size:13px; color:var(--secondary);">Quality</span>
+              <input id="qualityRange" type="range" min="50" max="100" step="1" value="85">
+              <span id="qualityValue" style="font-size:13px; color:var(--secondary);">85%</span>
+            </div>
+          </div>
+          <div id="sizeEstimate" class="fit-info" style="margin-top:6px;">Original — → ~—</div>
+        </div>
+
+        <div class="control-actions">
+          <button id="resizeBtn" class="primary" disabled>Update Preview</button>
+          <button id="bgRemoveResizerBtn" class="secondary" disabled>Remove Background</button>
+          <button id="openCropBtn" class="secondary" disabled>Crop</button>
+          <button id="downloadResizedBtn" class="secondary" disabled>Download</button>
+        </div>
+      </section>
+
+      <section class="preview" aria-label="Preview">
+        <div class="preview-header">
+          <div id="resizerInfo" class="fit-info">No image loaded.</div>
+          <a href="index.html">Back to features</a>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="resizerCanvas"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <!-- Crop Modal -->
+    <div id="resizerCropModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="resizerCropTitle">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2 id="resizerCropTitle">Crop Photo</h2>
+          <select id="resizerCropSizeSelect" aria-label="Crop size (mm)"></select>
+        </div>
+        <div class="modal-body">
+          <div class="crop-canvas-wrap">
+            <canvas id="resizerCropCanvas"></canvas>
+          </div>
+          <div class="crop-controls">
+            <label for="resizerZoomRange">Zoom</label>
+            <input id="resizerZoomRange" type="range" min="0.5" max="5" step="0.01" value="1">
+            <button id="resizerFitBtn" type="button">Fit</button>
+          </div>
+          <p class="tip">Drag to pan. Mouse wheel or slider to zoom. The clear area is the crop.</p>
+        </div>
+        <div class="modal-footer">
+          <button id="resizerCropCancelBtn" class="secondary">Cancel</button>
+          <button id="resizerCropApplyBtn" class="primary">Apply Crop</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <small>create by: 🐺speedywolfdesign</small>
+    </footer>
+
+    <script src="resizer.js"></script>
+  </body>
+  </html>
+
+
