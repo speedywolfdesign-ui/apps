@@ -1,164 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Offline Wi‑Fi Walkie‑Talkie</title>
-
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #020617;
-      --primary: #22c55e;
-      --danger: #ef4444;
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: radial-gradient(circle at top, #020617, #020617 60%, #020617);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 380px;
-      padding: 24px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    }
-
-    h1 {
-      font-size: 1.2rem;
-      margin: 0 0 12px;
-      text-align: center;
-    }
-
-    p {
-      font-size: 0.85rem;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .status {
-      margin: 16px 0;
-      padding: 10px;
-      text-align: center;
-      border-radius: 10px;
-      background: #020617;
-      font-size: 0.8rem;
-    }
-
-    .ptt {
-      margin: 28px auto 0;
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      border: none;
-      background: linear-gradient(145deg, #22c55e, #16a34a);
-      color: #020617;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 15px 40px rgba(34,197,94,0.4);
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
-    }
-
-    .ptt:active {
-      transform: scale(0.95);
-      box-shadow: 0 5px 15px rgba(239,68,68,0.6);
-      background: linear-gradient(145deg, #ef4444, #dc2626);
-      color: white;
-    }
-
-    .footer {
-      margin-top: 20px;
-      font-size: 0.7rem;
-      color: var(--muted);
-      text-align: center;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Offline Walkie-Talkie with QR</title>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(180deg, #020617, #020617);
+  color: #f8fafc;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.app {
+  width: 100%;
+  max-width: 420px;
+  height: 100vh;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+h1 { font-size: 22px; margin-bottom: 6px; text-align: center; }
+p { font-size: 14px; opacity: 0.85; text-align: center; line-height: 1.4; }
+.card { background: #020617; border-radius: 20px; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+button { width: 100%; padding: 18px; border-radius: 18px; border: none; font-size: 17px; font-weight: 600; margin-top: 14px; }
+button.primary { background: #22c55e; color: #022c22; }
+button.secondary { background: #38bdf8; color: #022c22; }
+button.hold { background: #ef4444; color: white; height: 120px; font-size: 20px; margin-top: 24px; }
+button:active { transform: scale(0.97); }
+.status { margin-top: 12px; font-size: 13px; text-align: center; color: #a5b4fc; }
+.hidden { display: none; }
+.pulse { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; margin: 12px auto; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.8); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+#qrcode { margin: 20px auto; display: block; }
+</style>
 </head>
 <body>
-  <div class="app">
-    <div class="card">
-      <h1>Offline Walkie‑Talkie</h1>
-      <p>Works on the same Wi‑Fi / hotspot. No internet required.</p>
+<div class="app">
 
-      <div class="status" id="status">Microphone: Not initialized</div>
+<!-- ROLE SELECT -->
+<div id="screen-role" class="card">
+  <h1>Walkie-Talkie</h1>
+  <p>Works offline on the same Wi-Fi or hotspot</p>
+  <button class="primary" onclick="startHost()">Start Walkie-Talkie</button>
+  <button class="secondary" onclick="startJoin()">Join Walkie-Talkie</button>
+</div>
 
-      <button class="ptt" id="ptt">Hold to Talk</button>
+<!-- HOST -->
+<div id="screen-host" class="card hidden">
+  <h1>Waiting to connect</h1>
+  <p>Scan this QR code on the other phone</p>
+  <canvas id="qrcode"></canvas>
+  <p class="status" id="host-status">Waiting for reply…</p>
+</div>
 
-      <div class="footer">
-        Demo mode • Audio loopback only
-      </div>
-    </div>
-  </div>
+<!-- JOIN -->
+<div id="screen-join" class="card hidden">
+  <h1>Join Walkie-Talkie</h1>
+  <p>Scan QR code from the host phone</p>
+  <video id="qr-video" width="100%" autoplay></video>
+  <p class="status" id="join-status">Scanning…</p>
+</div>
 
-  <script>
-    const statusEl = document.getElementById('status');
-    const pttBtn = document.getElementById('ptt');
+<!-- TALK -->
+<div id="screen-talk" class="card hidden">
+  <h1>Connected</h1>
+  <p>Hold to talk</p>
+  <button class="hold" id="talkBtn">HOLD TO TALK</button>
+  <p class="status" id="talk-status">Listening…</p>
+  <audio id="remoteAudio" autoplay></audio>
+</div>
 
-    let stream;
-    let audioContext;
-    let source;
-    let gainNode;
+</div>
 
-    async function initMic() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        audioContext = new AudioContext();
-        source = audioContext.createMediaStreamSource(stream);
-        gainNode = audioContext.createGain();
-        gainNode.gain.value = 0; // muted by default
-        source.connect(gainNode).connect(audioContext.destination);
-        statusEl.textContent = 'Microphone ready • Hold button to talk';
-      } catch (e) {
-        statusEl.textContent = 'Microphone permission denied';
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+<script>
+let pc, localStream;
+let hostOffer;
+async function initPeer() {
+  pc = new RTCPeerConnection();
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+  pc.ontrack = e => remoteAudio.srcObject = e.streams[0];
+}
+function show(id){ document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+
+// HOST SIDE
+async function startHost(){
+  show('screen-host');
+  await initPeer();
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  hostOffer = JSON.stringify(offer);
+  QRCode.toCanvas(document.getElementById('qrcode'), hostOffer, { width: 250 });
+}
+
+// JOIN SIDE
+async function startJoin(){
+  show('screen-join');
+  await initPeer();
+  const video = document.getElementById('qr-video');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(stream => {
+    video.srcObject = stream;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    function scanFrame(){
+      if(video.readyState === video.HAVE_ENOUGH_DATA){
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code = jsQR(imgData.data, imgData.width, imgData.height);
+        if(code){
+          connectFromQR(code.data);
+          return;
+        }
       }
+      requestAnimationFrame(scanFrame);
     }
-
-    pttBtn.addEventListener('mousedown', () => {
-      if (!audioContext) return;
-      gainNode.gain.value = 1;
-      statusEl.textContent = 'Transmitting…';
-    });
-
-    pttBtn.addEventListener('mouseup', () => {
-      if (!audioContext) return;
-      gainNode.gain.value = 0;
-      statusEl.textContent = 'Microphone ready';
-    });
-
-    pttBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (!audioContext) return;
-      gainNode.gain.value = 1;
-      statusEl.textContent = 'Transmitting…';
-    });
-
-    pttBtn.addEventListener('touchend', () => {
-      if (!audioContext) return;
-      gainNode.gain.value = 0;
-      statusEl.textContent = 'Microphone ready';
-    });
-
-    initMic();
-  </script>
+    scanFrame();
+  });
+}
+async function connectFromQR(data){
+  const offer = JSON.parse(data);
+  await pc.setRemoteDescription(offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  alert('Send this QR back to Host to finish');
+  // In production, you'd generate a QR of the answer here
+  show('screen-talk');
+}
+const talkBtn = document.getElementById('talkBtn');
+if(talkBtn){
+  talkBtn.addEventListener('touchstart',()=>toggleMic(true));
+  talkBtn.addEventListener('touchend',()=>toggleMic(false));
+}
+function toggleMic(on){
+  localStream.getAudioTracks()[0].enabled = on;
+  document.getElementById('talk-status').innerText = on?'Talking…':'Listening…';
+}
+</script>
 </body>
 </html>
