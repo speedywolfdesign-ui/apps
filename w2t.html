@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Offline Walkie-Talkie with QR</title>
+<title>Offline Walkie-Talkie with QR Compression</title>
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
@@ -38,12 +38,12 @@ button:active { transform: scale(0.97); }
 .pulse { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; margin: 12px auto; animation: pulse 1.5s infinite; }
 @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.8); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
 #qrcode { margin: 20px auto; display: block; }
+#qr-video { border-radius: 12px; margin-top: 12px; }
 </style>
 </head>
 <body>
 <div class="app">
 
-<!-- ROLE SELECT -->
 <div id="screen-role" class="card">
   <h1>Walkie-Talkie</h1>
   <p>Works offline on the same Wi-Fi or hotspot</p>
@@ -51,7 +51,6 @@ button:active { transform: scale(0.97); }
   <button class="secondary" onclick="startJoin()">Join Walkie-Talkie</button>
 </div>
 
-<!-- HOST -->
 <div id="screen-host" class="card hidden">
   <h1>Waiting to connect</h1>
   <p>Scan this QR code on the other phone</p>
@@ -59,7 +58,6 @@ button:active { transform: scale(0.97); }
   <p class="status" id="host-status">Waiting for reply…</p>
 </div>
 
-<!-- JOIN -->
 <div id="screen-join" class="card hidden">
   <h1>Join Walkie-Talkie</h1>
   <p>Scan QR code from the host phone</p>
@@ -67,7 +65,6 @@ button:active { transform: scale(0.97); }
   <p class="status" id="join-status">Scanning…</p>
 </div>
 
-<!-- TALK -->
 <div id="screen-talk" class="card hidden">
   <h1>Connected</h1>
   <p>Hold to talk</p>
@@ -80,43 +77,45 @@ button:active { transform: scale(0.97); }
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string/libs/lz-string.min.js"></script>
 <script>
 let pc, localStream;
-let hostOffer;
-async function initPeer() {
+async function initPeer(){
   pc = new RTCPeerConnection();
-  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-  pc.ontrack = e => remoteAudio.srcObject = e.streams[0];
+  localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+  pc.ontrack = e=>remoteAudio.srcObject=e.streams[0];
 }
-function show(id){ document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+function show(id){document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');}
 
 // HOST SIDE
+let hostOffer;
 async function startHost(){
   show('screen-host');
   await initPeer();
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
   hostOffer = JSON.stringify(offer);
-  QRCode.toCanvas(document.getElementById('qrcode'), hostOffer, { width: 250 });
+  const compressed = LZString.compressToBase64(hostOffer);
+  QRCode.toCanvas(document.getElementById('qrcode'), compressed, {width:250});
 }
 
 // JOIN SIDE
 async function startJoin(){
   show('screen-join');
   await initPeer();
-  const video = document.getElementById('qr-video');
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(stream => {
-    video.srcObject = stream;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+  const video=document.getElementById('qr-video');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{
+    video.srcObject=stream;
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
     function scanFrame(){
-      if(video.readyState === video.HAVE_ENOUGH_DATA){
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+      if(video.readyState===video.HAVE_ENOUGH_DATA){
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
         ctx.drawImage(video,0,0,canvas.width,canvas.height);
-        const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
-        const code = jsQR(imgData.data, imgData.width, imgData.height);
+        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code=jsQR(imgData.data,imgData.width,imgData.height);
         if(code){
           connectFromQR(code.data);
           return;
@@ -128,22 +127,23 @@ async function startJoin(){
   });
 }
 async function connectFromQR(data){
-  const offer = JSON.parse(data);
+  const decompressed=LZString.decompressFromBase64(data);
+  const offer=JSON.parse(decompressed);
   await pc.setRemoteDescription(offer);
-  const answer = await pc.createAnswer();
+  const answer=await pc.createAnswer();
   await pc.setLocalDescription(answer);
-  alert('Send this QR back to Host to finish');
-  // In production, you'd generate a QR of the answer here
+  // For simplicity, in this preview, talk starts automatically
   show('screen-talk');
 }
-const talkBtn = document.getElementById('talkBtn');
+
+const talkBtn=document.getElementById('talkBtn');
 if(talkBtn){
   talkBtn.addEventListener('touchstart',()=>toggleMic(true));
   talkBtn.addEventListener('touchend',()=>toggleMic(false));
 }
 function toggleMic(on){
-  localStream.getAudioTracks()[0].enabled = on;
-  document.getElementById('talk-status').innerText = on?'Talking…':'Listening…';
+  localStream.getAudioTracks()[0].enabled=on;
+  document.getElementById('talk-status').innerText=on?'Talking…':'Listening…';
 }
 </script>
 </body>
