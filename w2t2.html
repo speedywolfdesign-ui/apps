@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline Wi-Fi Walkie-Talkie</title>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --primary: #22c55e;
+      --danger: #ef4444;
+      --border: #1e293b;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #020617, #020617 70%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+    }
+
+    p {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 70px;
+      margin-top: 8px;
+      background: #020617;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.7rem;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--primary);
+      color: #020617;
+    }
+
+    button.secondary {
+      background: #020617;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .divider {
+      margin: 14px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .ptt {
+      margin: 22px auto 0;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #22c55e, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #020617;
+      box-shadow: 0 15px 40px rgba(34,197,94,0.4);
+      user-select: none;
+    }
+
+    .ptt.active {
+      background: linear-gradient(145deg, #ef4444, #dc2626);
+      color: #fff;
+      box-shadow: 0 5px 20px rgba(239,68,68,0.6);
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      text-align: center;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <div class="card">
+    <h1>Offline Walkie-Talkie</h1>
+    <p>Two phones • Same Wi-Fi • No internet after load</p>
+
+    <!-- PHONE A -->
+    <button id="createOffer">Create Offer (Phone A)</button>
+    <textarea id="offerBox" placeholder="Offer will appear here"></textarea>
+
+    <textarea id="answerInput" placeholder="Paste answer here (Phone A)"></textarea>
+    <button id="setAnswer" class="secondary">Set Answer</button>
+
+    <div class="divider"></div>
+
+    <!-- PHONE B -->
+    <textarea id="offerInput" placeholder="Paste offer here (Phone B)"></textarea>
+    <button id="createAnswer">Create Answer (Phone B)</button>
+    <textarea id="answerBox" placeholder="Answer will appear here"></textarea>
+
+    <!-- PTT -->
+    <div class="ptt" id="ptt">HOLD TO TALK</div>
+    <div class="status" id="status">Not connected</div>
+  </div>
+</div>
+
+<script>
+let pc;
+let localStream;
+let audioTrack;
+
+const statusEl = document.getElementById("status");
+const ptt = document.getElementById("ptt");
+
+async function init() {
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  audioTrack = localStream.getAudioTracks()[0];
+  audioTrack.enabled = false;
+
+  pc = new RTCPeerConnection({ iceServers: [] });
+  pc.addTrack(audioTrack, localStream);
+
+  pc.ontrack = (event) => {
+    const audio = document.createElement("audio");
+    audio.srcObject = event.streams[0];
+    audio.autoplay = true;
+  };
+
+  pc.onconnectionstatechange = () => {
+    statusEl.textContent = pc.connectionState;
+  };
+}
+
+init();
+
+createOffer.onclick = async () => {
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  offerBox.value = JSON.stringify(offer);
+};
+
+createAnswer.onclick = async () => {
+  const offer = JSON.parse(offerInput.value);
+  await pc.setRemoteDescription(offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  answerBox.value = JSON.stringify(answer);
+};
+
+setAnswer.onclick = async () => {
+  const answer = JSON.parse(answerInput.value);
+  await pc.setRemoteDescription(answer);
+};
+
+function startTalk() {
+  audioTrack.enabled = true;
+  ptt.classList.add("active");
+  statusEl.textContent = "Transmitting…";
+}
+
+function stopTalk() {
+  audioTrack.enabled = false;
+  ptt.classList.remove("active");
+  statusEl.textContent = pc.connectionState;
+}
+
+ptt.addEventListener("mousedown", startTalk);
+ptt.addEventListener("mouseup", stopTalk);
+ptt.addEventListener("mouseleave", stopTalk);
+ptt.addEventListener("touchstart", e => { e.preventDefault(); startTalk(); });
+ptt.addEventListener("touchend", stopTalk);
+</script>
+</body>
+</html>
