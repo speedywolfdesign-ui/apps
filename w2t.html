@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Offline Walkie-Talkie with QR Compression</title>
+<title>Offline Walkie-Talkie with Two-Way QR</title>
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
@@ -32,12 +32,13 @@ button { width: 100%; padding: 18px; border-radius: 18px; border: none; font-siz
 button.primary { background: #22c55e; color: #022c22; }
 button.secondary { background: #38bdf8; color: #022c22; }
 button.hold { background: #ef4444; color: white; height: 120px; font-size: 20px; margin-top: 24px; }
+button.disconnect { background: #f87171; color: white; }
 button:active { transform: scale(0.97); }
 .status { margin-top: 12px; font-size: 13px; text-align: center; color: #a5b4fc; }
 .hidden { display: none; }
 .pulse { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; margin: 12px auto; animation: pulse 1.5s infinite; }
 @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.8); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
-#qrcode { margin: 20px auto; display: block; }
+#qrcode, #answerQR { margin: 20px auto; display: block; }
 #qr-video { border-radius: 12px; margin-top: 12px; }
 </style>
 </head>
@@ -63,12 +64,15 @@ button:active { transform: scale(0.97); }
   <p>Scan QR code from the host phone</p>
   <video id="qr-video" width="100%" autoplay></video>
   <p class="status" id="join-status">Scanning…</p>
+  <p>Show this QR to the host to finish connecting</p>
+  <canvas id="answerQR"></canvas>
 </div>
 
 <div id="screen-talk" class="card hidden">
   <h1>Connected</h1>
   <p>Hold to talk</p>
   <button class="hold" id="talkBtn">HOLD TO TALK</button>
+  <button class="disconnect" onclick="disconnect()">Disconnect</button>
   <p class="status" id="talk-status">Listening…</p>
   <audio id="remoteAudio" autoplay></audio>
 </div>
@@ -93,10 +97,10 @@ let hostOffer;
 async function startHost(){
   show('screen-host');
   await initPeer();
-  const offer = await pc.createOffer();
+  const offer=await pc.createOffer();
   await pc.setLocalDescription(offer);
-  hostOffer = JSON.stringify(offer);
-  const compressed = LZString.compressToBase64(hostOffer);
+  hostOffer=JSON.stringify(offer);
+  const compressed=LZString.compressToBase64(hostOffer);
   QRCode.toCanvas(document.getElementById('qrcode'), compressed, {width:250});
 }
 
@@ -117,7 +121,7 @@ async function startJoin(){
         const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
         const code=jsQR(imgData.data,imgData.width,imgData.height);
         if(code){
-          connectFromQR(code.data);
+          createAnswerQR(code.data);
           return;
         }
       }
@@ -126,14 +130,39 @@ async function startJoin(){
     scanFrame();
   });
 }
-async function connectFromQR(data){
+
+async function createAnswerQR(data){
   const decompressed=LZString.decompressFromBase64(data);
   const offer=JSON.parse(decompressed);
   await pc.setRemoteDescription(offer);
   const answer=await pc.createAnswer();
   await pc.setLocalDescription(answer);
-  // For simplicity, in this preview, talk starts automatically
+  const answerCompressed=LZString.compressToBase64(JSON.stringify(answer));
+  QRCode.toCanvas(document.getElementById('answerQR'), answerCompressed, {width:250});
+  document.getElementById('join-status').innerText='Show this QR to the host to complete connection';
+
+  pc.onconnectionstatechange = ()=>{
+    if(pc.connectionState==='connected') show('screen-talk');
+  };
+}
+
+async function scanAnswerQR(answerData){
+  const decompressed=LZString.decompressFromBase64(answerData);
+  const answer=JSON.parse(decompressed);
+  await pc.setRemoteDescription(answer);
   show('screen-talk');
+}
+
+function disconnect(){
+  if(pc){
+    pc.close();
+    pc=null;
+  }
+  if(localStream){
+    localStream.getTracks().forEach(track=>track.stop());
+    localStream=null;
+  }
+  show('screen-role');
 }
 
 const talkBtn=document.getElementById('talkBtn');
