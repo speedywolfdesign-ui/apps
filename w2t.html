@@ -37,8 +37,9 @@ button.scanAnswer { background: #fbbf24; color: #022c22; }
 button:active { transform: scale(0.97); }
 .status { margin-top: 12px; font-size: 13px; text-align: center; color: #a5b4fc; }
 .hidden { display: none; }
-#qrcode, #answerQR { margin: 20px auto; display: block; }
+#qrcode, #answerQR { margin: 20px auto; display: block; border:1px solid #fff; border-radius:12px; }
 #qr-video, #scan-video { border-radius: 12px; margin-top: 12px; }
+input[type=range] { width: 100%; margin-top: 12px; }
 </style>
 </head>
 <body>
@@ -57,6 +58,7 @@ button:active { transform: scale(0.97); }
   <canvas id="qrcode"></canvas>
   <button class="scanAnswer" onclick="scanAnswerFromJoin()" style="display:block; margin:12px auto;">Scan Answer QR</button>
   <video id="scan-video" width="100%" autoplay class="hidden" style="margin-top:12px;"></video>
+  <input type="range" id="zoomSlider" min="1" max="1" step="0.1" value="1" class="hidden">
   <p class="status" id="host-status">Waiting for reply…</p>
 </div>
 
@@ -64,6 +66,7 @@ button:active { transform: scale(0.97); }
   <h1>Join Walkie-Talkie</h1>
   <p>Scan QR code from the host phone</p>
   <video id="qr-video" width="100%" autoplay></video>
+  <input type="range" id="joinZoomSlider" min="1" max="1" step="0.1" value="1" class="hidden">
   <p class="status" id="join-status">Scanning…</p>
   <p>Show this QR to the host to finish connecting</p>
   <canvas id="answerQR"></canvas>
@@ -84,7 +87,8 @@ button:active { transform: scale(0.97); }
 <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lz-string/libs/lz-string.min.js"></script>
 <script>
-let pc, localStream;
+let pc, localStream, scanStream;
+let track;
 async function initPeer(){
   pc = new RTCPeerConnection();
   localStream = await navigator.mediaDevices.getUserMedia({audio:true});
@@ -98,36 +102,63 @@ let hostOffer;
 async function startHost(){
   show('screen-host');
   await initPeer();
-  const offer=await pc.createOffer();
+  const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
-  hostOffer=JSON.stringify(offer);
-  const compressed=LZString.compressToBase64(hostOffer);
-  QRCode.toCanvas(document.getElementById('qrcode'), compressed, {width:250});
+  hostOffer = JSON.stringify(offer);
+  const compressed = LZString.compressToBase64(hostOffer);
+
+  const qrCanvas = document.getElementById('qrcode');
+  qrCanvas.width = 250;
+  qrCanvas.height = 250;
+  qrCanvas.style.width = '250px';
+  qrCanvas.style.height = '250px';
+  qrCanvas.classList.remove('hidden');
+
+  setTimeout(() => {
+    QRCode.toCanvas(qrCanvas, compressed, { width: 250 }, function(error){
+      if(error) console.error('QR generation error:', error);
+      else console.log('QR code generated successfully');
+    });
+  }, 100);
 }
 
 async function scanAnswerFromJoin(){
-  const video=document.getElementById('scan-video');
+  const video = document.getElementById('scan-video');
   video.classList.remove('hidden');
-  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{
-    video.srcObject=stream;
-    const canvas=document.createElement('canvas');
-    const ctx=canvas.getContext('2d');
-    function scanFrame(){
-      if(video.readyState===video.HAVE_ENOUGH_DATA){
-        canvas.width=video.videoWidth;
-        canvas.height=video.videoHeight;
-        ctx.drawImage(video,0,0,canvas.width,canvas.height);
-        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-        const code=jsQR(imgData.data,imgData.width,imgData.height);
-        if(code){
-          completeConnectionFromAnswer(code.data);
-          return;
-        }
-      }
-      requestAnimationFrame(scanFrame);
+  scanStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+  video.srcObject = scanStream;
+  track = scanStream.getVideoTracks()[0];
+
+  const zoomSlider = document.getElementById('zoomSlider');
+  if(track){
+    const capabilities = track.getCapabilities();
+    if(capabilities.zoom){
+      zoomSlider.min = capabilities.zoom.min;
+      zoomSlider.max = capabilities.zoom.max;
+      zoomSlider.step = capabilities.zoom.step || 0.1;
+      zoomSlider.value = track.getSettings().zoom || capabilities.zoom.min;
+      zoomSlider.classList.remove('hidden');
+      zoomSlider.oninput = () => {
+        try{ track.applyConstraints({advanced:[{zoom:parseFloat(zoomSlider.value)}]}); }
+        catch(e){ console.warn('Zoom error', e); }
+      };
+    } else zoomSlider.classList.add('hidden');
+  }
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  function scanFrame(){
+    if(video.readyState===video.HAVE_ENOUGH_DATA){
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video,0,0,canvas.width,canvas.height);
+      const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+      const code = jsQR(imgData.data,imgData.width,imgData.height);
+      if(code){ completeConnectionFromAnswer(code.data); return; }
     }
-    scanFrame();
-  });
+    requestAnimationFrame(scanFrame);
+  }
+  scanFrame();
 }
 
 async function completeConnectionFromAnswer(answerData){
@@ -135,6 +166,8 @@ async function completeConnectionFromAnswer(answerData){
   const answer=JSON.parse(decompressed);
   await pc.setRemoteDescription(answer);
   show('screen-talk');
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());}
+  document.getElementById('zoomSlider').classList.add('hidden');
 }
 
 // JOIN SIDE
@@ -144,6 +177,20 @@ async function startJoin(){
   const video=document.getElementById('qr-video');
   navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{
     video.srcObject=stream;
+    const track = stream.getVideoTracks()[0];
+    const joinZoomSlider = document.getElementById('joinZoomSlider');
+    const capabilities = track.getCapabilities();
+    if(capabilities.zoom){
+      joinZoomSlider.min = capabilities.zoom.min;
+      joinZoomSlider.max = capabilities.zoom.max;
+      joinZoomSlider.step = capabilities.zoom.step || 0.1;
+      joinZoomSlider.value = track.getSettings().zoom || capabilities.zoom.min;
+      joinZoomSlider.classList.remove('hidden');
+      joinZoomSlider.oninput = () => {
+        track.applyConstraints({advanced:[{zoom:parseFloat(joinZoomSlider.value)}]});
+      };
+    }
+
     const canvas=document.createElement('canvas');
     const ctx=canvas.getContext('2d');
     function scanFrame(){
@@ -153,10 +200,7 @@ async function startJoin(){
         ctx.drawImage(video,0,0,canvas.width,canvas.height);
         const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
         const code=jsQR(imgData.data,imgData.width,imgData.height);
-        if(code){
-          createAnswerQR(code.data);
-          return;
-        }
+        if(code){ createAnswerQR(code.data); return; }
       }
       requestAnimationFrame(scanFrame);
     }
@@ -171,16 +215,30 @@ async function createAnswerQR(data){
   const answer=await pc.createAnswer();
   await pc.setLocalDescription(answer);
   const answerCompressed=LZString.compressToBase64(JSON.stringify(answer));
-  QRCode.toCanvas(document.getElementById('answerQR'), answerCompressed, {width:250});
+
+  const qrCanvas = document.getElementById('answerQR');
+  qrCanvas.width = 250;
+  qrCanvas.height = 250;
+  qrCanvas.style.width = '250px';
+  qrCanvas.style.height = '250px';
+  qrCanvas.classList.remove('hidden');
+
+  setTimeout(() => {
+    QRCode.toCanvas(qrCanvas, answerCompressed, {width:250}, function(err){
+      if(err) console.error('Answer QR generation error:',err);
+    });
+  }, 100);
+
   document.getElementById('join-status').innerText='Show this QR to the host to complete connection';
-  pc.onconnectionstatechange = ()=>{
-    if(pc.connectionState==='connected') show('screen-talk');
-  };
+  pc.onconnectionstatechange = ()=>{if(pc.connectionState==='connected') show('screen-talk');};
 }
 
 function disconnect(){
   if(pc){ pc.close(); pc=null; }
   if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
+  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
+  document.getElementById('zoomSlider').classList.add('hidden');
+  document.getElementById('joinZoomSlider').classList.add('hidden');
   show('screen-role');
 }
 
