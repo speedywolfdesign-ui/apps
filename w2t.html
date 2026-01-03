@@ -28,18 +28,17 @@ body {
 h1 { font-size: 22px; margin-bottom: 6px; text-align: center; }
 p { font-size: 14px; opacity: 0.85; text-align: center; line-height: 1.4; }
 .card { background: #020617; border-radius: 20px; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-button { width: 100%; padding: 18px; border-radius: 18px; border: none; font-size: 17px; font-weight: 600; margin-top: 14px; }
+button { width: 100%; padding: 18px; border-radius: 18px; border: none; font-size: 17px; font-weight: 600; margin-top: 14px; cursor:pointer; }
 button.primary { background: #22c55e; color: #022c22; }
 button.secondary { background: #38bdf8; color: #022c22; }
 button.hold { background: #ef4444; color: white; height: 120px; font-size: 20px; margin-top: 24px; }
 button.disconnect { background: #f87171; color: white; }
+button.scanAnswer { background: #fbbf24; color: #022c22; }
 button:active { transform: scale(0.97); }
 .status { margin-top: 12px; font-size: 13px; text-align: center; color: #a5b4fc; }
 .hidden { display: none; }
-.pulse { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; margin: 12px auto; animation: pulse 1.5s infinite; }
-@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.8); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
 #qrcode, #answerQR { margin: 20px auto; display: block; }
-#qr-video { border-radius: 12px; margin-top: 12px; }
+#qr-video, #scan-video { border-radius: 12px; margin-top: 12px; }
 </style>
 </head>
 <body>
@@ -56,6 +55,8 @@ button:active { transform: scale(0.97); }
   <h1>Waiting to connect</h1>
   <p>Scan this QR code on the other phone</p>
   <canvas id="qrcode"></canvas>
+  <button class="scanAnswer" onclick="scanAnswerFromJoin()" style="display:block; margin:12px auto;">Scan Answer QR</button>
+  <video id="scan-video" width="100%" autoplay class="hidden" style="margin-top:12px;"></video>
   <p class="status" id="host-status">Waiting for reply…</p>
 </div>
 
@@ -104,6 +105,38 @@ async function startHost(){
   QRCode.toCanvas(document.getElementById('qrcode'), compressed, {width:250});
 }
 
+async function scanAnswerFromJoin(){
+  const video=document.getElementById('scan-video');
+  video.classList.remove('hidden');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{
+    video.srcObject=stream;
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
+    function scanFrame(){
+      if(video.readyState===video.HAVE_ENOUGH_DATA){
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code=jsQR(imgData.data,imgData.width,imgData.height);
+        if(code){
+          completeConnectionFromAnswer(code.data);
+          return;
+        }
+      }
+      requestAnimationFrame(scanFrame);
+    }
+    scanFrame();
+  });
+}
+
+async function completeConnectionFromAnswer(answerData){
+  const decompressed=LZString.decompressFromBase64(answerData);
+  const answer=JSON.parse(decompressed);
+  await pc.setRemoteDescription(answer);
+  show('screen-talk');
+}
+
 // JOIN SIDE
 async function startJoin(){
   show('screen-join');
@@ -140,28 +173,14 @@ async function createAnswerQR(data){
   const answerCompressed=LZString.compressToBase64(JSON.stringify(answer));
   QRCode.toCanvas(document.getElementById('answerQR'), answerCompressed, {width:250});
   document.getElementById('join-status').innerText='Show this QR to the host to complete connection';
-
   pc.onconnectionstatechange = ()=>{
     if(pc.connectionState==='connected') show('screen-talk');
   };
 }
 
-async function scanAnswerQR(answerData){
-  const decompressed=LZString.decompressFromBase64(answerData);
-  const answer=JSON.parse(decompressed);
-  await pc.setRemoteDescription(answer);
-  show('screen-talk');
-}
-
 function disconnect(){
-  if(pc){
-    pc.close();
-    pc=null;
-  }
-  if(localStream){
-    localStream.getTracks().forEach(track=>track.stop());
-    localStream=null;
-  }
+  if(pc){ pc.close(); pc=null; }
+  if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
   show('screen-role');
 }
 
