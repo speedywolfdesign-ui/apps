@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Users – Enterprise Permissions Demo</title>
+  <style>
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:#f5f6f8;
+      margin:0;
+      padding:24px;
+      color:#111827;
+    }
+
+    .modal {
+      max-width:1100px;
+      margin:auto;
+      background:#fff;
+      border-radius:10px;
+      box-shadow:0 20px 40px rgba(0,0,0,.12);
+      overflow:hidden;
+      height: calc(100vh - 50px);
+      display:flex;
+      flex-direction:column;
+    }
+
+    .header {
+      padding:20px 24px;
+      border-bottom:1px solid #e5e7eb;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    h1 { font-size:20px; margin:0; }
+    .content { padding:24px; flex: 1 1 auto; overflow: auto; min-height: 0; }
+    .section { margin-bottom:28px; }
+
+    .section h2 { font-size:16px; margin:0 0 4px 0; }
+    .section p { margin:0 0 12px 0; font-size:13px; color:#6b7280; }
+
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { padding:12px; border-bottom:1px solid #e5e7eb; text-align:left; }
+    th { font-size:12px; color:#6b7280; font-weight:600; }
+
+    .user-row.selected { background:#eff6ff; }
+
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      color:#fff;
+      font-size:12px;
+      font-weight:600;
+      margin-right:8px;
+    }
+
+    .active-dot {
+      width:8px;
+      height:8px;
+      background:#22c55e;
+      border-radius:50%;
+      display:inline-block;
+      margin-right:6px;
+    }
+
+    .matrix th, .matrix td { text-align:center; }
+    .matrix th:first-child, .matrix td:first-child { text-align:left; }
+
+    .global-warning {
+      display:none;
+      background:#fff1f2;
+      border-bottom:1px solid #fecdd3;
+      color:#9f1239;
+      padding:14px 24px;
+      font-size:14px;
+    }
+
+    .conflict-summary {
+      display:none;
+      background:#f8fafc;
+      border-bottom:1px solid #e5e7eb;
+      padding:8px 24px;
+      font-size:13px;
+      color:#374151;
+    }
+
+    .tooltip { position:relative; cursor:help; }
+    .tooltip:hover::after {
+      /* Disabled in favor of JS-managed floating tooltip to avoid viewport clipping */
+      display:none;
+    }
+
+    .conflict {
+      outline:2px solid #fca5a5;
+      outline-offset:2px;
+      border-radius:4px;
+    }
+
+    /* Floating tooltip */
+    #tooltipFloating {
+      position:fixed;
+      z-index:100;
+      max-width:280px;
+      background:#111827;
+      color:#fff;
+      padding:8px 10px;
+      border-radius:8px;
+      font-size:12px;
+      line-height:1.4;
+      box-shadow:0 10px 20px rgba(0,0,0,.25);
+      display:none;
+      pointer-events:none;
+      white-space:pre-line;
+    }
+
+    .footer {
+      padding:16px 24px;
+      border-top:1px solid #e5e7eb;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    button {
+      border-radius:8px;
+      padding:10px 16px;
+      font-size:14px;
+      border:none;
+      cursor:pointer;
+    }
+
+    .primary { background:#2563eb; color:#fff; }
+    .ghost { background:none; color:#2563eb; }
+  </style>
+</head>
+<body>
+
+<div class="modal">
+  <div class="header">
+    <h1>Add users</h1>
+    ✕
+  </div>
+
+  <div id="globalWarning" class="global-warning"></div>
+  <div id="conflictSummary" class="conflict-summary"></div>
+
+  <div class="content">
+
+    <div class="section">
+      <h2>Users list *</h2>
+      <p>Add existing Control Center users as participants.</p>
+
+      <table id="usersTable">
+        <thead>
+          <tr>
+            <th><input id="selectAllUsers" type="checkbox" /></th>
+            <th>User ID</th>
+            <th>Name</th>
+            <th class="col-license">License</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-role="viewer" data-license="basic">
+            <td><input type="checkbox"></td>
+            <td>EAMINOFF</td>
+            <td><span class="pill" style="background:#6366f1">EA</span>Erin Aminoff</td>
+            <td class="col-license">
+              <span class="license-badge" style="display:inline-block;padding:4px 8px;border-radius:6px;background:#eef2ff;color:#3730a3;font-size:12px;">Basic</span>
+              <button type="button" class="edit-license-btn" style="margin-left:8px;padding:2px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font-size:12px;color:#374151;">Edit</button>
+            </td>
+            <td><span class="active-dot"></span>Active</td>
+          </tr>
+          <tr data-role="initiator" data-license="standard">
+            <td><input type="checkbox"></td>
+            <td>EMERSON</td>
+            <td><span class="pill" style="background:#0ea5e9">EH</span>Emerson Herwitz</td>
+            <td class="col-license">
+              <span class="license-badge" style="display:inline-block;padding:4px 8px;border-radius:6px;background:#ecfeff;color:#155e75;font-size:12px;">Standard</span>
+              <button type="button" class="edit-license-btn" style="margin-left:8px;padding:2px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font-size:12px;color:#374151;">Edit</button>
+            </td>
+            <td><span class="active-dot"></span>Active</td>
+          </tr>
+          <tr data-role="reviewer" data-license="standard">
+            <td><input type="checkbox"></td>
+            <td>JBAPTISTA</td>
+            <td><span class="pill" style="background:#4f46e5">JB</span>Jaydon Baptista</td>
+            <td class="col-license">
+              <span class="license-badge" style="display:inline-block;padding:4px 8px;border-radius:6px;background:#ecfeff;color:#155e75;font-size:12px;">Standard</span>
+              <button type="button" class="edit-license-btn" style="margin-left:8px;padding:2px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font-size:12px;color:#374151;">Edit</button>
+            </td>
+            <td><span class="active-dot"></span>Active</td>
+          </tr>
+          <tr data-role="approver" data-license="changeAdmin">
+            <td><input type="checkbox"></td>
+            <td>KLEE</td>
+            <td><span class="pill" style="background:#10b981">KL</span>Kai Lee</td>
+            <td class="col-license">
+              <span class="license-badge" style="display:inline-block;padding:4px 8px;border-radius:6px;background:#f0fdf4;color:#166534;font-size:12px;">Change Admin</span>
+              <button type="button" class="edit-license-btn" style="margin-left:8px;padding:2px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font-size:12px;color:#374151;">Edit</button>
+            </td>
+            <td><span class="active-dot"></span>Active</td>
+          </tr>
+          <tr data-role="full" data-license="changeAdmin">
+            <td><input type="checkbox"></td>
+            <td>MRODRIGUEZ</td>
+            <td><span class="pill" style="background:#a855f7">MR</span>Marisol Rodriguez</td>
+            <td class="col-license">
+              <span class="license-badge" style="display:inline-block;padding:4px 8px;border-radius:6px;background:#f0fdf4;color:#166534;font-size:12px;">Change Admin</span>
+              <button type="button" class="edit-license-btn" style="margin-left:8px;padding:2px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font-size:12px;color:#374151;">Edit</button>
+            </td>
+            <td><span class="active-dot"></span>Active</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Enterprise permissions (Global) *</h2>
+      <p>Set enterprise permissions for all task types.</p>
+
+      <table class="matrix" id="permissionMatrix">
+        <thead>
+          <tr>
+            <th>Task type</th>
+            <th>No access</th>
+            <th>Initiator</th>
+            <th>Viewer</th>
+            <th>Reviewer</th>
+            <th>Approver</th>
+            <th>Full access</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Trend</td>
+            <td><input type="checkbox" data-perm="none"></td>
+            <td><input type="checkbox" data-perm="initiator"></td>
+            <td><input type="checkbox" data-perm="viewer"></td>
+            <td><input type="checkbox" data-perm="reviewer"></td>
+            <td><input type="checkbox" data-perm="approver"></td>
+            <td><input type="checkbox" data-perm="full"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <button class="ghost">Cancel</button>
+    <button class="primary">Next</button>
+  </div>
+</div>
+
+<!-- Toast host -->
+<div id="toastHost" style="position:fixed; right:16px; bottom:16px; z-index:70; display:flex; flex-direction:column; gap:8px;"></div>
+
+<!-- Edit License Modal -->
+<div id="editLicenseModal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60;">
+  <div id="editLicenseOverlay" style="position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(2px);"></div>
+  <div style="position:relative;background:#fff;border-radius:10px;box-shadow:0 20px 40px rgba(0,0,0,.12);min-width:320px;padding:16px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-weight:600;">Edit user license</div>
+      <button id="editLicenseClose" style="border:1px solid #e5e7eb;padding:4px 8px;border-radius:6px;background:#fff;">Close</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <label style="font-size:12px;color:#374151;">License type</label>
+      <select id="licenseSelect" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px;">
+        <option value="basic">Basic</option>
+        <option value="standard">Standard</option>
+        <option value="changeAdmin">Change Admin</option>
+      </select>
+      <div style="font-size:12px;color:#6b7280;">Note: License changes are rate-limited to once per minute per user.</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+      <button id="editLicenseSave" class="primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- (License editing UI removed per rollback) -->
+
+<script>
+  // Floating tooltip element
+  (function initFloatingTooltip(){
+    const tip = document.createElement('div');
+    tip.id = 'tooltipFloating';
+    document.body.appendChild(tip);
+    let currentEl = null;
+    function hide() {
+      tip.style.display = 'none';
+      tip.textContent = '';
+      currentEl = null;
+    }
+    function showFor(el) {
+      const text = el.getAttribute('data-tooltip') || '';
+      if (!text) return hide();
+      tip.textContent = text;
+      tip.style.display = 'block';
+      // Measure
+      tip.style.left = '0px';
+      tip.style.top = '-9999px';
+      const rect = el.getBoundingClientRect();
+      const margin = 8;
+      const tipRect = tip.getBoundingClientRect();
+      let x = rect.left + rect.width / 2 - tipRect.width / 2;
+      const vw = window.innerWidth;
+      if (x < margin) x = margin;
+      if (x + tipRect.width + margin > vw) x = vw - tipRect.width - margin;
+      let y = rect.top - tipRect.height - margin;
+      if (y < margin) y = rect.bottom + margin; // flip below if not enough space above
+      tip.style.left = `${x}px`;
+      tip.style.top = `${y}px`;
+    }
+    document.addEventListener('mouseover', (e) => {
+      const el = e.target.closest('[data-tooltip]');
+      if (el) {
+        currentEl = el;
+        showFor(el);
+      } else if (currentEl) {
+        hide();
+      }
+    }, true);
+    document.addEventListener('mouseout', (e) => {
+      const el = e.target.closest('[data-tooltip]');
+      if (el && !e.relatedTarget?.closest('[data-tooltip]')) hide();
+    }, true);
+    window.addEventListener('scroll', () => currentEl ? showFor(currentEl) : hide(), true);
+    window.addEventListener('resize', () => currentEl ? showFor(currentEl) : hide());
+  })();
+
+  const roleOrder = ['viewer','initiator','reviewer','approver','full'];
+  const userRows = document.querySelectorAll('#usersTable tbody tr');
+  const permCheckboxes = document.querySelectorAll('#permissionMatrix input');
+  const warning = document.getElementById('globalWarning');
+  const summary = document.getElementById('conflictSummary');
+  const selectAllUsersCb = document.getElementById('selectAllUsers');
+  const editLicenseModal = document.getElementById('editLicenseModal');
+  const editLicenseOverlay = document.getElementById('editLicenseOverlay');
+  const editLicenseClose = document.getElementById('editLicenseClose');
+  const editLicenseSave = document.getElementById('editLicenseSave');
+  const licenseSelect = document.getElementById('licenseSelect');
+  const toastHost = document.getElementById('toastHost');
+  let editingUserRow = null;
+
+  const truncateName = (name, max=14) =>
+    name.length <= max ? name : `${name.slice(0,5)}…${name.slice(-3)}`;
+
+  const licenseOrder = { basic:0, standard:1, changeAdmin:2 };
+  const requiredLicenseByPerm = {
+    none: 'basic',
+    viewer: 'basic',
+    initiator: 'standard',
+    reviewer: 'standard',
+    approver: 'changeAdmin',
+    full: 'changeAdmin'
+  };
+  const maxPermIndexByLicense = {
+    basic: roleOrder.indexOf('viewer'),
+    standard: roleOrder.indexOf('reviewer'),
+    changeAdmin: roleOrder.indexOf('full')
+  };
+  const licenseLabelMap = { basic: 'Basic', standard: 'Standard', changeAdmin: 'Change Admin' };
+
+  function selectedUsers() {
+    return [...userRows]
+      .filter(r => r.querySelector('input').checked)
+      .map(r => {
+        const nameCell = r.children[2];
+        // Use only the text nodes in the cell (exclude the initials pill span)
+        const plainName = [...nameCell.childNodes]
+          .filter(n => n.nodeType === Node.TEXT_NODE)
+          .map(n => n.textContent)
+          .join('')
+          .trim();
+        return { name: plainName, role: r.dataset.role, id: r.children[1].textContent.trim(), license: r.dataset.license || 'basic' };
+      });
+  }
+
+  function highestRequiredLicenseLevel(perms) {
+    if (!perms.length) return 0;
+    const levels = perms
+      .map(p => requiredLicenseByPerm[p] || 'basic')
+      .map(l => licenseOrder[l] ?? 0);
+    return Math.max(0, ...levels);
+  }
+
+  function isUserCompatibleWithPerms(row, perms) {
+    const req = highestRequiredLicenseLevel(perms);
+    const userLevel = licenseOrder[row.dataset.license || 'basic'] ?? 0;
+    return userLevel >= req;
+  }
+
+  function showToast(message) {
+    if (!toastHost) return;
+    const item = document.createElement('div');
+    item.textContent = message;
+    item.style.background = '#111827';
+    item.style.color = '#fff';
+    item.style.padding = '10px 12px';
+    item.style.borderRadius = '8px';
+    item.style.boxShadow = '0 10px 20px rgba(0,0,0,.18)';
+    item.style.fontSize = '13px';
+    item.style.opacity = '0';
+    item.style.transform = 'translateY(6px)';
+    item.style.transition = 'opacity 140ms ease, transform 140ms ease';
+    toastHost.appendChild(item);
+    requestAnimationFrame(() => {
+      item.style.opacity = '1';
+      item.style.transform = 'translateY(0)';
+    });
+    setTimeout(() => {
+      item.style.opacity = '0';
+      item.style.transform = 'translateY(6px)';
+      setTimeout(() => item.remove(), 180);
+    }, 2200);
+  }
+
+  function validatePermissions() {
+    const users = selectedUsers();
+    const perms = [...permCheckboxes].filter(c => c.checked).map(c => c.dataset.perm);
+    const granular = ['initiator','viewer','reviewer','approver'];
+    const allGranularChecked = granular.every(p => perms.includes(p));
+    // If all granular are selected, treat "full" as redundant for conflict checks
+    const permsToCheck = allGranularChecked ? perms.filter(p => p !== 'full') : perms;
+    let conflicts = [];
+
+    // Reset any previous conflict state on permission checkboxes up-front
+    permCheckboxes.forEach(cb => {
+      cb.disabled = false;
+      cb.classList.remove('conflict','tooltip');
+      cb.removeAttribute('data-tooltip');
+    });
+
+    // Require users to be selected BEFORE permissions
+    if (!users.length) {
+      // Disable all permission checkboxes and show tooltip guidance
+      permCheckboxes.forEach(cb => {
+        cb.checked = false;
+        cb.disabled = true;
+        cb.classList.remove('conflict');
+        cb.classList.add('tooltip');
+        cb.setAttribute('data-tooltip', 'Select users to enable permissions');
+      });
+      // Clear any stale license gating on users
+      [...userRows].forEach(r => {
+        const cb = r.querySelector('input[type="checkbox"]');
+        if (cb) {
+          cb.disabled = false;
+          cb.classList.remove('conflict','tooltip');
+          cb.removeAttribute('data-tooltip');
+        }
+      });
+      // Do not show top banner by default when no users are selected
+      warning.style.display = 'none';
+      summary.style.display = 'none';
+      return;
+    }
+
+    // License gating: disable incompatible users for selected permissions (UI), and collect ONLY SELECTED users for banner
+    const licenseBlockedUsersSelected = [];
+    if (permsToCheck.length) {
+      [...userRows].forEach(r => {
+        const cb = r.querySelector('input[type="checkbox"]');
+        const compatible = isUserCompatibleWithPerms(r, permsToCheck);
+        cb.disabled = !compatible;
+        if (!compatible) {
+          if (cb.checked) {
+            cb.checked = false;
+            r.classList.remove('selected');
+          }
+          const requiredLevel = highestRequiredLicenseLevel(permsToCheck);
+          const requiredLabel = Object.keys(licenseOrder).find(k => licenseOrder[k] === requiredLevel) || 'Standard';
+          cb.classList.add('tooltip','conflict');
+          cb.setAttribute('data-tooltip', `Requires ${requiredLabel} license`);
+          const nameCell = r.children[2];
+          const plainName = [...nameCell.childNodes].filter(n => n.nodeType===Node.TEXT_NODE).map(n => n.textContent).join('').trim();
+          // If this row is selected, include in banner list
+          const isSelected = !!(r.querySelector('input[type="checkbox"]')?.checked);
+          if (isSelected) licenseBlockedUsersSelected.push(plainName);
+        } else {
+          cb.disabled = false;
+          cb.classList.remove('conflict','tooltip');
+          cb.removeAttribute('data-tooltip');
+        }
+      });
+    } else {
+      // Re-enable all when no perms selected
+      [...userRows].forEach(r => {
+        const cb = r.querySelector('input[type="checkbox"]');
+        cb.disabled = false;
+        cb.classList.remove('conflict','tooltip');
+        cb.removeAttribute('data-tooltip');
+      });
+    }
+
+    // Do NOT block by current role if license allows upgrading.
+    // Role-based conflicts are ignored in favor of license gating.
+
+    permCheckboxes.forEach(cb => {
+      cb.disabled = false;
+      cb.classList.remove('conflict','tooltip');
+      cb.removeAttribute('data-tooltip');
+    });
+
+    // Proactive per-permission gating + tooltip (BEFORE clicking)
+    if (users.length) {
+      permCheckboxes.forEach(cb => {
+        const perm = cb.dataset.perm;
+        if (!perm || perm === 'none') return;
+        const requiredIdx = roleOrder.indexOf(perm);
+        const blockedByLicense = users.filter(u => {
+          const allowedIdx = maxPermIndexByLicense[u.license || 'basic'] ?? 0;
+          return allowedIdx < requiredIdx;
+        }).map(u => u.name);
+        if (blockedByLicense.length) {
+          cb.disabled = true;
+          cb.classList.add('tooltip','conflict');
+          const reqLabel = licenseLabelMap[requiredLicenseByPerm[perm] || 'basic'] || 'Standard';
+          cb.setAttribute('data-tooltip',
+            `Not allowed for:\n` +
+            blockedByLicense.map(n => `• ${truncateName(n)}`).join('\n') +
+            `\n\nRequires ${reqLabel} license`
+          );
+        }
+      });
+    }
+
+    // Full access tooltip/disable: compute hypothetically for selected users
+    const fullPerm = [...permCheckboxes].find(cb => cb.dataset.perm === 'full');
+    if (fullPerm) {
+      const fullRequiredIdx = roleOrder.indexOf('full');
+      const fullConflictUsers = users
+        .filter(u => (maxPermIndexByLicense[u.license || 'basic'] ?? 0) < fullRequiredIdx)
+        .map(u => u.name);
+      // Reset any prior tooltip styles
+      fullPerm.classList.remove('conflict','tooltip');
+      fullPerm.removeAttribute('data-tooltip');
+      fullPerm.disabled = false;
+      if (fullConflictUsers.length > 0) {
+        fullPerm.checked = false;
+        fullPerm.disabled = true;
+        fullPerm.classList.add('conflict','tooltip');
+        fullPerm.setAttribute(
+          'data-tooltip',
+          'Not allowed for:\n' + fullConflictUsers.map(n => `• ${truncateName(n)}`).join('\n') + '\n\nConsider upgrading their role.'
+        );
+      }
+    }
+
+    const conflictedPerms = [...new Set(conflicts.map(c => c.perm))];
+    const conflictedUsers = [...new Set(conflicts.map(c => c.user.name))];
+
+    if (!conflicts.length && !licenseBlockedUsersSelected.length) {
+      warning.style.display = summary.style.display = 'none';
+      return;
+    }
+    warning.style.display = 'block';
+    summary.style.display = (conflictedUsers.length || licenseBlockedUsersSelected.length) ? 'block' : 'none';
+    if (conflictedUsers.length) {
+      warning.innerText = '⚠️ Permission conflict detected. Some permissions were removed.';
+    } else if (licenseBlockedUsersSelected.length) {
+      warning.innerText = '⚠️ Licensing prevents assigning selected permissions to some users.';
+    }
+    const parts = [];
+    if (conflictedUsers.length) {
+      parts.push(`Blocked by role: <strong>${conflictedUsers.join(', ')}</strong> · Permissions: <strong>${conflictedPerms.join(', ')}</strong>`);
+    }
+    if (licenseBlockedUsersSelected.length) {
+      const reqLabel = Object.keys(licenseOrder).find(k => licenseOrder[k] === highestRequiredLicenseLevel(permsToCheck)) || 'Standard';
+      parts.push(`Blocked by license (${reqLabel} required): <strong>${licenseBlockedUsersSelected.join(', ')}</strong>`);
+    }
+    summary.innerHTML = parts.join('<br/>');
+
+    permCheckboxes.forEach(cb => {
+      if (conflictedPerms.includes(cb.dataset.perm)) {
+        const blocked = users.filter(
+          u => roleOrder.indexOf(cb.dataset.perm) > roleOrder.indexOf(u.role)
+        );
+        cb.checked = false;
+        cb.disabled = true;
+        cb.classList.add('conflict','tooltip');
+        cb.setAttribute(
+          'data-tooltip',
+          'Not allowed for:\n' +
+          blocked.map(b => `• ${truncateName(b.name)}`).join('\n') +
+          '\n\nConsider upgrading their role.'
+        );
+      }
+    });
+
+    // Keep "Full access" in sync with granular permissions:
+    // - Checked only when all granular are checked
+    // - Unchecked if any granular is unchecked
+    const granularPerms = ['initiator','viewer','reviewer','approver'];
+    const fullCbSync = [...permCheckboxes].find(c => c.dataset.perm === 'full');
+    const allGranularNowChecked = granularPerms.every(p => {
+      const el = [...permCheckboxes].find(c => c.dataset.perm === p);
+      return !!(el && el.checked);
+    });
+    if (fullCbSync) {
+      if (allGranularNowChecked && !fullCbSync.disabled) {
+        fullCbSync.checked = true;
+      } else {
+        fullCbSync.checked = false;
+      }
+    }
+    updateSelectAllState();
+  }
+
+  function updateSelectAllState() {
+    if (!selectAllUsersCb) return;
+    const rowCbs = [...document.querySelectorAll('#usersTable tbody input[type="checkbox"]')];
+    const enabled = rowCbs.filter(cb => !cb.disabled);
+    const selectedEnabled = enabled.filter(cb => cb.checked);
+    if (enabled.length === 0) {
+      selectAllUsersCb.indeterminate = false;
+      selectAllUsersCb.checked = false;
+      return;
+    }
+    selectAllUsersCb.indeterminate = selectedEnabled.length > 0 && selectedEnabled.length < enabled.length;
+    selectAllUsersCb.checked = selectedEnabled.length === enabled.length;
+  }
+
+  userRows.forEach(row => {
+    const cb = row.querySelector('input');
+    cb.addEventListener('change', () => {
+      row.classList.toggle('selected', cb.checked);
+      validatePermissions();
+      updateSelectAllState();
+    });
+    const editBtn = row.querySelector('.edit-license-btn');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
+        editingUserRow = row;
+        licenseSelect.value = row.dataset.license || 'basic';
+        editLicenseModal.style.display = 'flex';
+      });
+    }
+  });
+
+  if (selectAllUsersCb) {
+    selectAllUsersCb.addEventListener('change', () => {
+      const shouldSelect = selectAllUsersCb.checked;
+      [...userRows].forEach(row => {
+        const cb = row.querySelector('input[type="checkbox"]');
+        if (!cb) return;
+        if (cb.disabled && shouldSelect) return; // don't select disabled users
+        cb.checked = shouldSelect && !cb.disabled;
+        row.classList.toggle('selected', cb.checked);
+      });
+      validatePermissions();
+      updateSelectAllState();
+    });
+  }
+
+  permCheckboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      const rowCbs = [...cb.closest('tr').querySelectorAll('input[data-perm]')];
+      const perm = cb.dataset.perm;
+
+      if (perm === 'none' && cb.checked)
+        rowCbs.forEach(c => c.dataset.perm !== 'none' && (c.checked=false));
+
+      if (perm !== 'none' && cb.checked)
+        rowCbs.find(c => c.dataset.perm === 'none').checked = false;
+
+      if (perm === 'full' && cb.checked)
+        rowCbs.forEach(c => c.dataset.perm !== 'none' && (c.checked=true));
+
+      if (perm === 'full' && !cb.checked)
+        rowCbs.forEach(c => c.checked=false);
+
+      const granular = ['initiator','viewer','reviewer','approver'];
+      const fullCb = rowCbs.find(c => c.dataset.perm === 'full');
+      const allGranularChecked = granular.every(p => rowCbs.find(c => c.dataset.perm===p).checked);
+      if (allGranularChecked) {
+        fullCb.checked = true;
+      } else {
+        // If any granular permission is unchecked, Full access must be unchecked
+        fullCb.checked = false;
+      }
+
+      validatePermissions();
+    });
+  });
+
+  // Edit license modal controls
+  function closeEditModal() {
+    editLicenseModal.style.display = 'none';
+    editingUserRow = null;
+  }
+  if (editLicenseOverlay) editLicenseOverlay.addEventListener('click', closeEditModal);
+  if (editLicenseClose) editLicenseClose.addEventListener('click', closeEditModal);
+  if (editLicenseSave) {
+    editLicenseSave.addEventListener('click', () => {
+      if (!editingUserRow) return closeEditModal();
+      const newLic = licenseSelect.value;
+      const oldLic = editingUserRow.dataset.license || 'basic';
+      editingUserRow.dataset.license = newLic;
+      const badge = editingUserRow.querySelector('.license-badge');
+      if (badge) {
+        badge.textContent = newLic === 'changeAdmin' ? 'Change Admin' : (newLic.charAt(0).toUpperCase() + newLic.slice(1));
+        if (newLic === 'basic') {
+          badge.style.background = '#eef2ff'; badge.style.color = '#3730a3';
+        } else if (newLic === 'standard') {
+          badge.style.background = '#ecfeff'; badge.style.color = '#155e75';
+        } else {
+          badge.style.background = '#f0fdf4'; badge.style.color = '#166534';
+        }
+      }
+      // Capture name and label BEFORE clearing editingUserRow
+      const nameCell = editingUserRow.children[2];
+      const plainName = [...nameCell.childNodes].filter(n => n.nodeType===Node.TEXT_NODE).map(n => n.textContent).join('').trim();
+      const licenseLabel = badge ? badge.textContent : (newLic === 'changeAdmin' ? 'Change Admin' : (newLic.charAt(0).toUpperCase() + newLic.slice(1)));
+      closeEditModal();
+      validatePermissions();
+      showToast(`Updated license to ${licenseLabel} for ${plainName}`);
+    });
+  }
+
+  // Initial validation
+  validatePermissions();
+</script>
+<script src="ai.js"></script>
+
+</body>
+</html> 

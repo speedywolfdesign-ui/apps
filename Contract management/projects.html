@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Projects • Contract Management Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#326FD1',
+                100: '#326FD1',
+                200: '#326FD1',
+                300: '#326FD1',
+                400: '#326FD1',
+                500: '#326FD1',
+                600: '#326FD1',
+                700: '#326FD1',
+                800: '#326FD1',
+                900: '#326FD1'
+              }
+            },
+            fontFamily: {
+              sans: [
+                'Inter',
+                'ui-sans-serif',
+                'system-ui',
+                '-apple-system',
+                'Segoe UI',
+                'Roboto',
+                'Helvetica Neue',
+                'Arial',
+                'Noto Sans',
+                'Apple Color Emoji',
+                'Segoe UI Emoji'
+              ]
+            }
+          }
+        }
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body class="antialiased bg-gray-50 text-gray-900">
+    <!-- Top navbar -->
+    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-200">
+      <div class="w-full px-4 sm:px-6 lg:px-8">
+        <div class="flex h-14 items-center justify-between">
+          <div class="flex items-center gap-3">
+            <a href="projects.html" class="flex items-center gap-2">
+              <img src="assets/LOGO.svg" alt="Contract" class="h-8 w-8" />
+              <!-- <span class="hidden sm:inline text-sm font-semibold tracking-tight">Contract</span> -->
+            </a>
+          </div>
+          <nav class="hidden md:flex items-center gap-4 text-sm">
+            <span class="text-gray-600">Home</span>
+            <a class="text-gray-900 font-medium" href="projects.html">Projects</a>
+            <a class="text-gray-600 hover:text-gray-900" href="#">Magic Grid</a>
+            <a class="text-gray-600 hover:text-gray-900" href="#">Tasks</a>
+            <a class="text-gray-600 hover:text-gray-900" href="#">Contractor Portal</a>
+            <a class="text-gray-600 hover:text-gray-900" href="#">Reports</a>
+            <a class="text-gray-600 hover:text-gray-900" href="#">Dashboard</a>
+            <div class="relative">
+              <button id="adminMenuBtn" class="inline-flex items-center gap-1 rounded-md px-2 py-1.5 hover:bg-gray-100 text-gray-700">
+                Administration
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.108l3.71-3.877a.75.75 0 111.08 1.04l-4.24 4.433a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <div id="adminMenu" class="absolute right-0 mt-2 hidden w-48 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg">
+                <a href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">Users</a>
+                <a href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">Permissions</a>
+                <a href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">System settings</a>
+                <a href="index.html" class="block px-3 py-2 text-sm hover:bg-gray-50">Contract settings</a>
+              </div>
+            </div>
+          </nav>
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <button id="globalCreateBtn" class="inline-flex items-center gap-2 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13 11V3h-2v8H3v2h8v8h2v-8h8v-2h-8Z"/>
+                </svg>
+                Create
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5H7z"/></svg>
+              </button>
+              <div id="globalCreateMenu" class="absolute right-0 mt-2 hidden w-56 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg z-50">
+                <a id="createProjectOption" href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">Project</a>
+                <a id="createTrendOption" href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">Trend</a>
+                <a id="createChangeOption" href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">Change order</a>
+              </div>
+            </div>
+            <button class="rounded-md p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+              <span class="sr-only">Notifications</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 005 15h14a1 1 0 00.707-1.707L18 11.586V8a6 6 0 00-6-6Zm0 20a3 3 0 01-3-3h6a3 3 0 01-3 3Z"/>
+              </svg>
+            </button>
+            <button class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">IM</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Fixed, full-height left sidebar -->
+    <aside class="hidden lg:block fixed top-14 left-0 bottom-0 w-60 border-r border-gray-200 bg-white overflow-y-auto">
+      <nav>
+        <ul class="px-1 py-2">
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Project Home</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Cost</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Field Management</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Procurement</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Contracts</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Invoices</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Change Management</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Reports</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Drive</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <div class="px-4 sm:px-6 lg:px-8 py-6 lg:ml-60">
+    <main class="flex-1">
+      <div class="rounded-lg border border-gray-200 bg-white">
+        <!-- Top bar with tabs and tools -->
+        <div class="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div class="inline-flex items-center rounded-md border border-gray-200 bg-gray-100 p-0.5">
+            <button data-tab="all" class="tab-btn rounded-md px-3 py-1.5 text-sm font-medium bg-white text-gray-900 shadow-sm">All</button>
+            <button data-tab="favorites" class="tab-btn rounded-md px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900">Favorites</button>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="hidden sm:flex items-center rounded-md border border-gray-200 bg-white">
+              <button class="p-2 text-gray-600 hover:bg-gray-50" title="Settings">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.14 12.936a7.97 7.97 0 0 0 .06-.936c0-.318-.02-.63-.06-.936l2.037-1.582a.5.5 0 0 0 .121-.652l-1.93-3.342a.5.5 0 0 0-.607-.22l-2.398.96a8.042 8.042 0 0 0-1.617-.936l-.363-2.54A.5.5 0 0 0 13.94 1h-3.88a.5.5 0 0 0-.494.422l-.363 2.54a8.042 8.042 0 0 0-1.617.936l-2.398-.96a.5.5 0 0 0-.607.22L.65 7.96a.5.5 0 0 0 .121.652l2.037 1.582c-.04.306-.06.618-.06.936s.02.63.06.936L.77 13.65a.5.5 0 0 0-.121.652l1.93 3.342a.5.5 0 0 0 .607.22l2.398-.96c.5.36 1.045.67 1.617.936l.363 2.54a.5.5 0 0 0 .494.422h3.88a.5.5 0 0 0 .494-.422l.363-2.54c.572-.266 1.117-.575 1.617-.936l2.398.96a.5.5 0 0 0 .607-.22l1.93-3.342a.5.5 0 0 0-.121-.652l-2.037-1.582ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"/>
+                </svg>
+              </button>
+              <button class="border-l border-gray-200 p-2 text-gray-600 hover:bg-gray-50" title="Layout">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M4 5h16v4H4V5Zm0 6h10v8H4v-8Zm12 0h4v8h-4v-8Z"/>
+                </svg>
+              </button>
+              <button class="border-l border-gray-200 p-2 text-gray-600 hover:bg-gray-50" title="Columns">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M10 3h4v18h-4V3Zm-6 6h4v12H4V9Zm16 4h-4v8h4v-8Z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="relative w-full max-w-xs">
+              <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 3a7 7 0 015.292 11.707l4 4-1.414 1.414-4-4A7 7 0 1110 3Zm0 2a5 5 0 100 10 5 5 0 000-10Z"/>
+              </svg>
+              <input id="projectSearch" type="text" placeholder="Search" class="w-full rounded-md border border-gray-300 pl-8 pr-3 py-2 text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Projects table -->
+        <div class="px-4 py-4 sm:px-6">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+              <thead class="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium text-gray-600">ID</th>
+                  <th class="px-4 py-3 text-left font-medium text-gray-600">Name</th>
+                  <th class="px-4 py-3 text-left font-medium text-gray-600">Last calculated</th>
+                  <th class="px-4 py-3 text-left font-medium text-gray-600">Manager</th>
+                  <th class="px-4 py-3 text-left font-medium text-gray-600">Approved budget</th>
+                  <th class="px-4 py-3 text-left font-medium text-gray-600">ETC</th>
+                  <th class="px-4 py-3 text-left font-medium text-gray-600">Start</th>
+                  <th class="px-4 py-3 text-left font-medium text-gray-600">Finish</th>
+                </tr>
+              </thead>
+              <tbody id="projectsTableBody" class="divide-y divide-gray-100">
+                <!-- Sample rows based on screenshot -->
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+                <!-- more duplicate rows to resemble the screenshot -->
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Z"/>
+                      </svg>
+                      9810...2024
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><a href="#" class="project-name text-brand-700 hover:underline">PRISM Lem Manager</a></td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024 — 01:34PM</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[10px] font-semibold text-white">IM</span>
+                      <span class="text-gray-700">Iara Moran</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">18.4M</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                  <td class="px-4 py-3 text-gray-700">Apr 12, 2024</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div id="createProjectModal" class="fixed inset-0 z-50 hidden">
+      <div id="createProjectOverlay" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+      <div class="relative mx-auto flex h-full items-start justify-center p-4 sm:p-6">
+        <div class="mt-4 w-full max-w-4xl overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-black/5">
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6">
+            <h2 class="text-base font-semibold">Create project</h2>
+            <button id="createProjectClose" class="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M6.225 4.811 4.81 6.225 10.586 12l-5.775 5.775 1.414 1.414L12 13.414l5.775 5.775 1.414-1.414L13.414 12l5.775-5.775-1.414-1.414L12 10.586 6.225 4.811Z"/></svg>
+            </button>
+          </div>
+          <div class="max-h-[75vh] overflow-y-auto px-4 py-4 sm:px-6">
+            <form id="createProjectForm" class="space-y-6">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-gray-700">Project ID</label>
+                  <input name="projectId" data-required="true" type="text" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-gray-700">Project title</label>
+                  <input name="projectTitle" data-required="true" type="text" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="mb-1 block text-xs font-medium text-gray-700">Restore file</label>
+                  <div class="flex gap-2">
+                    <input type="text" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" placeholder="" />
+                    <button type="button" class="rounded-md border border-gray-300 bg-white px-3 py-2 text-xs">Browse</button>
+                  </div>
+                </div>
+              </div>
+
+              <details class="rounded-md border border-gray-200 bg-white" open>
+                <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium">Modules</summary>
+                <div class="border-t border-gray-200 p-3 grid grid-cols-1 sm:grid-cols-2 gap-y-2">
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Cost management</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Engineering management</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Field management</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Equipment/Materials</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Prime contractor</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Contracts</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Procurement</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Invoice</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Schedule</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Change management</label>
+                </div>
+              </details>
+
+              <details class="rounded-md border border-gray-200 bg-white">
+                <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium">Project options</summary>
+                <div class="border-t border-gray-200 p-3 grid grid-cols-1 sm:grid-cols-2 gap-y-2">
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Enterprise project</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Multi currency</label>
+                </div>
+              </details>
+
+              <details class="rounded-md border border-gray-200 bg-white">
+                <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium">Restore options</summary>
+                <div class="border-t border-gray-200 p-3 grid grid-cols-1 sm:grid-cols-2 gap-y-2">
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Include default group data</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Build persistant group data IDs</label>
+                  <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" class="rounded border-gray-300" /> Exclude actuals history</label>
+                </div>
+              </details>
+
+              <details class="rounded-md border border-gray-200 bg-white" open>
+                <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium">Contract settings</summary>
+                <div class="border-t border-gray-200 p-3 space-y-3">
+                  <label class="contract-setting-card relative flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 cursor-pointer transition">
+                    <div class="flex items-start gap-2">
+                      <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded bg-brand-600 text-xs font-semibold text-white">C</span>
+                      <div>
+                        <div class="text-sm">Create new contract</div>
+                        <p class="mt-1 text-xs leading-5 text-gray-600">
+                          This contract allows for direct engagement with a vendor, eliminating the need for a bidding process. It’s particularly beneficial when you have a trusted relationship with the vendor.
+                        </p>
+                      </div>
+                    </div>
+                    <input name="optCreateNew" type="checkbox" class="sr-only" checked />
+                    <span class="selection-check absolute right-2 top-2 hidden h-5 w-5 rounded-full bg-green-500 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L8.5 11.086l6.543-6.543a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </span>
+                  </label>
+                  <label class="contract-setting-card relative flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 cursor-pointer transition">
+                    <div class="flex items-start gap-2">
+                      <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-orange-600">●</span>
+                      <div>
+                        <div class="text-sm">Use ProcureWare</div>
+                        <p class="mt-1 text-xs leading-5 text-gray-600">
+                          Description here explain what it is — this selection allows you to import contracts from ProcureWare and manage it in Contruent enterprise.
+                        </p>
+                      </div>
+                    </div>
+                    <input name="optProcureWare" type="checkbox" class="sr-only" />
+                    <span class="selection-check absolute right-2 top-2 hidden h-5 w-5 rounded-full bg-green-500 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L8.5 11.086l6.543-6.543a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </span>
+                  </label>
+                  <label class="contract-setting-card relative flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 cursor-pointer transition">
+                    <div class="flex items-start gap-2">
+                      <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded border border-gray-300">✉</span>
+                      <div>
+                        <div class="text-sm">Use G2 contracts (control centre)</div>
+                        <p class="mt-1 text-xs leading-5 text-gray-600">
+                          Description here explain what it is — this selection allows you to import contracts from ProcureWare and manage it in Contruent enterprise.
+                        </p>
+                      </div>
+                    </div>
+                    <input name="optG2" type="checkbox" class="sr-only" />
+                    <span class="selection-check absolute right-2 top-2 hidden h-5 w-5 rounded-full bg-green-500 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L8.5 11.086l6.543-6.543a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </span>
+                  </label>
+                </div>
+              </details>
+            </form>
+          </div>
+          <div class="flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
+            <button id="createProjectCloseFooter" class="text-sm text-gray-700 hover:text-gray-900">Close</button>
+            <button id="createProjectSubmit" class="inline-flex items-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Create</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/js/projects.js"></script>
+    <script src="ai.js"></script>
+  </body>
+  </html>
+
+

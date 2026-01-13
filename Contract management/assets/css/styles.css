@@ -1,0 +1,18 @@
+/* Custom, minimal polish that complements Tailwind utilities */
+html, body {
+  height: 100%;
+}
+
+/* Improve focus outlines on key elements */
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(50, 111, 209, 0.6);
+  border-radius: 0.375rem;
+}
+
+/* Smoothen table hover transitions */
+tbody tr {
+  transition: background-color 120ms ease;
+}
+
+

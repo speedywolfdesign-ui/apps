@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>User permissions • Contract Management Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#326FD1',
+                100: '#326FD1',
+                200: '#326FD1',
+                300: '#326FD1',
+                400: '#326FD1',
+                500: '#326FD1',
+                600: '#326FD1',
+                700: '#326FD1',
+                800: '#326FD1',
+                900: '#326FD1'
+              }
+            },
+            fontFamily: {
+              sans: [
+                'Inter',
+                'ui-sans-serif',
+                'system-ui',
+                '-apple-system',
+                'Segoe UI',
+                'Roboto',
+                'Helvetica Neue',
+                'Arial',
+                'Noto Sans',
+                'Apple Color Emoji',
+                'Segoe UI Emoji'
+              ]
+            }
+          }
+        }
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body class="antialiased bg-gray-50 text-gray-900">
+    <!-- Top navbar -->
+    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-200">
+      <div class="w-full px-4 sm:px-6 lg:px-8">
+        <div class="flex h-14 items-center justify-between">
+          <div class="flex items-center gap-3">
+            <a href="projects.html" class="flex items-center gap-2">
+              <img src="assets/LOGO.svg" alt="Contract" class="h-8 w-8" />
+            </a>
+          </div>
+          <nav class="hidden md:flex items-center gap-4 text-sm">
+            <a class="text-gray-600 hover:text-gray-900" href="projects.html">Projects</a>
+            <a class="text-gray-600 hover:text-gray-900" href="#">Reports</a>
+            <div class="relative">
+              <button id="adminMenuBtn" class="inline-flex items-center gap-1 rounded-md px-2 py-1.5 hover:bg-gray-100 text-gray-700">
+                Administration
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.108l3.71-3.877a.75.75 0 111.08 1.04l-4.24 4.433a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <div id="adminMenu" class="absolute right-0 mt-2 hidden w-48 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg">
+                <a href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">Users</a>
+                <a href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">Permissions</a>
+                <a href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">System settings</a>
+                <a href="index.html" class="block px-3 py-2 text-sm hover:bg-gray-50">Contract settings</a>
+              </div>
+            </div>
+          </nav>
+          <div class="flex items-center gap-2">
+            <div class="relative hidden sm:block">
+              <button id="globalCreateBtn" class="inline-flex items-center gap-2 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13 11V3h-2v8H3v2h8v8h2v-8h8v-2h-8Z"/>
+                </svg>
+                Create
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5H7z"/></svg>
+              </button>
+              <div id="globalCreateMenu" class="absolute right-0 mt-2 hidden w-56 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg z-50">
+                <a id="createTrendOption" href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">Trend</a>
+                <a id="createChangeOption" href="#" class="block px-3 py-2 text-sm hover:bg-gray-50">Change order</a>
+              </div>
+            </div>
+            <button class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">IM</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Fixed, full-height left sidebar -->
+    <aside class="hidden lg:block fixed top-14 left-0 bottom-0 w-60 border-r border-gray-200 bg-white overflow-y-auto">
+      <nav>
+        <ul class="px-1 py-2">
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Project Home</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Cost</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Procurement</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Contracts</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Change Management</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Reports</a></li>
+          <li><a class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#"><span class="h-4 w-4 rounded bg-gray-100"></span>Drive</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <div class="px-4 sm:px-6 lg:px-8 py-6 lg:ml-60">
+      <!-- Breadcrumb -->
+      <div class="text-xs text-gray-500">
+        <nav class="flex items-center gap-2">
+          <a href="projects.html" class="hover:underline">Home</a>
+          <span>/</span>
+          <span>Administration</span>
+          <span>/</span>
+          <span class="text-gray-900">User permissions</span>
+        </nav>
+      </div>
+
+      <!-- Page header -->
+      <div class="mt-2 flex items-center justify-between">
+        <h1 class="text-xl font-semibold tracking-tight">User permissions</h1>
+        <div class="flex items-center gap-2">
+          <div class="relative w-full max-w-xs">
+            <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 3a7 7 0 015.292 11.707l4 4-1.414 1.414-4-4A7 7 0 1110 3Zm0 2a5 5 0 100 10 5 5 0 000-10Z"/>
+            </svg>
+            <input id="userSearch" type="text" placeholder="Search users" class="w-full rounded-md border border-gray-300 pl-8 pr-3 py-2 text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <main class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <!-- Users list -->
+        <section class="lg:col-span-1 rounded-lg border border-gray-200 bg-white">
+          <div class="border-b border-gray-200 px-4 py-3 sm:px-6">
+            <div class="text-sm font-medium text-gray-900">Users</div>
+          </div>
+          <div class="px-4 py-3 sm:px-6">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-3 py-2 text-left font-medium text-gray-600">Name</th>
+                  <th class="px-3 py-2 text-left font-medium text-gray-600">Role</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr>
+                  <td class="px-3 py-2">Erin Aminoff</td>
+                  <td class="px-3 py-2 text-gray-600">Viewer</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2">Emerson Herwitz</td>
+                  <td class="px-3 py-2 text-gray-600">Initiator</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2">Jaydon Baptista</td>
+                  <td class="px-3 py-2 text-gray-600">Reviewer</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2">Kai Lee</td>
+                  <td class="px-3 py-2 text-gray-600">Approver</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Permissions matrix -->
+        <section class="lg:col-span-2 rounded-lg border border-gray-200 bg-white">
+          <div class="border-b border-gray-200 px-4 py-3 sm:px-6">
+            <div class="text-sm font-medium text-gray-900">Permissions matrix</div>
+          </div>
+          <div class="px-4 py-3 sm:px-6">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-3 py-2 text-left font-medium text-gray-600">Task type</th>
+                  <th class="px-3 py-2 text-center font-medium text-gray-600">No access</th>
+                  <th class="px-3 py-2 text-center font-medium text-gray-600">Initiator</th>
+                  <th class="px-3 py-2 text-center font-medium text-gray-600">Viewer</th>
+                  <th class="px-3 py-2 text-center font-medium text-gray-600">Reviewer</th>
+                  <th class="px-3 py-2 text-center font-medium text-gray-600">Approver</th>
+                  <th class="px-3 py-2 text-center font-medium text-gray-600">Full access</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr>
+                  <td class="px-3 py-2">Trend</td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2">Change order</td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                  <td class="px-3 py-2 text-center"><input type="checkbox" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 sm:px-6">
+            <button class="text-sm text-gray-700 hover:text-gray-900">Cancel</button>
+            <button class="inline-flex items-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500">Save</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      // Simple "Administration" menu toggle for the header
+      (function(){
+        const btn = document.getElementById('adminMenuBtn');
+        const menu = document.getElementById('adminMenu');
+        if (!btn || !menu) return;
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          menu.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+          if (!menu.contains(e.target) && e.target !== btn) {
+            menu.classList.add('hidden');
+          }
+        });
+      })();
+      // "Create" menu toggle
+      (function(){
+        const btn = document.getElementById('globalCreateBtn');
+        const menu = document.getElementById('globalCreateMenu');
+        if (!btn || !menu) return;
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          menu.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+          if (!menu.contains(e.target) && e.target !== btn) {
+            menu.classList.add('hidden');
+          }
+        });
+      })();
+    </script>
+    <script src="ai.js"></script>
+  </body>
+  </html>
+
+
