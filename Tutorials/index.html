@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Figma Tutorials | Study Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-950 text-slate-100 min-h-screen" oncontextmenu="return false;">
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-20">
+      <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600 text-white font-semibold">FS</span>
+          <div>
+            <p class="font-semibold text-lg">Figma Study Hub</p>
+            <p class="text-xs text-slate-400">Tutorial Library</p>
+          </div>
+        </div>
+        <nav class="hidden sm:flex items-center gap-6 text-sm text-slate-200">
+          <!-- <a class="hover:text-purple-300 transition" href="backup.html">Home</a> -->
+          <a class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 transition text-sm font-semibold" href="#videos">Videos</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-10 space-y-10">
+      <section class="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl shadow-purple-900/30">
+        <div class="absolute inset-0">
+          <div class="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-slate-900/30"></div>
+          <img src="assets/image/hero image.png" alt="Figma learning" class="h-full w-full object-cover opacity-60" />
+        </div>
+        <div class="relative z-10 px-8 py-12 lg:py-16 space-y-4 max-w-2xl">
+          <p class="text-sm uppercase text-purple-300 font-semibold">Start learning Figma</p>
+          <h1 class="text-4xl sm:text-5xl font-bold leading-tight">Design faster with guided tutorials</h1>
+          <p class="text-lg text-slate-200">Stream lessons, practice components, and ship polished screens—all in one place.</p>
+          <div class="flex flex-wrap gap-3">
+            <a href="#videos" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 transition font-semibold">Watch tutorials</a>
+            <!-- <a href="backup.html" class="px-5 py-3 rounded-xl border border-slate-700 hover:border-slate-500 transition text-slate-200">View course overview</a> -->
+          </div>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <p class="text-sm uppercase text-purple-300 font-semibold">Tutorials</p>
+        <h1 class="text-3xl sm:text-4xl font-bold leading-tight">Your First Step into Figma</h1>
+        <p class="text-slate-300">Simple tutorials to help you design faster and smarter.</p>
+      </section>
+
+      <section id="videos" class="grid md:grid-cols-2 gap-8">
+        <article class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+          <div class="relative group rounded-xl overflow-hidden">
+            <video class="w-full rounded-xl bg-black"
+              data-video-key="tutorial-1"
+              poster="assets/image/T101-1.jpg"
+              controls
+              controlsList="nodownload noremoteplayback noplaybackrate"
+              disablePictureInPicture
+              preload="metadata"
+              oncontextmenu="return false;"
+              disableRemotePlayback>
+              Your browser does not support the video tag.
+            </video>
+            <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950/70 to-transparent"></div>
+          </div>
+          <div class="space-y-1">
+            <h2 class="text-xl font-semibold">Figma basics</h2>
+            <p class="text-slate-400 text-sm">Visual design, Scrolling pages, and more.</p>
+          </div>
+          <!-- <p class="text-xs text-slate-500">Sources load at runtime (not in page markup); swap with your secure streaming URLs.</p> -->
+        </article>
+
+        <!-- <article class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+          <div class="relative group rounded-xl overflow-hidden">
+            <video class="w-full rounded-xl bg-black"
+              data-video-key="tutorial-2"
+              poster="assets/image/T101-1.jpg"
+              controls
+              controlsList="nodownload noremoteplayback noplaybackrate"
+              disablePictureInPicture
+              preload="metadata"
+              oncontextmenu="return false;"
+              disableRemotePlayback>
+              Your browser does not support the video tag.
+            </video>
+            <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950/70 to-transparent"></div>
+          </div>
+          <div class="space-y-1">
+            <h2 class="text-xl font-semibold">Design Tokens & Variables</h2>
+            <p class="text-slate-400 text-sm">Set up color, spacing, and type scales that keep products consistent.</p>
+          </div>
+          <p class="text-xs text-slate-500">Controls limit download/save, but hosting should also enforce streaming-only.</p>
+        </article> -->
+      </section>
+      </main>
+
+    <footer class="border-t border-slate-800 bg-slate-900/60 backdrop-blur py-6">
+      <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-400">
+        <p>Figma Study Hub — tutorials stream only.</p>
+        <div class="flex gap-4">
+          <a class="hover:text-purple-300 transition" href="backup.html">Home</a>
+          <a class="hover:text-purple-300 transition" href="#videos">Videos</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Sample encoded sources (swap with your secure streaming URLs / signed links).
+      const STREAMS = {
+        "tutorial-1": {
+          poster: "assets/image/T101-1.jpg",
+          sources: [
+            { type: "video/mp4", data: "QXNzZXRzL1ZpZGVvcy90dXRvcmlhbDEubXA0" }
+          ]
+        },
+        // "tutorial-2": {
+        //   poster: "assets/image/T101-1.jpg",
+        //   sources: [
+        //     { type: "video/mp4", data: "QXNzZXRzL1ZpZGVvcy90dXRvcmlhbDEubXA0" }
+        //   ]
+        // }
+      };
+
+      function injectSources() {
+        document.querySelectorAll("[data-video-key]").forEach((video) => {
+          const key = video.getAttribute("data-video-key");
+          const stream = STREAMS[key];
+          if (!stream) return;
+          // Clear any existing sources before injecting.
+          while (video.firstChild) {
+            video.removeChild(video.firstChild);
+          }
+          stream.sources.forEach((src) => {
+            const sourceEl = document.createElement("source");
+            sourceEl.type = src.type;
+            sourceEl.src = atob(src.data); // decoded at runtime to avoid plain URL in markup
+            video.appendChild(sourceEl);
+          });
+          if (stream.poster) video.poster = stream.poster;
+          video.load();
+        });
+      }
+
+      // Block common download shortcuts / devtools combos (best-effort only).
+      function blockShortcuts() {
+        const blockedKeys = ["s", "p", "ArrowDown", "u", "c", "i", "j"];
+        document.addEventListener("keydown", (event) => {
+          const meta = event.ctrlKey || event.metaKey;
+          const key = event.key;
+          const comboBlocked =
+            (meta && blockedKeys.includes(key)) ||
+            (meta && event.shiftKey && ["I", "J", "C"].includes(key)) ||
+            key === "F12" ||
+            key === "PrintScreen";
+          if (comboBlocked) {
+            event.preventDefault();
+          }
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        injectSources();
+        blockShortcuts();
+      });
+    </script>
+  </body>
+</html>
