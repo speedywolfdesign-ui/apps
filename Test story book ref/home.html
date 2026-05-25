@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enterprise Home — Contruent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <link rel="stylesheet" href="components/tokens.css" />
+  <link rel="stylesheet" href="components/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <div id="top-nav-mount"></div>
+
+  <!-- ===== MAIN ===== -->
+  <main class="home-main">
+
+    <!-- Page header -->
+    <div class="home-header">
+      <h1>Enterprise home</h1>
+      <p>Here is your dashboard with performance, actions and favorite projects</p>
+    </div>
+
+    <!-- ===== PERFORMANCE CARD ===== -->
+    <div class="perf-card">
+
+      <!-- Card header -->
+      <div class="perf-card-header">
+        <div class="perf-card-title-row">
+          <h2>Performance</h2>
+          <span class="perf-card-date">to Aug 16, 2024</span>
+          <span class="perf-card-unit">All values are in USD</span>
+        </div>
+        <div class="perf-card-right">
+          <span class="live-label">Viewing live data</span>
+          <a class="projects-link" href="projects.html">from 6 projects</a>
+        </div>
+      </div>
+
+      <!-- Info banner -->
+      <div class="perf-banner">
+        <i class="pi pi-info-circle"></i>
+        <span>To view project performance, please run the calculate totals process in <a href="#">Control Center</a>.</span>
+      </div>
+
+      <!-- Gauges + chart -->
+      <div class="perf-body">
+
+        <!-- Gauges -->
+        <div class="perf-gauges">
+
+          <!-- SPI — arc length π×80≈251; 1.23/1.50=82% → 206 -->
+          <div>
+            <div class="gauge-section-title">SPI</div>
+            <div class="gauge-section-sub">Schedule performance indicator</div>
+            <svg class="gauge-svg" viewBox="0 0 200 128" aria-hidden="true">
+              <path d="M 20 108 A 80 80 0 0 1 180 108" fill="none" stroke="#e5e5e5" stroke-width="18" stroke-linecap="round"/>
+              <path d="M 20 108 A 80 80 0 0 1 180 108" fill="none" stroke="#3f9242" stroke-width="18" stroke-linecap="round" stroke-dasharray="206 350"/>
+              <text x="100" y="97" text-anchor="middle" font-size="30" font-weight="700" fill="#3f9242" font-family="Inter,sans-serif">1.23</text>
+              <text x="14"  y="124" text-anchor="middle" font-size="13" fill="#9e9e9e" font-family="Inter,sans-serif">0.00</text>
+              <text x="186" y="124" text-anchor="middle" font-size="13" fill="#9e9e9e" font-family="Inter,sans-serif">1.50</text>
+            </svg>
+            <div class="gauge-change up">
+              <span class="gauge-change-icon up"><i class="pi pi-arrow-up"></i></span>
+              Up from 1.2
+            </div>
+          </div>
+
+          <!-- CPI — 0.52/1.50=34.7% → 87 -->
+          <div>
+            <div class="gauge-section-title">CPI</div>
+            <div class="gauge-section-sub">Cost performance indicator</div>
+            <svg class="gauge-svg" viewBox="0 0 200 128" aria-hidden="true">
+              <path d="M 20 108 A 80 80 0 0 1 180 108" fill="none" stroke="#e5e5e5" stroke-width="18" stroke-linecap="round"/>
+              <path d="M 20 108 A 80 80 0 0 1 180 108" fill="none" stroke="#e31b0c" stroke-width="18" stroke-linecap="round" stroke-dasharray="87 350"/>
+              <text x="100" y="97" text-anchor="middle" font-size="30" font-weight="700" fill="#e31b0c" font-family="Inter,sans-serif">0.52</text>
+              <text x="14"  y="124" text-anchor="middle" font-size="13" fill="#9e9e9e" font-family="Inter,sans-serif">0.00</text>
+              <text x="186" y="124" text-anchor="middle" font-size="13" fill="#9e9e9e" font-family="Inter,sans-serif">1.50</text>
+            </svg>
+            <div class="gauge-change neutral">
+              <span class="gauge-change-icon neutral"><i class="pi pi-minus"></i></span>
+              No change
+            </div>
+          </div>
+
+        </div><!-- /perf-gauges -->
+
+        <!-- S-Curve chart -->
+        <div class="perf-chart">
+          <div class="chart-header">
+            <span class="chart-title">S-Curve</span>
+            <i class="pi pi-info-circle" style="font-size:11px;color:var(--default-text-secondary)"></i>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-swatch" style="background:#1e2a5c"></span>Baseline</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#1a4a9f"></span>Approved</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#6b7280"></span>Control</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#94a3b8"></span>Financial</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#7dd3fc"></span>Earned</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#0284c7"></span>Actuals</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#16a34a"></span>Incurred</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#15803d"></span>Commitment</span>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="sCurveChart"></canvas>
+          </div>
+        </div>
+
+      </div><!-- /perf-body -->
+
+      <!-- Metrics grid -->
+      <div class="perf-metrics">
+        <div class="metric-cell">
+          <div class="metric-label">Approved budget</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Actual to date</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Total committed</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Estimate at completion</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Planned completion date</div>
+          <div class="metric-value metric-value-date">Dec 21, 2026</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Budget to date</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Earned to date</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Estimate to complete</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Previous estimate at completion</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Forecast completion date</div>
+          <div class="metric-value metric-value-date">Dec 29, 2026</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+      </div><!-- /perf-metrics -->
+
+    </div><!-- /perf-card -->
+
+    <!-- ===== BOTTOM 3-COL ===== -->
+    <div class="home-bottom">
+
+      <!-- Announcements -->
+      <div class="home-card">
+        <div class="home-card-header">
+          <h3>Announcements</h3>
+          <div class="card-actions">
+            <a class="card-link" href="#">Read all</a>
+          </div>
+        </div>
+        <div class="home-card-body">
+          <div class="announce-item">
+            <div class="announce-meta">
+              Jan 17, 2025 by
+              <span class="announce-avatar">IM</span>
+              Lara Moran
+            </div>
+            <div class="announce-heading">Nam risus orci, vulputate vel rutrum in</div>
+            <div class="announce-body">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. In semper ut lectus
+              sit amet blandit. Sed dictum neque non quam aliquam interdum. Duis
+              consequat ante dolor. <a class="announce-more" href="#">More...</a>
+            </div>
+          </div>
+          <div class="announce-item">
+            <div class="announce-meta">
+              Jan 10, 2025 by
+              <span class="announce-avatar" style="background:#1565c0">JD</span>
+              James Davis
+            </div>
+            <div class="announce-heading">Quarterly review schedule has been updated</div>
+            <div class="announce-body">
+              All project leads should prepare performance summaries for the upcoming
+              review. <a class="announce-more" href="#">More...</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My favorite projects -->
+      <div class="home-card">
+        <div class="home-card-header">
+          <h3>My favorite projects</h3>
+          <div class="card-actions">
+            <a class="card-link" href="#">Manage</a>
+          </div>
+        </div>
+        <div class="home-card-body">
+          <div class="proj-item">
+            <i class="pi pi-star-fill proj-star"></i>
+            <div class="proj-info">
+              <div class="proj-name">CISCO Systems</div>
+              <div class="proj-date">Forecast: Aug 19, 2024</div>
+            </div>
+            <div class="proj-right">
+              <span class="proj-pct">68%</span>
+              <div class="proj-bar-track"><div class="proj-bar-fill" style="width:68%"></div></div>
+            </div>
+          </div>
+          <div class="proj-item">
+            <i class="pi pi-star-fill proj-star"></i>
+            <div class="proj-info">
+              <div class="proj-name">Project name</div>
+              <div class="proj-date">Forecast: Aug 19, 2024</div>
+            </div>
+            <div class="proj-right">
+              <span class="proj-pct">68%</span>
+              <div class="proj-bar-track"><div class="proj-bar-fill" style="width:68%"></div></div>
+            </div>
+          </div>
+          <div class="proj-item">
+            <i class="pi pi-star-fill proj-star"></i>
+            <div class="proj-info">
+              <div class="proj-name">Project name</div>
+              <div class="proj-date">Forecast: Aug 19, 2024</div>
+            </div>
+            <div class="proj-right">
+              <span class="proj-pct">68%</span>
+              <div class="proj-bar-track"><div class="proj-bar-fill" style="width:68%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My actions -->
+      <div class="home-card">
+        <div class="home-card-header">
+          <h3>My actions</h3>
+          <div class="card-actions">
+            <a class="card-link" href="#">Edit</a>
+            <a class="card-link" href="#">View all</a>
+            <button class="card-close-btn" aria-label="Close"><i class="pi pi-times"></i></button>
+          </div>
+        </div>
+        <div class="home-card-body">
+          <div class="action-item">
+            <i class="pi pi-flag action-flag"></i>
+            <div class="action-info">
+              <div class="action-name">Action name</div>
+              <div class="action-sub">Change order &bull; A9128391</div>
+            </div>
+            <div class="action-right">
+              <span class="action-id">P9819...8101</span>
+              <span class="action-tag tag-approval">FOR APPROVAL</span>
+            </div>
+          </div>
+          <div class="action-item">
+            <i class="pi pi-flag action-flag"></i>
+            <div class="action-info">
+              <div class="action-name">Action name</div>
+              <div class="action-sub">Change order &bull; A9128391</div>
+            </div>
+            <div class="action-right">
+              <span class="action-id">P9819...8101</span>
+              <span class="action-tag tag-todo">TO DO</span>
+            </div>
+          </div>
+          <div class="action-item">
+            <i class="pi pi-flag action-flag"></i>
+            <div class="action-info">
+              <div class="action-name">Action name</div>
+              <div class="action-sub">Change order &bull; A9128391</div>
+            </div>
+            <div class="action-right">
+              <span class="action-id">P9819...8101</span>
+              <span class="action-tag tag-draft">DRAFT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /home-bottom -->
+
+  </main><!-- /home-main -->
+
+  <script src="components/top-nav.js"></script>
+  <script src="components/ai-panel.js"></script>
+  <script src="components/script.js"></script>
+  <script>
+    renderTopNav({ activeItem: 'home' });
+
+    /* ===== S-CURVE CHART ===== */
+    (function () {
+      const labels = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      // Bar data — approximate monthly budget figures (in millions)
+      const mk = (base, jitter) => labels.map((_, i) => +(base + (Math.sin(i * 0.7) * jitter)).toFixed(1));
+
+      const datasets = [
+        {
+          label: 'Baseline',
+          data: [232, 238, 231, 237, 232, 235, 237, 233, 237, 232, 234, 238],
+          backgroundColor: '#1e2a5c',
+          barPercentage: 0.85,
+          categoryPercentage: 0.85,
+          order: 2,
+        },
+        {
+          label: 'Approved',
+          data: [218, 223, 217, 222, 218, 220, 222, 218, 222, 218, 220, 223],
+          backgroundColor: '#1a4a9f',
+          barPercentage: 0.85,
+          categoryPercentage: 0.85,
+          order: 2,
+        },
+        {
+          label: 'Control',
+          data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          backgroundColor: '#6b7280',
+          barPercentage: 0.85,
+          categoryPercentage: 0.85,
+          order: 2,
+        },
+        {
+          label: 'Financial',
+          data: [165, 167, 164, 167, 165, 166, 167, 165, 167, 165, 166, 167],
+          backgroundColor: '#94a3b8',
+          barPercentage: 0.85,
+          categoryPercentage: 0.85,
+          order: 2,
+        },
+        {
+          label: 'Earned',
+          data: [162, 164, 162, 164, 161, 163, 164, 162, 164, 162, 163, 164],
+          backgroundColor: '#7dd3fc',
+          barPercentage: 0.85,
+          categoryPercentage: 0.85,
+          order: 2,
+        },
+        {
+          label: 'Actuals',
+          data: [130, 133, 130, 132, 130, 131, 133, null, null, null, null, null],
+          backgroundColor: '#0284c7',
+          barPercentage: 0.85,
+          categoryPercentage: 0.85,
+          order: 2,
+        },
+        {
+          label: 'Incurred',
+          data: [127, 130, 127, 129, 127, 128, 130, null, null, null, null, null],
+          backgroundColor: '#16a34a',
+          barPercentage: 0.85,
+          categoryPercentage: 0.85,
+          order: 2,
+        },
+        {
+          label: 'Commitment',
+          data: [124, 127, 124, 126, 124, 125, 127, null, null, null, null, null],
+          backgroundColor: '#15803d',
+          barPercentage: 0.85,
+          categoryPercentage: 0.85,
+          order: 2,
+        },
+        // S-curve — past (solid)
+        {
+          type: 'line',
+          label: '_scurve_solid',
+          data: [40, 62, 83, 105, 128, 150, 168, null, null, null, null, null],
+          borderColor: '#1a1a2e',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+          tension: 0.45,
+          order: 1,
+        },
+        // S-curve — projection (dashed)
+        {
+          type: 'line',
+          label: '_scurve_proj',
+          data: [null, null, null, null, null, null, 168, 182, 194, 205, 216, 226],
+          borderColor: '#1a1a2e',
+          borderWidth: 1.5,
+          borderDash: [5, 4],
+          pointRadius: (ctx) => ctx.dataIndex === 11 ? 5 : 0,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#1a1a2e',
+          pointBorderWidth: 1.5,
+          fill: false,
+          tension: 0.45,
+          order: 1,
+        },
+      ];
+
+      // Custom plugin: red vertical line at "Jun" (index 6)
+      const verticalLinePlugin = {
+        id: 'currentPeriodLine',
+        afterDatasetsDraw(chart) {
+          const { ctx, scales: { x, y } } = chart;
+          const xPos = x.getPixelForValue(6);
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(xPos, y.top);
+          ctx.lineTo(xPos, y.bottom);
+          ctx.strokeStyle = '#e31b0c';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          // small triangle at bottom
+          ctx.beginPath();
+          ctx.moveTo(xPos - 5, y.bottom);
+          ctx.lineTo(xPos + 5, y.bottom);
+          ctx.lineTo(xPos, y.bottom - 7);
+          ctx.closePath();
+          ctx.fillStyle = '#e31b0c';
+          ctx.fill();
+          ctx.restore();
+        }
+      };
+
+      const ctx = document.getElementById('sCurveChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets },
+        plugins: [verticalLinePlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              filter: (item) => !item.dataset.label.startsWith('_'),
+              callbacks: {
+                label: (ctx) => {
+                  if (ctx.raw === null) return null;
+                  return ` ${ctx.dataset.label}: $${ctx.raw}M`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11 }, color: '#616161' }
+            },
+            y: {
+              position: 'left',
+              min: 0,
+              max: 260,
+              grid: { color: '#f0f0f0' },
+              ticks: {
+                font: { size: 11 },
+                color: '#616161',
+                callback: (v) => v === 0 ? '0' : '$' + v + 'M',
+                stepSize: 50,
+              }
+            }
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

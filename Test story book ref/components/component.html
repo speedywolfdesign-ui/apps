@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contruent UI-Lib — Component Reference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <link rel="stylesheet" href="tokens.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- TOP NAV -->
+  <nav class="top-nav" role="navigation" aria-label="Main navigation">
+
+    <!-- LOGO -->
+    <div class="tnav-logo">
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" class="tnav-logo-svg" aria-label="Contruent">
+        <g clip-path="url(#clip0_1203_73750)">
+          <rect x="21" y="12" width="14" height="32" stroke="#E5E5E5"/>
+          <path d="M21.0706 40.0001H32.5C33.4388 40.0001 34.1998 39.2386 34.1998 38.2989V37.959H22.7705C21.8315 37.959 21.0706 38.7205 21.0706 39.6601V40.0001Z" fill="#F93822"/>
+          <path d="M23.2412 28.0724C23.2412 32.1311 24.5412 33.9029 27.7677 33.9029C30.021 33.9029 31.0247 33.1548 31.549 31.6946C31.7772 31.0594 32.3799 30.6356 33.0547 30.6356H34.1337C33.731 33.6386 31.6219 35.9207 27.7685 35.9207C22.8826 35.9215 21 32.1087 21 28.0724C21 24.0361 22.8826 20.2241 27.7677 20.2241C31.6219 20.2241 33.731 22.5062 34.1328 25.5092H33.0539C32.3791 25.5092 31.7763 25.0855 31.5482 24.4503C31.0239 22.9908 30.021 22.2419 27.7669 22.2419C24.5403 22.2419 23.2412 24.0137 23.2412 28.0724Z" fill="#24125F"/>
+        </g>
+        <defs>
+          <clipPath id="clip0_1203_73750">
+            <rect x="21" y="12" width="14" height="32" fill="white"/>
+          </clipPath>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- PRIMARY NAV ITEMS -->
+    <ul class="tnav-menu" id="tnavMenu">
+      <li class="tnav-item">
+        <a class="tnav-link tnav-link-active" href="../home.html">Home</a>
+      </li>
+      <li class="tnav-item tnav-has-dropdown" id="tnd-projects">
+        <button class="tnav-link tnav-link-dropdown" onclick="toggleNavDropdown('tnd-projects')" aria-expanded="false">
+          Projects <i class="pi pi-chevron-down tnav-chevron"></i>
+        </button>
+        <ul class="tnav-dropdown tnav-dropdown-projects" role="menu">
+          <div class="tnav-proj-header">Recently opened</div>
+          <a class="tnav-proj-item" href="../project-home.html">
+            <span class="tnav-proj-avatar" style="background:#00897b">OA</span>
+            <div class="tnav-proj-info">
+              <span class="tnav-proj-id">0128-0919-1228</span>
+              <span class="tnav-proj-name">Open AI</span>
+            </div>
+          </a>
+          <a class="tnav-proj-item" href="../project-home.html">
+            <span class="tnav-proj-avatar" style="background:#8e44ad">OR</span>
+            <div class="tnav-proj-info">
+              <span class="tnav-proj-id">0128-0919-1228</span>
+              <span class="tnav-proj-name">Omnes Records</span>
+            </div>
+          </a>
+          <a class="tnav-proj-item" href="../project-home.html">
+            <span class="tnav-proj-avatar" style="background:#1abc9c">MD</span>
+            <div class="tnav-proj-info">
+              <span class="tnav-proj-id">0128-0919-1228</span>
+              <span class="tnav-proj-name">McDonald's</span>
+            </div>
+          </a>
+          <a class="tnav-proj-item" href="../project-home.html">
+            <span class="tnav-proj-avatar" style="background:#00acc1">BK</span>
+            <div class="tnav-proj-info">
+              <span class="tnav-proj-id">0128-0919-1228</span>
+              <span class="tnav-proj-name">Burger King</span>
+            </div>
+          </a>
+          <a class="tnav-proj-item" href="../project-home.html">
+            <span class="tnav-proj-avatar" style="background:#283593">AW</span>
+            <div class="tnav-proj-info">
+              <span class="tnav-proj-id">0128-0919-1228</span>
+              <span class="tnav-proj-name">Amazon Web Services</span>
+            </div>
+          </a>
+          <a class="tnav-proj-footer" href="../projects.html">View all projects</a>
+        </ul>
+      </li>
+      <li class="tnav-item">
+        <a class="tnav-link" href="#">Drive</a>
+      </li>
+      <li class="tnav-item">
+        <a class="tnav-link tnav-link-external" href="#" target="_blank">
+          Magic Grid <i class="pi pi-arrow-up-right tnav-external-icon"></i>
+        </a>
+      </li>
+      <li class="tnav-item">
+        <a class="tnav-link" href="#">Tasks</a>
+      </li>
+      <li class="tnav-item">
+        <a class="tnav-link" href="#">Contractors</a>
+      </li>
+      <li class="tnav-item tnav-has-dropdown" id="tnd-reports">
+        <button class="tnav-link tnav-link-dropdown" onclick="toggleNavDropdown('tnd-reports')" aria-expanded="false">
+          Reports <i class="pi pi-chevron-down tnav-chevron"></i>
+        </button>
+        <ul class="tnav-dropdown" role="menu">
+          <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-chart-bar"></i> Overview</li>
+          <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-chart-line"></i> Analytics</li>
+          <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-download"></i> Export</li>
+        </ul>
+      </li>
+      <li class="tnav-item">
+        <a class="tnav-link tnav-link-external" href="#" target="_blank">
+          Dashboard <i class="pi pi-arrow-up-right tnav-external-icon"></i>
+        </a>
+      </li>
+      <li class="tnav-item tnav-has-dropdown" id="tnd-admin">
+        <button class="tnav-link tnav-link-dropdown" onclick="toggleNavDropdown('tnd-admin')" aria-expanded="false">
+          Admin <i class="pi pi-chevron-down tnav-chevron"></i>
+        </button>
+        <ul class="tnav-dropdown" role="menu">
+          <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-users"></i> Users</li>
+          <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-cog"></i> Settings</li>
+          <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-shield"></i> Permissions</li>
+        </ul>
+      </li>
+    </ul>
+
+    <!-- RIGHT-SIDE ACTIONS -->
+    <div class="tnav-actions">
+
+      <!-- Control Center -->
+      <a class="tnav-ctrl-center" href="#">
+        Control Center <i class="pi pi-arrow-up-right" style="font-size:11px;"></i>
+      </a>
+
+      <!-- Create button -->
+      <button class="tnav-create-btn">
+        <i class="pi pi-plus"></i> Create
+      </button>
+
+      <!-- Environment (globe + id) -->
+      <div class="tnav-env" title="Environment: rio001">
+        <i class="pi pi-globe tnav-env-icon"></i>
+        <span class="tnav-env-id">rio001</span>
+      </div>
+
+      <!-- Notification bell -->
+      <button class="tnav-icon-btn" aria-label="Notifications">
+        <i class="pi pi-bell"></i>
+      </button>
+
+      <!-- Add-ons grid -->
+      <button class="tnav-icon-btn" aria-label="Add-ons" id="tnavAddonsBtn" onclick="toggleAddons()">
+        <i class="pi pi-th-large"></i>
+      </button>
+      <!-- Add-ons dropdown -->
+      <div class="tnav-addons-panel" id="tnavAddonsPanel">
+        <div class="tnav-addons-header">Add-ons</div>
+        <a class="tnav-addons-item" href="#" target="_blank">
+          <span class="tnav-addons-icon" style="background:#3F51B5">
+            <i class="pi pi-link" style="color:#fff;font-size:11px"></i>
+          </span>
+          Connect
+        </a>
+        <a class="tnav-addons-item" href="#" target="_blank">
+          <span class="tnav-addons-icon" style="background:#03A9F4">
+            <i class="pi pi-shopping-cart" style="color:#fff;font-size:11px"></i>
+          </span>
+          ProcureWare
+        </a>
+        <a class="tnav-addons-item" href="#" target="_blank">
+          <span class="tnav-addons-icon" style="background:#673AB7">
+            <i class="pi pi-calculator" style="color:#fff;font-size:11px"></i>
+          </span>
+          Estimating
+        </a>
+      </div>
+
+      <!-- User avatar + profile dropdown -->
+      <div class="tnav-profile" id="tnavProfile">
+        <button class="tnav-avatar" onclick="toggleProfile()" aria-label="User profile" aria-expanded="false">JP</button>
+        <div class="tnav-profile-panel" id="tnavProfilePanel">
+          <div class="tnav-profile-header">
+            <div class="tnav-avatar tnav-avatar-lg">JP</div>
+            <div>
+              <div class="tnav-profile-name">John P.</div>
+              <div class="tnav-profile-email">john.p@contruent.com</div>
+            </div>
+          </div>
+          <div class="tnav-profile-divider"></div>
+          <a class="tnav-profile-item" href="#"><i class="pi pi-info-circle"></i> Upgrade plan</a>
+          <a class="tnav-profile-item tnav-profile-item-danger" href="#"><i class="pi pi-sign-out"></i> Logout</a>
+        </div>
+      </div>
+
+    </div><!-- /tnav-actions -->
+
+    <!-- Mobile hamburger -->
+    <button class="tnav-hamburger" onclick="toggleMobileMenu()" aria-label="Open menu" aria-expanded="false">
+      <i class="pi pi-bars"></i>
+    </button>
+
+  </nav>
+
+  <div class="page-layout">
+
+    <!-- LEFT NAV — Contruent LeftNavigation component -->
+    <aside class="lnav" id="leftNav" aria-label="Project navigation">
+
+      <!-- Scrollable menu area -->
+      <div class="lnav-scroll" id="lnavScroll">
+        <nav class="lnav-menu" id="lnavMenu">
+
+          <!-- 1. Project Home (no sub-items) -->
+          <div class="lnav-item" data-key="project-home">
+            <a class="lnav-link" href="#" onclick="setLnavActive(this)">
+              <i class="pi pi-home lnav-icon" aria-hidden="true"></i>
+              <span class="lnav-label">Project Home</span>
+            </a>
+          </div>
+
+          <!-- 2. Cost (has children) -->
+          <div class="lnav-item lnav-has-children" data-key="cost">
+            <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+              <i class="pi pi-dollar lnav-icon" aria-hidden="true"></i>
+              <span class="lnav-label">Cost</span>
+              <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+            </button>
+            <ul class="lnav-sub" aria-hidden="true">
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Cost Summary</a></li>
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Budget</a></li>
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Commitments</a></li>
+            </ul>
+          </div>
+
+          <!-- 3. Field Management (no sub-items) -->
+          <div class="lnav-item" data-key="field">
+            <a class="lnav-link" href="#" onclick="setLnavActive(this)">
+              <i class="pi pi-map lnav-icon" aria-hidden="true"></i>
+              <span class="lnav-label">Field Management</span>
+            </a>
+          </div>
+
+          <!-- 4. Procurement (has children) -->
+          <div class="lnav-item lnav-has-children" data-key="procurement">
+            <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+              <i class="pi pi-box lnav-icon" aria-hidden="true"></i>
+              <span class="lnav-label">Procurement</span>
+              <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+            </button>
+            <ul class="lnav-sub" aria-hidden="true">
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Purchase Orders</a></li>
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Bid Packages</a></li>
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Vendors</a></li>
+            </ul>
+          </div>
+
+          <!-- 5. Contracts (has children, EXPANDED + active sub-item) -->
+          <div class="lnav-item lnav-has-children lnav-expanded" data-key="contracts">
+            <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="true">
+              <i class="pi pi-file lnav-icon" aria-hidden="true"></i>
+              <span class="lnav-label">Contracts</span>
+              <i class="pi pi-angle-up lnav-chevron" aria-hidden="true"></i>
+            </button>
+            <ul class="lnav-sub lnav-sub-open" aria-hidden="false">
+              <li><a class="lnav-sublink lnav-sublink-active" href="#" onclick="setLnavActive(this)">Contracts</a></li>
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Reports</a></li>
+            </ul>
+          </div>
+
+          <!-- 6. Invoices (has children) -->
+          <div class="lnav-item lnav-has-children" data-key="invoices">
+            <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+              <i class="pi pi-book lnav-icon" aria-hidden="true"></i>
+              <span class="lnav-label">Invoices</span>
+              <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+            </button>
+            <ul class="lnav-sub" aria-hidden="true">
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Owner Invoices</a></li>
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Subcontractor Invoices</a></li>
+            </ul>
+          </div>
+
+          <!-- 7. Change Management (has children) -->
+          <div class="lnav-item lnav-has-children" data-key="change-mgmt">
+            <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+              <i class="pi pi-refresh lnav-icon" aria-hidden="true"></i>
+              <span class="lnav-label">Change Management</span>
+              <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+            </button>
+            <ul class="lnav-sub" aria-hidden="true">
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Change Orders</a></li>
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Potential Changes</a></li>
+            </ul>
+          </div>
+
+          <!-- 8. Reports (has children) -->
+          <div class="lnav-item lnav-has-children" data-key="reports">
+            <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+              <i class="pi pi-chart-bar lnav-icon" aria-hidden="true"></i>
+              <span class="lnav-label">Reports</span>
+              <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+            </button>
+            <ul class="lnav-sub" aria-hidden="true">
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Overview</a></li>
+              <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this)">Custom Reports</a></li>
+            </ul>
+          </div>
+
+          <!-- 9. Drive (no sub-items) -->
+          <div class="lnav-item" data-key="drive">
+            <a class="lnav-link" href="#" onclick="setLnavActive(this)">
+              <i class="pi pi-folder lnav-icon" aria-hidden="true"></i>
+              <span class="lnav-label">Drive</span>
+            </a>
+          </div>
+
+        </nav>
+      </div>
+
+      <!-- Collapse / Expand toggle handle -->
+      <button
+        class="lnav-toggle"
+        id="lnavToggle"
+        onclick="toggleLeftNav()"
+        aria-label="Collapse sidebar"
+        title="Collapse sidebar"
+      >
+        <!-- Vertical dots / handle SVG — matches CloseIcon.vue at rest -->
+        <svg width="16" height="24" viewBox="0 0 16 24" fill="none" class="lnav-toggle-icon lnav-toggle-close">
+          <path d="M10 12L10 10L6 10L6 12L10 12ZM6 20C6 21.1046 6.89543 22 8 22C9.10457 22 10 21.1046 10 20L6 20ZM6 12L6 16L10 16L10 12L6 12ZM6 16L6 20L10 20L10 16L6 16Z" fill="#E5E5E5"/>
+          <path d="M10 4C10 2.89543 9.10457 2 8 2C6.89543 2 6 2.89543 6 4L10 4ZM6 12L6 14L10 14L10 12L6 12ZM6 4L6 8L10 8L10 4L6 4ZM6 8L6 12L10 12L10 8L6 8Z" fill="#E5E5E5"/>
+        </svg>
+        <!-- Arrow icon when collapsed (OpenIcon.vue) -->
+        <svg width="16" height="24" viewBox="0 0 16 24" fill="none" class="lnav-toggle-icon lnav-toggle-open">
+          <path d="M11.7321 13.5359L12.7321 11.8038L9.26795 9.80384L8.26795 11.5359L11.7321 13.5359ZM4.26795 18.4641C3.71566 19.4207 4.04341 20.6439 5 21.1961C5.95659 21.7484 7.17977 21.4207 7.73205 20.4641L4.26795 18.4641ZM8.26795 11.5359L6.26795 15L9.73205 17L11.7321 13.5359L8.26795 11.5359ZM6.26795 15L4.26795 18.4641L7.73205 20.4641L9.73205 17L6.26795 15Z" fill="#E5E5E5"/>
+          <path d="M7.73205 3.53589C7.17977 2.5793 5.95659 2.25155 5 2.80384C4.04341 3.35612 3.71566 4.5793 4.26795 5.53589L7.73205 3.53589ZM8.26795 12.4641L9.26795 14.1961L12.7321 12.1961L11.7321 10.4641L8.26795 12.4641ZM4.26795 5.53589L6.26795 8.99999L9.73205 6.99999L7.73205 3.53589L4.26795 5.53589ZM6.26795 8.99999L8.26795 12.4641L11.7321 10.4641L9.73205 6.99999L6.26795 8.99999Z" fill="#E5E5E5"/>
+        </svg>
+      </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <!-- SECTION: BUTTONS -->
+      <section id="buttons" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Button</h1>
+          <p class="section-desc">Button component with multiple severity levels, sizes, and states.</p>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">Severities</h3>
+          <div class="story-canvas">
+            <button class="btn btn-primary">Primary</button>
+            <button class="btn btn-secondary">Secondary</button>
+            <button class="btn btn-success">Success</button>
+            <button class="btn btn-info">Info</button>
+            <button class="btn btn-warning">Warning</button>
+            <button class="btn btn-help">Help</button>
+            <button class="btn btn-danger">Danger</button>
+            <button class="btn btn-gray">Gray</button>
+          </div>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">With Icons</h3>
+          <div class="story-canvas">
+            <button class="btn btn-primary"><i class="pi pi-check btn-icon-left"></i>Save</button>
+            <button class="btn btn-secondary">Cancel<i class="pi pi-times btn-icon-right"></i></button>
+            <button class="btn btn-danger"><i class="pi pi-trash btn-icon-left"></i>Delete</button>
+            <button class="btn btn-gray btn-icon-only" aria-label="Add"><i class="pi pi-plus"></i></button>
+            <button class="btn btn-primary btn-icon-only" aria-label="Edit"><i class="pi pi-pencil"></i></button>
+          </div>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">Outlined</h3>
+          <div class="story-canvas">
+            <button class="btn btn-outlined btn-outlined-primary">Primary</button>
+            <button class="btn btn-outlined btn-outlined-secondary">Secondary</button>
+            <button class="btn btn-outlined btn-outlined-success">Success</button>
+            <button class="btn btn-outlined btn-outlined-danger">Danger</button>
+            <button class="btn btn-outlined btn-outlined-warning">Warning</button>
+          </div>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">Text</h3>
+          <div class="story-canvas">
+            <button class="btn btn-text btn-text-primary">Primary</button>
+            <button class="btn btn-text btn-text-secondary">Secondary</button>
+            <button class="btn btn-text btn-text-danger">Danger</button>
+          </div>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">Sizes</h3>
+          <div class="story-canvas" style="align-items:center">
+            <button class="btn btn-primary btn-sm">Small</button>
+            <button class="btn btn-primary">Default</button>
+            <button class="btn btn-primary btn-lg">Large</button>
+          </div>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">States</h3>
+          <div class="story-canvas">
+            <button class="btn btn-primary">Default</button>
+            <button class="btn btn-primary btn-hover-state">Hover</button>
+            <button class="btn btn-primary" disabled>Disabled</button>
+            <button class="btn btn-primary btn-loading" disabled>
+              <svg class="btn-spinner" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="31.4" stroke-dashoffset="10"/></svg>
+              Loading
+            </button>
+          </div>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">Rounded</h3>
+          <div class="story-canvas">
+            <button class="btn btn-primary btn-rounded">Primary</button>
+            <button class="btn btn-outlined btn-outlined-primary btn-rounded">Outlined</button>
+            <button class="btn btn-primary btn-rounded btn-icon-only" aria-label="Add"><i class="pi pi-plus"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: BUTTON GROUP -->
+      <section id="button-group" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Button Group</h1>
+          <p class="section-desc">Group multiple buttons together as a unit.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas">
+            <div class="btn-group">
+              <button class="btn btn-primary btn-group-item"><i class="pi pi-align-left"></i></button>
+              <button class="btn btn-primary btn-group-item"><i class="pi pi-align-center"></i></button>
+              <button class="btn btn-primary btn-group-item"><i class="pi pi-align-right"></i></button>
+              <button class="btn btn-primary btn-group-item"><i class="pi pi-align-justify"></i></button>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-outlined btn-outlined-primary btn-group-item">Save</button>
+              <button class="btn btn-outlined btn-outlined-primary btn-group-item">Edit</button>
+              <button class="btn btn-outlined btn-outlined-primary btn-group-item">Delete</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: SPLIT BUTTON -->
+      <section id="split-button" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Split Button</h1>
+          <p class="section-desc">Button with a dropdown for secondary actions.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas">
+            <div class="split-btn" id="splitBtn1">
+              <button class="btn btn-primary split-btn-main">Save</button>
+              <button class="btn btn-primary split-btn-arrow" onclick="toggleSplitMenu('splitMenu1')"><i class="pi pi-chevron-down"></i></button>
+              <ul class="split-btn-menu" id="splitMenu1">
+                <li class="split-btn-item"><i class="pi pi-save"></i> Save As</li>
+                <li class="split-btn-item"><i class="pi pi-refresh"></i> Update</li>
+                <li class="split-btn-item"><i class="pi pi-trash"></i> Delete</li>
+              </ul>
+            </div>
+            <div class="split-btn" id="splitBtn2">
+              <button class="btn btn-secondary split-btn-main">Options</button>
+              <button class="btn btn-secondary split-btn-arrow" onclick="toggleSplitMenu('splitMenu2')"><i class="pi pi-chevron-down"></i></button>
+              <ul class="split-btn-menu" id="splitMenu2">
+                <li class="split-btn-item"><i class="pi pi-print"></i> Print</li>
+                <li class="split-btn-item"><i class="pi pi-download"></i> Export</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: INPUT TEXT -->
+      <section id="input-text" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Input Text</h1>
+          <p class="section-desc">Text input with label, help text, and validation states.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:16px;align-items:flex-start;max-width:400px">
+            <div class="input-field">
+              <label class="input-label">Username</label>
+              <input class="input-text" type="text" placeholder="Enter username" />
+            </div>
+            <div class="input-field">
+              <label class="input-label">Email</label>
+              <input class="input-text" type="email" placeholder="Enter email" value="user@contruent.com" />
+              <span class="input-help">We'll never share your email.</span>
+            </div>
+            <div class="input-field">
+              <label class="input-label">Password</label>
+              <input class="input-text input-invalid" type="password" placeholder="Enter password" value="abc" />
+              <span class="input-error">Password must be at least 8 characters.</span>
+            </div>
+            <div class="input-field">
+              <label class="input-label input-label-disabled">Disabled</label>
+              <input class="input-text" type="text" placeholder="Disabled field" disabled />
+            </div>
+            <div class="input-field">
+              <label class="input-label">Small</label>
+              <input class="input-text input-sm" type="text" placeholder="Small input" />
+            </div>
+            <div class="input-field">
+              <label class="input-label">Large</label>
+              <input class="input-text input-lg" type="text" placeholder="Large input" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: DROPDOWN -->
+      <section id="dropdown" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Dropdown</h1>
+          <p class="section-desc">Select component for single-value choices.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:16px;align-items:flex-start;max-width:300px">
+            <div class="input-field">
+              <label class="input-label">City</label>
+              <div class="dropdown" id="dd1" onclick="toggleDropdown('dd1')">
+                <span class="dropdown-value">Select a city</span>
+                <i class="pi pi-chevron-down dropdown-arrow"></i>
+                <ul class="dropdown-menu">
+                  <li class="dropdown-item" onclick="selectOption('dd1','New York')">New York</li>
+                  <li class="dropdown-item" onclick="selectOption('dd1','Los Angeles')">Los Angeles</li>
+                  <li class="dropdown-item dropdown-item-active" onclick="selectOption('dd1','Chicago')">Chicago</li>
+                  <li class="dropdown-item" onclick="selectOption('dd1','Houston')">Houston</li>
+                </ul>
+              </div>
+            </div>
+            <div class="input-field">
+              <label class="input-label">Status</label>
+              <div class="dropdown dropdown-invalid">
+                <span class="dropdown-value dropdown-placeholder">Select status</span>
+                <i class="pi pi-chevron-down dropdown-arrow"></i>
+              </div>
+              <span class="input-error">Please select a status.</span>
+            </div>
+            <div class="input-field">
+              <label class="input-label input-label-disabled">Disabled</label>
+              <div class="dropdown dropdown-disabled">
+                <span class="dropdown-value dropdown-placeholder">Disabled</span>
+                <i class="pi pi-chevron-down dropdown-arrow"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: CHECKBOX -->
+      <section id="checkbox" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Checkbox</h1>
+          <p class="section-desc">Binary selection control.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:12px;align-items:flex-start">
+            <label class="checkbox-wrapper">
+              <div class="checkbox-box" onclick="toggleCheck(this)"></div>
+              <span class="checkbox-label">Unchecked</span>
+            </label>
+            <label class="checkbox-wrapper">
+              <div class="checkbox-box checked" onclick="toggleCheck(this)"><i class="pi pi-check checkbox-check-icon"></i></div>
+              <span class="checkbox-label">Checked</span>
+            </label>
+            <label class="checkbox-wrapper">
+              <div class="checkbox-box checked indeterminate" onclick="toggleCheck(this)"><i class="pi pi-minus checkbox-check-icon"></i></div>
+              <span class="checkbox-label">Indeterminate</span>
+            </label>
+            <label class="checkbox-wrapper checkbox-disabled">
+              <div class="checkbox-box disabled"></div>
+              <span class="checkbox-label">Disabled unchecked</span>
+            </label>
+            <label class="checkbox-wrapper checkbox-disabled">
+              <div class="checkbox-box checked disabled"><i class="pi pi-check checkbox-check-icon"></i></div>
+              <span class="checkbox-label">Disabled checked</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: RADIO -->
+      <section id="radio" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Radio Button</h1>
+          <p class="section-desc">Single selection from a group of options.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:12px;align-items:flex-start">
+            <label class="radio-wrapper" onclick="selectRadio('rg1','r1')">
+              <div class="radio-box" id="r1"></div>
+              <span class="radio-label">Option 1</span>
+            </label>
+            <label class="radio-wrapper" onclick="selectRadio('rg1','r2')">
+              <div class="radio-box selected" id="r2"></div>
+              <span class="radio-label">Option 2 (selected)</span>
+            </label>
+            <label class="radio-wrapper" onclick="selectRadio('rg1','r3')">
+              <div class="radio-box" id="r3"></div>
+              <span class="radio-label">Option 3</span>
+            </label>
+            <label class="radio-wrapper checkbox-disabled">
+              <div class="radio-box disabled"></div>
+              <span class="radio-label">Disabled</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: INPUT NUMBER -->
+      <section id="input-number" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Input Number</h1>
+          <p class="section-desc">Numeric input with increment/decrement controls.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:16px;align-items:flex-start">
+            <div class="input-field">
+              <label class="input-label">Quantity</label>
+              <div class="input-number">
+                <button class="input-number-btn" onclick="changeNum('num1',-1)"><i class="pi pi-minus"></i></button>
+                <input class="input-number-field" id="num1" type="number" value="1" min="0" />
+                <button class="input-number-btn" onclick="changeNum('num1',1)"><i class="pi pi-plus"></i></button>
+              </div>
+            </div>
+            <div class="input-field">
+              <label class="input-label">Price ($)</label>
+              <div class="input-number">
+                <button class="input-number-btn" onclick="changeNum('num2',-1)"><i class="pi pi-minus"></i></button>
+                <input class="input-number-field" id="num2" type="number" value="25" />
+                <button class="input-number-btn" onclick="changeNum('num2',1)"><i class="pi pi-plus"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: CHIPS -->
+      <section id="chips" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Chips</h1>
+          <p class="section-desc">Enter multiple values as chips/tags.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="max-width:400px">
+            <div class="chips-input" id="chipsContainer" onclick="document.getElementById('chipsInput').focus()">
+              <span class="chip">React<i class="pi pi-times chip-remove" onclick="removeChip(this)"></i></span>
+              <span class="chip">Vue<i class="pi pi-times chip-remove" onclick="removeChip(this)"></i></span>
+              <span class="chip">Angular<i class="pi pi-times chip-remove" onclick="removeChip(this)"></i></span>
+              <input class="chips-text-input" id="chipsInput" type="text" placeholder="Add tag..." onkeydown="addChip(event)" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: TAG -->
+      <section id="tag" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Tag</h1>
+          <p class="section-desc">Small label component for categorization.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Severities</h3>
+          <div class="story-canvas">
+            <span class="tag tag-primary">Primary</span>
+            <span class="tag tag-success">Success</span>
+            <span class="tag tag-info">Info</span>
+            <span class="tag tag-warning">Warning</span>
+            <span class="tag tag-danger">Danger</span>
+          </div>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">With Icons</h3>
+          <div class="story-canvas">
+            <span class="tag tag-primary"><i class="pi pi-user tag-icon"></i>Primary</span>
+            <span class="tag tag-success"><i class="pi pi-check tag-icon"></i>Success</span>
+            <span class="tag tag-info"><i class="pi pi-info-circle tag-icon"></i>Info</span>
+            <span class="tag tag-warning"><i class="pi pi-exclamation-triangle tag-icon"></i>Warning</span>
+            <span class="tag tag-danger"><i class="pi pi-times-circle tag-icon"></i>Danger</span>
+          </div>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Rounded</h3>
+          <div class="story-canvas">
+            <span class="tag tag-primary tag-rounded">Primary</span>
+            <span class="tag tag-success tag-rounded">Success</span>
+            <span class="tag tag-info tag-rounded">Info</span>
+            <span class="tag tag-warning tag-rounded">Warning</span>
+            <span class="tag tag-danger tag-rounded">Danger</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: BADGE -->
+      <section id="badge" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Badge</h1>
+          <p class="section-desc">Numeric indicator overlaid on components.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Inline Badges</h3>
+          <div class="story-canvas" style="align-items:center">
+            <span class="badge badge-primary">2</span>
+            <span class="badge badge-secondary">5</span>
+            <span class="badge badge-success">3</span>
+            <span class="badge badge-info">8</span>
+            <span class="badge badge-warning">12</span>
+            <span class="badge badge-danger">99+</span>
+          </div>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">On Buttons</h3>
+          <div class="story-canvas" style="align-items:center">
+            <div class="badge-on-btn">
+              <button class="btn btn-primary"><i class="pi pi-bell"></i> Notifications</button>
+              <span class="badge badge-danger badge-overlay">5</span>
+            </div>
+            <div class="badge-on-btn">
+              <button class="btn btn-gray btn-icon-only"><i class="pi pi-inbox"></i></button>
+              <span class="badge badge-primary badge-overlay">12</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: PROGRESS BAR -->
+      <section id="progress-bar" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Progress Bar</h1>
+          <p class="section-desc">Visual indicator of task completion.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Determinate</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:12px;width:100%;max-width:500px">
+            <div class="progress-bar"><div class="progress-bar-value" style="width:25%"><span class="progress-bar-label">25%</span></div></div>
+            <div class="progress-bar"><div class="progress-bar-value" style="width:50%"><span class="progress-bar-label">50%</span></div></div>
+            <div class="progress-bar"><div class="progress-bar-value" style="width:75%"><span class="progress-bar-label">75%</span></div></div>
+            <div class="progress-bar"><div class="progress-bar-value" style="width:100%"><span class="progress-bar-label">100%</span></div></div>
+          </div>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Indeterminate</h3>
+          <div class="story-canvas" style="width:100%;max-width:500px">
+            <div class="progress-bar progress-bar-indeterminate" style="width:100%">
+              <div class="progress-bar-value-indeterminate"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: SKELETON -->
+      <section id="skeleton" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Skeleton</h1>
+          <p class="section-desc">Placeholder loading animation.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Shapes</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:12px;align-items:flex-start;width:300px">
+            <div class="skeleton skeleton-rect" style="width:100%;height:16px"></div>
+            <div class="skeleton skeleton-rect" style="width:75%;height:16px"></div>
+            <div class="skeleton skeleton-rect" style="width:88%;height:16px"></div>
+            <div class="skeleton skeleton-circle" style="width:48px;height:48px"></div>
+            <div class="skeleton skeleton-rect" style="width:100%;height:120px;border-radius:8px"></div>
+          </div>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Card Placeholder</h3>
+          <div class="story-canvas">
+            <div class="card" style="width:260px">
+              <div class="skeleton skeleton-rect" style="width:100%;height:140px;border-radius:6px;margin-bottom:16px"></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <div class="skeleton skeleton-circle" style="width:40px;height:40px;flex-shrink:0"></div>
+                <div style="flex:1">
+                  <div class="skeleton skeleton-rect" style="width:80%;height:12px;margin-bottom:6px"></div>
+                  <div class="skeleton skeleton-rect" style="width:55%;height:10px"></div>
+                </div>
+              </div>
+              <div class="skeleton skeleton-rect" style="width:100%;height:10px;margin-bottom:6px"></div>
+              <div class="skeleton skeleton-rect" style="width:90%;height:10px"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: STATUS INDICATOR -->
+      <section id="status-indicator" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Status Indicator</h1>
+          <p class="section-desc">Shows metric direction — positive, negative, or neutral.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas">
+            <div class="status-indicator status-positive">
+              <i class="pi pi-arrow-up status-icon"></i>
+              <span class="status-value">S&P 500</span>
+              <span class="status-detail">+7%</span>
+            </div>
+            <div class="status-indicator status-negative">
+              <i class="pi pi-arrow-down status-icon"></i>
+              <span class="status-value">NASDAQ</span>
+              <span class="status-detail">-2.3%</span>
+            </div>
+            <div class="status-indicator status-neutral">
+              <i class="pi pi-minus status-icon"></i>
+              <span class="status-value">DOW</span>
+              <span class="status-detail">0.0%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: CARD -->
+      <section id="card" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Card</h1>
+          <p class="section-desc">Content container with optional header, body, and footer.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="align-items:flex-start;flex-wrap:wrap">
+            <div class="card" style="width:280px">
+              <div class="card-body">
+                <h2 class="card-title">Advanced Card</h2>
+                <p class="card-subtitle">Card subtitle</p>
+                <div class="card-content">
+                  <p style="color:#616161;font-size:14px">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus.</p>
+                </div>
+                <div class="card-footer">
+                  <button class="btn btn-primary btn-sm">View</button>
+                  <button class="btn btn-outlined btn-outlined-secondary btn-sm">Cancel</button>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="width:280px">
+              <div class="card-body">
+                <h2 class="card-title">Simple Card</h2>
+                <div class="card-content">
+                  <p style="color:#616161;font-size:14px">A card with just a title and content area.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: PANEL -->
+      <section id="panel" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Panel</h1>
+          <p class="section-desc">Collapsible content container.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:12px;width:100%;max-width:500px">
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Panel Header</span>
+                <button class="panel-toggle" onclick="togglePanel(this)"><i class="pi pi-minus"></i></button>
+              </div>
+              <div class="panel-content">
+                <p style="color:#616161;font-size:14px;margin:0">Panel content goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+              </div>
+            </div>
+            <div class="panel panel-collapsed">
+              <div class="panel-header">
+                <span class="panel-title">Collapsed Panel</span>
+                <button class="panel-toggle" onclick="togglePanel(this)"><i class="pi pi-plus"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: ACCORDION -->
+      <section id="accordion" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Accordion</h1>
+          <p class="section-desc">Vertically stacked set of collapsible sections.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="width:100%;max-width:500px">
+            <div class="accordion">
+              <div class="accordion-tab">
+                <div class="accordion-header active" onclick="toggleAccordion(this)">
+                  <i class="pi pi-chevron-down accordion-icon"></i>
+                  <span>Section 1 — Active</span>
+                </div>
+                <div class="accordion-content">
+                  <p style="margin:0;color:#616161;font-size:14px">Content for section 1. Sed ut perspiciatis unde omnis iste natus error sit voluptatem.</p>
+                </div>
+              </div>
+              <div class="accordion-tab">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                  <i class="pi pi-chevron-right accordion-icon"></i>
+                  <span>Section 2</span>
+                </div>
+              </div>
+              <div class="accordion-tab">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                  <i class="pi pi-chevron-right accordion-icon"></i>
+                  <span>Section 3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: DIVIDER -->
+      <section id="divider" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Divider</h1>
+          <p class="section-desc">Separator line between content sections.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Horizontal</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:8px;width:100%;max-width:500px">
+            <p style="margin:0;color:#616161;font-size:14px">Content above the divider.</p>
+            <div class="divider divider-horizontal"></div>
+            <p style="margin:0;color:#616161;font-size:14px">Content below the divider.</p>
+            <div class="divider divider-horizontal divider-dashed"></div>
+            <p style="margin:0;color:#616161;font-size:14px">Dashed divider.</p>
+            <div class="divider divider-horizontal-labeled"><span class="divider-label">OR</span></div>
+          </div>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Vertical</h3>
+          <div class="story-canvas" style="height:80px;align-items:center">
+            <span style="font-size:14px;color:#616161">Left</span>
+            <div class="divider divider-vertical"></div>
+            <span style="font-size:14px;color:#616161">Middle</span>
+            <div class="divider divider-vertical"></div>
+            <span style="font-size:14px;color:#616161">Right</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: TOOLBAR -->
+      <section id="toolbar" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Toolbar</h1>
+          <p class="section-desc">Horizontal grouping of controls with start, center, and end slots.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="width:100%">
+            <div class="toolbar" style="width:100%">
+              <div class="toolbar-start">
+                <button class="btn btn-primary btn-sm"><i class="pi pi-plus btn-icon-left"></i>New</button>
+                <button class="btn btn-gray btn-sm"><i class="pi pi-upload btn-icon-left"></i>Import</button>
+                <div class="divider divider-vertical" style="height:28px;margin:0 4px"></div>
+                <button class="btn btn-text btn-text-secondary btn-sm btn-icon-only"><i class="pi pi-trash"></i></button>
+              </div>
+              <div class="toolbar-end">
+                <div class="input-search-wrap">
+                  <i class="pi pi-search input-search-icon"></i>
+                  <input class="input-search" type="text" placeholder="Search..." />
+                </div>
+                <button class="btn btn-gray btn-sm btn-icon-only"><i class="pi pi-filter"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: TAB MENU -->
+      <section id="tab-menu" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Tab Menu</h1>
+          <p class="section-desc">Navigation tabs for switching between views.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas" style="flex-direction:column;width:100%;max-width:600px">
+            <ul class="tab-menu" id="tabMenu1">
+              <li class="tab-menu-item active" onclick="switchTab('tabMenu1',this,'tabContent1','panel1')">Overview</li>
+              <li class="tab-menu-item" onclick="switchTab('tabMenu1',this,'tabContent1','panel2')">Details</li>
+              <li class="tab-menu-item" onclick="switchTab('tabMenu1',this,'tabContent1','panel3')">History</li>
+              <li class="tab-menu-item" onclick="switchTab('tabMenu1',this,'tabContent1','panel4')">Settings</li>
+            </ul>
+            <div id="tabContent1">
+              <div id="panel1" class="tab-panel active"><p style="color:#616161;font-size:14px;padding:16px 0;margin:0">Overview content — this is the default active tab.</p></div>
+              <div id="panel2" class="tab-panel"><p style="color:#616161;font-size:14px;padding:16px 0;margin:0">Details content area.</p></div>
+              <div id="panel3" class="tab-panel"><p style="color:#616161;font-size:14px;padding:16px 0;margin:0">History content area.</p></div>
+              <div id="panel4" class="tab-panel"><p style="color:#616161;font-size:14px;padding:16px 0;margin:0">Settings content area.</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: STEPS -->
+      <section id="steps" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Steps</h1>
+          <p class="section-desc">Wizard-style step indicator.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Step 2 Active</h3>
+          <div class="story-canvas" style="width:100%;max-width:600px">
+            <div class="steps">
+              <div class="step step-complete">
+                <div class="step-circle step-circle-complete"><i class="pi pi-check" style="font-size:12px"></i></div>
+                <span class="step-label">Personal Info</span>
+              </div>
+              <div class="step step-active">
+                <div class="step-circle step-circle-active">2</div>
+                <span class="step-label">Account</span>
+              </div>
+              <div class="step">
+                <div class="step-circle">3</div>
+                <span class="step-label">Payment</span>
+              </div>
+              <div class="step">
+                <div class="step-circle">4</div>
+                <span class="step-label">Confirm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: BREADCRUMB -->
+      <section id="breadcrumb" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Breadcrumb</h1>
+          <p class="section-desc">Navigation trail showing the current page hierarchy.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Default</h3>
+          <div class="story-canvas">
+            <nav class="breadcrumb">
+              <ol class="breadcrumb-list">
+                <li class="breadcrumb-item"><a class="breadcrumb-link"><i class="pi pi-home"></i></a></li>
+                <li class="breadcrumb-separator"><i class="pi pi-angle-right"></i></li>
+                <li class="breadcrumb-item"><a class="breadcrumb-link">Projects</a></li>
+                <li class="breadcrumb-separator"><i class="pi pi-angle-right"></i></li>
+                <li class="breadcrumb-item"><a class="breadcrumb-link">Frontend</a></li>
+                <li class="breadcrumb-separator"><i class="pi pi-angle-right"></i></li>
+                <li class="breadcrumb-item breadcrumb-current">Components</li>
+              </ol>
+            </nav>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: MESSAGE -->
+      <section id="message" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Message</h1>
+          <p class="section-desc">Inline contextual feedback messages.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Severities</h3>
+          <div class="story-canvas" style="flex-direction:column;gap:8px;width:100%;max-width:500px">
+            <div class="message message-info">
+              <i class="pi pi-info-circle message-icon"></i>
+              <span class="message-text">This is an informational message.</span>
+              <button class="message-close" onclick="this.closest('.message').remove()"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="message message-success">
+              <i class="pi pi-check-circle message-icon"></i>
+              <span class="message-text">Your changes have been saved successfully.</span>
+              <button class="message-close" onclick="this.closest('.message').remove()"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="message message-warn">
+              <i class="pi pi-exclamation-triangle message-icon"></i>
+              <span class="message-text">Warning: This action cannot be undone.</span>
+              <button class="message-close" onclick="this.closest('.message').remove()"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="message message-error">
+              <i class="pi pi-times-circle message-icon"></i>
+              <span class="message-text">An error occurred. Please try again.</span>
+              <button class="message-close" onclick="this.closest('.message').remove()"><i class="pi pi-times"></i></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: TOAST -->
+      <section id="toast" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Toast</h1>
+          <p class="section-desc">Transient notification messages in a corner overlay.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Trigger Toasts</h3>
+          <div class="story-canvas" style="gap:10px;flex-wrap:wrap">
+            <button class="btn btn-info btn-sm" onclick="showToast('info','Info Message','This is an informational toast.')">Info</button>
+            <button class="btn btn-success btn-sm" onclick="showToast('success','Success','Your action completed successfully.')">Success</button>
+            <button class="btn btn-warning btn-sm" onclick="showToast('warn','Warning','Please review before proceeding.')">Warning</button>
+            <button class="btn btn-danger btn-sm" onclick="showToast('error','Error','Something went wrong.')">Error</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: AVATAR -->
+      <section id="avatar" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Avatar</h1>
+          <p class="section-desc">Represents a user or entity with an image, icon, or initials.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Shapes &amp; Sizes</h3>
+          <div class="story-canvas" style="align-items:center;gap:16px;flex-wrap:wrap">
+            <div class="avatar avatar-circle avatar-sm">AG</div>
+            <div class="avatar avatar-circle">JD</div>
+            <div class="avatar avatar-circle avatar-lg">MK</div>
+            <div class="avatar avatar-circle avatar-xl">RB</div>
+            <div class="avatar avatar-square">AG</div>
+            <div class="avatar avatar-square avatar-lg">JD</div>
+            <div class="avatar avatar-circle" style="background:#326fd1;color:#fff"><i class="pi pi-user"></i></div>
+            <img src="https://ui-avatars.com/api/?name=Alex+G&background=326fd1&color=fff&size=40" class="avatar avatar-circle" style="padding:0;overflow:hidden" alt="avatar" />
+          </div>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Avatar Group</h3>
+          <div class="story-canvas">
+            <div class="avatar-group">
+              <div class="avatar avatar-circle" style="background:#326fd1;color:#fff">AG</div>
+              <div class="avatar avatar-circle" style="background:#4caf50;color:#fff">JD</div>
+              <div class="avatar avatar-circle" style="background:#ff9800;color:#fff">MK</div>
+              <div class="avatar avatar-circle" style="background:#9c27b0;color:#fff">RB</div>
+              <div class="avatar avatar-circle" style="background:#e5e5e5;color:#737373">+3</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: DIALOG -->
+      <section id="dialog" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Dialog</h1>
+          <p class="section-desc">Modal dialogs with configurable sizes, header actions, and footer buttons.</p>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">Confirmation (Small)</h3>
+          <div class="story-canvas">
+            <button class="btn btn-danger btn-sm" onclick="openDialog('dlg-confirm')">Delete item</button>
+          </div>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">Form Dialog (Medium)</h3>
+          <div class="story-canvas">
+            <button class="btn btn-primary btn-sm" onclick="openDialog('dlg-form')">Create project</button>
+          </div>
+        </div>
+
+        <div class="story-block">
+          <h3 class="story-label">Large with window controls</h3>
+          <div class="story-canvas">
+            <button class="btn btn-secondary btn-sm" onclick="openDialog('dlg-large')">Open large dialog</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: TYPOGRAPHY -->
+      <section id="typography" class="component-section">
+        <div class="section-header">
+          <h1 class="section-title">Typography</h1>
+          <p class="section-desc">Type scale and text variant system using the Inter font family.</p>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Headings</h3>
+          <div class="story-canvas" style="flex-direction:column;align-items:flex-start;gap:8px">
+            <h1 class="typo-h1">Heading 1 — 32px Bold</h1>
+            <h2 class="typo-h2">Heading 2 — 24px Bold</h2>
+            <h3 class="typo-h3">Heading 3 — 20px Bold</h3>
+            <h4 class="typo-h4">Heading 4 — 18px Bold</h4>
+            <h5 class="typo-h5">Heading 5 — 16px SemiBold</h5>
+            <h6 class="typo-h6">Heading 6 — 14px SemiBold</h6>
+          </div>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Body &amp; Utility</h3>
+          <div class="story-canvas" style="flex-direction:column;align-items:flex-start;gap:8px">
+            <p class="typo-body-lg">Body Large — 16px Regular</p>
+            <p class="typo-body">Body — 14px Regular</p>
+            <p class="typo-body-sm">Body Small — 12px Regular</p>
+            <span class="typo-caption">Caption — 11px Medium</span>
+            <span class="typo-overline">OVERLINE — 11px UPPERCASE</span>
+            <span class="typo-muted">Muted text — secondary color</span>
+            <a class="typo-link" href="#">Link text — interactive</a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ===== DIALOG INSTANCES ===== -->
+
+  <!-- Confirmation (small) -->
+  <div class="dialog-overlay" id="dlg-confirm">
+    <div class="dialog-panel dialog-panel-sm">
+      <div class="dialog-header">
+        <div class="dialog-header-text">
+          <div class="dialog-title">Confirm Delete</div>
+        </div>
+        <div class="dialog-header-actions">
+          <button class="dialog-action-btn dialog-close" onclick="closeDialog('dlg-confirm')" title="Close"><i class="pi pi-times"></i></button>
+        </div>
+      </div>
+      <div class="dialog-body">
+        <p style="font-size:14px;font-weight:500;color:var(--default-text);margin:0 0 6px">Are you sure you want to delete this item?</p>
+        <p style="font-size:13px;color:var(--default-text-secondary);margin:0">This action cannot be undone.</p>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-text btn-text-secondary" onclick="closeDialog('dlg-confirm')">Cancel</button>
+        <div class="dialog-footer-right">
+          <button class="btn btn-danger" onclick="closeDialog('dlg-confirm')">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form dialog (medium, 3-button footer) -->
+  <div class="dialog-overlay" id="dlg-form">
+    <div class="dialog-panel">
+      <div class="dialog-header">
+        <div class="dialog-header-text">
+          <div class="dialog-title">Create Project</div>
+          <div class="dialog-subtitle">Fill in the project details</div>
+        </div>
+        <div class="dialog-header-actions">
+          <button class="dialog-action-btn dialog-close" onclick="closeDialog('dlg-form')" title="Close"><i class="pi pi-times"></i></button>
+        </div>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label class="input-label">Project Name <span style="color:#e53935">*</span></label>
+          <input type="text" class="input-text" placeholder="Enter project name..." />
+        </div>
+        <div>
+          <label class="input-label">Category</label>
+          <div class="dropdown" id="dlg-cat-dd" onclick="toggleDropdown('dlg-cat-dd')">
+            <span class="dropdown-value dropdown-placeholder">Select category</span>
+            <i class="pi pi-chevron-down dropdown-icon"></i>
+            <ul class="dropdown-menu" role="listbox">
+              <li class="dropdown-item" onclick="selectOption('dlg-cat-dd','Infrastructure')">Infrastructure</li>
+              <li class="dropdown-item" onclick="selectOption('dlg-cat-dd','Construction')">Construction</li>
+              <li class="dropdown-item" onclick="selectOption('dlg-cat-dd','IT')">IT</li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <label class="input-label">Description</label>
+          <textarea class="input-text" rows="3" style="height:auto;resize:vertical" placeholder="Optional description..."></textarea>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-text btn-text-secondary" onclick="closeDialog('dlg-form')">Cancel</button>
+        <div class="dialog-footer-right">
+          <button class="btn btn-secondary">Save Draft</button>
+          <button class="btn btn-primary">Create Project</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Large dialog with window controls -->
+  <div class="dialog-overlay" id="dlg-large">
+    <div class="dialog-panel dialog-panel-lg">
+      <div class="dialog-header dialog-header-lg">
+        <div class="dialog-header-text">
+          <div class="dialog-title">Project Management</div>
+          <div class="dialog-subtitle">Manage all your projects</div>
+        </div>
+        <div class="dialog-header-actions">
+          <button class="dialog-action-btn" title="Minimize"><i class="pi pi-minus"></i></button>
+          <button class="dialog-action-btn" title="Maximize"><i class="pi pi-window-maximize"></i></button>
+          <button class="dialog-action-btn dialog-close" onclick="closeDialog('dlg-large')" title="Close"><i class="pi pi-times"></i></button>
+        </div>
+      </div>
+      <div class="dialog-body">
+        <p style="font-size:14px;color:var(--default-text-secondary)">This is a large dialog with minimize and maximize header controls. Content can scroll independently inside the body area.</p>
+        <div style="margin-top:16px;height:200px;border:1px dashed var(--default-surface-border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--default-text-secondary);font-size:13px">
+          DataGrid or complex content here
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-text btn-text-secondary" onclick="closeDialog('dlg-large')">Cancel</button>
+        <div class="dialog-footer-right">
+          <button class="btn btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="dialog.js"></script>
+</body>
+</html>

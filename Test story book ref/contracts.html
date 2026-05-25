@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cisco Systems — Contracts — Contruent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <link rel="stylesheet" href="components/tokens.css" />
+  <link rel="stylesheet" href="components/styles.css" />
+</head>
+<body>
+
+  <div id="top-nav-mount"></div>
+  <div id="left-nav-mount"></div>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="proj-content">
+
+    <!-- Breadcrumb -->
+    <div class="page-top-row">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="home.html">Home</a>
+        <span class="bc-sep">/</span>
+        <a href="projects.html">Projects</a>
+        <span class="bc-sep">/</span>
+        <span data-proj="name">Cisco Systems</span>
+        <span class="bc-sep">/</span>
+      </nav>
+    </div>
+
+    <!-- Page title -->
+    <h1 class="page-title">Contracts</h1>
+
+    <!-- ===== TOOLBAR ===== -->
+    <div class="contracts-toolbar">
+      <div class="contracts-toolbar-left">
+        <!-- Add dropdown -->
+        <div class="row-action-wrap">
+          <button class="add-btn" onclick="toggleContractsAddMenu(event)">
+            Add <i class="pi pi-chevron-down"></i>
+          </button>
+          <div class="row-action-menu" id="contractsAddMenu">
+            <div class="row-action-menu-item" onclick="openCreateContractModal()"><i class="pi pi-file-edit"></i> Create contract</div>
+            <div class="row-action-menu-item"><i class="pi pi-shopping-cart"></i> Import from ProcureWare</div>
+            <div class="row-action-menu-item"><i class="pi pi-download"></i> Fetch from G2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="contracts-toolbar-right">
+        <button class="filter-btn"><i class="pi pi-filter"></i> Filters</button>
+        <button class="toolbar-icon-btn" aria-label="Column settings"><i class="pi pi-cog"></i></button>
+        <button class="toolbar-icon-btn" aria-label="Table view"><i class="pi pi-bars"></i></button>
+        <button class="toolbar-icon-btn" aria-label="Grid view"><i class="pi pi-th-large"></i></button>
+        <div class="toolbar-search-wrap">
+          <input type="text" class="toolbar-search" id="contractsSearch" placeholder="Search...." oninput="filterContracts(this.value)" />
+          <i class="pi pi-search toolbar-search-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CONTRACTS TABLE ===== -->
+    <div class="contracts-table-wrap">
+      <table class="contracts-table" id="contractsTable">
+        <thead>
+          <tr>
+            <th class="col-contract-id">Contract ID</th>
+            <th class="col-type">Type</th>
+            <th class="col-description">Description</th>
+            <th class="col-created">Created on</th>
+            <th class="col-origin">Origin</th>
+            <th class="col-status">Status</th>
+            <th class="col-row-action"></th>
+          </tr>
+        </thead>
+        <tbody id="contractsTableBody">
+          <!-- Rows rendered by JS -->
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /proj-content -->
+
+  <script src="components/top-nav.js"></script>
+  <script src="components/left-nav.js"></script>
+  <script src="components/dialog.js"></script>
+  <script src="components/ai-panel.js"></script>
+  <script src="components/script.js"></script>
+  <script>
+    renderTopNav({ activeItem: 'projects' });
+    renderLeftNav({ expandedGroup: 'contracts', activeSub: 'contracts-list' });
+    applyProjectContext();
+
+    /* ===== CONTRACTS DATA ===== */
+    const CONTRACTS = [
+      {
+        id: 'G2-CON-5606',
+        type: 'NEC4',
+        description: 'Imported G2 Contract 1 - Enterprise Solution',
+        createdOn: '23 Oct 2025',
+        origin: 'G2',
+        status: 'ACTIVE'
+      },
+      {
+        id: 'G2-CON-5605',
+        type: 'NEC4',
+        description: 'Imported G2 Contract 2 - Enterprise Solution',
+        createdOn: '23 Nov 2025',
+        origin: 'G2',
+        status: 'ACTIVE'
+      }
+    ];
+
+    /* ===== RENDER TABLE ===== */
+    function renderContracts(data) {
+      const tbody = document.getElementById('contractsTableBody');
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:48px 24px;color:var(--default-text-secondary);font-size:13px;">No contracts found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map((c, i) => {
+        const globalIdx = CONTRACTS.indexOf(c);
+        const badgeClass = ({ ACTIVE: 'active', SUBMITTED: 'submitted', DRAFT: 'draft' })[c.status] || 'active';
+        return `
+        <tr>
+          <td class="col-contract-id"><a class="contract-id-link" href="#" onclick="openContractDetail(${globalIdx});return false;">${c.id}</a></td>
+          <td class="col-type">${c.type}</td>
+          <td class="col-description">${c.description}</td>
+          <td class="col-created">${c.createdOn}</td>
+          <td class="col-origin">${c.origin}</td>
+          <td class="col-status"><span class="status-badge ${badgeClass}">${c.status}</span></td>
+          <td class="col-row-action">
+            <div class="row-action-wrap">
+              <button class="row-action-btn" onclick="toggleRowMenu(event, 'row-menu-${i}')" aria-label="Row actions">
+                <i class="pi pi-ellipsis-v"></i>
+              </button>
+              <div class="row-action-menu" id="row-menu-${i}">
+                <div class="row-action-menu-item" onclick="openContractDetail(${globalIdx})"><i class="pi pi-eye"></i> View</div>
+                <div class="row-action-menu-item" onclick="openContractDetail(${globalIdx});switchToEditMode()"><i class="pi pi-pencil"></i> Edit</div>
+                <div class="row-action-menu-item" onclick="duplicateContract('${c.id}')"><i class="pi pi-copy"></i> Duplicate</div>
+                <div class="row-action-menu-item danger" onclick="deleteContract('${c.id}')"><i class="pi pi-trash"></i> Delete</div>
+              </div>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    /* ===== FILTER ===== */
+    function filterContracts(query) {
+      const q = query.toLowerCase();
+      const filtered = CONTRACTS.filter(c =>
+        c.id.toLowerCase().includes(q) ||
+        c.type.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q) ||
+        c.origin.toLowerCase().includes(q) ||
+        c.status.toLowerCase().includes(q)
+      );
+      renderContracts(filtered);
+    }
+
+    /* ===== ROW ACTION MENU ===== */
+    function toggleRowMenu(e, menuId) {
+      e.stopPropagation();
+      const menu = document.getElementById(menuId);
+      const isOpen = menu.classList.contains('open');
+      document.querySelectorAll('.row-action-menu.open').forEach(m => m.classList.remove('open'));
+      if (!isOpen) menu.classList.add('open');
+    }
+
+    /* ===== ADD MENU ===== */
+    function toggleContractsAddMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('contractsAddMenu');
+      const isOpen = menu.classList.contains('open');
+      document.querySelectorAll('.row-action-menu.open').forEach(m => m.classList.remove('open'));
+      if (!isOpen) menu.classList.add('open');
+    }
+
+    /* Close menus on outside click */
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.row-action-menu.open').forEach(m => m.classList.remove('open'));
+    });
+
+    /* ===== INIT ===== */
+    renderContracts(CONTRACTS);
+
+    /* ===== CREATE CONTRACT MODAL ===== */
+    let _nextContractNum = 5607;
+
+    function openCreateContractModal() {
+      document.querySelectorAll('.row-action-menu.open').forEach(m => m.classList.remove('open'));
+      _setContractModalMode('create', null);
+      openDialog('createContractModal');
+
+      /* Pre-fill Projects dropdown with active project */
+      let proj = { name: 'Cisco Systems', id: '0128-0919-0001' };
+      try { const s = localStorage.getItem('currentProject'); if (s) proj = JSON.parse(s); } catch(e) {}
+      const sel = document.getElementById('ccProjectSelect');
+      if (sel) sel.innerHTML = `<option value="${proj.id}">${proj.name}</option>`;
+
+      /* Init 3 pay-item rows if table is empty */
+      if (!document.querySelector('#payItemsBody tr')) {
+        for (let i = 0; i < 3; i++) addPayItemRow();
+      }
+    }
+
+    function _collectContractData(status) {
+      const rawId = document.getElementById('ccContractIdInput').value.trim();
+      return {
+        id:          rawId || ('CON-' + (_nextContractNum++)),
+        type:        document.getElementById('ccContractTypeSelect').value || '—',
+        description: document.getElementById('ccDescriptionInput').value.trim() || '—',
+        createdOn:   new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        origin:      'Manual',
+        status,
+        /* full form snapshot for detail view */
+        taskType:         document.getElementById('ccTaskType').value,
+        project:          document.getElementById('ccProjectSelect').value,
+        detailedDesc:     document.getElementById('ccDetailedDesc').value,
+        currencyId:       document.getElementById('ccCurrencyId').value,
+        exchangeRate:     document.getElementById('ccExchangeRate').value,
+        agreementTypeId:  document.getElementById('ccAgreementTypeId').value,
+        contractOption:   document.getElementById('ccContractOption').value,
+        primeContractId:  document.getElementById('ccPrimeContractId').value,
+        refControlAccountId: document.getElementById('ccRefControlAccountId').value,
+        alternateId:      document.getElementById('ccAlternateId').value,
+        commitPayItems:   document.getElementById('ccCommitPayItems').checked,
+      };
+    }
+
+    function submitContract() {
+      const data = _collectContractData('SUBMITTED');
+      CONTRACTS.unshift(data);
+      renderContracts(CONTRACTS);
+      _resetContractForm();
+      closeDialog('createContractModal');
+    }
+
+    function saveContractAsDraft() {
+      const data = _collectContractData('DRAFT');
+      CONTRACTS.unshift(data);
+      renderContracts(CONTRACTS);
+      _resetContractForm();
+      closeDialog('createContractModal');
+    }
+
+    function _resetContractForm() {
+      ['ccContractIdInput','ccDescriptionInput','ccDetailedDesc','ccCurrencyId','ccExchangeRate',
+       'ccAgreementTypeId','ccContractOption','ccPrimeContractId','ccRefControlAccountId','ccAlternateId']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      ['ccTaskType','ccContractTypeSelect']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
+      const chk = document.getElementById('ccCommitPayItems');
+      if (chk) chk.checked = false;
+      document.getElementById('payItemsBody').innerHTML = '';
+    }
+
+    function openContractDetail(idx) {
+      const contract = CONTRACTS[idx];
+      if (!contract) return;
+      document.querySelectorAll('.row-action-menu.open').forEach(m => m.classList.remove('open'));
+      _setContractModalMode('view', contract);
+      openDialog('createContractModal');
+    }
+
+    function _setContractModalMode(mode, contract) {
+      const titleEl  = document.querySelector('#createContractModal .dialog-title');
+      const actionsEl = document.querySelector('#createContractModal .dialog-header-actions');
+      const body     = document.querySelector('#createContractModal .dialog-body');
+      const footer   = document.getElementById('ccModalFooter');
+
+      if (mode === 'view') {
+        const statusKey = (contract.status || '').toLowerCase();
+        const statusLabel = { submitted: 'SUBMITTED', draft: 'IN DRAFT', active: 'ACTIVE' }[statusKey] || contract.status;
+        titleEl.innerHTML = `Create contract <span class="cc-status-tag ${statusKey}">${statusLabel}</span>`;
+
+        actionsEl.innerHTML = `
+          <button class="cc-header-edit-btn" onclick="switchToEditMode()">Edit</button>
+          <button class="dialog-action-btn" title="Minimize"><i class="pi pi-minus"></i></button>
+          <button class="dialog-action-btn" title="Maximize"><i class="pi pi-window-maximize"></i></button>
+          <button class="dialog-action-btn dialog-close" onclick="closeContractView()" title="Close"><i class="pi pi-times"></i></button>`;
+
+        body.classList.add('view-mode');
+
+        footer.innerHTML = `
+          <button class="btn btn-text btn-text-secondary" onclick="closeContractView()">Close</button>`;
+
+        _fillContractForm(contract);
+        document.getElementById('payItemsBody').innerHTML = '';
+      } else {
+        titleEl.innerHTML = 'Create contract';
+
+        actionsEl.innerHTML = `
+          <button class="dialog-action-btn" title="Minimize"><i class="pi pi-minus"></i></button>
+          <button class="dialog-action-btn" title="Maximize"><i class="pi pi-window-maximize"></i></button>
+          <button class="dialog-action-btn dialog-close" onclick="closeDialog('createContractModal')" title="Close"><i class="pi pi-times"></i></button>`;
+
+        body.classList.remove('view-mode');
+
+        footer.innerHTML = `
+          <button class="btn btn-text btn-text-secondary" onclick="closeDialog('createContractModal')">Cancel</button>
+          <div class="dialog-footer-right">
+            <button class="btn btn-secondary" onclick="saveContractAsDraft()">Save as draft</button>
+            <button class="btn btn-primary" onclick="submitContract()">Submit</button>
+          </div>`;
+      }
+    }
+
+    function switchToEditMode() {
+      /* Restore create-mode UI while keeping the filled form values */
+      const titleEl   = document.querySelector('#createContractModal .dialog-title');
+      const actionsEl = document.querySelector('#createContractModal .dialog-header-actions');
+      const body      = document.querySelector('#createContractModal .dialog-body');
+      const footer    = document.getElementById('ccModalFooter');
+
+      titleEl.innerHTML = 'Create contract';
+      actionsEl.innerHTML = `
+        <button class="dialog-action-btn" title="Minimize"><i class="pi pi-minus"></i></button>
+        <button class="dialog-action-btn" title="Maximize"><i class="pi pi-window-maximize"></i></button>
+        <button class="dialog-action-btn dialog-close" onclick="closeDialog('createContractModal')" title="Close"><i class="pi pi-times"></i></button>`;
+      body.classList.remove('view-mode');
+      footer.innerHTML = `
+        <button class="btn btn-text btn-text-secondary" onclick="closeDialog('createContractModal')">Cancel</button>
+        <div class="dialog-footer-right">
+          <button class="btn btn-secondary" onclick="saveContractAsDraft()">Save as draft</button>
+          <button class="btn btn-primary" onclick="submitContract()">Submit</button>
+        </div>`;
+    }
+
+    function _fillContractForm(c) {
+      _setFieldVal('ccTaskType',             c.taskType    || 'Contract');
+      _setFieldVal('ccProjectSelect',        c.project     || '');
+      _setFieldVal('ccContractIdInput',      c.id          || '');
+      _setFieldVal('ccContractTypeSelect',   c.type        || '');
+      _setFieldVal('ccDescriptionInput',     c.description || '');
+      _setFieldVal('ccDetailedDesc',         c.detailedDesc       || '');
+      _setFieldVal('ccCurrencyId',           c.currencyId         || '');
+      _setFieldVal('ccExchangeRate',         c.exchangeRate       || '');
+      _setFieldVal('ccAgreementTypeId',      c.agreementTypeId    || '');
+      _setFieldVal('ccContractOption',       c.contractOption     || '');
+      _setFieldVal('ccPrimeContractId',      c.primeContractId    || '');
+      _setFieldVal('ccRefControlAccountId',  c.refControlAccountId|| '');
+      _setFieldVal('ccAlternateId',          c.alternateId        || '');
+      const chk = document.getElementById('ccCommitPayItems');
+      if (chk) chk.checked = !!c.commitPayItems;
+    }
+
+    function _setFieldVal(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.tagName === 'SELECT') {
+        /* try to match existing option by value or text */
+        let matched = false;
+        for (const opt of el.options) {
+          if (opt.value === value || opt.text === value) { el.value = opt.value; matched = true; break; }
+        }
+        if (!matched && value) {
+          el.add(new Option(value, value));
+          el.value = value;
+        }
+      } else {
+        el.value = value;
+      }
+    }
+
+    function closeContractView() {
+      closeDialog('createContractModal');
+      /* reset to create-mode UI after the dialog closes */
+      setTimeout(() => _setContractModalMode('create', null), 50);
+    }
+
+    function toggleCCSection(btn) {
+      const body = btn.nextElementSibling;
+      const isOpen = body.style.display !== 'none';
+      body.style.display = isOpen ? 'none' : '';
+      btn.classList.toggle('cc-acc-closed', isOpen);
+    }
+
+    function addPayItemRow() {
+      const tbody = document.getElementById('payItemsBody');
+      const idx = tbody.children.length + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="cc-col-num">${idx}</td>
+        <td><input class="cc-pay-cell-input" type="text" placeholder="Description" /></td>
+        <td><select class="cc-pay-cell-select"><option value=""></option></select></td>
+        <td><select class="cc-pay-cell-select"><option value=""></option></select></td>
+        <td><input class="cc-pay-cell-input" type="number" value="0" /></td>
+        <td><select class="cc-pay-cell-select"><option value=""></option></select></td>
+        <td><input class="cc-pay-cell-input" type="number" /></td>
+        <td><input class="cc-pay-cell-input" type="number" /></td>
+        <td><input class="cc-pay-cell-input" type="number" /></td>
+        <td><select class="cc-pay-cell-select"><option value=""></option></select></td>
+        <td><select class="cc-pay-cell-select"><option value=""></option></select></td>
+        <td><input class="cc-pay-cell-input" type="text" /></td>
+        <td><button class="cc-pay-remove-btn" onclick="removePayItemRow(this)" title="Remove"><i class="pi pi-times"></i></button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function removePayItemRow(btn) {
+      btn.closest('tr').remove();
+      document.querySelectorAll('#payItemsBody tr').forEach((tr, i) => {
+        tr.querySelector('.cc-col-num').textContent = i + 1;
+      });
+    }
+
+    /* ===== DELETE CONTRACT ===== */
+    function deleteContract(id) {
+      const idx = CONTRACTS.findIndex(c => c.id.toUpperCase() === id.toUpperCase());
+      if (idx === -1) return false;
+      CONTRACTS.splice(idx, 1);
+      renderContracts(CONTRACTS);
+      return true;
+    }
+
+    /* ===== DUPLICATE CONTRACT ===== */
+    function duplicateContract(id) {
+      const original = CONTRACTS.find(c => c.id.toUpperCase() === id.toUpperCase());
+      if (!original) return false;
+      const copy = Object.assign({}, original, {
+        id: 'CON-' + (_nextContractNum++),
+        createdOn: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        status: 'DRAFT',
+        description: 'Copy of ' + original.description,
+        origin: 'Manual'
+      });
+      CONTRACTS.splice(CONTRACTS.indexOf(original) + 1, 0, copy);
+      renderContracts(CONTRACTS);
+      return true;
+    }
+
+  </script>
+
+  <!-- ===== CREATE CONTRACT MODAL ===== -->
+  <div class="dialog-overlay" id="createContractModal">
+    <div class="dialog-panel dialog-panel-xl">
+
+      <!-- Header -->
+      <div class="dialog-header dialog-header-lg">
+        <div class="dialog-header-text">
+          <div class="dialog-title">Create contract</div>
+        </div>
+        <div class="dialog-header-actions">
+          <button class="dialog-action-btn" title="Minimize"><i class="pi pi-minus"></i></button>
+          <button class="dialog-action-btn" title="Maximize"><i class="pi pi-window-maximize"></i></button>
+          <button class="dialog-action-btn dialog-close" onclick="closeDialog('createContractModal')" title="Close"><i class="pi pi-times"></i></button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="dialog-body">
+
+        <!-- Task type + Projects -->
+        <div class="cc-row-2">
+          <div class="cc-field">
+            <label class="cc-label">Task type <span class="cc-req">*</span></label>
+            <div class="cc-select-wrap">
+              <select class="cc-select" id="ccTaskType"><option>Contract</option></select>
+            </div>
+          </div>
+          <div class="cc-field">
+            <label class="cc-label">Projects <span class="cc-req">*</span></label>
+            <div class="cc-select-wrap">
+              <select class="cc-select" id="ccProjectSelect"><option>Cisco Systems</option></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contract ID + Contract type -->
+        <div class="cc-row-2">
+          <div class="cc-field">
+            <label class="cc-label">Contract ID</label>
+            <input type="text" class="cc-input" id="ccContractIdInput" />
+          </div>
+          <div class="cc-field">
+            <label class="cc-label">Contract type <span class="cc-req">*</span></label>
+            <div class="cc-select-wrap">
+              <select class="cc-select" id="ccContractTypeSelect"><option value=""></option><option>NEC4</option><option>FIDIC</option></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="cc-field">
+          <label class="cc-label">Description <span class="cc-req">*</span></label>
+          <input type="text" class="cc-input" id="ccDescriptionInput" />
+        </div>
+
+        <!-- Detailed Description -->
+        <div class="cc-field">
+          <label class="cc-label">Detailed Description</label>
+          <textarea class="cc-textarea" id="ccDetailedDesc" placeholder="Full work scope..."></textarea>
+        </div>
+
+        <!-- Currency -->
+        <div class="cc-section-label">Currency</div>
+        <div class="cc-row-2">
+          <div class="cc-field">
+            <label class="cc-label">Currency ID <span class="cc-req">*</span></label>
+            <input type="text" class="cc-input" id="ccCurrencyId" />
+          </div>
+          <div class="cc-field">
+            <label class="cc-label">Exchange Rate</label>
+            <input type="text" class="cc-input" id="ccExchangeRate" />
+          </div>
+        </div>
+
+        <!-- References -->
+        <div class="cc-section-label">References</div>
+        <div class="cc-row-2">
+          <div class="cc-field">
+            <label class="cc-label">Agreement Type ID</label>
+            <input type="text" class="cc-input" id="ccAgreementTypeId" />
+          </div>
+          <div class="cc-field">
+            <label class="cc-label">Contract Option</label>
+            <input type="text" class="cc-input" id="ccContractOption" />
+          </div>
+        </div>
+        <div class="cc-row-2">
+          <div class="cc-field">
+            <label class="cc-label">Prime Contract ID</label>
+            <input type="text" class="cc-input" id="ccPrimeContractId" />
+          </div>
+          <div class="cc-field">
+            <label class="cc-label">Control Account ID</label>
+            <input type="text" class="cc-input" id="ccRefControlAccountId" />
+          </div>
+        </div>
+        <div class="cc-row-2">
+          <div class="cc-field">
+            <label class="cc-label">Alternate ID</label>
+            <input type="text" class="cc-input" id="ccAlternateId" />
+          </div>
+          <div class="cc-field cc-field-vcenter">
+            <label class="cc-checkbox-wrap">
+              <input type="checkbox" class="cc-checkbox-input" id="ccCommitPayItems" />
+              <span class="cc-checkbox-box"></span>
+              <span class="cc-checkbox-label">Commit Pay Items to Control Account</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ── Contractor accordion ── -->
+        <div class="cc-accordion">
+          <button class="cc-accordion-header" onclick="toggleCCSection(this)">
+            <i class="pi pi-chevron-down cc-acc-chevron"></i>
+            Contractor (Contact info, internal assignment, financial limits and portal access)
+          </button>
+          <div class="cc-accordion-body">
+            <div class="cc-subsection-label" style="margin-top:0">Contractor Information</div>
+
+            <div class="cc-radio-group">
+              <label class="cc-radio-wrap">
+                <input type="radio" name="cc-contractor-type" value="existing" checked />
+                <span class="cc-radio-dot"></span>
+                Existing contractor
+              </label>
+              <label class="cc-radio-wrap">
+                <input type="radio" name="cc-contractor-type" value="new" />
+                <span class="cc-radio-dot"></span>
+                New contractor
+              </label>
+            </div>
+
+            <div class="cc-field">
+              <label class="cc-label">Contact Name <span class="cc-req">*</span></label>
+              <div class="cc-select-wrap">
+                <select class="cc-select"><option>Simon Medley</option></select>
+              </div>
+            </div>
+            <div class="cc-field">
+              <label class="cc-label">Tax ID</label>
+              <input type="text" class="cc-input" />
+            </div>
+            <div class="cc-field">
+              <label class="cc-label">Address</label>
+              <input type="text" class="cc-input cc-input-readonly" value="405 Avenue, Calgary, Alberta, T2P 3G9" readonly />
+            </div>
+            <div class="cc-row-2">
+              <div class="cc-field">
+                <label class="cc-label">Telephone</label>
+                <input type="text" class="cc-input cc-input-readonly" value="--" readonly />
+              </div>
+              <div class="cc-field">
+                <label class="cc-label">Business Class</label>
+                <input type="text" class="cc-input cc-input-readonly" value="Details" readonly />
+              </div>
+            </div>
+            <div class="cc-row-2">
+              <div class="cc-field">
+                <label class="cc-label">Email <span class="cc-req">*</span></label>
+                <input type="text" class="cc-input cc-input-readonly" value="msimon@domain.com" readonly />
+              </div>
+              <div class="cc-field">
+                <label class="cc-label">Fax</label>
+                <input type="text" class="cc-input cc-input-readonly" value="--" readonly />
+              </div>
+            </div>
+
+            <div class="cc-subsection-label">Internal assignment</div>
+            <div class="cc-row-2">
+              <div class="cc-field">
+                <label class="cc-label">Administrator Initials</label>
+                <input type="text" class="cc-input cc-input-readonly" value="LB" readonly />
+              </div>
+              <div class="cc-field">
+                <label class="cc-label">Engineer Initials</label>
+                <input type="text" class="cc-input cc-input-readonly" value="EDO" readonly />
+              </div>
+            </div>
+            <div class="cc-row-2">
+              <div class="cc-field">
+                <label class="cc-label">Contractor User ID</label>
+                <input type="text" class="cc-input cc-input-readonly" value="ARE11-USERNAME" readonly />
+              </div>
+              <div class="cc-field">
+                <label class="cc-label">Administrator User ID</label>
+                <input type="text" class="cc-input cc-input-readonly" value="ARE11-USERNAME" readonly />
+              </div>
+            </div>
+            <label class="cc-checkbox-wrap" style="margin-bottom:16px;display:flex">
+              <input type="checkbox" class="cc-checkbox-input" />
+              <span class="cc-checkbox-box"></span>
+              <span class="cc-checkbox-label">Add user permission to contractor portal</span>
+            </label>
+
+            <div class="cc-subsection-label">Other Information</div>
+            <div class="cc-row-2">
+              <div class="cc-field">
+                <label class="cc-label">Cost Change Ceiling</label>
+                <input type="text" class="cc-input cc-input-readonly" value="--" readonly />
+              </div>
+              <div class="cc-field">
+                <label class="cc-label">Cost Ceiling</label>
+                <input type="text" class="cc-input cc-input-readonly" value="--" readonly />
+              </div>
+            </div>
+            <div class="cc-row-2">
+              <div class="cc-field">
+                <label class="cc-label">Remaining Ceiling</label>
+                <input type="text" class="cc-input cc-input-readonly" value="--" readonly />
+              </div>
+              <div class="cc-field">
+                <label class="cc-label">Current Ceiling</label>
+                <input type="text" class="cc-input cc-input-readonly" value="--" readonly />
+              </div>
+            </div>
+            <label class="cc-checkbox-wrap" style="display:flex">
+              <input type="checkbox" class="cc-checkbox-input" />
+              <span class="cc-checkbox-box"></span>
+              <span class="cc-checkbox-label">Allow Progress Claim</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ── Pay Items accordion ── -->
+        <div class="cc-accordion">
+          <button class="cc-accordion-header" onclick="toggleCCSection(this)">
+            <i class="pi pi-chevron-down cc-acc-chevron"></i>
+            Pay Items (Scope line items with quantities, hours and pricing)
+          </button>
+          <div class="cc-accordion-body" style="padding-left:12px;padding-right:12px">
+            <div class="cc-pay-table-wrap">
+              <table class="cc-pay-table">
+                <thead>
+                  <tr>
+                    <th class="cc-col-num">#</th>
+                    <th style="min-width:110px">Pay item description</th>
+                    <th style="min-width:80px">Quantity unit</th>
+                    <th style="min-width:80px">Qty element ID</th>
+                    <th style="min-width:70px">Original quantity</th>
+                    <th style="min-width:80px">Hours element ID</th>
+                    <th style="min-width:60px">Hours rate</th>
+                    <th style="min-width:70px">Original hours</th>
+                    <th style="min-width:70px">Unit price</th>
+                    <th style="min-width:70px">Price unit</th>
+                    <th style="min-width:70px">Price type</th>
+                    <th style="min-width:120px">Control account ID</th>
+                    <th style="width:30px"></th>
+                  </tr>
+                </thead>
+                <tbody id="payItemsBody"></tbody>
+              </table>
+            </div>
+            <button class="cc-add-row-btn" onclick="addPayItemRow()">
+              <i class="pi pi-plus"></i> Add
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Payment work accordion ── -->
+        <div class="cc-accordion">
+          <button class="cc-accordion-header" onclick="toggleCCSection(this)">
+            <i class="pi pi-chevron-down cc-acc-chevron"></i>
+            Payment work (Payment details and work schedule)
+          </button>
+          <div class="cc-accordion-body">
+            <div class="cc-payment-grid">
+              <!-- Left column -->
+              <div>
+                <div class="cc-subsection-label" style="margin-top:0">Other Information</div>
+                <div class="cc-field">
+                  <label class="cc-label">Price Type</label>
+                  <div class="cc-select-wrap">
+                    <select class="cc-select"><option value="">Select...</option></select>
+                  </div>
+                </div>
+                <div class="cc-field">
+                  <label class="cc-label">Payment Terms ID</label>
+                  <div class="cc-select-wrap">
+                    <select class="cc-select"><option value="">Select...</option></select>
+                  </div>
+                </div>
+                <div class="cc-field">
+                  <label class="cc-label">Advance Payment Percent</label>
+                  <input type="number" class="cc-input" value="0" />
+                </div>
+                <div class="cc-field">
+                  <label class="cc-label">Advance Payment Recovery Percent</label>
+                  <input type="number" class="cc-input" value="0" />
+                </div>
+                <div class="cc-field">
+                  <label class="cc-label">Retention Percent</label>
+                  <input type="number" class="cc-input" value="0" />
+                </div>
+                <div class="cc-field">
+                  <label class="cc-label">Reference Date</label>
+                  <div class="cc-select-wrap">
+                    <select class="cc-select"><option value="">Select...</option></select>
+                  </div>
+                </div>
+              </div>
+              <!-- Right column -->
+              <div>
+                <div class="cc-subsection-label" style="margin-top:0">Other Information</div>
+                <table class="cc-schedule-table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>Planned</th>
+                      <th>Forecast</th>
+                      <th>Variance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="cc-sch-label">Completion Date</td>
+                      <td><input type="date" class="cc-input cc-input-sm" /></td>
+                      <td><input type="date" class="cc-input cc-input-sm" /></td>
+                      <td>
+                        <label class="cc-checkbox-wrap">
+                          <input type="checkbox" class="cc-checkbox-input" />
+                          <span class="cc-checkbox-box"></span>
+                          <span class="cc-checkbox-label" style="font-size:12px">Actual</span>
+                        </label>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="cc-sch-label">Duration</td>
+                      <td><input type="number" class="cc-input cc-input-sm" /></td>
+                      <td><input type="number" class="cc-input cc-input-sm" /></td>
+                      <td><input type="number" class="cc-input cc-input-sm" /></td>
+                    </tr>
+                    <tr>
+                      <td class="cc-sch-label">Work Days</td>
+                      <td><input type="number" class="cc-input cc-input-sm" /></td>
+                      <td><input type="number" class="cc-input cc-input-sm" /></td>
+                      <td><input type="number" class="cc-input cc-input-sm" /></td>
+                    </tr>
+                    <tr>
+                      <td class="cc-sch-label">Non-work Days</td>
+                      <td><input type="number" class="cc-input cc-input-sm" /></td>
+                      <td><input type="number" class="cc-input cc-input-sm" /></td>
+                      <td><input type="number" class="cc-input cc-input-sm" /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Attachments accordion ── -->
+        <div class="cc-accordion" style="margin-bottom:0">
+          <button class="cc-accordion-header" onclick="toggleCCSection(this)">
+            <i class="pi pi-chevron-down cc-acc-chevron"></i>
+            Attachments
+          </button>
+          <div class="cc-accordion-body">
+            <div class="cc-att-header">
+              <span>File name</span>
+              <span>Size</span>
+            </div>
+            <div class="cc-dropzone">
+              <i class="pi pi-cloud-upload cc-dropzone-icon"></i>
+              Drop files to attach, or <a href="#" class="cc-browse-link" onclick="return false">browse</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /dialog-body -->
+
+      <!-- Footer -->
+      <div class="dialog-footer" id="ccModalFooter">
+        <button class="btn btn-text btn-text-secondary" onclick="closeDialog('createContractModal')">Cancel</button>
+        <div class="dialog-footer-right">
+          <button class="btn btn-secondary" onclick="saveContractAsDraft()">Save as draft</button>
+          <button class="btn btn-primary" onclick="submitContract()">Submit</button>
+        </div>
+      </div>
+
+    </div><!-- /dialog-panel -->
+  </div><!-- /createContractModal -->
+
+
+</body>
+</html>

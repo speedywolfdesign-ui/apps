@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cisco Systems — Project Home — Contruent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <link rel="stylesheet" href="components/tokens.css" />
+  <link rel="stylesheet" href="components/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── AI Insights card ── */
+    .ai-insights-card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1.5px solid #ebe9fb;margin-bottom:20px;overflow:hidden}
+    .ai-insights-header{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-bottom:1px solid #f0effe;background:linear-gradient(90deg,#f8f7ff 0%,#fff 60%)}
+    .ai-insights-title{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:#1e293b}
+    .ai-insights-title-icon{width:28px;height:28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .ai-insights-badge{font-size:11px;color:#6366f1;background:#eef2ff;padding:2px 9px;border-radius:20px;font-weight:500}
+    .ai-insights-refresh-btn{background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;border-radius:6px;line-height:1;transition:color .15s}
+    .ai-insights-refresh-btn:hover{color:#6366f1}
+    .ai-insights-loading{padding:28px 20px;display:flex;align-items:center;justify-content:center;gap:10px;color:#94a3b8;font-size:13px}
+    .ai-insights-tiles{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #f4f4f8}
+    .ai-insight-tile{padding:18px 20px;border-right:1px solid #f4f4f8;opacity:0;transition:opacity .35s}
+    .ai-insight-tile:last-child{border-right:none}
+    .ai-insight-tile.revealed{opacity:1}
+    .ai-tile-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .ai-tile-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+    .ai-tile-label{font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em}
+    .ai-tile-value{font-size:20px;font-weight:700;line-height:1.15;margin-bottom:5px}
+    .ai-tile-detail{font-size:12px;color:#64748b;line-height:1.5}
+    .ai-tile-detail strong{color:#334155}
+    .ai-tile-critical .ai-tile-icon{background:#fef2f2;color:#e31b0c}
+    .ai-tile-critical .ai-tile-value{color:#e31b0c}
+    .ai-tile-good     .ai-tile-icon{background:#f0fdf4;color:#16a34a}
+    .ai-tile-good     .ai-tile-value{color:#16a34a}
+    .ai-tile-warning  .ai-tile-icon{background:#fffbeb;color:#d97706}
+    .ai-tile-warning  .ai-tile-value{color:#b45309}
+    .ai-tile-info     .ai-tile-icon{background:#eef2ff;color:#6366f1}
+    .ai-tile-info     .ai-tile-value{font-size:13px;font-weight:600;color:#1e293b}
+    .ai-insights-footer{padding:11px 20px;border-top:1px solid #f0effe;display:flex;align-items:center;justify-content:space-between;background:#fafbff}
+    .ai-insights-ask-btn{display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .15s}
+    .ai-insights-ask-btn:hover{opacity:.9}
+    @keyframes ai-tile-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+
+  <div id="top-nav-mount"></div>
+  <div id="left-nav-mount"></div>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="proj-content">
+
+    <!-- Breadcrumb + Owner view -->
+    <div class="page-top-row">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="home.html">Home</a>
+        <span class="bc-sep">/</span>
+        <a href="projects.html">Projects</a>
+        <span class="bc-sep">/</span>
+        <span data-proj="name">Cisco Systems</span>
+        <span class="bc-sep">/</span>
+      </nav>
+      <button class="owner-view-btn" aria-label="Switch view">
+        <div class="owner-avatar">JP</div>
+        Owner view
+        <i class="pi pi-chevron-down"></i>
+      </button>
+    </div>
+
+    <!-- Page title -->
+    <h1 class="page-title">Home</h1>
+
+    <!-- ===== PERFORMANCE CARD ===== -->
+    <div class="perf-card">
+      <div class="perf-card-header">
+        <div class="perf-card-title-row">
+          <h2>Performance</h2>
+          <span class="perf-card-date">to Aug 16, 2024</span>
+          <span class="perf-card-unit">All values are in USD</span>
+        </div>
+        <div class="perf-card-right">
+          <span class="live-label">Viewing live data</span>
+          <a class="projects-link" href="projects.html">from 6 projects</a>
+        </div>
+      </div>
+
+      <div class="perf-banner">
+        <i class="pi pi-info-circle"></i>
+        <span>To view project performance, please run the calculate totals process in <a href="#">Control Center</a>.</span>
+      </div>
+
+      <div class="perf-body">
+        <!-- Gauges -->
+        <div class="perf-gauges">
+          <!-- SPI — arc length π×80≈251; 1.23/1.50=82% → 206 -->
+          <div>
+            <div class="gauge-section-title">SPI</div>
+            <div class="gauge-section-sub">Schedule performance indicator</div>
+            <svg class="gauge-svg" viewBox="0 0 200 128" aria-hidden="true">
+              <path d="M 20 108 A 80 80 0 0 1 180 108" fill="none" stroke="#e5e5e5" stroke-width="18" stroke-linecap="round"/>
+              <path d="M 20 108 A 80 80 0 0 1 180 108" fill="none" stroke="#3f9242" stroke-width="18" stroke-linecap="round" stroke-dasharray="206 350"/>
+              <text x="100" y="97" text-anchor="middle" font-size="30" font-weight="700" fill="#3f9242" font-family="Inter,sans-serif">1.23</text>
+              <text x="14"  y="124" text-anchor="middle" font-size="13" fill="#9e9e9e" font-family="Inter,sans-serif">0.00</text>
+              <text x="186" y="124" text-anchor="middle" font-size="13" fill="#9e9e9e" font-family="Inter,sans-serif">1.50</text>
+            </svg>
+            <div class="gauge-change up">
+              <span class="gauge-change-icon up"><i class="pi pi-arrow-up"></i></span>
+              Up from 1.2
+            </div>
+          </div>
+
+          <!-- CPI — 0.52/1.50=34.7% → 87 -->
+          <div>
+            <div class="gauge-section-title">CPI</div>
+            <div class="gauge-section-sub">Cost performance indicator</div>
+            <svg class="gauge-svg" viewBox="0 0 200 128" aria-hidden="true">
+              <path d="M 20 108 A 80 80 0 0 1 180 108" fill="none" stroke="#e5e5e5" stroke-width="18" stroke-linecap="round"/>
+              <path d="M 20 108 A 80 80 0 0 1 180 108" fill="none" stroke="#e31b0c" stroke-width="18" stroke-linecap="round" stroke-dasharray="87 350"/>
+              <text x="100" y="97" text-anchor="middle" font-size="30" font-weight="700" fill="#e31b0c" font-family="Inter,sans-serif">0.52</text>
+              <text x="14"  y="124" text-anchor="middle" font-size="13" fill="#9e9e9e" font-family="Inter,sans-serif">0.00</text>
+              <text x="186" y="124" text-anchor="middle" font-size="13" fill="#9e9e9e" font-family="Inter,sans-serif">1.50</text>
+            </svg>
+            <div class="gauge-change neutral">
+              <span class="gauge-change-icon neutral"><i class="pi pi-minus"></i></span>
+              No change
+            </div>
+          </div>
+        </div>
+
+        <!-- S-Curve -->
+        <div class="perf-chart">
+          <div class="chart-header">
+            <span class="chart-title">S-Curve</span>
+            <i class="pi pi-info-circle" style="font-size:11px;color:var(--default-text-secondary)"></i>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-swatch" style="background:#1e2a5c"></span>Baseline</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#1a4a9f"></span>Approved</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#6b7280"></span>Control</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#94a3b8"></span>Financial</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#7dd3fc"></span>Earned</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#0284c7"></span>Actuals</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#16a34a"></span>Incurred</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#15803d"></span>Commitment</span>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="sCurveChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metrics grid -->
+      <div class="perf-metrics">
+        <div class="metric-cell">
+          <div class="metric-label">Approved budget</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Actual to date</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Total committed</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Estimate at completion</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Planned completion date</div>
+          <div class="metric-value metric-value-date">Dec 21, 2026</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Budget to date</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Earned to date</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Estimate to complete</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Previous estimate at completion</div>
+          <div class="metric-value">$43.7M</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">Forecast completion date</div>
+          <div class="metric-value metric-value-date">Dec 29, 2026</div>
+          <div class="metric-delta"><i class="pi pi-arrow-up"></i> $300K (.76%)</div>
+        </div>
+      </div>
+    </div><!-- /perf-card -->
+
+    <!-- ===== AI INSIGHTS CARD ===== -->
+    <div class="ai-insights-card" id="aiInsightsCard">
+
+      <div class="ai-insights-header">
+        <div class="ai-insights-title">
+          <span class="ai-insights-title-icon">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1L9.5 5.5L14 7L9.5 8.5L8 13L6.5 8.5L2 7L6.5 5.5L8 1Z" fill="white"/>
+              <path d="M13 1L13.75 3.25L16 4L13.75 4.75L13 7L12.25 4.75L10 4L12.25 3.25L13 1Z" fill="white" opacity="0.7"/>
+            </svg>
+          </span>
+          AI Insights
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="ai-insights-badge">Generated from live data</span>
+          <button class="ai-insights-refresh-btn" onclick="refreshAiInsights()" title="Refresh">
+            <i class="pi pi-refresh" id="aiRefreshIcon" style="font-size:13px"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div class="ai-insights-loading" id="aiInsightsLoading">
+        <i class="pi pi-spin pi-spinner" style="color:#6366f1;font-size:14px"></i>
+        Analyzing project data…
+      </div>
+
+      <!-- Tiles (revealed after "analysis") -->
+      <div class="ai-insights-tiles" id="aiInsightsTiles" style="display:none">
+
+        <div class="ai-insight-tile ai-tile-critical">
+          <div class="ai-tile-top">
+            <div class="ai-tile-icon"><i class="pi pi-exclamation-triangle"></i></div>
+            <div class="ai-tile-label">Cost Overrun Risk</div>
+          </div>
+          <div class="ai-tile-value">HIGH</div>
+          <div class="ai-tile-detail">
+            CPI <strong>0.52</strong> — $1.92 spent per $1.00 budgeted<br>
+            EAC: <strong>$84.0M</strong> vs $43.7M approved (+92%)
+          </div>
+        </div>
+
+        <div class="ai-insight-tile ai-tile-good">
+          <div class="ai-tile-top">
+            <div class="ai-tile-icon"><i class="pi pi-check-circle"></i></div>
+            <div class="ai-tile-label">Schedule Performance</div>
+          </div>
+          <div class="ai-tile-value">ON TRACK</div>
+          <div class="ai-tile-detail">
+            SPI <strong>1.23</strong> — 23% ahead of schedule<br>
+            Earning more value than planned
+          </div>
+        </div>
+
+        <div class="ai-insight-tile ai-tile-warning">
+          <div class="ai-tile-top">
+            <div class="ai-tile-icon"><i class="pi pi-calendar"></i></div>
+            <div class="ai-tile-label">Forecast Completion</div>
+          </div>
+          <div class="ai-tile-value">Dec 29, 2026</div>
+          <div class="ai-tile-detail">
+            8 days after planned date<br>
+            Planned: <strong>Dec 21, 2026</strong>
+          </div>
+        </div>
+
+        <div class="ai-insight-tile ai-tile-info">
+          <div class="ai-tile-top">
+            <div class="ai-tile-icon"><i class="pi pi-lightbulb"></i></div>
+            <div class="ai-tile-label">AI Recommendation</div>
+          </div>
+          <div class="ai-tile-value">Investigate Cost Variance</div>
+          <div class="ai-tile-detail">
+            CPI below 0.6 signals critical overrun. Review cost categories urgently. Schedule buffer provides partial offset.
+          </div>
+        </div>
+
+      </div><!-- /tiles -->
+
+      <div class="ai-insights-footer" id="aiInsightsFooter" style="display:none">
+        <span style="font-size:12px;color:#94a3b8">Based on data to Aug 16, 2024 &bull; 6 projects</span>
+        <button class="ai-insights-ask-btn" onclick="openAiPanel(); window._aiAskForecast && _aiAskForecast()">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1L9.5 5.5L14 7L9.5 8.5L8 13L6.5 8.5L2 7L6.5 5.5L8 1Z" fill="white"/>
+          </svg>
+          Ask AI for details
+        </button>
+      </div>
+
+    </div><!-- /aiInsightsCard -->
+
+    <!-- ===== BOTTOM 2-COL ===== -->
+    <div class="proj-bottom">
+
+      <!-- Project information -->
+      <div class="info-card">
+        <div class="card-head">
+          <h3>Project information</h3>
+        </div>
+        <div class="proj-info-body">
+          <div class="proj-info-row">
+            <span class="proj-info-label">ID</span>
+            <span class="proj-info-divider"></span>
+            <span class="proj-info-value" style="color:var(--default-text-secondary)" data-proj="id">0128-0919-0001</span>
+          </div>
+          <div class="proj-info-row">
+            <span class="proj-info-label">Manager</span>
+            <span class="proj-info-divider"></span>
+            <span class="proj-info-value">
+              <span class="mgr-avatar">IM</span>
+              Iara Moran
+            </span>
+          </div>
+          <div class="proj-info-row">
+            <span class="proj-info-label">Scope</span>
+            <span class="proj-info-divider"></span>
+            <span class="proj-info-value" style="color:var(--default-text-secondary)">Project scope</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- My actions -->
+      <div class="actions-card">
+        <div class="card-head">
+          <h3>My actions</h3>
+          <a class="view-all-link" href="#">View all</a>
+        </div>
+        <div class="actions-body">
+          <div class="action-item">
+            <i class="pi pi-flag action-flag"></i>
+            <div class="action-info">
+              <div class="action-name">Action name</div>
+              <div class="action-sub">Change order &bull; A9128391</div>
+            </div>
+            <div class="action-right">
+              <span class="action-id">P9819...8101</span>
+              <span class="action-tag tag-approval">FOR APPROVAL</span>
+            </div>
+          </div>
+          <div class="action-item">
+            <i class="pi pi-flag action-flag"></i>
+            <div class="action-info">
+              <div class="action-name">Action name</div>
+              <div class="action-sub">Change order &bull; A9128391</div>
+            </div>
+            <div class="action-right">
+              <span class="action-id">P9819...8101</span>
+              <span class="action-tag tag-todo">TO DO</span>
+            </div>
+          </div>
+          <div class="action-item">
+            <i class="pi pi-flag action-flag"></i>
+            <div class="action-info">
+              <div class="action-name">Action name</div>
+              <div class="action-sub">Change order &bull; A9128391</div>
+            </div>
+            <div class="action-right">
+              <span class="action-id">P9819...8101</span>
+              <span class="action-tag tag-draft">DRAFT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /proj-bottom -->
+
+  </div><!-- /proj-content -->
+
+  <script src="components/top-nav.js"></script>
+  <script src="components/left-nav.js"></script>
+  <script src="components/ai-panel.js"></script>
+  <script src="components/script.js"></script>
+  <script>
+    renderTopNav({ activeItem: 'projects' });
+    renderLeftNav({ activeLink: 'project-home' });
+    applyProjectContext();
+
+    /* ── Project data (read by AI panel) ── */
+    window.PROJECT_DATA = {
+      spi: 1.23, cpi: 0.52,
+      approvedBudget: 43.7, eac: 84.0, costOverrun: 40.3,
+      plannedCompletion: 'Dec 21, 2026', forecastCompletion: 'Dec 29, 2026',
+      scheduleVarianceDays: -8, dataDate: 'Aug 16, 2024'
+    };
+
+    /* ── AI Insights reveal animation ── */
+    function showAiInsights() {
+      var loading = document.getElementById('aiInsightsLoading');
+      var tiles   = document.getElementById('aiInsightsTiles');
+      var footer  = document.getElementById('aiInsightsFooter');
+      if (loading) loading.style.display = 'flex';
+      if (tiles)   { tiles.style.display = 'none'; tiles.querySelectorAll('.ai-insight-tile').forEach(function(t){ t.classList.remove('revealed'); }); }
+      if (footer)  footer.style.display = 'none';
+
+      setTimeout(function() {
+        if (loading) loading.style.display = 'none';
+        if (tiles) {
+          tiles.style.display = 'grid';
+          tiles.querySelectorAll('.ai-insight-tile').forEach(function(tile, i) {
+            setTimeout(function() { tile.classList.add('revealed'); }, i * 180);
+          });
+        }
+        setTimeout(function() { if (footer) footer.style.display = 'flex'; }, 800);
+      }, 1800);
+    }
+
+    function refreshAiInsights() {
+      var icon = document.getElementById('aiRefreshIcon');
+      if (icon) icon.classList.add('pi-spin');
+      setTimeout(function() {
+        if (icon) icon.classList.remove('pi-spin');
+        showAiInsights();
+      }, 400);
+    }
+
+    /* Bridge: "Ask AI for details" button auto-sends the forecast question */
+    window._aiAskForecast = function() {
+      setTimeout(function() {
+        var input = document.getElementById('aiInput');
+        if (input && typeof sendAiMessage === 'function') {
+          input.value = 'Show forecast data';
+          sendAiMessage();
+        }
+      }, 380);
+    };
+
+    /* Start insight animation on load */
+    showAiInsights();
+
+    /* ===== S-CURVE CHART ===== */
+    (function () {
+      const labels = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const datasets = [
+        { label: 'Baseline',    data: [232,238,231,237,232,235,237,233,237,232,234,238], backgroundColor: '#1e2a5c', barPercentage: 0.85, categoryPercentage: 0.85, order: 2 },
+        { label: 'Approved',    data: [218,223,217,222,218,220,222,218,222,218,220,223], backgroundColor: '#1a4a9f', barPercentage: 0.85, categoryPercentage: 0.85, order: 2 },
+        { label: 'Control',     data: [0,0,0,0,0,0,0,0,0,0,0,0],                        backgroundColor: '#6b7280', barPercentage: 0.85, categoryPercentage: 0.85, order: 2 },
+        { label: 'Financial',   data: [165,167,164,167,165,166,167,165,167,165,166,167], backgroundColor: '#94a3b8', barPercentage: 0.85, categoryPercentage: 0.85, order: 2 },
+        { label: 'Earned',      data: [162,164,162,164,161,163,164,162,164,162,163,164], backgroundColor: '#7dd3fc', barPercentage: 0.85, categoryPercentage: 0.85, order: 2 },
+        { label: 'Actuals',     data: [130,133,130,132,130,131,133,null,null,null,null,null], backgroundColor: '#0284c7', barPercentage: 0.85, categoryPercentage: 0.85, order: 2 },
+        { label: 'Incurred',    data: [127,130,127,129,127,128,130,null,null,null,null,null], backgroundColor: '#16a34a', barPercentage: 0.85, categoryPercentage: 0.85, order: 2 },
+        { label: 'Commitment',  data: [124,127,124,126,124,125,127,null,null,null,null,null], backgroundColor: '#15803d', barPercentage: 0.85, categoryPercentage: 0.85, order: 2 },
+        { type: 'line', label: '_scurve',      data: [40,62,83,105,128,150,168,null,null,null,null,null], borderColor: '#1a1a2e', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: '_projection',  data: [null,null,null,null,null,null,168,182,194,205,216,226], borderColor: '#1a1a2e', borderWidth: 1.5, borderDash: [5,4], pointRadius: (ctx) => ctx.dataIndex === 11 ? 5 : 0, pointBackgroundColor: '#fff', pointBorderColor: '#1a1a2e', pointBorderWidth: 1.5, fill: false, tension: 0.45, order: 1 },
+      ];
+      const verticalLinePlugin = {
+        id: 'currentPeriodLine',
+        afterDatasetsDraw(chart) {
+          const { ctx, scales: { x, y } } = chart;
+          const xPos = x.getPixelForValue(6);
+          ctx.save();
+          ctx.beginPath(); ctx.moveTo(xPos, y.top); ctx.lineTo(xPos, y.bottom);
+          ctx.strokeStyle = '#e31b0c'; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(xPos-5, y.bottom); ctx.lineTo(xPos+5, y.bottom); ctx.lineTo(xPos, y.bottom-7);
+          ctx.closePath(); ctx.fillStyle = '#e31b0c'; ctx.fill();
+          ctx.restore();
+        }
+      };
+      new Chart(document.getElementById('sCurveChart').getContext('2d'), {
+        type: 'bar', data: { labels, datasets }, plugins: [verticalLinePlugin],
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              filter: (i) => !i.dataset.label.startsWith('_'),
+              callbacks: { label: (ctx) => ctx.raw === null ? null : ` ${ctx.dataset.label}: $${ctx.raw}M` }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#616161' } },
+            y: { position: 'left', min: 0, max: 260, grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 }, color: '#616161', callback: (v) => v === 0 ? '0' : '$'+v+'M', stepSize: 50 } }
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,785 @@
+/*
+ * =====================================================================
+ * CONTRUENT DESIGN SYSTEM — TOKENS
+ * Source: contruent-frontend/packages/design/tailwind.config.cjs
+ * =====================================================================
+ */
+
+:root {
+
+  /* ------------------------------------------------------------------ */
+  /* SPACING                                                              */
+  /* ------------------------------------------------------------------ */
+  --space-none:   0px;
+  --space-half:   2px;
+  --space-1half:  6px;
+  --space-2half:  10px;
+  --space-1:      4px;
+  --space-2:      8px;
+  --space-3:      12px;
+  --space-4:      16px;
+  --space-6:      24px;
+  --space-8:      32px;
+  --space-10:     40px;
+  --space-12:     48px;
+  --space-14:     56px;
+  --space-16:     64px;
+  --space-20:     80px;
+  --space-24:     96px;
+  --space-32:     128px;
+  --space-40:     160px;
+  --space-48:     192px;
+
+  /* ------------------------------------------------------------------ */
+  /* BORDER RADIUS                                                        */
+  /* ------------------------------------------------------------------ */
+  --radius-none:  0px;
+  --radius-sm:    2px;
+  --radius:       4px;
+  --radius-md:    6px;
+  --radius-lg:    8px;
+  --radius-xl:    12px;
+  --radius-2xl:   16px;
+  --radius-3xl:   24px;
+  --radius-full:  9999px;
+
+  /* ------------------------------------------------------------------ */
+  /* BORDER WIDTH                                                         */
+  /* ------------------------------------------------------------------ */
+  --border-none:  0px;
+  --border-1:     1px;
+  --border-2:     2px;
+  --border-3:     3px;
+  --border-4:     4px;
+
+  /* ------------------------------------------------------------------ */
+  /* BREAKPOINTS                                                          */
+  /* ------------------------------------------------------------------ */
+  --screen-sm:    375px;
+  --screen-md:    768px;
+  --screen-lg:    1024px;
+  --screen-xl:    1280px;
+  --screen-2xl:   1536px;
+
+  /* ------------------------------------------------------------------ */
+  /* COLOR PALETTES — RAW                                                 */
+  /* ------------------------------------------------------------------ */
+
+  /* Black / White */
+  --color-black:  #000000;
+  --color-white:  #ffffff;
+
+  /* Primary (Blue) */
+  --primary-0:    #ffffff;
+  --primary-50:   #eef3fb;
+  --primary-100:  #e6edf9;
+  --primary-200:  #c1d3f1;
+  --primary-300:  #97b6e7;
+  --primary-400:  #5b8cda;
+  --primary-500:  #326fd1;
+  --primary-600:  #2859a7;
+  --primary-700:  #1e437d;
+  --primary-800:  #193868;
+  --primary-900:  #142c54;
+  --primary-950:  #0f2343;
+
+  /* Blue */
+  --blue-50:      #eef3fb;
+  --blue-100:     #e6edf9;
+  --blue-200:     #c1d3f1;
+  --blue-300:     #97b6e7;
+  --blue-400:     #5b8cda;
+  --blue-500:     #326fd1;
+  --blue-600:     #2859a7;
+  --blue-700:     #1e437d;
+  --blue-800:     #193868;
+  --blue-900:     #142c54;
+  --blue-950:     #0f2343;
+
+  /* Surface (Neutral) */
+  --surface-0:    #ffffff;
+  --surface-50:   #fafafa;
+  --surface-100:  #f5f5f5;
+  --surface-200:  #e5e5e5;
+  --surface-300:  #d4d4d4;
+  --surface-400:  #bdbdbd;
+  --surface-500:  #737373;
+  --surface-600:  #616161;
+  --surface-700:  #4f4f4f;
+  --surface-800:  #3d3d3d;
+  --surface-900:  #2b2b2b;
+  --surface-950:  #212121;
+
+  /* Text (mirrors Surface) */
+  --text-0:       #ffffff;
+  --text-50:      #fafafa;
+  --text-100:     #f5f5f5;
+  --text-200:     #e5e5e5;
+  --text-300:     #d4d4d4;
+  --text-400:     #bdbdbd;
+  --text-500:     #737373;
+  --text-600:     #616161;
+  --text-700:     #4f4f4f;
+  --text-800:     #3d3d3d;
+  --text-900:     #2b2b2b;
+  --text-950:     #212121;
+
+  /* Neutral */
+  --neutral-50:   #fafafa;
+  --neutral-100:  #f5f5f5;
+  --neutral-200:  #e5e5e5;
+  --neutral-300:  #d4d4d4;
+  --neutral-400:  #bdbdbd;
+  --neutral-500:  #737373;
+  --neutral-600:  #616161;
+  --neutral-700:  #4f4f4f;
+  --neutral-800:  #3d3d3d;
+  --neutral-900:  #2b2b2b;
+  --neutral-950:  #212121;
+
+  /* Green */
+  --green-50:     #edf7ee;
+  --green-100:    #dbf0dc;
+  --green-200:    #b8e0b9;
+  --green-300:    #94d196;
+  --green-400:    #6dc070;
+  --green-500:    #4caf50;
+  --green-600:    #3f9242;
+  --green-700:    #357937;
+  --green-800:    #285c2a;
+  --green-900:    #1c401d;
+  --green-950:    #163217;
+
+  /* Red */
+  --red-50:       #feedec;
+  --red-100:      #fddbd8;
+  --red-200:      #fab2ad;
+  --red-300:      #f88e86;
+  --red-400:      #f66a5f;
+  --red-500:      #f44336;
+  --red-600:      #e31b0c;
+  --red-700:      #a91409;
+  --red-800:      #6f0d06;
+  --red-900:      #3a0703;
+  --red-950:      #1d0302;
+
+  /* Orange */
+  --orange-50:    #fff5e5;
+  --orange-100:   #ffebcc;
+  --orange-200:   #ffd699;
+  --orange-300:   #ffc266;
+  --orange-400:   #ffad33;
+  --orange-500:   #ff9800;
+  --orange-600:   #cc7a00;
+  --orange-700:   #995c00;
+  --orange-800:   #663d00;
+  --orange-900:   #331f00;
+  --orange-950:   #190f00;
+
+  /* Yellow */
+  --yellow-50:    #fefce8;
+  --yellow-100:   #fef9c3;
+  --yellow-200:   #fef08a;
+  --yellow-300:   #fde047;
+  --yellow-400:   #facc15;
+  --yellow-500:   #eab308;
+  --yellow-600:   #ca8a04;
+  --yellow-700:   #a16207;
+  --yellow-800:   #73430c;
+  --yellow-900:   #58310e;
+  --yellow-950:   #2f1e04;
+
+  /* Emerald */
+  --emerald-50:   #ecfdf5;
+  --emerald-100:  #d1fae5;
+  --emerald-200:  #a7f3d0;
+  --emerald-300:  #6ee7b7;
+  --emerald-400:  #34d399;
+  --emerald-500:  #10b981;
+  --emerald-600:  #059669;
+  --emerald-700:  #047857;
+  --emerald-800:  #065f46;
+  --emerald-900:  #064e3b;
+  --emerald-950:  #022c22;
+
+  /* Gray (Tailwind gray scale) */
+  --gray-50:      #f9fafb;
+  --gray-100:     #f3f4f6;
+  --gray-200:     #e5e7eb;
+  --gray-300:     #d1d5db;
+  --gray-400:     #9ca3af;
+  --gray-500:     #6b7280;
+  --gray-600:     #4b5563;
+  --gray-700:     #374151;
+  --gray-800:     #1f2937;
+  --gray-900:     #111827;
+  --gray-950:     #030712;
+
+  /* Slate */
+  --slate-50:     #f8fafc;
+  --slate-100:    #f1f5f9;
+  --slate-200:    #e2e8f0;
+  --slate-300:    #cbd5e1;
+  --slate-400:    #94a3b8;
+  --slate-500:    #64748b;
+  --slate-600:    #475569;
+  --slate-700:    #334155;
+  --slate-800:    #1e293b;
+  --slate-900:    #0f172a;
+  --slate-950:    #020617;
+
+  /* Light Blue */
+  --lightblue-100: #e6f6fe;
+  --lightblue-200: #9addfb;
+  --lightblue-300: #4fc3f7;
+  --lightblue-400: #03a9f4;
+  --lightblue-500: #0276ab;
+  --lightblue-600: #014462;
+
+  /* Teal */
+  --teal-100:     #e5f4f3;
+  --teal-200:     #99d5cf;
+  --teal-300:     #4cb5ac;
+  --teal-400:     #009688;
+  --teal-500:     #00695f;
+  --teal-600:     #003c36;
+
+  /* Indigo */
+  --indigo-100:   #eceef8;
+  --indigo-200:   #b2b9e1;
+  --indigo-300:   #7985cb;
+  --indigo-400:   #3f51b5;
+  --indigo-500:   #2c397f;
+  --indigo-600:   #192048;
+
+  /* Deep Purple */
+  --deep-purple-100: #f0ebf8;
+  --deep-purple-200: #c2b0e2;
+  --deep-purple-300: #9575cd;
+  --deep-purple-400: #673ab7;
+  --deep-purple-500: #482980;
+  --deep-purple-600: #291749;
+
+  /* Blue Grey */
+  --blue-grey-100: #eff2f3;
+  --blue-grey-200: #bfcbd1;
+  --blue-grey-300: #90a4ae;
+  --blue-grey-400: #607d8b;
+  --blue-grey-500: #435861;
+  --blue-grey-600: #263238;
+
+  /* Deep Grey */
+  --deep-grey-100: #ebedee;
+  --deep-grey-200: #aeb6b9;
+  --deep-grey-300: #727f85;
+  --deep-grey-400: #354851;
+  --deep-grey-500: #253239;
+  --deep-grey-600: #151d20;
+
+  /* ------------------------------------------------------------------ */
+  /* SEMANTIC TOKENS — BRAND                                              */
+  /* ------------------------------------------------------------------ */
+  --brand-primary:          #326fd1;
+  --brand-surface:          #eef3fb;
+  --brand-fill:             #326fd1;
+  --brand-on-fill:          #ffffff;
+  --brand-text:             #193868;
+  --brand-surface-border:   #2859a7;
+  --brand-outline:          #e6edf9;
+  --brand-surface-hover:    #e6edf9;
+  --brand-fill-hover:       #2859a7;
+  --brand-logo-primary:     #24125f;
+  --brand-logo-secondary:   #f93822;
+
+  /* Logo colors */
+  --logo-blue:    #24125f;
+  --logo-red:     #f93822;
+
+  /* ------------------------------------------------------------------ */
+  /* SEMANTIC TOKENS — STATUS                                             */
+  /* ------------------------------------------------------------------ */
+
+  /* Danger */
+  --danger-surface:       #fddbd8;
+  --danger-text:          #a91409;
+  --danger-fill:          #e31b0c;
+  --danger-on-fill:       #ffffff;
+  --danger-fill-hover:    #a91409;
+  --danger-surface-hover: #f88e86;
+
+  /* Warning */
+  --warning-surface:       #ffebcc;
+  --warning-text:          #995c00;
+  --warning-fill:          #ff9800;
+  --warning-on-fill:       #ffffff;
+  --warning-surface-hover: #ffd699;
+  --warning-fill-hover:    #cc7a00;
+
+  /* Success */
+  --success-surface:       #dbf0dc;
+  --success-text:          #285c2a;
+  --success-fill:          #3f9242;
+  --success-on-fill:       #ffffff;
+  --success-surface-hover: #94d196;
+  --success-fill-hover:    #357937;
+
+  /* Info */
+  --info-text:             #193868;
+  --info-surface:          #eef3fb;
+  --info-fill:             #326fd1;
+  --info-on-fill:          #ffffff;
+  --info-surface-hover:    #c1d3f1;
+  --info-fill-hover:       #2859a7;
+
+  /* Help */
+  --help-surface:       #f0ebf8;
+  --help-surface-hover: #c2b0e2;
+  --help-text:          #291749;
+  --help-fill:          #673ab7;
+  --help-fill-hover:    #482980;
+  --help-on-fill:       #ffffff;
+
+  /* ------------------------------------------------------------------ */
+  /* SEMANTIC TOKENS — DEFAULT SURFACE                                   */
+  /* ------------------------------------------------------------------ */
+  --default-surface:                    #ffffff;
+  --default-surface-secondary:          #fafafa;
+  --default-surface-border:             #e5e5e5;
+  --default-surface-hover:              #fafafa;
+  --default-surface-secondary-border:   #bdbdbd;
+  --default-surface-border-hover:       #bdbdbd;
+  --default-surface-secondary-border-hover: #737373;
+  --default-surface-secondary-hover:    #e5e5e5;
+  --default-divider-color:              #e5e5e5;
+  --default-text:                       #212121;
+  --default-text-secondary:             #616161;
+  --default-link:                       #326fd1;
+  --default-link-active:                #2859a7;
+  --default-link-hover:                 #1e437d;
+  --default-fill:                       #4f4f4f;
+  --default-on-fill:                    #ffffff;
+  --default-link-secondary:             #616161;
+  --default-link-secondary-hover:       #4f4f4f;
+  --default-link-secondary-active:      #4f4f4f;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — ACCORDION                                         */
+  /* ------------------------------------------------------------------ */
+  --accordion-content-bg:               #ffffff;
+  --accordion-content-border:           #e5e5e5;
+  --accordion-content-color:            #101820;
+  --accordion-header-bg:                #ffffff;
+  --accordion-header-border:            #cfd1d2;
+  --accordion-header-color:             #101820;
+  --accordion-header-hover-bg:          #ffffff;
+  --accordion-header-hover-border:      #cfd1d2;
+  --accordion-header-hover-color:       #101820;
+  --accordion-header-active-bg:         #ffffff;
+  --accordion-header-active-border:     #cfd1d2;
+  --accordion-header-active-color:      #40464d;
+  --accordion-header-active-hover:      #40464d;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — BUTTON                                            */
+  /* ------------------------------------------------------------------ */
+  --btn-bg:                   #326fd1;
+  --btn-border:               #2859a7;
+  --btn-color:                #ffffff;
+  --btn-hover-bg:             #2859a7;
+  --btn-hover-border:         #193868;
+  --btn-hover-color:          #ffffff;
+  --btn-active-bg:            #193868;
+  --btn-active-border:        #142c54;
+  --btn-active-color:         #ffffff;
+  --btn-link-color:           #326fd1;
+  --btn-link-focus-shadow:    #e6edf9;
+  --btn-link-hover-color:     #1e437d;
+  --btn-secondary-bg:         #ffffff;
+  --btn-secondary-border:     #e5e5e5;
+  --btn-secondary-color:      #326fd1;
+  --btn-secondary-hover-bg:   #ffffff;
+  --btn-secondary-hover-border: #bdbdbd;
+  --btn-secondary-hover-color: #326fd1;
+  --btn-secondary-active-bg:  #ffffff;
+  --btn-secondary-active-border: #e5e5e5;
+  --btn-secondary-active-color: #193868;
+  --btn-secondary-focus-shadow: #fafafa;
+  --btn-success-bg:           #3f9242;
+  --btn-success-border:       #357937;
+  --btn-success-color:        #ffffff;
+  --btn-success-hover-bg:     #357937;
+  --btn-success-hover-border: #357937;
+  --btn-success-hover-color:  #ffffff;
+  --btn-success-active-bg:    #357937;
+  --btn-success-active-border: #357937;
+  --btn-success-active-color: #ffffff;
+  --btn-success-focus-shadow: #dbf0dc;
+  --btn-warning-bg:           #ff9800;
+  --btn-warning-border:       #cc7a00;
+  --btn-warning-color:        #ffffff;
+  --btn-warning-hover-bg:     #cc7a00;
+  --btn-warning-hover-border: #cc7a00;
+  --btn-warning-hover-color:  #ffffff;
+  --btn-warning-active-bg:    #cc7a00;
+  --btn-warning-active-border: #cc7a00;
+  --btn-warning-active-color: #ffffff;
+  --btn-warning-focus-shadow: #ffebcc;
+  --btn-danger-bg:            #e31b0c;
+  --btn-danger-border:        #a91409;
+  --btn-danger-color:         #ffffff;
+  --btn-danger-hover-bg:      #a91409;
+  --btn-danger-hover-border:  #6f0d06;
+  --btn-danger-hover-color:   #ffffff;
+  --btn-danger-active-bg:     #a91409;
+  --btn-danger-active-border: #6f0d06;
+  --btn-danger-active-color:  #ffffff;
+  --btn-danger-focus-shadow:  #fddbd8;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — INPUT                                             */
+  /* ------------------------------------------------------------------ */
+  --input-bg:               #ffffff;
+  --input-border:           #bdbdbd;
+  --input-color:            #212121;
+  --input-placeholder:      #737373;
+  --input-icon-color:       #616161;
+  --input-hover-border:     #737373;
+  --input-focus-border:     #e6edf9;
+  --input-error-border:     #e31b0c;
+  --input-filled-bg:        #fafafa;
+  --input-filled-hover-bg:  #fafafa;
+  --input-filled-focus-bg:  #ffffff;
+  --inputgroup-bg:          #e5e5e5;
+  --inputgroup-color:       #707479;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — CHECKBOX                                          */
+  /* ------------------------------------------------------------------ */
+  --checkbox-border:               #e5e5e5;
+  --checkbox-active-bg:            #326fd1;
+  --checkbox-active-border:        #326fd1;
+  --checkbox-active-hover-bg:      #2859a7;
+  --checkbox-active-hover-border:  #193868;
+  --checkbox-icon-active-color:    #ffffff;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — RADIO BUTTON                                      */
+  /* ------------------------------------------------------------------ */
+  --radio-border:               #e5e5e5;
+  --radio-active-bg:            #326fd1;
+  --radio-active-border:        #2859a7;
+  --radio-active-hover-bg:      #326fd1;
+  --radio-active-hover-border:  #193868;
+  --radio-icon-active-color:    #ffffff;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — CHIP                                              */
+  /* ------------------------------------------------------------------ */
+  --chip-bg:    #e5e5e5;
+  --chip-color: #212121;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — CARD                                              */
+  /* ------------------------------------------------------------------ */
+  --card-subtitle-color: #707479;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — MESSAGE                                           */
+  /* ------------------------------------------------------------------ */
+  --msg-info-bg:        #eef3fb;
+  --msg-info-border:    #eef3fb;
+  --msg-info-color:     #193868;
+  --msg-info-icon:      #193868;
+  --msg-success-bg:     #dbf0dc;
+  --msg-success-border: #dbf0dc;
+  --msg-success-color:  #285c2a;
+  --msg-success-icon:   #285c2a;
+  --msg-warning-bg:     #ffebcc;
+  --msg-warning-border: #ffebcc;
+  --msg-warning-color:  #995c00;
+  --msg-warning-icon:   #995c00;
+  --msg-error-bg:       #fddbd8;
+  --msg-error-border:   #fddbd8;
+  --msg-error-color:    #a91409;
+  --msg-error-icon:     #a91409;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — PROGRESS BAR                                      */
+  /* ------------------------------------------------------------------ */
+  --progressbar-bg:    #326fd1;
+  --progressbar-color: #ffffff;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — SKELETON                                          */
+  /* ------------------------------------------------------------------ */
+  --skeleton-bg:          #eceded;
+  --skeleton-animation-bg: rgba(255,255,255,0.4);
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — TAB VIEW / TAB MENU                               */
+  /* ------------------------------------------------------------------ */
+  --tabview-nav-bg:               #ffffff;
+  --tabview-nav-border:           #e5e5e5;
+  --tabview-header-bg:            #ffffff;
+  --tabview-header-border:        #e5e5e5;
+  --tabview-header-color:         #212121;
+  --tabview-header-hover-bg:      #ffffff;
+  --tabview-header-hover-border:  #326fd1;
+  --tabview-header-hover-color:   #326fd1;
+  --tabview-header-active-bg:     #ffffff;
+  --tabview-header-active-border: #326fd1;
+  --tabview-header-active-color:  #326fd1;
+  --tabview-content-bg:           #ffffff;
+  --tabview-content-border:       #e5e5e5;
+  --tabview-content-color:        #212121;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — PANEL                                             */
+  /* ------------------------------------------------------------------ */
+  --panel-header-bg:          #f5f6f6;
+  --panel-header-border:      #cfd1d2;
+  --panel-header-color:       #101820;
+  --panel-header-hover-bg:    #e7e8e9;
+  --panel-header-hover-border: #e7e8e9;
+  --panel-header-hover-color: #40464d;
+  --panel-content-bg:         #ffffff;
+  --panel-content-border:     #cfd1d2;
+  --panel-content-color:      #101820;
+  --panel-footer-bg:          #ffffff;
+  --panel-footer-border:      #878b8f;
+  --panel-footer-color:       #40464d;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — STEPS                                             */
+  /* ------------------------------------------------------------------ */
+  --steps-item-bg:          #ffffff;
+  --steps-item-border:      #e5e5e5;
+  --steps-item-color:       #212121;
+  --steps-item-number-color: #616161;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — BREADCRUMB                                        */
+  /* ------------------------------------------------------------------ */
+  --breadcrumb-item-color:    #616161;
+  --breadcrumb-item-icon:     #212121;
+  --breadcrumb-last-color:    #212121;
+  --breadcrumb-separator:     #e5e5e5;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — MENU / MENUITEM                                   */
+  /* ------------------------------------------------------------------ */
+  --menu-bg:                  #ffffff;
+  --menu-border:              #cfd1d2;
+  --menu-color:               #40464d;
+  --menuitem-color:           #212121;
+  --menuitem-hover-bg:        #fafafa;
+  --menuitem-hover-color:     #212121;
+  --menuitem-active-bg:       #fafafa;
+  --menuitem-active-color:    #212121;
+  --menuitem-icon-color:      #212121;
+  --menuitem-icon-hover:      #212121;
+  --menuitem-icon-active:     #212121;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — TOOLTIP                                           */
+  /* ------------------------------------------------------------------ */
+  --tooltip-bg:    #4f4f4f;
+  --tooltip-color: #ffffff;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — TOGGLE BUTTON                                     */
+  /* ------------------------------------------------------------------ */
+  --toggle-bg:              #ffffff;
+  --toggle-border:          #cfd1d2;
+  --toggle-color:           #40464d;
+  --toggle-hover-bg:        #e7e8e9;
+  --toggle-hover-border:    #cfd1d2;
+  --toggle-hover-color:     #40464d;
+  --toggle-active-bg:       #326fd1;
+  --toggle-active-border:   #2859a7;
+  --toggle-active-color:    #ffffff;
+  --toggle-active-hover-bg: #2859a7;
+  --toggle-active-hover-border: #234e92;
+  --toggle-active-hover-color:  #ffffff;
+  --toggle-icon-color:      #707479;
+  --toggle-icon-hover:      #40464d;
+  --toggle-icon-active:     #ffffff;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — INPUT SWITCH                                      */
+  /* ------------------------------------------------------------------ */
+  --switch-off-bg:    #878b8f;
+  --switch-off-hover: #9fa3a6;
+  --switch-on-bg:     #326fd1;
+  --switch-on-hover:  #2859a7;
+  --switch-handle:    #ffffff;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — DIALOG                                            */
+  /* ------------------------------------------------------------------ */
+  --dialog-header-bg:     #ffffff;
+  --dialog-header-border: transparent;
+  --dialog-header-color:  #40464d;
+  --dialog-footer-border: transparent;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — DIVIDER                                           */
+  /* ------------------------------------------------------------------ */
+  --divider-color: #e5e5e5;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — FOCUS                                             */
+  /* ------------------------------------------------------------------ */
+  --focus-outline: #99b7e8;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — CALENDAR                                          */
+  /* ------------------------------------------------------------------ */
+  --calendar-bg:              #ffffff;
+  --calendar-border:          #cfd1d2;
+  --calendar-color:           #707479;
+  --calendar-header-bg:       #ffffff;
+  --calendar-header-border:   #cfd1d2;
+  --calendar-header-color:    #40464d;
+  --calendar-today-bg:        #cfd1d2;
+  --calendar-today-color:     #40464d;
+  --calendar-cell-hover-bg:   #e7e8e9;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — SLIDER                                            */
+  /* ------------------------------------------------------------------ */
+  --slider-bg:              #cfd1d2;
+  --slider-range-bg:        #326fd1;
+  --slider-handle-bg:       #ffffff;
+  --slider-handle-border:   #326fd1;
+  --slider-handle-hover-bg: #2859a7;
+  --slider-handle-hover-border: #1e437d;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — PAGINATOR                                         */
+  /* ------------------------------------------------------------------ */
+  --paginator-bg:           #ffffff;
+  --paginator-border:       #cfd1d2;
+  --paginator-color:        #707479;
+  --paginator-elem-color:   #707479;
+  --paginator-elem-hover-bg: #f1f1f2;
+  --paginator-icon-color:   #707479;
+  --paginator-icon-hover:   #40464d;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — TABLE                                             */
+  /* ------------------------------------------------------------------ */
+  --table-header-bg:         #f5f6f6;
+  --table-header-border:     #cfd1d2;
+  --table-header-color:      #40464d;
+  --table-header-cell-bg:    #f5f6f6;
+  --table-header-cell-color: #40464d;
+  --table-header-highlight:  #234e92;
+  --table-body-row-bg:       #ffffff;
+  --table-body-row-color:    #40464d;
+  --table-body-row-even:     #fafafb;
+  --table-body-row-hover:    #40464d;
+  --table-body-cell-border:  #e7e8e9;
+  --table-footer-bg:         #f5f6f6;
+  --table-footer-border:     #cfd1d2;
+  --table-footer-color:      #40464d;
+  --table-resizer-bg:        #326fd1;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — CHART COLORS                                      */
+  /* ------------------------------------------------------------------ */
+  --chart-color-1: #03a9f4;
+  --chart-color-2: #3f51b5;
+  --chart-color-3: #009688;
+  --chart-color-4: #673ab7;
+  --chart-color-5: #34d399;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — DRIVE FILE TYPES                                  */
+  /* ------------------------------------------------------------------ */
+  --drive-file-media:       #f66a5f;
+  --drive-file-pdf:         #f66a5f;
+  --drive-file-doc:         #5b8cda;
+  --drive-file-spreadsheet: #6dc070;
+  --drive-folder:           #334155;
+  --drive-file-other:       #334155;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — FORMS                                             */
+  /* ------------------------------------------------------------------ */
+  --form-trend:        #5b8cda;
+  --form-change-order: #34d399;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — AVATAR                                            */
+  /* ------------------------------------------------------------------ */
+  --avatar-bg:    #212121;
+  --avatar-color: #ffffff;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — BADGE                                             */
+  /* ------------------------------------------------------------------ */
+  --badge-bg:    #c1d3f1;
+  --badge-color: #ffffff;
+
+  /* ------------------------------------------------------------------ */
+  /* COMPONENT TOKENS — PASSWORD METER                                    */
+  /* ------------------------------------------------------------------ */
+  --password-meter-bg:  #e7e8e9;
+  --password-weak:      #f44336;
+  --password-medium:    #ff9800;
+  --password-strong:    #4caf50;
+
+  /* ------------------------------------------------------------------ */
+  /* SHADOWS                                                              */
+  /* ------------------------------------------------------------------ */
+  --shadow-sm:  0 1px 2px 0 rgba(0,0,0,0.05);
+  --shadow-md:  0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-lg:  0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  --shadow-xl:  0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+  --shadow-overlay: 0 0 0 1px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.12);
+
+  /* ------------------------------------------------------------------ */
+  /* TYPOGRAPHY                                                           */
+  /* ------------------------------------------------------------------ */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-xs:   11px;
+  --font-size-sm:   12px;
+  --font-size-base: 14px;
+  --font-size-md:   16px;
+  --font-size-lg:   18px;
+  --font-size-xl:   20px;
+  --font-size-2xl:  24px;
+  --font-size-3xl:  28px;
+  --font-size-4xl:  32px;
+  --font-weight-regular:   400;
+  --font-weight-medium:    500;
+  --font-weight-semibold:  600;
+  --font-weight-bold:      700;
+  --font-weight-extrabold: 800;
+  --line-height-tight:     1.2;
+  --line-height-snug:      1.35;
+  --line-height-normal:    1.5;
+  --line-height-relaxed:   1.6;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide:   0.03em;
+  --letter-spacing-wider:  0.06em;
+  --letter-spacing-widest: 0.08em;
+
+  /* ------------------------------------------------------------------ */
+  /* TRANSITIONS                                                          */
+  /* ------------------------------------------------------------------ */
+  --transition-fast:   150ms ease;
+  --transition-base:   200ms ease;
+  --transition-slow:   300ms ease;
+
+  /* ------------------------------------------------------------------ */
+  /* Z-INDEX SCALE                                                        */
+  /* ------------------------------------------------------------------ */
+  --z-dropdown:  50;
+  --z-sticky:    100;
+  --z-fixed:     200;
+  --z-overlay:   400;
+  --z-modal:     500;
+  --z-toast:     9999;
+}
