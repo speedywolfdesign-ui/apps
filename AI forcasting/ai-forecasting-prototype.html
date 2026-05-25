@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI S-Curve Forecasting — Contruent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+/* ── DS Tokens ── */
+:root {
+  --brand-fill:#326fd1;--brand-fill-hover:#2859a7;--brand-fill-selected:#142c54;--brand-on-fill:#fff;
+  --default-text:#212121;--default-text-secondary:#616161;--default-fill:#4f4f4f;--default-on-fill:#fff;
+  --default-surface:#fff;--default-surface-secondary:#fafafa;--default-surface-hover:#fafafa;
+  --default-surface-secondary-hover:#e5e5e5;--default-surface-border:#e5e5e5;--default-surface-border-hover:#bdbdbd;
+  --help-fill:#673ab7;--button-background:#326fd1;--button-border-color:#2859a7;
+  --button-hover-background:#2859a7;--button-hover-border-color:#142c54;
+  --button-secondary-color:#326fd1;--button-secondary-background:#fff;--button-secondary-border-color:#e5e5e5;
+  --button-secondary-hover-border:#bdbdbd;--input-border-color:#bdbdbd;
+  --spacing-1:4px;--spacing-1-half:6px;--spacing-2:8px;--spacing-2-half:10px;
+  --spacing-3:12px;--spacing-4:16px;--spacing-6:24px;--spacing-8:32px;
+  --border-rounded:4px;--border-rounded-full:9999px;--border-rounded-2xl:16px;
+  --shadow-overlay:0 2px 12px 0 rgba(0,0,0,.1);--focused-ring:0 0 0 2px #fff,0 0 0 4px #5aa0f0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',-apple-system,sans-serif;font-size:14px;color:var(--default-text);background:var(--default-surface);display:flex;flex-direction:column}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+:focus-visible{outline:none;box-shadow:var(--focused-ring)}
+
+/* ══════════════════════════════════════════
+   ROLE-BASED VISIBILITY
+══════════════════════════════════════════ */
+
+/* Tab visibility */
+body[data-role="readonly"] .tab-btn-settings,
+body[data-role="readonly"] .tab-btn-warnings { display:none !important }
+
+/* Run forecast button */
+body[data-role="projectManager"] .run-forecast-btn,
+body[data-role="readonly"] .run-forecast-btn { display:none !important }
+
+/* Export */
+body[data-role="readonly"] .export-btn { display:none !important }
+
+/* Override / warning actions */
+body[data-role="costEngineer"] .warn-action,
+body[data-role="projectManager"] .warn-action,
+body[data-role="readonly"] .warn-action { display:none !important }
+
+/* Settings edit controls: read-only for costEngineer and PM */
+body[data-role="costEngineer"] .settings-editable,
+body[data-role="projectManager"] .settings-editable { pointer-events:none; opacity:0.45 }
+body[data-role="costEngineer"] .settings-save-row,
+body[data-role="projectManager"] .settings-save-row { display:none !important }
+
+/* Controls manager: feature toggles locked (can adjust weights, not add/remove) */
+body[data-role="controlsManager"] .feature-toggle-wrap { pointer-events:none; opacity:0.4 }
+
+/* Show-only-for-role helpers */
+.show-superuser { display:none }
+body[data-role="superuser"] .show-superuser { display:flex !important }
+.show-controlsManager { display:none }
+body[data-role="controlsManager"] .show-controlsManager { display:flex !important }
+.show-readonly-notice { display:none }
+body[data-role="costEngineer"] .show-readonly-notice,
+body[data-role="projectManager"] .show-readonly-notice { display:flex !important }
+
+/* Simplified appendix for read-only */
+body[data-role="readonly"] .appendix-detail { display:none !important }
+body[data-role="readonly"] .appendix-simplified { display:block !important }
+.appendix-simplified { display:none }
+
+/* ══════════════════════════════════════════
+   ROLE MODAL
+══════════════════════════════════════════ */
+.modal-overlay {
+  position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);
+}
+.modal-overlay.hidden { display:none }
+.role-modal {
+  background:#fff;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.2);
+  width:640px;max-width:96vw;max-height:90vh;overflow-y:auto;
+}
+.role-modal__head {
+  padding:var(--spacing-6) var(--spacing-6) var(--spacing-4);
+  border-bottom:1px solid var(--default-surface-border);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:var(--spacing-4);
+}
+.role-modal__head h2 { font-size:18px;font-weight:600;color:var(--default-text) }
+.role-modal__head p { font-size:12px;font-weight:500;color:var(--default-text-secondary);margin-top:4px;line-height:1.5 }
+.role-modal__close {
+  width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+  color:var(--default-text-secondary);font-size:18px;flex-shrink:0;
+  transition:background .15s;
+}
+.role-modal__close:hover { background:var(--default-surface-secondary) }
+.role-cards { display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-3);padding:var(--spacing-4) var(--spacing-6) var(--spacing-6) }
+.role-card {
+  border:2px solid var(--default-surface-border);border-radius:6px;
+  padding:var(--spacing-4);cursor:pointer;transition:all .15s;position:relative;
+}
+.role-card:hover { border-color:var(--brand-fill);background:rgba(50,111,209,0.03) }
+.role-card.active { border-color:var(--brand-fill);background:rgba(50,111,209,0.05) }
+.role-card__head { display:flex;align-items:center;gap:var(--spacing-3);margin-bottom:var(--spacing-3) }
+.role-card__avatar {
+  width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  font-size:12px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.role-card__name { font-size:13px;font-weight:600;color:var(--default-text) }
+.role-card__title { font-size:11px;font-weight:500;color:var(--default-text-secondary);margin-top:1px }
+.role-card__perms { list-style:none;display:flex;flex-direction:column;gap:4px }
+.role-card__perms li { display:flex;align-items:center;gap:6px;font-size:11px;color:var(--default-text-secondary) }
+.perm-icon { width:14px;height:14px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font-size:9px }
+.perm-yes { background:#d1fae5;color:#047857 }
+.perm-no  { background:#fee2e2;color:#dc2626 }
+.perm-partial { background:#fef3c7;color:#b45309 }
+.role-active-chip {
+  position:absolute;top:8px;right:8px;
+  background:var(--brand-fill);color:#fff;
+  font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;
+}
+
+/* ══════════════════════════════════════════
+   ROLE INDICATOR BAR
+══════════════════════════════════════════ */
+.role-bar {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px var(--spacing-6);border-bottom:1px solid var(--default-surface-border);
+  flex-shrink:0;
+}
+.role-bar__left { display:flex;align-items:center;gap:10px }
+.role-bar__avatar {
+  width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  font-size:11px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.role-bar__name { font-size:12px;font-weight:600;color:var(--default-text) }
+.role-bar__title { font-size:11px;font-weight:500;color:var(--default-text-secondary);margin-top:1px }
+.role-badge {
+  display:inline-flex;align-items:center;padding:2px 8px;
+  border-radius:var(--border-rounded-full);font-size:10px;font-weight:700;border:1px solid;
+}
+.rb-superuser     { background:rgba(50,111,209,.1);  color:#326fd1; border-color:rgba(50,111,209,.3) }
+.rb-controlsManager{ background:rgba(4,120,87,.1);   color:#047857; border-color:rgba(4,120,87,.3) }
+.rb-costEngineer  { background:rgba(180,83,9,.1);    color:#b45309; border-color:rgba(180,83,9,.3) }
+.rb-projectManager{ background:rgba(109,40,217,.1);  color:#6d28d9; border-color:rgba(109,40,217,.3) }
+.rb-readonly      { background:rgba(107,114,128,.1); color:#6b7280; border-color:rgba(107,114,128,.3) }
+.role-bar__right { display:flex;align-items:center;gap:var(--spacing-2) }
+.role-bar__scope { font-size:11px;font-weight:500;color:var(--default-text-secondary) }
+
+/* ══════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════ */
+.app-header {
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;height:56px;padding:0 var(--spacing-3) 0 0;
+  background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.1);
+  flex-shrink:0;position:sticky;top:0;z-index:100;
+}
+.app-header__left { display:flex;align-items:center;height:100% }
+.logo-box { width:56px;height:100%;display:flex;align-items:center;justify-content:center;flex-shrink:0 }
+.app-header__menu { display:flex;align-items:center;gap:var(--spacing-1);height:100% }
+.nav-item {
+  display:inline-flex;align-items:center;gap:var(--spacing-1);height:32px;
+  padding:0 var(--spacing-1-half);border-radius:var(--border-rounded);
+  font-size:14px;font-weight:500;color:var(--default-text);white-space:nowrap;transition:background .15s;
+}
+.nav-item:hover { background:var(--default-surface-secondary) }
+.nav-item.active { background:var(--default-surface-secondary-hover);font-weight:600 }
+.header-right { display:flex;align-items:center;gap:var(--spacing-1);flex-shrink:0 }
+.btn-cc {
+  display:inline-flex;align-items:center;gap:var(--spacing-1);height:36px;
+  padding:0 var(--spacing-2-half);border-radius:var(--border-rounded);
+  border:1px solid var(--default-surface-border);background:#fff;color:var(--brand-fill);
+  font-family:inherit;font-size:14px;font-weight:600;letter-spacing:-.14px;transition:all .15s;
+}
+.btn-create {
+  display:inline-flex;align-items:center;gap:var(--spacing-1);height:36px;
+  padding:0 var(--spacing-2-half);border-radius:var(--border-rounded);
+  background:var(--brand-fill);color:#fff;font-family:inherit;
+  font-size:14px;font-weight:600;letter-spacing:-.14px;transition:background .15s;
+}
+.btn-create:hover { background:var(--brand-fill-hover) }
+.env-badge { display:flex;align-items:center;gap:4px;height:24px;padding:0 4px }
+.env-text { font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--default-text) }
+#headerAvatar {
+  display:grid;place-items:center;width:32px;height:32px;border-radius:50%;
+  font-size:10px;font-weight:700;color:#fff;cursor:pointer;transition:opacity .15s;
+}
+#headerAvatar:hover { opacity:.8 }
+
+/* ══════════════════════════════════════════
+   SHELL
+══════════════════════════════════════════ */
+.app-shell { display:flex;flex:1;overflow:hidden }
+
+/* Left Nav */
+.left-nav {
+  width:256px;background:var(--default-surface-secondary);
+  border-right:1px solid var(--default-surface-border);
+  padding:var(--spacing-2);display:flex;flex-direction:column;
+  gap:2px;flex-shrink:0;overflow-y:auto;
+}
+.lnav-tab {
+  display:flex;align-items:center;gap:var(--spacing-3);
+  width:100%;height:40px;padding:0 var(--spacing-3);
+  border-radius:var(--border-rounded);font-size:12px;font-weight:500;
+  color:var(--default-text);white-space:nowrap;transition:background .15s;cursor:pointer;
+}
+.lnav-tab:hover:not(.sel) { background:rgba(229,229,229,.5) }
+.lnav-tab.sel { background:var(--default-surface-secondary-hover);font-weight:600 }
+.lnav-tab.expanded .lnav-chevron { transform:rotate(180deg) }
+.lnav-icon { width:16px;height:16px;flex-shrink:0 }
+.lnav-label { flex:1 }
+.lnav-chevron { width:14px;height:14px;flex-shrink:0;transition:transform .2s }
+.lnav-subtabs { display:flex;flex-direction:column;gap:2px;padding:0 var(--spacing-2);margin-bottom:4px }
+.lnav-sub {
+  display:flex;align-items:center;justify-content:space-between;
+  height:32px;padding:0 12px 0 28px;border-radius:var(--border-rounded);
+  font-size:12px;font-weight:500;color:var(--default-text);cursor:pointer;
+  transition:background .15s;border-left:2px solid transparent;
+}
+.lnav-sub:hover { background:rgba(229,229,229,.5) }
+.lnav-sub.active { border-left-color:var(--brand-fill);color:var(--brand-fill);font-weight:600;background:rgba(50,111,209,.06) }
+.ai-chip { background:#ede9fe;color:#5b21b6;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px }
+
+/* Main */
+.app-main { flex:1;overflow:hidden;display:flex;flex-direction:column }
+.page-header { padding:var(--spacing-4) var(--spacing-6) 0;flex-shrink:0 }
+.bc { display:flex;align-items:center;gap:4px;padding:4px 0 8px;font-size:12px;font-weight:500;color:var(--default-text-secondary) }
+.bc a { color:var(--default-text-secondary);text-decoration:none }
+.bc a:hover { text-decoration:underline }
+.bc .sep { color:#ccc }
+.bc .cur { color:var(--default-text) }
+.page-title-row { display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:var(--spacing-4) }
+.page-title { font-size:24px;font-weight:600;line-height:24px;color:var(--default-text) }
+.page-sub { font-size:13px;font-weight:500;color:var(--default-text-secondary);margin-top:4px }
+
+/* Sub-nav tabs */
+.subnav { display:flex;align-items:center;border-bottom:2px solid var(--default-surface-border);padding:0 var(--spacing-6);flex-shrink:0 }
+.stab {
+  display:inline-flex;align-items:center;gap:6px;padding:0 var(--spacing-4);height:40px;
+  font-size:13px;font-weight:500;color:var(--default-text-secondary);
+  border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;
+}
+.stab:hover { color:var(--default-text) }
+.stab.active { color:var(--brand-fill);font-weight:600;border-bottom-color:var(--brand-fill) }
+.stab .badge { background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:1px 5px;border-radius:99px;min-width:18px;text-align:center }
+
+/* Tab content */
+.tab-content { flex:1;overflow-y:auto;padding:var(--spacing-6) }
+.tab-pane { display:none }
+.tab-pane.active { display:block }
+
+/* ══════════════════════════════════════════
+   GENERIC BUTTONS
+══════════════════════════════════════════ */
+.btn {
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--spacing-1-half);
+  height:32px;padding:0 var(--spacing-3);border-radius:var(--border-rounded);
+  border:1px solid transparent;font-family:inherit;font-size:12px;font-weight:600;
+  white-space:nowrap;cursor:pointer;transition:all .15s;
+}
+.btn-primary { color:#fff;background:var(--button-background);border-color:var(--button-border-color) }
+.btn-primary:hover { background:var(--button-hover-background);border-color:var(--button-hover-border-color) }
+.btn-secondary { color:var(--button-secondary-color);background:#fff;border-color:var(--button-secondary-border-color) }
+.btn-secondary:hover { border-color:var(--button-secondary-hover-border) }
+.btn-ui-gray { color:var(--default-text);background:#fff;border-color:var(--default-surface-border) }
+.btn-ui-gray:hover { background:var(--default-surface-hover);border-color:var(--default-surface-border-hover) }
+.btn-ui-gray.sel { background:var(--brand-fill);border-color:var(--brand-fill);color:#fff }
+
+/* ══════════════════════════════════════════
+   FORECAST CURVES TAB
+══════════════════════════════════════════ */
+.ai-bar {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:var(--spacing-3) var(--spacing-4);background:rgba(50,111,209,.04);
+  border:1px solid rgba(50,111,209,.15);border-radius:var(--border-rounded);
+  margin-bottom:var(--spacing-4);gap:var(--spacing-3);flex-wrap:wrap;
+}
+.ai-bar__label { font-size:12px;font-weight:600;color:var(--brand-fill);display:flex;align-items:center;gap:6px }
+.ai-bar__chips { display:flex;align-items:center;gap:var(--spacing-2);flex-wrap:wrap;flex:1 }
+.chip {
+  display:inline-flex;align-items:center;height:22px;padding:0 8px;
+  border-radius:var(--border-rounded-full);background:rgba(50,111,209,.08);
+  border:1px solid rgba(50,111,209,.2);font-size:11px;font-weight:500;color:var(--brand-fill);
+}
+.conf-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:var(--border-rounded-full);font-size:11px;font-weight:600 }
+.conf-high { background:#d1fae5;color:#047857 }
+.conf-med  { background:#fef3c7;color:#b45309 }
+.conf-low  { background:#fee2e2;color:#dc2626 }
+.kpi-row { display:grid;grid-template-columns:repeat(4,1fr);gap:var(--spacing-3);margin-bottom:var(--spacing-4) }
+.kpi { background:#fff;border:1px solid var(--default-surface-border);border-radius:var(--border-rounded);padding:var(--spacing-3) var(--spacing-4) }
+.kpi-lbl { font-size:11px;font-weight:500;color:var(--default-text-secondary);margin-bottom:4px }
+.kpi-val { font-size:20px;font-weight:600;color:var(--default-text);line-height:1.2 }
+.kpi-sub { font-size:11px;font-weight:500;color:var(--default-text-secondary);margin-top:2px }
+.kpi-val.warn { color:#b45309 }
+.chart-tb { display:flex;align-items:center;justify-content:space-between;gap:var(--spacing-3);padding:var(--spacing-3) 0 var(--spacing-4);flex-wrap:wrap }
+.ctb-l { display:flex;align-items:center;gap:var(--spacing-2);flex-wrap:wrap }
+.ctb-r { display:flex;align-items:center;gap:var(--spacing-2) }
+.curve-btn {
+  display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 var(--spacing-3);
+  border-radius:var(--border-rounded);border:1px solid var(--default-surface-border);
+  font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;background:#fff;color:var(--default-text);
+}
+.curve-btn .dot { width:8px;height:8px;border-radius:50%;flex-shrink:0 }
+.curve-btn.on-actual   { background:rgba(50,111,209,.08);border-color:#326fd1;color:#326fd1 }
+.curve-btn.on-incurred { background:rgba(245,158,11,.08);border-color:#f59e0b;color:#b45309 }
+.curve-btn.on-earned   { background:rgba(16,185,129,.08);border-color:#10b981;color:#047857 }
+.chart-wrap { background:#fff;border:1px solid var(--default-surface-border);border-radius:var(--border-rounded);padding:var(--spacing-4);margin-bottom:var(--spacing-4) }
+#cv { display:block;width:100% }
+.legend { display:flex;align-items:center;gap:var(--spacing-6);padding:var(--spacing-3) 0 0;font-size:11px;color:var(--default-text-secondary);flex-wrap:wrap }
+.leg-item { display:flex;align-items:center;gap:6px }
+.info-box {
+  display:flex;gap:var(--spacing-3);padding:var(--spacing-3) var(--spacing-4);
+  background:rgba(50,111,209,.04);border:1px solid rgba(50,111,209,.15);
+  border-radius:var(--border-rounded);font-size:12px;font-weight:500;color:var(--default-text);line-height:1.6;
+}
+
+/* ══════════════════════════════════════════
+   SETTINGS TAB
+══════════════════════════════════════════ */
+.settings-banner {
+  display:flex;align-items:flex-start;gap:var(--spacing-3);padding:var(--spacing-3) var(--spacing-4);
+  border-radius:var(--border-rounded);margin-bottom:var(--spacing-4);font-size:12px;font-weight:500;line-height:1.6;
+}
+.sb-global    { background:rgba(50,111,209,.05);border:1px solid rgba(50,111,209,.2);color:var(--default-text) }
+.sb-project   { background:rgba(4,120,87,.05);border:1px solid rgba(4,120,87,.2);color:var(--default-text) }
+.sb-readonly  { background:#fef3c7;border:1px solid #fcd34d;color:#92400e }
+.settings-grid { display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-6) }
+.s-section { background:#fff;border:1px solid var(--default-surface-border);border-radius:var(--border-rounded) }
+.s-section.full { grid-column:1/-1 }
+.s-head { display:flex;align-items:center;justify-content:space-between;padding:var(--spacing-4);border-bottom:1px solid var(--default-surface-border);gap:var(--spacing-3) }
+.s-head__title { font-size:14px;font-weight:600;color:var(--default-text);display:flex;align-items:center;gap:var(--spacing-2) }
+.s-head__desc { font-size:12px;font-weight:500;color:var(--default-text-secondary);margin-top:2px }
+.s-body { padding:var(--spacing-4);display:flex;flex-direction:column;gap:10px }
+.feat-row {
+  display:flex;align-items:center;gap:var(--spacing-3);padding:var(--spacing-3);
+  border:1px solid var(--default-surface-border);border-radius:var(--border-rounded);
+  background:var(--default-surface-secondary);transition:border-color .15s;
+}
+.feat-row:hover { border-color:var(--default-surface-border-hover) }
+.feat-row.off { opacity:.4 }
+.feat-info { flex:1;min-width:0 }
+.feat-name { font-size:12px;font-weight:600;color:var(--default-text) }
+.feat-desc { font-size:11px;font-weight:500;color:var(--default-text-secondary);margin-top:1px }
+.feat-wt { display:flex;align-items:center;gap:var(--spacing-2);min-width:145px }
+.feat-wt label { font-size:11px;font-weight:500;color:var(--default-text-secondary);white-space:nowrap }
+.wt-val { font-size:12px;font-weight:700;color:var(--brand-fill);min-width:28px;text-align:right }
+/* toggle */
+.tog { position:relative;width:32px;height:18px;flex-shrink:0 }
+.tog input { opacity:0;width:0;height:0;position:absolute }
+.tog-slider { position:absolute;inset:0;background:#d1d5db;border-radius:99px;cursor:pointer;transition:background .2s }
+.tog-slider::before { content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2) }
+.tog input:checked+.tog-slider { background:var(--brand-fill) }
+.tog input:checked+.tog-slider::before { transform:translateX(14px) }
+/* range */
+.rng { -webkit-appearance:none;width:90px;height:4px;border-radius:2px;background:var(--default-surface-secondary-hover);outline:none;cursor:pointer }
+.rng::-webkit-slider-thumb { -webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--brand-fill);cursor:pointer }
+.rng:disabled { opacity:.35;pointer-events:none }
+.divider { height:1px;background:var(--default-surface-border);margin:var(--spacing-3) 0 }
+.el-grid { display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-2) }
+.tag { display:inline-flex;align-items:center;padding:1px 6px;border-radius:var(--border-rounded-full);font-size:10px;font-weight:600 }
+.tag-ai   { background:#ede9fe;color:#5b21b6 }
+.tag-type2{ background:#dbeafe;color:#1d4ed8 }
+.s-foot { display:flex;align-items:center;justify-content:flex-end;gap:var(--spacing-2);padding:var(--spacing-4) 0 0;border-top:1px solid var(--default-surface-border);margin-top:var(--spacing-6) }
+.sel-in { height:32px;padding:0 var(--spacing-3);border:1px solid var(--input-border-color);border-radius:var(--border-rounded);background:#fff;font-family:inherit;font-size:12px;font-weight:500;color:var(--default-text) }
+
+/* ══════════════════════════════════════════
+   APPENDIX TAB
+══════════════════════════════════════════ */
+.app-grid { display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-6) }
+.app-card { background:#fff;border:1px solid var(--default-surface-border);border-radius:var(--border-rounded);padding:var(--spacing-4) var(--spacing-6) }
+.app-card.full { grid-column:1/-1 }
+.app-title { font-size:13px;font-weight:600;color:var(--default-text);margin-bottom:var(--spacing-3);display:flex;align-items:center;gap:var(--spacing-2) }
+.ring-wrap { display:flex;flex-direction:column;align-items:center;gap:var(--spacing-4);padding:var(--spacing-4) 0 }
+.ring { position:relative;width:120px;height:120px }
+.ring svg { transform:rotate(-90deg) }
+.ring-lbl { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center }
+.ring-pct { font-size:24px;font-weight:700;color:var(--default-text) }
+.ring-word { font-size:11px;font-weight:600;color:#047857 }
+.basis-list { list-style:none;display:flex;flex-direction:column;gap:8px }
+.basis-list li { display:flex;align-items:flex-start;gap:8px;font-size:12px;font-weight:500;color:var(--default-text);line-height:1.55 }
+.bdot { width:6px;height:6px;border-radius:50%;background:var(--brand-fill);flex-shrink:0;margin-top:5px }
+.sim-tbl { width:100%;border-collapse:collapse }
+.sim-tbl th { font-size:11px;font-weight:600;color:var(--default-text-secondary);text-align:left;padding:6px 8px;border-bottom:1px solid var(--default-surface-border);background:var(--default-surface-secondary) }
+.sim-tbl td { font-size:12px;font-weight:500;padding:8px;border-bottom:1px solid var(--default-surface-border) }
+.sim-tbl tr:last-child td { border-bottom:none }
+.m-badge { display:inline-flex;padding:1px 6px;border-radius:99px;font-size:10px;font-weight:700 }
+.m-high   { background:#d1fae5;color:#047857 }
+.m-medium { background:#fef3c7;color:#b45309 }
+.range-row { display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:var(--default-text-secondary);margin-bottom:4px }
+.range-track { position:relative;height:24px;background:var(--default-surface-secondary);border-radius:12px;border:1px solid var(--default-surface-border);margin-top:24px }
+.range-fill { position:absolute;inset:0;background:linear-gradient(90deg,#d1fae5,#fef3c7,#fee2e2);border-radius:12px }
+.range-mk { position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;transform:translateX(-50%) }
+.range-mk-lbl { position:absolute;top:-20px;transform:translateX(-50%);font-size:10px;font-weight:700;white-space:nowrap }
+.range-vals { display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--default-text);margin-top:8px }
+
+/* ══════════════════════════════════════════
+   WARNINGS TAB
+══════════════════════════════════════════ */
+.warn-summary { display:flex;gap:var(--spacing-3);padding:var(--spacing-3) 0 var(--spacing-4);flex-wrap:wrap }
+.status-pill { display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid }
+.sp-ok   { background:#d1fae5;border-color:#6ee7b7;color:#047857 }
+.sp-warn { background:#fef3c7;border-color:#fcd34d;color:#b45309 }
+.sp-err  { background:#fee2e2;border-color:#fca5a5;color:#dc2626 }
+.warn-list { display:flex;flex-direction:column;gap:var(--spacing-3) }
+.warn-card { display:flex;gap:var(--spacing-4);padding:var(--spacing-4);border-radius:var(--border-rounded);border-left:4px solid }
+.wc-err  { border-color:#dc2626;background:#fef2f2 }
+.wc-warn { border-color:#f59e0b;background:#fffbeb }
+.wc-info { border-color:var(--brand-fill);background:rgba(50,111,209,.03) }
+.wc-icon { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px }
+.wc-err  .wc-icon { background:#fee2e2 }
+.wc-warn .wc-icon { background:#fef3c7 }
+.wc-info .wc-icon { background:rgba(50,111,209,.1) }
+.wc-body { flex:1;min-width:0 }
+.wc-title { font-size:13px;font-weight:600;color:var(--default-text);margin-bottom:4px }
+.wc-desc { font-size:12px;font-weight:500;color:var(--default-text-secondary);line-height:1.55 }
+.wc-meta { display:flex;align-items:center;gap:var(--spacing-3);margin-top:8px;flex-wrap:wrap }
+.wc-meta span { font-size:11px;font-weight:500;color:var(--default-text-secondary) }
+.wc-meta strong { color:var(--default-text) }
+.wc-act { display:flex;align-items:flex-start;flex-shrink:0 }
+</style>
+</head>
+<body data-role="superuser">
+
+<!-- ══ ROLE MODAL ══ -->
+<div id="roleModal" class="modal-overlay hidden">
+  <div class="role-modal">
+    <div class="role-modal__head">
+      <div>
+        <h2>Switch User Role</h2>
+        <p>Select a user type to see how the AI Forecasting interface adapts per role and permission level.</p>
+      </div>
+      <button class="role-modal__close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="role-cards">
+
+      <div class="role-card" id="rc-superuser" onclick="setRole('superuser')">
+        <span class="role-active-chip" id="chip-superuser">● Active</span>
+        <div class="role-card__head">
+          <div class="role-card__avatar" style="background:#326fd1">AG</div>
+          <div>
+            <div class="role-card__name">Alex Ghaste</div>
+            <div class="role-card__title">System Administrator</div>
+          </div>
+        </div>
+        <ul class="role-card__perms">
+          <li><span class="perm-icon perm-yes">✓</span> Configure global driver settings &amp; weights</li>
+          <li><span class="perm-icon perm-yes">✓</span> Add / remove classification features</li>
+          <li><span class="perm-icon perm-yes">✓</span> Run AI forecast &amp; override curves</li>
+          <li><span class="perm-icon perm-yes">✓</span> Full access to warnings &amp; appendix</li>
+        </ul>
+      </div>
+
+      <div class="role-card" id="rc-controlsManager" onclick="setRole('controlsManager')">
+        <span class="role-active-chip" id="chip-controlsManager" style="display:none">● Active</span>
+        <div class="role-card__head">
+          <div class="role-card__avatar" style="background:#047857">MS</div>
+          <div>
+            <div class="role-card__name">Maria Santos</div>
+            <div class="role-card__title">Project Controls Manager</div>
+          </div>
+        </div>
+        <ul class="role-card__perms">
+          <li><span class="perm-icon perm-yes">✓</span> Run AI forecast &amp; override curves</li>
+          <li><span class="perm-icon perm-partial">~</span> Adjust weights at project level only</li>
+          <li><span class="perm-icon perm-no">✕</span> Cannot add / remove features (global)</li>
+          <li><span class="perm-icon perm-yes">✓</span> Act on all warnings</li>
+        </ul>
+      </div>
+
+      <div class="role-card" id="rc-costEngineer" onclick="setRole('costEngineer')">
+        <span class="role-active-chip" id="chip-costEngineer" style="display:none">● Active</span>
+        <div class="role-card__head">
+          <div class="role-card__avatar" style="background:#b45309">DK</div>
+          <div>
+            <div class="role-card__name">David Kim</div>
+            <div class="role-card__title">Cost Engineer</div>
+          </div>
+        </div>
+        <ul class="role-card__perms">
+          <li><span class="perm-icon perm-yes">✓</span> Run AI forecast for assigned accounts</li>
+          <li><span class="perm-icon perm-partial">~</span> View settings (read-only)</li>
+          <li><span class="perm-icon perm-no">✕</span> Cannot modify settings or weights</li>
+          <li><span class="perm-icon perm-no">✕</span> Cannot act on warnings (view only)</li>
+        </ul>
+      </div>
+
+      <div class="role-card" id="rc-projectManager" onclick="setRole('projectManager')">
+        <span class="role-active-chip" id="chip-projectManager" style="display:none">● Active</span>
+        <div class="role-card__head">
+          <div class="role-card__avatar" style="background:#6d28d9">SC</div>
+          <div>
+            <div class="role-card__name">Sarah Chen</div>
+            <div class="role-card__title">Project Manager</div>
+          </div>
+        </div>
+        <ul class="role-card__perms">
+          <li><span class="perm-icon perm-no">✕</span> Cannot run AI forecast</li>
+          <li><span class="perm-icon perm-partial">~</span> View settings (read-only)</li>
+          <li><span class="perm-icon perm-partial">~</span> View warnings (no actions)</li>
+          <li><span class="perm-icon perm-yes">✓</span> Full forecast curves &amp; appendix</li>
+        </ul>
+      </div>
+
+      <div class="role-card" id="rc-readonly" onclick="setRole('readonly')" style="grid-column:1/-1">
+        <span class="role-active-chip" id="chip-readonly" style="display:none">● Active</span>
+        <div class="role-card__head">
+          <div class="role-card__avatar" style="background:#6b7280">JP</div>
+          <div>
+            <div class="role-card__name">James Porter</div>
+            <div class="role-card__title">Stakeholder / Read-Only</div>
+          </div>
+        </div>
+        <ul class="role-card__perms" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px">
+          <li><span class="perm-icon perm-yes">✓</span> View forecast curves</li>
+          <li><span class="perm-icon perm-partial">~</span> Simplified appendix only</li>
+          <li><span class="perm-icon perm-no">✕</span> No settings tab</li>
+          <li><span class="perm-icon perm-no">✕</span> No warnings tab</li>
+          <li><span class="perm-icon perm-no">✕</span> No run/export actions</li>
+          <li><span class="perm-icon perm-no">✕</span> No curve overrides</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<header class="app-header">
+  <div class="app-header__left">
+    <div class="logo-box">
+      <svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="4" fill="#326fd1"/><path d="M8 16C8 11.582 11.582 8 16 8c2.21 0 4.21.896 5.657 2.343L18.829 13.172C18.04 12.382 16.976 12 16 12c-2.209 0-4 1.791-4 4s1.791 4 4 4c.976 0 2.04-.382 2.829-1.172l2.828 2.829C20.21 23.104 18.21 24 16 24 11.582 24 8 20.418 8 16z" fill="#fff"/></svg>
+    </div>
+    <nav class="app-header__menu">
+      <button class="nav-item">Home</button>
+      <button class="nav-item active">Projects ▾</button>
+      <button class="nav-item">Drive</button>
+      <button class="nav-item">Tasks</button>
+      <button class="nav-item">Reports ▾</button>
+      <button class="nav-item">Admin ▾</button>
+    </nav>
+  </div>
+  <div class="header-right">
+    <div style="display:flex;align-items:center;gap:var(--spacing-2)">
+      <button class="btn-cc">Control Center ↗</button>
+      <button class="btn-create">+ Create</button>
+    </div>
+    <div class="env-badge">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="#616161" stroke-width="1"/><path d="M7 1.5S5 4 5 7s2 5.5 2 5.5M7 1.5S9 4 9 7s-2 5.5-2 5.5M1.5 7h11" stroke="#616161" stroke-width="1"/></svg>
+      <span class="env-text">rio01</span>
+    </div>
+    <div id="headerAvatar" style="background:#326fd1" onclick="openModal()" title="Click to switch role">AG</div>
+  </div>
+</header>
+
+<!-- ══ SHELL ══ -->
+<div class="app-shell">
+
+  <!-- LEFT NAV -->
+  <aside class="left-nav">
+    <button class="lnav-tab">
+      <svg class="lnav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L2 6v8h4v-4h4v4h4V6z"/></svg>
+      <span class="lnav-label">Project Home</span>
+    </button>
+    <button class="lnav-tab sel expanded">
+      <svg class="lnav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2zm0 4h12v2H2zm0 4h8v2H2z"/></svg>
+      <span class="lnav-label">Cost</span>
+      <svg class="lnav-chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5l4 4 4-4"/></svg>
+    </button>
+    <div class="lnav-subtabs">
+      <button class="lnav-sub">Cost Breakdown</button>
+      <button class="lnav-sub">Time Phased Data</button>
+      <button class="lnav-sub active">AI Forecasting <span class="ai-chip">AI</span></button>
+      <button class="lnav-sub">EV Analysis</button>
+    </div>
+    <button class="lnav-tab">
+      <svg class="lnav-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+      <span class="lnav-label">Field Management</span>
+    </button>
+    <button class="lnav-tab">
+      <svg class="lnav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v2H2zm0 4h8v2H2zm0 4h10v2H2z"/></svg>
+      <span class="lnav-label">Procurement</span>
+      <svg class="lnav-chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5l4 4 4-4"/></svg>
+    </button>
+    <button class="lnav-tab">
+      <svg class="lnav-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="9" width="3" height="6" rx="1"/><rect x="6" y="5" width="3" height="10" rx="1"/><rect x="11" y="1" width="3" height="14" rx="1"/></svg>
+      <span class="lnav-label">Reports</span>
+      <svg class="lnav-chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5l4 4 4-4"/></svg>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="app-main">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <nav class="bc">
+        <a href="#">Projects</a><span class="sep">›</span>
+        <a href="#">Greenfield Refinery Expansion</a><span class="sep">›</span>
+        <a href="#">Cost</a><span class="sep">›</span>
+        <span class="cur">AI Forecasting</span>
+      </nav>
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">AI S-Curve Forecasting <span class="tag tag-ai" style="font-size:11px;vertical-align:middle;margin-left:6px">AI Beta</span></div>
+          <div class="page-sub">Control Account: CA-1042 · Civil Foundations — Phase 2</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="sel-in" style="width:230px">
+            <option>CA-1042 · Civil Foundations — P2</option>
+            <option>CA-1033 · Structural Steel</option>
+            <option>CA-1055 · MEP Rough-in</option>
+            <option>CA-1088 · Piping Tie-ins</option>
+          </select>
+          <button class="btn btn-secondary export-btn">Export</button>
+          <button class="btn btn-primary run-forecast-btn" onclick="runForecast(this)">Run AI Forecast</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Role indicator bar -->
+    <div class="role-bar">
+      <div class="role-bar__left">
+        <div class="role-bar__avatar" id="rbAvatar" style="background:#326fd1">AG</div>
+        <div>
+          <div class="role-bar__name" id="rbName">Alex Ghaste</div>
+          <div class="role-bar__title" id="rbTitle">System Administrator</div>
+        </div>
+        <span class="role-badge rb-superuser" id="rbBadge">Super User</span>
+        <span class="role-bar__scope" id="rbScope" style="margin-left:8px">· Global client settings</span>
+      </div>
+      <div class="role-bar__right">
+        <span style="font-size:11px;color:var(--default-text-secondary)">Previewing as:</span>
+        <button class="btn btn-secondary" style="font-size:11px" onclick="openModal()">Switch Role</button>
+      </div>
+    </div>
+
+    <!-- Sub-nav -->
+    <div class="subnav">
+      <button class="stab active" onclick="switchTab('curves',this)">Forecast Curves</button>
+      <button class="stab tab-btn-settings" id="tabBtnSettings" onclick="switchTab('settings',this)">Driver Settings</button>
+      <button class="stab" onclick="switchTab('appendix',this)">Forecast Appendix</button>
+      <button class="stab tab-btn-warnings" id="tabBtnWarnings" onclick="switchTab('warnings',this)">Warnings <span class="badge">3</span></button>
+    </div>
+
+    <!-- Tab content -->
+    <div class="tab-content">
+
+      <!-- ══ TAB: CURVES ══ -->
+      <div id="tab-curves" class="tab-pane active">
+
+        <div class="ai-bar">
+          <div class="ai-bar__label">
+            <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#326fd1"/><path d="M4.5 7l2 2 3-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            AI Forecast Active
+          </div>
+          <div class="ai-bar__chips">
+            <span style="font-size:11px;color:var(--default-text-secondary)">Driven by:</span>
+            <span class="chip">Phase Type · 25%</span>
+            <span class="chip">Discipline · 20%</span>
+            <span class="chip">Work Type · 20%</span>
+            <span class="chip">Project Size · 15%</span>
+            <span class="chip">Region · 10%</span>
+            <span class="chip">CPI · 10%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <span class="conf-badge conf-high">High Confidence · 87%</span>
+            <span style="font-size:11px;color:var(--default-text-secondary)">24 similar accounts</span>
+          </div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi"><div class="kpi-lbl">Est. at Completion (EAC)</div><div class="kpi-val">$42.7M</div><div class="kpi-sub">Budget: $40.0M · +6.75%</div></div>
+          <div class="kpi"><div class="kpi-lbl">% Complete (Actuals)</div><div class="kpi-val">61.4%</div><div class="kpi-sub">Actuals to date: $26.2M</div></div>
+          <div class="kpi"><div class="kpi-lbl">CPI / SPI</div><div class="kpi-val warn">0.92 / 0.88</div><div class="kpi-sub">Cost overrun · Behind schedule</div></div>
+          <div class="kpi"><div class="kpi-lbl">Forecast Completion</div><div class="kpi-val">Nov 2026</div><div class="kpi-sub">Scheduled: Aug 2026 · +3 mo.</div></div>
+        </div>
+
+        <div class="chart-tb">
+          <div class="ctb-l">
+            <button class="curve-btn on-actual"   id="tog-actual"   onclick="toggleCurve('actual',this)"><span class="dot" style="background:#326fd1"></span>Actual / ETC</button>
+            <button class="curve-btn on-incurred" id="tog-incurred" onclick="toggleCurve('incurred',this)"><span class="dot" style="background:#f59e0b"></span>Incurred / ETC</button>
+            <button class="curve-btn on-earned"   id="tog-earned"   onclick="toggleCurve('earned',this)"><span class="dot" style="background:#10b981"></span>Earned / ETC</button>
+            <div style="width:1px;height:24px;background:var(--default-surface-border);margin:0 4px"></div>
+            <button class="btn btn-ui-gray sel" id="tog-band" onclick="toggleBand(this)">Confidence Band</button>
+          </div>
+          <div class="ctb-r">
+            <span style="font-size:12px;font-weight:500;color:var(--default-text-secondary)">View:</span>
+            <button class="btn btn-ui-gray sel" id="v-cum" onclick="switchView('cum',this)" style="border-radius:4px 0 0 4px;border-right:none">Cumulative</button>
+            <button class="btn btn-ui-gray"     id="v-per" onclick="switchView('per',this)" style="border-radius:0 4px 4px 0">Periodic</button>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <canvas id="cv" height="360"></canvas>
+          <div class="legend">
+            <div class="leg-item"><div style="width:24px;height:2px;background:#326fd1;border-radius:1px"></div><span>Actual/ETC · Historical</span></div>
+            <div class="leg-item"><div style="width:24px;height:0;border-top:2px dashed #326fd1"></div><span>Actual/ETC · Forecast</span></div>
+            <div class="leg-item"><div style="width:24px;height:0;border-top:2px dashed #f59e0b"></div><span>Incurred/ETC · Forecast</span></div>
+            <div class="leg-item"><div style="width:24px;height:0;border-top:2px dashed #10b981"></div><span>Earned/ETC · Forecast</span></div>
+            <div class="leg-item"><div style="width:24px;height:10px;background:rgba(50,111,209,.12);border-radius:2px"></div><span>P10–P90 Band</span></div>
+            <div class="leg-item"><div style="width:2px;height:14px;background:#dc2626;border-radius:1px"></div><span>Today</span></div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="#326fd1" stroke-width="1.5"/><path d="M8 7v4M8 5v1" stroke="#326fd1" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Forecast derived from <strong>24 historically similar control accounts</strong> matching Phase: Construction, Discipline: Civil, Work Type: Direct, Region: Gulf Coast. CPI correction factor <strong>×0.92</strong> and SPI schedule extension <strong>+3 months</strong> applied to shape the remaining curve.
+        </div>
+      </div>
+
+      <!-- ══ TAB: SETTINGS ══ -->
+      <div id="tab-settings" class="tab-pane">
+
+        <!-- Super user: global scope banner -->
+        <div class="settings-banner sb-global show-superuser" style="align-items:flex-start">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="#326fd1" stroke-width="1.5"/><path d="M8 5v1M8 7v4" stroke="#326fd1" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <div><strong>Global Client Settings</strong> — These driver configurations apply across <em>all projects</em> for this client. Changes affect how the AI selects and weights features for every control account in the system. Only System Administrators can modify global defaults.</div>
+        </div>
+
+        <!-- Controls manager: project-level banner -->
+        <div class="settings-banner sb-project show-controlsManager" style="align-items:flex-start">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><path d="M8 2l5.196 3v6L8 14 2.804 11V5z" stroke="#047857" stroke-width="1.5" fill="none"/><path d="M8 8V5M8 9.5v.5" stroke="#047857" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <div><strong>Project-Level Overrides</strong> — You can adjust feature weights for this project. Feature toggles (add/remove) are managed globally by the System Administrator and are locked here. Reset to restore global defaults.</div>
+        </div>
+
+        <!-- Cost engineer / PM: read-only banner -->
+        <div class="settings-banner sb-readonly show-readonly-notice" style="align-items:flex-start">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><rect x="3" y="7" width="10" height="7" rx="1" stroke="#92400e" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" stroke="#92400e" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <div id="roNoticeText"><strong>Read-only</strong> — Your role does not have permission to modify forecast driver settings. Contact your System Administrator (Alex Ghaste) to request changes.</div>
+        </div>
+
+        <div class="settings-grid">
+
+          <!-- Categorical Features -->
+          <div class="s-section">
+            <div class="s-head">
+              <div>
+                <div class="s-head__title">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M2 7h7M2 11h5" stroke="#326fd1" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Categorical Features
+                  <span class="tag tag-ai">Type 1</span>
+                </div>
+                <div class="s-head__desc">Classification drivers for project &amp; control account matching</div>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <!-- Super user only: add feature button -->
+                <button class="btn btn-secondary show-superuser" style="font-size:11px" onclick="addFeature()">+ Add Feature</button>
+                <button class="btn btn-secondary settings-action-btn settings-editable" onclick="resetSettings(this)">Reset</button>
+              </div>
+            </div>
+            <div class="s-body" id="featBody">
+
+              <div class="feat-row" id="fr-phase">
+                <div class="feature-toggle-wrap tog"><input type="checkbox" checked onchange="togFeat(this,'fr-phase')"><span class="tog-slider"></span></div>
+                <div class="feat-info"><div class="feat-name">Phase Type</div><div class="feat-desc">Engineering / Procurement / Construction / Closeout</div></div>
+                <div class="feat-wt settings-editable">
+                  <label>Weight</label>
+                  <input type="range" class="rng" min="1" max="10" value="5" oninput="updWt(this)">
+                  <span class="wt-val">25%</span>
+                </div>
+              </div>
+
+              <div class="feat-row" id="fr-disc">
+                <div class="feature-toggle-wrap tog"><input type="checkbox" checked onchange="togFeat(this,'fr-disc')"><span class="tog-slider"></span></div>
+                <div class="feat-info"><div class="feat-name">Discipline</div><div class="feat-desc">Civil, Structural, MEP, Instrumentation…</div></div>
+                <div class="feat-wt settings-editable">
+                  <label>Weight</label>
+                  <input type="range" class="rng" min="1" max="10" value="4" oninput="updWt(this)">
+                  <span class="wt-val">20%</span>
+                </div>
+              </div>
+
+              <div class="feat-row" id="fr-wtype">
+                <div class="feature-toggle-wrap tog"><input type="checkbox" checked onchange="togFeat(this,'fr-wtype')"><span class="tog-slider"></span></div>
+                <div class="feat-info"><div class="feat-name">Work Type</div><div class="feat-desc">Direct, Indirect, Subcontract</div></div>
+                <div class="feat-wt settings-editable">
+                  <label>Weight</label>
+                  <input type="range" class="rng" min="1" max="10" value="4" oninput="updWt(this)">
+                  <span class="wt-val">20%</span>
+                </div>
+              </div>
+
+              <div class="feat-row" id="fr-psize">
+                <div class="feature-toggle-wrap tog"><input type="checkbox" checked onchange="togFeat(this,'fr-psize')"><span class="tog-slider"></span></div>
+                <div class="feat-info"><div class="feat-name">Project Size</div><div class="feat-desc">Small / Medium / Large / Mega</div></div>
+                <div class="feat-wt settings-editable">
+                  <label>Weight</label>
+                  <input type="range" class="rng" min="1" max="10" value="3" oninput="updWt(this)">
+                  <span class="wt-val">15%</span>
+                </div>
+              </div>
+
+              <div class="feat-row off" id="fr-asize">
+                <div class="feature-toggle-wrap tog"><input type="checkbox" onchange="togFeat(this,'fr-asize')"><span class="tog-slider"></span></div>
+                <div class="feat-info"><div class="feat-name">Account Size</div><div class="feat-desc">Relative budget size within project</div></div>
+                <div class="feat-wt settings-editable">
+                  <label>Weight</label>
+                  <input type="range" class="rng" min="1" max="10" value="2" disabled>
+                  <span class="wt-val" style="color:var(--default-text-secondary)">—</span>
+                </div>
+              </div>
+
+              <div class="feat-row" id="fr-region">
+                <div class="feature-toggle-wrap tog"><input type="checkbox" checked onchange="togFeat(this,'fr-region')"><span class="tog-slider"></span></div>
+                <div class="feat-info"><div class="feat-name">Region</div><div class="feat-desc">Geographic region classification</div></div>
+                <div class="feat-wt settings-editable">
+                  <label>Weight</label>
+                  <input type="range" class="rng" min="1" max="10" value="2" oninput="updWt(this)">
+                  <span class="wt-val">10%</span>
+                </div>
+              </div>
+
+              <!-- Add feature form (Super User only) -->
+              <div id="addFeatForm" style="display:none;padding:var(--spacing-3);border:1px dashed var(--brand-fill);border-radius:var(--border-rounded);background:rgba(50,111,209,.03)">
+                <div style="font-size:12px;font-weight:600;color:var(--default-text);margin-bottom:8px">Add Custom Classification Feature</div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <input type="text" placeholder="Feature name (e.g. Module Group)" style="height:32px;padding:0 12px;border:1px solid var(--input-border-color);border-radius:4px;font-family:inherit;font-size:12px;flex:1;min-width:160px" id="newFeatName">
+                  <input type="text" placeholder="Description (optional)" style="height:32px;padding:0 12px;border:1px solid var(--input-border-color);border-radius:4px;font-family:inherit;font-size:12px;flex:1;min-width:160px">
+                  <button class="btn btn-primary" style="font-size:11px" onclick="confirmAddFeature()">Add</button>
+                  <button class="btn btn-secondary" style="font-size:11px" onclick="document.getElementById('addFeatForm').style.display='none'">Cancel</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Numerical Features -->
+          <div class="s-section">
+            <div class="s-head">
+              <div>
+                <div class="s-head__title">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="9" width="3" height="4" rx="1" fill="#326fd1"/><rect x="5.5" y="5" width="3" height="8" rx="1" fill="#326fd1"/><rect x="10" y="1" width="3" height="12" rx="1" fill="#326fd1"/></svg>
+                  Numerical Features
+                  <span class="tag tag-type2">Type 2</span>
+                </div>
+                <div class="s-head__desc">Cost element mix and EV performance index factors</div>
+              </div>
+            </div>
+            <div class="s-body">
+
+              <div style="font-size:12px;font-weight:600;color:var(--default-text)">Cost Element Mix</div>
+              <div class="el-grid">
+                <div class="feat-row settings-editable"><div class="feature-toggle-wrap tog"><input type="checkbox" checked><span class="tog-slider"></span></div><div class="feat-info"><div class="feat-name">Labor</div><div class="feat-desc">Direct &amp; indirect hours</div></div></div>
+                <div class="feat-row settings-editable"><div class="feature-toggle-wrap tog"><input type="checkbox" checked><span class="tog-slider"></span></div><div class="feat-info"><div class="feat-name">Materials</div><div class="feat-desc">Bulk &amp; tagged equipment</div></div></div>
+                <div class="feat-row settings-editable"><div class="feature-toggle-wrap tog"><input type="checkbox" checked><span class="tog-slider"></span></div><div class="feat-info"><div class="feat-name">Subcontracts</div><div class="feat-desc">Sub-awarded packages</div></div></div>
+                <div class="feat-row settings-editable"><div class="feature-toggle-wrap tog"><input type="checkbox"><span class="tog-slider"></span></div><div class="feat-info"><div class="feat-name">Equipment</div><div class="feat-desc">Construction equipment</div></div></div>
+              </div>
+
+              <div class="divider"></div>
+              <div style="font-size:12px;font-weight:600;color:var(--default-text)">Forecast Metric</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap" class="settings-editable">
+                <button class="btn btn-ui-gray sel" onclick="selMetric(this)">Cost ($)</button>
+                <button class="btn btn-ui-gray" onclick="selMetric(this)">Hours (h)</button>
+                <button class="btn btn-ui-gray" onclick="selMetric(this)">Quantity (qty)</button>
+              </div>
+
+              <div class="divider"></div>
+              <div style="font-size:12px;font-weight:600;color:var(--default-text)">Earned Value Factors</div>
+              <div style="font-size:11px;color:var(--default-text-secondary);margin-top:-4px">Applies when EV is configured for this client</div>
+
+              <div class="feat-row" id="fr-cpi">
+                <div class="feature-toggle-wrap tog settings-editable"><input type="checkbox" checked onchange="togFeat(this,'fr-cpi')"><span class="tog-slider"></span></div>
+                <div class="feat-info"><div class="feat-name">CPI — Cost Performance Index</div><div class="feat-desc">Shapes remaining cost based on cost efficiency</div></div>
+                <div class="feat-wt settings-editable"><label>Weight</label><input type="range" class="rng" min="1" max="10" value="2" oninput="updWt(this)"><span class="wt-val">10%</span></div>
+              </div>
+
+              <div class="feat-row" id="fr-spi">
+                <div class="feature-toggle-wrap tog settings-editable"><input type="checkbox" checked onchange="togFeat(this,'fr-spi')"><span class="tog-slider"></span></div>
+                <div class="feat-info"><div class="feat-name">SPI — Schedule Performance Index</div><div class="feat-desc">Adjusts curve duration via schedule adherence</div></div>
+                <div class="feat-wt settings-editable"><label>Weight</label><input type="range" class="rng" min="1" max="10" value="2" oninput="updWt(this)"><span class="wt-val">10%</span></div>
+              </div>
+
+            </div>
+          </div>
+
+        </div><!-- /settings-grid -->
+
+        <div class="s-foot settings-save-row">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-primary" onclick="runForecast(this)">Save &amp; Re-run Forecast</button>
+        </div>
+      </div>
+
+      <!-- ══ TAB: APPENDIX ══ -->
+      <div id="tab-appendix" class="tab-pane">
+
+        <!-- Full appendix (all roles except readonly) -->
+        <div class="appendix-detail">
+          <div class="app-grid">
+
+            <div class="app-card">
+              <div class="app-title"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.8 3.8 4.2.6-3 3 .7 4.2L7 10.5 3.3 12.6l.7-4.2-3-3 4.2-.6z" stroke="#326fd1" stroke-width="1.3" fill="none"/></svg>Forecast Confidence</div>
+              <div class="ring-wrap">
+                <div class="ring">
+                  <svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#e5e5e5" stroke-width="10"/><circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="41" stroke-linecap="round"/></svg>
+                  <div class="ring-lbl"><span class="ring-pct">87%</span><span class="ring-word">High</span></div>
+                </div>
+                <div style="text-align:center"><div style="font-size:12px;font-weight:500;color:var(--default-text-secondary)">Based on 24 similar historical accounts</div><div style="font-size:11px;color:var(--default-text-secondary);margin-top:4px">Minimum match threshold: ≥ 80%</div></div>
+              </div>
+            </div>
+
+            <div class="app-card">
+              <div class="app-title"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 13L5 7l3 3 5-8" stroke="#326fd1" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>EAC Forecast Range</div>
+              <div style="font-size:12px;font-weight:500;color:var(--default-text-secondary);margin-bottom:12px">Probabilistic range from model uncertainty and historical variance.</div>
+              <div class="range-row"><span>Optimistic (P10)</span><span>Base (P50)</span><span>Pessimistic (P90)</span></div>
+              <div class="range-track">
+                <div class="range-fill"></div>
+                <div class="range-mk" style="left:12.7%;background:#9ca3af"><div class="range-mk-lbl">Budget $40M</div></div>
+                <div class="range-mk" style="left:47%;background:var(--brand-fill)"><div class="range-mk-lbl" style="color:var(--brand-fill)">$42.7M</div></div>
+              </div>
+              <div class="range-vals"><span style="color:#047857">$39.1M</span><span style="color:var(--brand-fill)">$42.7M base</span><span style="color:#dc2626">$46.8M</span></div>
+              <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px;font-size:11px"><div style="width:10px;height:10px;border-radius:50%;background:#10b981;flex-shrink:0"></div><span><strong>P10 ($39.1M)</strong> — Best case; slightly under budget</span></div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:11px"><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div><span><strong>P50 ($42.7M)</strong> — Base case; +6.75% over budget</span></div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:11px"><div style="width:10px;height:10px;border-radius:50%;background:#dc2626;flex-shrink:0"></div><span><strong>P90 ($46.8M)</strong> — Downside; +17% over budget</span></div>
+              </div>
+            </div>
+
+            <div class="app-card">
+              <div class="app-title"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1" stroke="#326fd1" stroke-width="1.3"/><path d="M4 5h6M4 8h4" stroke="#326fd1" stroke-width="1.3" stroke-linecap="round"/></svg>Basis of Forecast</div>
+              <ul class="basis-list">
+                <li><span class="bdot"></span><span><strong>Pattern Matching:</strong> 24 completed accounts with ≥80% similarity across Phase Type, Discipline, Work Type, Region, and Project Size.</span></li>
+                <li><span class="bdot"></span><span><strong>CPI Adjustment:</strong> CPI of 0.92 applied — late-growth correction shapes cost escalation pattern in remaining curve.</span></li>
+                <li><span class="bdot"></span><span><strong>SPI Adjustment:</strong> Duration extended ~3 months based on SPI of 0.88.</span></li>
+                <li><span class="bdot"></span><span><strong>Earned Value Ceiling:</strong> Earned/ETC bounded by Approved Budget ($40.0M). Cannot earn over budget.</span></li>
+                <li><span class="bdot"></span><span><strong>Incurred/Actual Gap:</strong> 4.2% accrual spread reflected as divergence between Actual and Incurred lines.</span></li>
+              </ul>
+            </div>
+
+            <div class="app-card">
+              <div class="app-title"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="4.5" cy="4.5" r="3" stroke="#326fd1" stroke-width="1.3"/><circle cx="10" cy="9.5" r="3" stroke="#326fd1" stroke-width="1.3"/><path d="M7 5.5l1.5 2.5" stroke="#326fd1" stroke-width="1.3" stroke-linecap="round"/></svg>Top Similar Historical Accounts</div>
+              <table class="sim-tbl">
+                <thead><tr><th>Account</th><th>Project</th><th>EAC vs Budget</th><th>Match</th></tr></thead>
+                <tbody>
+                  <tr><td>CA-0812 · Civil Fnds.</td><td>Port Arthur Exp.</td><td style="color:#047857;font-weight:600">+4.1%</td><td><span class="m-badge m-high">96%</span></td></tr>
+                  <tr><td>CA-0634 · Civil P3</td><td>Sabine Pass LNG</td><td style="color:#b45309;font-weight:600">+8.3%</td><td><span class="m-badge m-high">91%</span></td></tr>
+                  <tr><td>CA-1001 · Grading</td><td>Freeport Complex</td><td style="color:#047857;font-weight:600">+2.8%</td><td><span class="m-badge m-high">88%</span></td></tr>
+                  <tr><td>CA-0778 · Grading P2</td><td>Golden Pass</td><td style="color:#dc2626;font-weight:600">+11.5%</td><td><span class="m-badge m-medium">82%</span></td></tr>
+                  <tr><td>CA-0523 · Civil Fnds.</td><td>Texas LNG</td><td style="color:#047857;font-weight:600">+3.6%</td><td><span class="m-badge m-medium">80%</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="app-card full">
+              <div class="app-title"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l6 11H1z" stroke="#f59e0b" stroke-width="1.3" fill="none"/><path d="M7 6v3" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="11" r=".5" fill="#f59e0b"/></svg>Fallback Handling</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+                <div style="padding:12px;background:#fffbeb;border-radius:4px;border:1px solid #fcd34d"><div style="font-size:12px;font-weight:600;color:#b45309;margin-bottom:6px">Insufficient History (&lt; 5 matches)</div><div style="font-size:11px;color:var(--default-text-secondary);line-height:1.55">Model copies the Planned Baseline curve for the ETC. Labeled "Baseline-Copy". Confidence shown as Low.</div></div>
+                <div style="padding:12px;background:#fef2f2;border-radius:4px;border:1px solid #fca5a5"><div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:6px">No Historical Data</div><div style="font-size:11px;color:var(--default-text-secondary);line-height:1.55">User prompted to select pre-defined curve: Symmetric S, Front-Loaded, or Back-Loaded. No AI curve generated.</div></div>
+                <div style="padding:12px;background:#f0f9ff;border-radius:4px;border:1px solid #bae6fd"><div style="font-size:12px;font-weight:600;color:#0369a1;margin-bottom:6px">Schedule Conflict Detected</div><div style="font-size:11px;color:var(--default-text-secondary);line-height:1.55">Forecast blocked. Warning raised. Schedule must be corrected before AI forecast runs.</div></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Simplified appendix for read-only -->
+        <div class="appendix-simplified">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-6)">
+            <div class="app-card">
+              <div class="app-title">Forecast Confidence</div>
+              <div class="ring-wrap">
+                <div class="ring">
+                  <svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#e5e5e5" stroke-width="10"/><circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="41" stroke-linecap="round"/></svg>
+                  <div class="ring-lbl"><span class="ring-pct">87%</span><span class="ring-word">High</span></div>
+                </div>
+                <div style="text-align:center;font-size:12px;font-weight:500;color:var(--default-text-secondary)">24 similar historical accounts matched</div>
+              </div>
+            </div>
+            <div class="app-card">
+              <div class="app-title">EAC Forecast Range</div>
+              <div style="font-size:12px;font-weight:500;color:var(--default-text-secondary);margin-bottom:12px">Based on model uncertainty and historical variance.</div>
+              <div class="range-row"><span>P10</span><span>P50</span><span>P90</span></div>
+              <div class="range-track"><div class="range-fill"></div><div class="range-mk" style="left:47%;background:var(--brand-fill)"><div class="range-mk-lbl" style="color:var(--brand-fill)">$42.7M</div></div></div>
+              <div class="range-vals"><span style="color:#047857">$39.1M</span><span style="color:var(--brand-fill)">$42.7M</span><span style="color:#dc2626">$46.8M</span></div>
+              <div style="margin-top:16px;padding:12px;background:var(--default-surface-secondary);border-radius:4px">
+                <div style="font-size:11px;font-weight:600;color:var(--default-text-secondary);margin-bottom:4px">SUMMARY</div>
+                <div style="font-size:12px;font-weight:500;color:var(--default-text);line-height:1.55">Base case EAC of $42.7M is +6.75% over the $40.0M approved budget. AI model has high confidence based on 24 similar projects.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══ TAB: WARNINGS ══ -->
+      <div id="tab-warnings" class="tab-pane">
+
+        <div class="warn-summary">
+          <span class="status-pill sp-err"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#dc2626"/><path d="M6 3.5v3M6 8v.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>1 Error · Forecast Blocked</span>
+          <span class="status-pill sp-warn"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1.5l4.5 9H1.5z" fill="#f59e0b"/><path d="M6 5v2.5M6 8.5v.5" stroke="#fff" stroke-width="1" stroke-linecap="round"/></svg>2 Warnings · Review Recommended</span>
+          <span class="status-pill sp-ok"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#10b981"/><path d="M4 6l1.5 1.5L8 4" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>4 Accounts · AI Forecast Active</span>
+        </div>
+
+        <div class="warn-list">
+
+          <div class="warn-card wc-err">
+            <div class="wc-icon">🚫</div>
+            <div class="wc-body">
+              <div class="wc-title">Forecast Blocked — Schedule Finish Date in the Past</div>
+              <div class="wc-desc">Control Account <strong>CA-1088 (Piping Tie-ins)</strong> has a Forecast Finish of <strong>March 15, 2025</strong> (past) with <strong>$4.2M ETC remaining</strong>. AI forecast cannot run until schedule is corrected. Contruent does not own the schedule — update in the scheduling tool and re-sync.</div>
+              <div class="wc-meta"><span>Account: <strong>CA-1088</strong></span><span>Forecast Finish: <strong>15 Mar 2025</strong></span><span>ETC: <strong>$4.2M</strong></span><span>% Complete: <strong>38%</strong></span></div>
+            </div>
+            <div class="wc-act warn-action"><button class="btn btn-secondary" style="font-size:11px;white-space:nowrap">Review Schedule</button></div>
+          </div>
+
+          <div class="warn-card wc-warn">
+            <div class="wc-icon">⚠️</div>
+            <div class="wc-body">
+              <div class="wc-title">Low Confidence — Insufficient Similar Accounts Found</div>
+              <div class="wc-desc">Control Account <strong>CA-1103 (Module Pre-fabrication)</strong> matched only <strong>3 similar accounts</strong> (min: 5). AI forecast is using <strong>Baseline-Copy</strong> fallback. Results should be manually reviewed and the curve overridden if needed.</div>
+              <div class="wc-meta"><span>Account: <strong>CA-1103</strong></span><span>Matches: <strong>3</strong></span><span>Confidence: <strong>Low (43%)</strong></span><span>Fallback: <strong>Baseline-Copy</strong></span></div>
+            </div>
+            <div class="wc-act warn-action"><button class="btn btn-secondary" style="font-size:11px;white-space:nowrap">Override Curve</button></div>
+          </div>
+
+          <div class="warn-card wc-warn">
+            <div class="wc-icon">⚠️</div>
+            <div class="wc-body">
+              <div class="wc-title">Performance Alert — CPI and SPI Below Threshold</div>
+              <div class="wc-desc">Account <strong>CA-1042 (Civil Foundations)</strong> shows CPI <strong>0.92</strong>, SPI <strong>0.88</strong>. Performance corrections applied but if trend continues, final EAC may exceed P90 ($46.8M). Review bottom-up ETC and corrective action plan.</div>
+              <div class="wc-meta"><span>Account: <strong>CA-1042</strong></span><span>CPI: <strong style="color:#dc2626">0.92</strong></span><span>SPI: <strong style="color:#dc2626">0.88</strong></span><span>EAC Impact: <strong>+$2.7M</strong></span></div>
+            </div>
+            <div class="wc-act warn-action"><button class="btn btn-secondary" style="font-size:11px;white-space:nowrap" onclick="switchTab('appendix',document.querySelectorAll('.stab')[2])">View Appendix</button></div>
+          </div>
+
+          <div class="warn-card wc-info">
+            <div class="wc-icon">ℹ️</div>
+            <div class="wc-body">
+              <div class="wc-title">Module Groups Detected — Excluded from Cross-Project Matching</div>
+              <div class="wc-desc">Project uses Module Groups (MODGRP-A through MODGRP-F). These are <strong>excluded from cross-project AI matching</strong> (project-specific, cannot be normalized). They are included as local factors within this project's accounts only. Enable in Driver Settings if intra-project weighting is desired.</div>
+              <div class="wc-meta"><span>Groups: <strong>MODGRP-A, B, C, D, E, F</strong></span><span>Scope: <strong>This project only</strong></span></div>
+            </div>
+            <div class="wc-act warn-action"><button class="btn btn-secondary" style="font-size:11px;white-space:nowrap" onclick="switchTab('settings',document.querySelectorAll('.stab')[1])">Open Settings</button></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /tab-content -->
+  </main>
+</div>
+
+<script>
+/* ── Role config ── */
+const ROLES = {
+  superuser:       { initials:'AG', color:'#326fd1', name:'Alex Ghaste',   title:'System Administrator',      badge:'Super User',    badgeCls:'rb-superuser',     scope:'· Global client settings' },
+  controlsManager: { initials:'MS', color:'#047857', name:'Maria Santos',  title:'Project Controls Manager',  badge:'Controls Mgr',  badgeCls:'rb-controlsManager', scope:'· Project-level access' },
+  costEngineer:    { initials:'DK', color:'#b45309', name:'David Kim',     title:'Cost Engineer',             badge:'Cost Engineer', badgeCls:'rb-costEngineer',  scope:'· View &amp; run only' },
+  projectManager:  { initials:'SC', color:'#6d28d9', name:'Sarah Chen',    title:'Project Manager',           badge:'Project Mgr',   badgeCls:'rb-projectManager', scope:'· View only' },
+  readonly:        { initials:'JP', color:'#6b7280', name:'James Porter',  title:'Stakeholder (Read-Only)',   badge:'Read-Only',     badgeCls:'rb-readonly',      scope:'· View only' }
+};
+let currentRole = 'superuser';
+
+function setRole(key) {
+  currentRole = key;
+  const r = ROLES[key];
+
+  // Update header avatar
+  const ha = document.getElementById('headerAvatar');
+  ha.textContent = r.initials;
+  ha.style.background = r.color;
+
+  // Update role bar
+  document.getElementById('rbAvatar').textContent = r.initials;
+  document.getElementById('rbAvatar').style.background = r.color;
+  document.getElementById('rbName').textContent = r.name;
+  document.getElementById('rbTitle').textContent = r.title;
+  const rb = document.getElementById('rbBadge');
+  rb.textContent = r.badge;
+  rb.className = 'role-badge ' + r.badgeCls;
+  document.getElementById('rbScope').innerHTML = r.scope;
+
+  // Set body attribute (CSS handles everything else)
+  document.body.setAttribute('data-role', key);
+
+  // Update active chips in modal
+  Object.keys(ROLES).forEach(k => {
+    const chip = document.getElementById('chip-' + k);
+    const card = document.getElementById('rc-' + k);
+    if (chip) chip.style.display = k === key ? 'block' : 'none';
+    if (card) card.classList.toggle('active', k === key);
+  });
+
+  // Read-only notice text per role
+  if (key === 'costEngineer') {
+    document.getElementById('roNoticeText').innerHTML = '<strong>Read-only</strong> — Your role (Cost Engineer) does not have permission to modify forecast driver settings. Contact your System Administrator (Alex Ghaste) to request changes.';
+  } else if (key === 'projectManager') {
+    document.getElementById('roNoticeText').innerHTML = '<strong>Read-only</strong> — Your role (Project Manager) does not have permission to modify forecast driver settings. Contact your Project Controls Manager or System Administrator.';
+  }
+
+  // If current tab is now hidden, redirect to curves
+  const activeTab = document.querySelector('.stab.active');
+  if (activeTab) {
+    const parentClasses = activeTab.className;
+    const isSettings = activeTab === document.querySelector('.tab-btn-settings');
+    const isWarnings = activeTab === document.querySelector('.tab-btn-warnings');
+    const hidden = (isSettings || isWarnings) && key === 'readonly';
+    if (hidden) switchTab('curves', document.querySelector('.stab:not([style*="display:none"])'));
+  }
+
+  closeModal();
+}
+
+/* ── Modal ── */
+function openModal() { document.getElementById('roleModal').classList.remove('hidden') }
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('roleModal') || !e.target.closest('.role-modal'))
+    document.getElementById('roleModal').classList.add('hidden');
+}
+document.getElementById('roleModal').addEventListener('click', closeModal);
+
+/* ── Tab switching ── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'curves') setTimeout(drawChart, 10);
+}
+
+/* ── Run forecast (loading state) ── */
+function runForecast(btn) {
+  const orig = btn.textContent;
+  btn.textContent = 'Running…';
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = orig; btn.disabled = false; drawChart(); }, 1500);
+}
+
+/* ── Feature toggle ── */
+function togFeat(cb, id) {
+  document.getElementById(id).classList.toggle('off', !cb.checked);
+  const slider = document.querySelector('#' + id + ' .rng');
+  const val    = document.querySelector('#' + id + ' .wt-val');
+  if (slider) { slider.disabled = !cb.checked; }
+  if (val)    { val.textContent = cb.checked ? slider.value * 5 + '%' : '—'; val.style.color = cb.checked ? 'var(--brand-fill)' : 'var(--default-text-secondary)'; }
+}
+
+/* ── Weight update ── */
+function updWt(slider) {
+  slider.closest('.feat-wt').querySelector('.wt-val').textContent = slider.value * 5 + '%';
+}
+
+/* ── Metric select ── */
+function selMetric(btn) {
+  btn.closest('div').querySelectorAll('.btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+/* ── Settings reset ── */
+function resetSettings(btn) { btn.textContent = 'Reset'; }
+
+/* ── Add custom feature (Super User) ── */
+function addFeature() {
+  document.getElementById('addFeatForm').style.display = 'block';
+  document.getElementById('newFeatName').focus();
+}
+function confirmAddFeature() {
+  const name = document.getElementById('newFeatName').value.trim();
+  if (!name) return;
+  const row = document.createElement('div');
+  row.className = 'feat-row';
+  row.innerHTML = `
+    <div class="feature-toggle-wrap tog"><input type="checkbox" checked><span class="tog-slider"></span></div>
+    <div class="feat-info"><div class="feat-name">${name}</div><div class="feat-desc">Custom classification feature</div></div>
+    <div class="feat-wt settings-editable"><label>Weight</label><input type="range" class="rng" min="1" max="10" value="2" oninput="updWt(this)"><span class="wt-val">10%</span></div>
+  `;
+  document.getElementById('featBody').insertBefore(row, document.getElementById('addFeatForm'));
+  document.getElementById('addFeatForm').style.display = 'none';
+  document.getElementById('newFeatName').value = '';
+}
+
+/* ── Chart state ── */
+const vis = { actual:true, incurred:true, earned:true };
+let bandOn = true, viewMode = 'cum';
+
+function toggleCurve(n, btn) {
+  vis[n] = !vis[n];
+  btn.classList.toggle('on-' + n, vis[n]);
+  btn.style.opacity = vis[n] ? '' : '0.4';
+  if (!vis[n]) { btn.style.background = '#fff'; btn.style.borderColor = 'var(--default-surface-border)'; btn.style.color = 'var(--default-text)'; }
+  else { btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = ''; }
+  drawChart();
+}
+function toggleBand(btn) { bandOn = !bandOn; btn.classList.toggle('sel', bandOn); drawChart(); }
+function switchView(m, btn) {
+  viewMode = m;
+  document.getElementById('v-cum').classList.toggle('sel', m === 'cum');
+  document.getElementById('v-per').classList.toggle('sel', m === 'per');
+  drawChart();
+}
+
+/* ── S-curve ── */
+function sCurve(n, max, shift) {
+  return Array.from({length:n}, (_,i) => {
+    const x = (i/(n-1) - 0.5)*10 + (shift||0);
+    return max * Math.max(0, Math.min(1, 1/(1+Math.exp(-x))));
+  });
+}
+function toPeriodic(a) { return a.map((v,i) => i===0 ? v : v-a[i-1]) }
+
+function drawChart() {
+  const canvas = document.getElementById('cv');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth - 32;
+  const H = 360;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const P = {t:28,r:16,b:50,l:68};
+  const CW = W-P.l-P.r, CH = H-P.t-P.b;
+  const months = ['Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26','Aug 26','Sep 26','Oct 26','Nov 26','Dec 26'];
+  const N = months.length, TODAY = 16;
+  const YMAX = viewMode==='cum' ? 50 : 5;
+  const aC = sCurve(N,42.7,-1.2), iC = sCurve(N,43.5,-1.0), eC = sCurve(N,40.0,-1.5);
+  const p10C = sCurve(N,39.1,-1.5), p90C = sCurve(N,46.8,-0.8);
+  const cvt = a => viewMode==='cum' ? a : toPeriodic(a);
+  const a=cvt(aC),ic=cvt(iC),e=cvt(eC),p10=cvt(p10C),p90=cvt(p90C);
+  const xP = i => P.l+(i/(N-1))*CW;
+  const yP = v => P.t+CH-(v/YMAX)*CH;
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  const yTks = viewMode==='cum'?[0,10,20,30,40,50]:[0,1,2,3,4,5];
+  ctx.strokeStyle='#f0f0f0'; ctx.lineWidth=1;
+  yTks.forEach(v=>{ctx.beginPath();ctx.moveTo(P.l,yP(v));ctx.lineTo(P.l+CW,yP(v));ctx.stroke()});
+  for(let i=0;i<N;i+=3){ctx.beginPath();ctx.moveTo(xP(i),P.t);ctx.lineTo(xP(i),P.t+CH);ctx.stroke()}
+  ctx.fillStyle='#616161'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  yTks.forEach(v=>ctx.fillText('$'+v+'M',P.l-8,yP(v)));
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let i=0;i<N;i+=3) ctx.fillText(months[i],xP(i),P.t+CH+8);
+  if(bandOn&&vis.actual){ctx.save();ctx.beginPath();ctx.moveTo(xP(TODAY),yP(p90[TODAY]));for(let i=TODAY+1;i<N;i++)ctx.lineTo(xP(i),yP(p90[i]));for(let i=N-1;i>=TODAY;i--)ctx.lineTo(xP(i),yP(p10[i]));ctx.closePath();ctx.fillStyle='rgba(50,111,209,.10)';ctx.fill();ctx.restore()}
+  if(viewMode==='cum'){ctx.save();ctx.strokeStyle='#9ca3af';ctx.lineWidth=1;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(P.l,yP(40));ctx.lineTo(P.l+CW,yP(40));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#9ca3af';ctx.font='10px Inter,sans-serif';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('Budget $40M',P.l+CW,yP(40)-3);ctx.restore()}
+  ctx.save();ctx.strokeStyle='#dc2626';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(xP(TODAY),P.t);ctx.lineTo(xP(TODAY),P.t+CH);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#dc2626';ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('Today',xP(TODAY),P.t+4);ctx.restore();
+  function line(data,color,f,t,dash,lw){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=lw||2;if(dash)ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(xP(f),yP(data[f]));for(let i=f+1;i<=t;i++)ctx.lineTo(xP(i),yP(data[i]));ctx.stroke();ctx.setLineDash([]);ctx.restore()}
+  function dot(x,y,c){ctx.save();ctx.beginPath();ctx.arc(x,y,4.5,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();ctx.restore()}
+  if(vis.earned)   {line(e, '#10b981',0,TODAY,false,2);line(e, '#10b981',TODAY,N-1,true,2);dot(xP(TODAY),yP(e[TODAY]),'#10b981')}
+  if(vis.incurred) {line(ic,'#f59e0b',0,TODAY,false,2);line(ic,'#f59e0b',TODAY,N-1,true,2);dot(xP(TODAY),yP(ic[TODAY]),'#f59e0b')}
+  if(vis.actual)   {line(a, '#326fd1',0,TODAY,false,2.5);line(a,'#326fd1',TODAY,N-1,true,2.5);dot(xP(TODAY),yP(a[TODAY]),'#326fd1')}
+  ctx.save();ctx.strokeStyle='#e5e5e5';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(P.l,P.t);ctx.lineTo(P.l,P.t+CH);ctx.lineTo(P.l+CW,P.t+CH);ctx.stroke();ctx.restore();
+  ctx.save();ctx.translate(12,P.t+CH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#616161';ctx.font='11px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(viewMode==='cum'?'Cumulative Cost':'Periodic Cost',0,0);ctx.restore();
+}
+
+window.addEventListener('load', drawChart);
+window.addEventListener('resize', ()=>{ if(document.getElementById('tab-curves').classList.contains('active')) drawChart() });
+</script>
+</body>
+</html>
