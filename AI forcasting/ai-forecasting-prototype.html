@@ -443,7 +443,7 @@ body[data-role="readonly"] .appendix-simplified { display:block !important }
         <div class="role-card__head">
           <div class="role-card__avatar" style="background:#326fd1">AG</div>
           <div>
-            <div class="role-card__name">Alex Ghaste</div>
+            <div class="role-card__name">Alex Doe</div>
             <div class="role-card__title">System Administrator</div>
           </div>
         </div>
@@ -627,7 +627,7 @@ body[data-role="readonly"] .appendix-simplified { display:block !important }
       <div class="role-bar__left">
         <div class="role-bar__avatar" id="rbAvatar" style="background:#326fd1">AG</div>
         <div>
-          <div class="role-bar__name" id="rbName">Alex Ghaste</div>
+          <div class="role-bar__name" id="rbName">Alex Doe</div>
           <div class="role-bar__title" id="rbTitle">System Administrator</div>
         </div>
         <span class="role-badge rb-superuser" id="rbBadge">Super User</span>
@@ -731,7 +731,7 @@ body[data-role="readonly"] .appendix-simplified { display:block !important }
         <!-- Cost engineer / PM: read-only banner -->
         <div class="settings-banner sb-readonly show-readonly-notice" style="align-items:flex-start">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><rect x="3" y="7" width="10" height="7" rx="1" stroke="#92400e" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" stroke="#92400e" stroke-width="1.5" stroke-linecap="round"/></svg>
-          <div id="roNoticeText"><strong>Read-only</strong> — Your role does not have permission to modify forecast driver settings. Contact your System Administrator (Alex Ghaste) to request changes.</div>
+          <div id="roNoticeText"><strong>Read-only</strong> — Your role does not have permission to modify forecast driver settings. Contact your System Administrator (Alex Doe) to request changes.</div>
         </div>
 
         <div class="settings-grid">
@@ -1048,7 +1048,7 @@ body[data-role="readonly"] .appendix-simplified { display:block !important }
 <script>
 /* ── Role config ── */
 const ROLES = {
-  superuser:       { initials:'AG', color:'#326fd1', name:'Alex Ghaste',   title:'System Administrator',      badge:'Super User',    badgeCls:'rb-superuser',     scope:'· Global client settings' },
+  superuser:       { initials:'AG', color:'#326fd1', name:'Alex Doe',   title:'System Administrator',      badge:'Super User',    badgeCls:'rb-superuser',     scope:'· Global client settings' },
   controlsManager: { initials:'MS', color:'#047857', name:'Maria Santos',  title:'Project Controls Manager',  badge:'Controls Mgr',  badgeCls:'rb-controlsManager', scope:'· Project-level access' },
   costEngineer:    { initials:'DK', color:'#b45309', name:'David Kim',     title:'Cost Engineer',             badge:'Cost Engineer', badgeCls:'rb-costEngineer',  scope:'· View &amp; run only' },
   projectManager:  { initials:'SC', color:'#6d28d9', name:'Sarah Chen',    title:'Project Manager',           badge:'Project Mgr',   badgeCls:'rb-projectManager', scope:'· View only' },
@@ -1088,7 +1088,7 @@ function setRole(key) {
 
   // Read-only notice text per role
   if (key === 'costEngineer') {
-    document.getElementById('roNoticeText').innerHTML = '<strong>Read-only</strong> — Your role (Cost Engineer) does not have permission to modify forecast driver settings. Contact your System Administrator (Alex Ghaste) to request changes.';
+    document.getElementById('roNoticeText').innerHTML = '<strong>Read-only</strong> — Your role (Cost Engineer) does not have permission to modify forecast driver settings. Contact your System Administrator (Alex Doe) to request changes.';
   } else if (key === 'projectManager') {
     document.getElementById('roNoticeText').innerHTML = '<strong>Read-only</strong> — Your role (Project Manager) does not have permission to modify forecast driver settings. Contact your Project Controls Manager or System Administrator.';
   }
