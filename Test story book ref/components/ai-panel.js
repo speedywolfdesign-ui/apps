@@ -17,7 +17,7 @@
     },
     'project-home.html': {
       icon: 'pi-home',
-      label: 'Project Overview',
+      label: 'Project overview',
       greeting: "Hi! I can analyze your project performance, show forecast data, explain CPI/SPI, assess risks, or navigate anywhere. What would you like to know?",
       chips: ['Show forecast data', 'Explain cost overrun', 'What\'s at risk?', 'Summarize project']
     },
@@ -32,6 +32,12 @@
       label: 'Home',
       greeting: "Hi! I can help you navigate Contruent, find projects, or answer any questions.",
       chips: ['What can I do here?', 'Find a project', 'Show recent activity', 'Explain the dashboard']
+    },
+    'scurve-forecast.html': {
+      icon: 'pi-chart-line',
+      label: 'S-curve forecast',
+      greeting: "Hi! I can control the S-curve forecast directly — simulate time, switch accounts, run AI analysis, adjust driver weights, or answer what-if questions. Try a suggestion below.",
+      chips: ['Simulate to Jan 2026', 'Run AI forecast', 'Switch to MEP Systems', 'What\'s the current EAC?', 'What if SPI improves to 0.95?']
     }
   };
 
@@ -88,7 +94,7 @@
               <path d="M13 1L13.75 3.25L16 4L13.75 4.75L13 7L12.25 4.75L10 4L12.25 3.25L13 1Z" fill="white" opacity="0.7"/>
             </svg>
           </div>
-          AI Assistant
+          AI assistant
         </div>
         <button class="ai-panel-close" onclick="closeAiPanel()" title="Close">
           <i class="pi pi-times"></i>
@@ -326,7 +332,7 @@
     var doDraft  = /\bdraft\b/i.test(text);
     var steps    = [];
 
-    steps.push({ label: 'Opening Create Contract form', delay: 500, fn: function() {
+    steps.push({ label: 'Opening create contract form', delay: 500, fn: function() {
       if (typeof openCreateContractModal === 'function') openCreateContractModal();
     }});
 
@@ -396,6 +402,200 @@
   }
 
   /* ══════════════════════════════════════════
+     S-CURVE PAGE HELPERS
+  ══════════════════════════════════════════ */
+
+  function isScurvePage() {
+    return window.location.pathname.split('/').pop() === 'scurve-forecast.html';
+  }
+
+  function extractMonthIdx(text) {
+    var mc = window.MONTH_CALENDAR;
+    if (!mc) return -1;
+    var m = text.match(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d{4})/i);
+    if (m) {
+      var mo3 = m[1].toLowerCase().substring(0, 3);
+      var yr  = m[2];
+      for (var i = 0; i < mc.length; i++) {
+        if (mc[i].toLowerCase().startsWith(mo3) && mc[i].includes(yr)) return i;
+      }
+    }
+    var n = text.match(/\bmonth\s+(\d+)\b/i);
+    if (n) { var idx = parseInt(n[1]) - 1; if (idx >= 0 && idx < mc.length) return idx; }
+    var pct = text.match(/\b(\d+)\s*%\s*(?:through|complete|done)/i);
+    if (pct) { var p = parseInt(pct[1]); return Math.min(23, Math.round(p / 100 * 23)); }
+    return -1;
+  }
+
+  function extractCAId(text) {
+    if (/ca.?1043|structural|steel/i.test(text))    return 'ca-1043';
+    if (/ca.?1044|mep|mechanical|electrical/i.test(text)) return 'ca-1044';
+    if (/ca.?1045|site.?prep|preparation/i.test(text)) return 'ca-1045';
+    if (/ca.?1042|civil|foundation/i.test(text))    return 'ca-1042';
+    return null;
+  }
+
+  var CA_LABELS = {
+    'ca-1042': 'CA-1042 · Civil Foundations P2',
+    'ca-1043': 'CA-1043 · Structural Steel P1',
+    'ca-1044': 'CA-1044 · MEP Systems',
+    'ca-1045': 'CA-1045 · Site Preparation'
+  };
+
+  function scurveSetSlider(idx) {
+    var slider = document.getElementById('scTimeSlider');
+    if (slider) {
+      slider.value = idx;
+      var pct = ((idx - +slider.min) / (+slider.max - +slider.min)) * 100;
+      slider.style.setProperty('--fill-pct', pct + '%');
+    }
+    if (typeof window.updateChartTime === 'function') window.updateChartTime(idx);
+  }
+
+  function scurveLiveStatus() {
+    var eac     = document.getElementById('m-eac')?.textContent     || '—';
+    var pct     = document.getElementById('m-pct')?.textContent     || '—';
+    var cpispi  = document.getElementById('m-cpispi')?.textContent  || '—';
+    var comp    = document.getElementById('m-completion')?.textContent || '—';
+    var month   = document.getElementById('scTsMonth')?.textContent  || '—';
+    var isAi    = window.AI_FORECAST_ACTIVE;
+    var caBtn   = document.getElementById('acctSelectorBtn');
+    var ca      = caBtn ? caBtn.textContent.trim().replace(/\s+/g,' ') : '—';
+    return '<strong>Current Forecast Status</strong>'
+      + '<div style="margin-top:8px;font-size:13px;line-height:1.9">'
+      + '<div>📋 <strong>Account:</strong> ' + ca + '</div>'
+      + '<div>📅 <strong>Simulated to:</strong> ' + month + (window.AI_FORECAST_ACTIVE ? ' <em>(AI forecast active)</em>' : '') + '</div>'
+      + '<div>💰 <strong>EAC:</strong> ' + eac + '</div>'
+      + '<div>✅ <strong>% Complete:</strong> ' + pct + '</div>'
+      + '<div>📊 <strong>CPI / SPI:</strong> ' + cpispi + '</div>'
+      + '<div>🏁 <strong>Forecast completion:</strong> ' + comp + '</div>'
+      + (isAi ? '<div style="margin-top:6px;padding:5px 8px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1d4ed8">⚡ AI Forecast is active — curves reflect matched account analysis</div>' : '')
+      + '</div>';
+  }
+
+  function buildScurveSimulateSteps(idx) {
+    var mc = window.MONTH_CALENDAR || [];
+    var label = mc[idx] || 'Month ' + (idx + 1);
+    return [
+      { label: 'Reading timeline position', delay: 400, fn: function() {} },
+      { label: 'Moving simulate slider to ' + label, delay: 600, fn: function() {
+        scurveSetSlider(idx);
+      }},
+      { label: 'Chart and KPIs updated', delay: 300, fn: function() {} }
+    ];
+  }
+
+  function buildScurveSwitchCASteps(id) {
+    var name = CA_LABELS[id] || id;
+    return [
+      { label: 'Loading account data for ' + name, delay: 500, fn: function() {} },
+      { label: 'Updating S-curve and KPIs', delay: 700, fn: function() {
+        if (typeof window.selectAccount === 'function') window.selectAccount(id);
+      }},
+      { label: 'Chart refreshed', delay: 300, fn: function() {} }
+    ];
+  }
+
+  function buildScurveRunForecastSteps() {
+    return [
+      { label: 'Reading active driver weights', delay: 400, fn: function() {} },
+      { label: 'Matching historical accounts via Gower distance', delay: 900, fn: function() {} },
+      { label: 'Computing P10 / P50 / P90 forecast curves', delay: 700, fn: function() {} },
+      { label: 'Applying AI forecast to chart', delay: 400, fn: function() {
+        if (typeof window.runAiForecast === 'function') window.runAiForecast();
+      }}
+    ];
+  }
+
+  function buildScurveResetSteps() {
+    return [
+      { label: 'Resetting simulate slider to today', delay: 400, fn: function() {
+        if (typeof window.resetToRealToday === 'function') window.resetToRealToday();
+      }},
+      { label: 'Restoring original S-curve', delay: 500, fn: function() {} }
+    ];
+  }
+
+  function buildScurveResetSettingsSteps() {
+    return [
+      { label: 'Resetting all driver weights to defaults', delay: 500, fn: function() {
+        if (typeof window.resetSettingsWeights === 'function') window.resetSettingsWeights();
+      }},
+      { label: 'S-curve restored to baseline forecast', delay: 400, fn: function() {} }
+    ];
+  }
+
+  function buildScurveWeightSteps(key, label, value) {
+    return [
+      { label: 'Opening driver settings', delay: 400, fn: function() {} },
+      { label: 'Setting ' + label + ' weight to ' + value.toFixed(1), delay: 600, fn: function() {
+        if (typeof window.updateSettingsWeight === 'function') window.updateSettingsWeight(key, value);
+        // Also visually update the slider if settings panel is open
+        var slider = document.getElementById('wslider-' + key);
+        if (slider) { slider.value = value; slider.style.setProperty('--fill-pct', (value / 5 * 100).toFixed(0) + '%'); }
+        var valEl = document.getElementById('wval-' + key);
+        if (valEl) valEl.textContent = value.toFixed(1);
+      }},
+      { label: 'Weight updated — run AI forecast to apply', delay: 300, fn: function() {} }
+    ];
+  }
+
+  function buildScurveWhatIfSPI(spi) {
+    var bac  = window.CHART_BAC  || 40;
+    var cpi  = parseFloat((document.getElementById('m-cpispi')?.textContent || '0.92 / 0.88').split('/')[0]) || 0.92;
+    var eac  = (bac / cpi).toFixed(1);
+    var sc   = window.SCHEDULED_END_IDX || 20;
+    var mc   = window.MONTH_CALENDAR || [];
+    var slip = Math.round(24 * Math.max(-6, (1 / spi) - 1));
+    var compIdx = Math.min(23, Math.max(0, sc + slip));
+    var compLabel = mc[compIdx] || '—';
+    var schedLabel = mc[sc] || '—';
+    var slipText = compIdx === sc ? 'On schedule' : (compIdx > sc ? '+' + (compIdx - sc) + ' months late' : Math.abs(compIdx - sc) + ' months early');
+    return '<strong>What-if: SPI = ' + spi.toFixed(2) + '</strong>'
+      + '<div style="margin-top:8px;font-size:13px;line-height:1.9">'
+      + '<div>📅 <strong>Forecast completion:</strong> ' + compLabel + ' <em>(' + slipText + ' vs ' + schedLabel + ' plan)</em></div>'
+      + '<div>💰 <strong>EAC (cost unchanged):</strong> $' + eac + 'M</div>'
+      + '<div style="margin-top:6px;padding:6px 10px;background:#fefce8;border:1px solid #fde68a;border-radius:6px;font-size:12px;color:#92400e">'
+      + '⚠ This is a schedule-only simulation. To see the effect on the chart, open Driver Settings, adjust SPI weight, and run AI Forecast.'
+      + '</div></div>';
+  }
+
+  function buildScurveWhatIfCPI(cpi) {
+    var bac = window.CHART_BAC || 40;
+    var eac = (bac / cpi).toFixed(1);
+    var varPct = ((eac / bac - 1) * 100).toFixed(1);
+    var sign = varPct >= 0 ? '+' : '';
+    return '<strong>What-if: CPI = ' + cpi.toFixed(2) + '</strong>'
+      + '<div style="margin-top:8px;font-size:13px;line-height:1.9">'
+      + '<div>💰 <strong>Implied EAC:</strong> $' + eac + 'M (' + sign + varPct + '% vs $' + bac.toFixed(1) + 'M budget)</div>'
+      + '<div>📈 <strong>Cost efficiency:</strong> $' + (1 / cpi).toFixed(2) + ' spent per $1.00 of earned value</div>'
+      + '<div style="margin-top:6px;padding:6px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;font-size:12px;color:#1e40af">'
+      + '💡 Adjust the SPI/CPI weight in Driver Settings and run AI Forecast to reflect this scenario on the chart.'
+      + '</div></div>';
+  }
+
+  function buildScurveExplainDrivers() {
+    var aw = window.ACTIVE_WEIGHTS || {};
+    var total = Object.values(aw).reduce(function(a, b) { return a + b; }, 0) || 1;
+    var sorted = Object.entries(aw)
+      .filter(function(e) { return e[1] > 0; })
+      .sort(function(a, b) { return b[1] - a[1]; })
+      .slice(0, 6);
+    var rows = sorted.map(function(e) {
+      var pct = ((e[1] / total) * 100).toFixed(0);
+      var bar = Math.round(e[1] / 5 * 100);
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+        + '<span style="width:140px;font-size:12px;color:#374151">' + e[0].replace(/_/g, ' ') + '</span>'
+        + '<div style="flex:1;height:6px;background:#e5e7eb;border-radius:3px"><div style="height:6px;background:#3b82f6;border-radius:3px;width:' + bar + '%"></div></div>'
+        + '<span style="width:36px;text-align:right;font-size:12px;color:#6b7280">' + pct + '%</span>'
+        + '</div>';
+    }).join('');
+    return '<strong>Active Driver Weights</strong>'
+      + '<div style="margin-top:10px">' + rows + '</div>'
+      + '<div style="margin-top:8px;font-size:12px;color:#6b7280">Open <em>Driver settings</em> to adjust. Run AI forecast to apply.</div>';
+  }
+
+  /* ══════════════════════════════════════════
      INTENT RESOLVER  (order matters)
   ══════════════════════════════════════════ */
 
@@ -424,6 +624,74 @@
   function resolveIntent(text) {
     var t = text;
 
+    /* ── S-Curve page handlers ── */
+    if (isScurvePage()) {
+
+      // Simulate / time travel
+      if (/simulat|time.*travel|move.*to|go.*to|advance.*to|jump.*to/i.test(t)) {
+        var sIdx = extractMonthIdx(t);
+        if (sIdx >= 0) {
+          var sMc = window.MONTH_CALENDAR || [];
+          return { type: 'multistep', reply: 'Simulating to <strong>' + (sMc[sIdx] || 'Month ' + (sIdx + 1)) + '</strong>.', steps: buildScurveSimulateSteps(sIdx) };
+        }
+      }
+
+      // Run AI Forecast
+      if (/run.*forecast|run.*ai|run.*analys|apply.*forecast|ai.*forecast|forecast.*now/i.test(t)) {
+        return { type: 'multistep', reply: 'Running AI forecast analysis…', steps: buildScurveRunForecastSteps() };
+      }
+
+      // Switch control account
+      var scaId = extractCAId(t);
+      if (scaId && /switch|change|select|go.*to\b/i.test(t)) {
+        return { type: 'multistep', reply: 'Switching to <strong>' + (CA_LABELS[scaId] || scaId) + '</strong>.', steps: buildScurveSwitchCASteps(scaId) };
+      }
+
+      // What-if SPI
+      if (/what.*if|simulate.*spi/i.test(t) && /\bspi\b/i.test(t)) {
+        var spiNum = t.match(/\b(0\.\d+|1\.\d+|2\.\d+)\b/);
+        if (spiNum) {
+          var spiVal = parseFloat(spiNum[1]);
+          if (spiVal > 0 && spiVal < 3) return { type: 'simple', reply: buildScurveWhatIfSPI(spiVal) };
+        }
+      }
+
+      // What-if CPI
+      if (/what.*if|simulate.*cpi/i.test(t) && /\bcpi\b/i.test(t)) {
+        var cpiNum = t.match(/\b(0\.\d+|1\.\d+|2\.\d+)\b/);
+        if (cpiNum) {
+          var cpiVal = parseFloat(cpiNum[1]);
+          if (cpiVal > 0 && cpiVal < 3) return { type: 'simple', reply: buildScurveWhatIfCPI(cpiVal) };
+        }
+      }
+
+      // Status / EAC query
+      if (/\beac\b|current.*status|show.*status|forecast.*status|how.*are.*we|what.*is.*the/i.test(t)) {
+        return { type: 'simple', reply: scurveLiveStatus() };
+      }
+
+      // Driver weights / explain
+      if (/driver|weight|factor/i.test(t)) {
+        return { type: 'simple', reply: buildScurveExplainDrivers() };
+      }
+
+      // Reset settings
+      if (/reset.*setting|restore.*default|default.*setting/i.test(t)) {
+        return { type: 'multistep', reply: 'Resetting driver settings to defaults.', steps: buildScurveResetSettingsSteps() };
+      }
+
+      // Reset to today
+      if (/reset|today|back.*today/i.test(t)) {
+        return { type: 'multistep', reply: 'Resetting simulate slider to <strong>today</strong>.', steps: buildScurveResetSteps() };
+      }
+
+      // S-curve page fallback
+      return {
+        type: 'simple',
+        reply: 'On this page I can: <strong>simulate time</strong> ("Simulate to Jan 2026"), <strong>run AI Forecast</strong>, <strong>switch accounts</strong> ("Switch to MEP Systems"), answer <strong>what-if questions</strong> ("What if SPI is 0.95?"), or show <strong>driver weights</strong>. What would you like to do?'
+      };
+    }
+
     /* ── Project-home: forecast / EAC ── */
     var pd = window.PROJECT_DATA;
     if (pd && /forecast|eac|estimate.*complet|complet.*date|projection/i.test(t)) {
@@ -432,7 +700,7 @@
         reply: 'Running forecast analysis…',
         steps: [
           { label: 'Reading performance metrics (CPI, SPI)', delay: 500, fn: function() {} },
-          { label: 'Computing Estimate at Completion (EAC)', delay: 700, fn: function() {} },
+          { label: 'Computing estimate at completion (EAC)', delay: 700, fn: function() {} },
           { label: 'Evaluating schedule variance', delay: 600, fn: function() {} },
           { label: 'Building forecast summary', delay: 400, fn: function() {
             setTimeout(function() { appendMessage('assistant', buildForecastReply(pd)); }, 350);
@@ -553,8 +821,8 @@
     if (/\btrend\b/i.test(t)) {
       return {
         type: 'multistep',
-        reply: 'Opening the <strong>Create Contract</strong> form for your new trend.',
-        steps: [{ label: 'Opening Create Contract form', delay: 500, fn: function() {
+        reply: 'Opening the <strong>Create contract</strong> form for your new trend.',
+        steps: [{ label: 'Opening create contract form', delay: 500, fn: function() {
           if (typeof openCreateContractModal === 'function') openCreateContractModal();
         }}]
       };
@@ -585,7 +853,7 @@
 
     /* ── Navigate ── */
     if (/project home|project overview|go.*home/i.test(t)) {
-      return { type: 'multistep', reply: 'Taking you to <strong>Project Home</strong>.', steps: buildNavigateSteps('project-home.html', 'Project Home') };
+      return { type: 'multistep', reply: 'Taking you to <strong>Project home</strong>.', steps: buildNavigateSteps('project-home.html', 'Project home') };
     }
     if (/\bprojects\b/i.test(t) && /go|open|navigate|take/i.test(t)) {
       return { type: 'multistep', reply: 'Taking you to <strong>Projects</strong>.', steps: buildNavigateSteps('projects.html', 'Projects') };
@@ -611,7 +879,7 @@
     { test: /g2|import|procure/i,
       reply: 'The 2 existing contracts were imported from <strong>G2</strong>. You can also import from ProcureWare via <em>Add → Import from ProcureWare</em>.' },
     { test: /pay item|payitem|quantity|price/i,
-      reply: 'Pay items are scope line items — description, quantity, hours, unit price, price type, and control account ID. Expand <em>Pay Items</em> inside any contract to manage them.' },
+      reply: 'Pay items are scope line items — description, quantity, hours, unit price, price type, and control account ID. Expand <em>Pay items</em> inside any contract to manage them.' },
     { test: /s.?curve|spend|budget|cost/i,
       reply: 'The S-curve shows cumulative planned vs actual spend over time. A gap indicates schedule slippage — check the Performance section for context.' },
     { test: /at.risk|behind|overrun|delay/i,

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cisco Systems — S-curve forecasting — Contruent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <link rel="stylesheet" href="components/tokens.css" />
+  <link rel="stylesheet" href="components/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="scurve-forecast.css" />
+</head>
+<body>
+
+  <div id="top-nav-mount"></div>
+  <div id="left-nav-mount"></div>
+
+  <div class="proj-content">
+
+    <!-- Breadcrumb -->
+    <div class="page-top-row">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="home.html">Home</a><span class="bc-sep">/</span>
+        <a href="projects.html">Projects</a><span class="bc-sep">/</span>
+        <span data-proj="name">Cisco Systems</span><span class="bc-sep">/</span>
+      </nav>
+    </div>
+
+    <!-- Page title block -->
+    <div class="sc-page-title-block">
+      <h1 class="page-title" style="margin-bottom:2px">S-curve forecasting</h1>
+      <div class="sc-page-subtitle">Control account: CA-1042 · Civil Foundations — Phase 2</div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="sc-toolbar">
+      <div class="sc-toolbar-left">
+        <div class="sc-acct-selector-wrap" id="acctSelectorWrap">
+          <button class="sc-acct-selector" onclick="toggleAcctDropdown()" aria-expanded="false" id="acctSelectorBtn">
+            CA-1042 · Civil Foundations — P2 <i class="pi pi-chevron-down sc-acct-chevron"></i>
+          </button>
+          <div class="sc-acct-dropdown" id="acctDropdown" style="display:none">
+            <div class="sc-acct-search-wrap">
+              <i class="pi pi-search sc-acct-search-icon"></i>
+              <input class="sc-acct-search" id="acctSearch" type="text"
+                placeholder="Search accounts…"
+                oninput="filterAcctDropdown(this.value)"
+                autocomplete="off" />
+            </div>
+            <div class="sc-acct-drop-item sc-acct-drop-item--active" data-id="ca-1042" onclick="selectAccount('ca-1042')">CA-1042 · Civil Foundations — P2</div>
+            <div class="sc-acct-drop-item" data-id="ca-1043" onclick="selectAccount('ca-1043')">CA-1043 · Structural Steel — P1</div>
+            <div class="sc-acct-drop-item" data-id="ca-1044" onclick="selectAccount('ca-1044')">CA-1044 · MEP Systems</div>
+            <div class="sc-acct-drop-item" data-id="ca-1045" onclick="selectAccount('ca-1045')">CA-1045 · Site Preparation</div>
+            <div class="sc-acct-drop-no-results" id="acctDropNoResults" style="display:none">No accounts found</div>
+          </div>
+        </div>
+        <!-- <button class="sc-toolbar-icon-btn" title="Filter settings" aria-label="Filter settings">
+          <i class="pi pi-sliders-h"></i>
+        </button> -->
+      </div>
+      <div class="sc-toolbar-right">
+        <button class="btn btn-primary sc-run-btn" onclick="openSettingsModal()">
+          <i class="pi pi-cog btn-icon-left"></i> Run forecast
+        </button>
+        <div class="sc-kebab-wrap" id="kebabWrap">
+          <button class="sc-toolbar-icon-btn" id="kebabBtn" onclick="toggleKebabMenu()" aria-expanded="false" title="More options" aria-label="More options">
+            <i class="pi pi-ellipsis-v"></i>
+          </button>
+          <div class="sc-kebab-dropdown" id="kebabDropdown" style="display:none">
+            <button class="sc-kebab-item" type="button" onclick="kebabExportExcel()">
+              <i class="pi pi-file-excel"></i> Export
+            </button>
+            <div class="sc-kebab-divider"></div>
+            <button class="sc-kebab-item" type="button" onclick="openSwitchUserModal()">
+              <i class="pi pi-users"></i> Switch user
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCORDION 1: Forecast curves (open) -->
+    <div class="sc-acc-section" id="acc-forecast">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-forecast')" aria-expanded="true">
+        <i class="pi pi-chevron-down sc-acc-chevron"></i>
+        <span class="sc-acc-title">Cumulative spend forecast</span>
+      </button>
+      <div class="sc-acc-body" id="acc-forecast-body">
+
+        <!-- AI Banner -->
+        <div class="sc-ai-banner" id="scAiBanner">
+          <div class="sc-ai-banner-row">
+            <button class="sc-ai-banner-expand" id="aiBannerExpandBtn" onclick="toggleAiBannerDetail()" title="Expand forecast drivers" aria-label="Expand AI forecast details" aria-expanded="false">
+              <i class="pi pi-chevron-right"></i>
+            </button>
+            <span class="sc-ai-active-tag">AI forecast active</span>
+            <span class="sc-ai-driven-label">Driven by:</span>
+            <div class="sc-ai-driver-pills" id="scAiDriverPills">
+              <span class="sc-driver-pill">CA group codes: 30%</span>
+              <span class="sc-driver-pill">Project groups: 20%</span>
+              <span class="sc-driver-pill">Curve shape: 20%</span>
+              <span class="sc-driver-pill">Cost mix: 15%</span>
+              <span class="sc-driver-pill">SPI / CPI: 10%</span>
+              <span class="sc-driver-pill">Duration: 5%</span>
+            </div>
+            <div class="sc-ai-banner-right">
+              <span class="sc-high-confidence-pill">High confidence: 87%</span>
+              <span class="sc-similar-accts">24 similar accounts</span>
+            </div>
+          </div>
+          <div class="sc-ai-banner-detail" id="scAiBannerDetail" style="display:none"></div>
+        </div>
+
+        <!-- KPI row (4 metric cards) -->
+        <div class="sc-metric-row">
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Est. at completion (EAC)</div>
+            <div class="sc-metric-value" id="m-eac">$42.2M</div>
+            <div class="sc-metric-sub" id="m-eac-sub">Budget: $40.0M · <span class="sc-metric-over">+5.50%</span></div>
+          </div>
+          <div class="sc-metric-card sc-metric-card--border-left">
+            <div class="sc-metric-label">% Complete (actuals)</div>
+            <div class="sc-metric-value" id="m-pct">55.9%</div>
+            <div class="sc-metric-sub" id="m-pct-sub">Actuals to date: $23.6M</div>
+          </div>
+          <div class="sc-metric-card sc-metric-card--border-left">
+            <div class="sc-metric-label">CPI / SPI</div>
+            <div class="sc-metric-value sc-metric-value--warn" id="m-cpispi">0.92 / 0.88</div>
+            <div class="sc-metric-sub sc-metric-sub--warn">Cost overrun · behind schedule</div>
+          </div>
+          <div class="sc-metric-card sc-metric-card--border-left">
+            <div class="sc-metric-label">Forecast completion</div>
+            <div class="sc-metric-value" id="m-completion">Nov 2026</div>
+            <div class="sc-metric-sub" id="m-completion-sub">Scheduled: Aug 2026 · <span class="sc-metric-over">+3 mo.</span></div>
+          </div>
+        </div>
+
+        <!-- Chart controls row -->
+        <div class="sc-chart-controls">
+          <div class="sc-chart-controls-left">
+            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('actual')" data-line="actual" aria-pressed="true">
+              <span class="sc-line-dot sc-line-dot--actual"></span> Actual / ETC
+            </button>
+            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('incurred')" data-line="incurred" aria-pressed="true">
+              <span class="sc-line-dot sc-line-dot--incurred"></span> Incurred / ETC
+            </button>
+            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('earned')" data-line="earned" aria-pressed="true">
+              <span class="sc-line-dot sc-line-dot--earned"></span> Earned / ETC
+            </button>
+            <label class="sc-line-toggle sc-line-toggle--checkbox">
+              <input type="checkbox" id="cbConfidenceBand" checked onchange="toggleConfidenceBand(this.checked)" />
+              <span>Confidence band</span>
+            </label>
+          </div>
+          <div class="sc-chart-controls-right">
+            <div class="sc-date-range">
+              <button class="sc-date-btn">Jan 2025 <i class="pi pi-calendar"></i></button>
+              <button class="sc-date-btn">Dec 2026 <i class="pi pi-calendar"></i></button>
+            </div>
+            <div class="sc-view-toggle">
+              <span class="sc-view-label">Cumulative</span>
+              <label class="sc-toggle-switch" aria-label="Toggle cumulative/periodic">
+                <input type="checkbox" id="togglePeriodic" onchange="toggleChartView(this.checked)" />
+                <span class="sc-toggle-track"></span>
+              </label>
+              <span class="sc-view-label">Periodic</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time scrubber -->
+        <div class="sc-time-scrubber">
+          <div class="sc-ts-left">
+            <i class="pi pi-history sc-ts-icon"></i>
+            <span class="sc-ts-sim-label">Simulate:</span>
+            <span class="sc-ts-month" id="scTsMonth">Jun 2025</span>
+            <span class="sc-ts-sim-badge" id="scTsSimBadge" style="display:none">Simulated</span>
+          </div>
+          <input type="range" class="sc-ts-slider" id="scTimeSlider"
+                 min="2" max="22" value="6"
+                 oninput="updateChartTime(+this.value); this.style.setProperty('--fill-pct', ((this.value-this.min)/(this.max-this.min)*100)+'%')"
+                 style="--fill-pct:20%" />
+          <button class="sc-ts-reset" onclick="resetToRealToday()" title="Reset to current date">
+            <i class="pi pi-refresh"></i> Today
+          </button>
+        </div>
+
+        <!-- Chart area -->
+        <div class="sc-chart-outer">
+          <div class="sc-chart-title-row">
+            <span class="sc-chart-title-label">S-curve <i class="pi pi-info-circle sc-chart-info-icon" title="Cumulative cost S-curve with periodic bar chart"></i></span>
+            <div class="sc-chart-inner-legend">
+              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#3949ab"></span> Baseline</span>
+              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#1565c0"></span> Approved</span>
+              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#283593"></span> Control</span>
+              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#5c6bc0"></span> Financial</span>
+              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#42a5f5"></span> Earned</span>
+              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#1e88e5"></span> Actuals</span>
+              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#26a69a"></span> Incurred</span>
+              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#43a047"></span> Commitment</span>
+            </div>
+          </div>
+          <div class="sc-chart-wrap" style="height:320px">
+            <canvas id="scurve-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart legend (below chart) -->
+        <div class="sc-bottom-legend">
+          <span class="sc-bl-item sc-bl-solid sc-bl-actual">Actual/ETC · historical</span>
+          <span class="sc-bl-item sc-bl-dashed sc-bl-actual">Actual/ETC · forecast</span>
+          <span class="sc-bl-item sc-bl-solid sc-bl-incurred">Incurred/ETC · historical</span>
+          <span class="sc-bl-item sc-bl-dashed sc-bl-incurred">Incurred/ETC · forecast</span>
+          <span class="sc-bl-item sc-bl-solid sc-bl-earned">Earned/ETC · historical</span>
+          <span class="sc-bl-item sc-bl-dashed sc-bl-earned">Earned/ETC · forecast</span>
+          <span class="sc-bl-item sc-bl-band">P10–P90 band</span>
+          <span class="sc-bl-item sc-bl-today">| Today</span>
+        </div>
+
+        <!-- Forecast explanation (light green box) -->
+        <div class="sc-forecast-exp-box">
+          Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks.
+          Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned/ETC) are each matched using their own historical data series.
+          Matching uses Gower distance across CA group codes (PHASE_TYPE, DISCIPLINE, WORK_TYPE) and project groups (PROJ_SIZE, REGION).
+          SPI (0.88) and CPI (0.92) active as weighting factors — accounts with similar performance profiles weighted higher.
+          Top 9 matched neighbors (avg similarity 0.78, min 0.30) re-anchor to $23.6M actuals → $42.2M EAC.
+          Curve shape signals (skewness, front-load ratio, Gini, peak period) indicate deviation from the baseline plan.
+        </div>
+
+      </div><!-- /.sc-acc-body -->
+    </div><!-- /.sc-acc-section #acc-forecast -->
+
+    <!-- ACCORDION 2: Driver settings (collapsed) -->
+    <!-- <div class="sc-acc-section sc-acc-section--collapsed" id="acc-drivers">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-drivers')" aria-expanded="false">
+        <i class="pi pi-chevron-right sc-acc-chevron"></i>
+        <span class="sc-acc-title">Driver settings</span>
+      </button>
+      <div class="sc-acc-body" id="acc-drivers-body" style="display:none">
+        <div id="driver-settings-container"></div>
+      </div>
+    </div> -->
+
+    <!-- ACCORDION 3: Forecast appendix -->
+    <div class="sc-acc-section" id="acc-appendix">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-appendix')" aria-expanded="true">
+        <i class="pi pi-chevron-down sc-acc-chevron"></i>
+        <span class="sc-acc-title">Forecast appendix</span>
+      </button>
+      <div class="sc-acc-body" id="acc-appendix-body">
+        <div id="appendix-container"></div>
+      </div>
+    </div>
+
+    <!-- ACCORDION 4: Warnings -->
+    <div class="sc-acc-section" id="acc-warnings">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-warnings')" aria-expanded="true">
+        <i class="pi pi-chevron-down sc-acc-chevron"></i>
+        <span class="sc-acc-title">Warnings</span>
+      </button>
+      <div class="sc-acc-body" id="acc-warnings-body">
+        <div id="warnings-container"></div>
+      </div>
+    </div>
+
+  </div><!-- /.proj-content -->
+
+  <script src="components/top-nav.js"></script>
+  <script src="components/left-nav.js"></script>
+  <script src="components/dialog.js"></script>
+  <script src="components/ai-panel.js"></script>
+  <script src="components/script.js"></script>
+  <script src="scurve-forecast.js"></script>
+  <script>
+    renderTopNav({ activeItem: 'projects' });
+    renderLeftNav({ expandedGroup: 'cost', activeSub: 'ai-forecasting' });
+    applyProjectContext();
+  </script>
+</body>
+</html>

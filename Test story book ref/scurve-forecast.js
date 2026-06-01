@@ -1,0 +1,2870 @@
+/* ================================================================
+   S-CURVE FORECASTING ENGINE
+   Methodology: Gower distance, recency weighting, weighted-median
+   forecast, P10/P50/P90 confidence bands
+   ================================================================ */
+
+'use strict';
+
+/* ──────────────────────────────────────────────────────────────────
+   SEEDED PRNG — mulberry32
+   ────────────────────────────────────────────────────────────────── */
+function mulberry32(seed) {
+  return function () {
+    seed |= 0;
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   BETA-DISTRIBUTION PDF (unnormalised)
+   ────────────────────────────────────────────────────────────────── */
+function betaPDF(x, alpha, beta) {
+  if (x <= 0 || x >= 1) return 0;
+  return Math.pow(x, alpha - 1) * Math.pow(1 - x, beta - 1);
+}
+
+/**
+ * Generate a monthly spend profile using a beta distribution.
+ * nPeriods: number of months
+ * alpha, beta: shape params
+ * totalBudget: total spend in $M
+ * noiseSeed: seed for reproducible noise (~15% amplitude)
+ * Returns array of length nPeriods with monthly spend values.
+ */
+function generateSpendProfile(nPeriods, alpha, betaShape, totalBudget, noiseSeed) {
+  const rng = mulberry32(noiseSeed);
+  const raw = [];
+  for (let i = 0; i < nPeriods; i++) {
+    const x = (i + 0.5) / nPeriods;
+    raw.push(betaPDF(x, alpha, betaShape));
+  }
+  // Add ~15% multiplicative noise
+  const noisy = raw.map(v => v * (1 + 0.15 * (rng() * 2 - 1)));
+  const sum = noisy.reduce((a, b) => a + b, 0);
+  return noisy.map(v => (v / sum) * totalBudget);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   CURVE SHAPE STATISTICS
+   ────────────────────────────────────────────────────────────────── */
+function mean(arr) {
+  if (!arr.length) return 0;
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function variance(arr) {
+  const m = mean(arr);
+  return arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length;
+}
+
+function skewness(arr) {
+  if (arr.length < 2) return 0;
+  const m = mean(arr);
+  const sd = Math.sqrt(variance(arr));
+  if (sd === 0) return 0;
+  const m3 = arr.reduce((s, v) => s + ((v - m) / sd) ** 3, 0) / arr.length;
+  return m3;
+}
+
+function kurtosis(arr) {
+  if (arr.length < 2) return 0;
+  const m = mean(arr);
+  const sd = Math.sqrt(variance(arr));
+  if (sd === 0) return 0;
+  const m4 = arr.reduce((s, v) => s + ((v - m) / sd) ** 4, 0) / arr.length;
+  return m4 - 3; // excess kurtosis
+}
+
+function frontLoadRatio(arr) {
+  if (!arr.length) return 0;
+  const half = Math.floor(arr.length / 2);
+  const firstHalf = arr.slice(0, half).reduce((a, b) => a + b, 0);
+  const total = arr.reduce((a, b) => a + b, 0);
+  return total === 0 ? 0 : firstHalf / total;
+}
+
+function giniCoeff(arr) {
+  const n = arr.length;
+  if (n === 0) return 0;
+  const sorted = [...arr].sort((a, b) => a - b);
+  const cumsum = [];
+  let s = 0;
+  for (const v of sorted) { s += v; cumsum.push(s); }
+  const totalSum = s;
+  if (totalSum === 0) return 0;
+  const L = cumsum.reduce((acc, c) => acc + c / totalSum, 0) / n;
+  return 1 - 2 * L + 1 / n;
+}
+
+function peakPeriodNorm(arr) {
+  if (!arr.length) return 0;
+  let maxIdx = 0;
+  for (let i = 1; i < arr.length; i++) if (arr[i] > arr[maxIdx]) maxIdx = i;
+  return maxIdx / (arr.length - 1 || 1);
+}
+
+/**
+ * Compute all shape stats for a spend array up to `upToIndex` (inclusive).
+ * Returns an object of stats.
+ */
+function computeShapeStats(arr, upToIndex) {
+  const slice = arr.slice(0, upToIndex + 1);
+  return {
+    skewness:        skewness(slice),
+    kurtosis:        kurtosis(slice),
+    frontLoadRatio:  frontLoadRatio(slice),
+    gini:            giniCoeff(slice),
+    peakPeriodNorm:  peakPeriodNorm(slice),
+  };
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   WEIGHTED PERCENTILE (linear interpolation)
+   weights and values must be same length
+   ────────────────────────────────────────────────────────────────── */
+function weightedPercentile(values, weights, p) {
+  if (!values.length) return NaN;
+  // Sort by value
+  const pairs = values.map((v, i) => [v, weights[i]]).sort((a, b) => a[0] - b[0]);
+  const totalW = pairs.reduce((s, [, w]) => s + w, 0);
+  if (totalW === 0) return NaN;
+
+  // Build cumulative weights
+  const cum = [];
+  let acc = 0;
+  for (const [, w] of pairs) { acc += w; cum.push(acc / totalW); }
+
+  const target = p / 100;
+  if (target <= cum[0]) return pairs[0][0];
+  if (target >= cum[cum.length - 1]) return pairs[pairs.length - 1][0];
+
+  for (let i = 1; i < pairs.length; i++) {
+    if (cum[i] >= target) {
+      // Linear interpolation
+      const frac = (target - cum[i - 1]) / (cum[i] - cum[i - 1]);
+      return pairs[i - 1][0] + frac * (pairs[i][0] - pairs[i - 1][0]);
+    }
+  }
+  return pairs[pairs.length - 1][0];
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   DATA: FOCAL ACCOUNT
+   ────────────────────────────────────────────────────────────────── */
+const FOCAL = {
+  id: 'PROJ-2024/ACCT-CIVIL-001',
+  phase:        'Construction',
+  discipline:   'Civil',
+  workType:     'Construction',
+  projSizeCat:  'L',
+  acctSizeCat:  'M',
+  region:       'NA',
+  durationMonths: 24,
+  budgetAmount:  15.0,   // $M
+  acctPctProject: 0.125,
+  laborMix:     0.58,
+  materialMix:  0.18,
+  equipMix:     0.14,
+  subMix:       0.10,
+  // Planned profile: beta(3,3) scaled to $15M, no noise
+  get plannedProfile() {
+    return generateSpendProfile(24, 3.0, 3.0, 15.0, 999);
+  },
+  // Actual spend months 1-10 ($M, converted from $K)
+  actualSpend: [0.120, 0.255, 0.385, 0.545, 0.725, 0.855, 0.910, 0.870, 0.765, 0.700],
+  completionDate: null, // active
+};
+
+// Pre-compute planned stats once
+const focalPlanned = FOCAL.plannedProfile;
+const focalPlannedStats = computeShapeStats(focalPlanned, focalPlanned.length - 1);
+
+// Total actuals to date (sum of all known actual spend)
+const ACTD_COMPUTED = FOCAL.actualSpend.reduce((a, b) => a + b, 0); // $6.13M
+
+/* ──────────────────────────────────────────────────────────────────
+   DATA: POOL ACCOUNTS
+   [id, phase, discipline, workType, projSize, acctSize, region,
+    durationMo, budgetM, acctPct, labor, mat, equip, sub,
+    spendAlpha, spendBeta, completionYear, noiseSeed]
+   ────────────────────────────────────────────────────────────────── */
+const POOL_RAW = [
+  ['MATCH-001','Construction','Civil','Construction','L','M','NA',22,14.2,0.120,0.56,0.19,0.15,0.10,3.0,2.8,2022,1],
+  ['MATCH-002','Construction','Civil','Construction','L','M','NA',26,16.1,0.118,0.55,0.20,0.14,0.11,3.1,3.2,2023,2],
+  ['MATCH-003','Construction','Civil','Construction','L','S','NA',20,11.8,0.110,0.57,0.18,0.15,0.10,2.8,3.0,2023,3],
+  ['MATCH-004','Construction','Civil','Construction','L','M','NA',24,15.5,0.129,0.54,0.21,0.14,0.11,3.2,3.0,2022,4],
+  ['MATCH-005','Construction','Structural','Construction','L','M','NA',22,13.8,0.115,0.48,0.22,0.18,0.12,3.0,3.1,2021,5],
+  ['MATCH-006','Construction','Civil','Construction','M','S','NA',18,9.5,0.238,0.60,0.18,0.13,0.09,2.0,4.5,2022,6],
+  ['MATCH-007','Construction','Civil','Construction','L','L','EMEA',28,18.3,0.122,0.52,0.22,0.15,0.11,3.5,2.5,2021,7],
+  ['MATCH-008','Construction','Mechanical','Construction','L','M','NA',24,14.9,0.124,0.35,0.28,0.25,0.12,3.0,3.0,2020,8],
+  ['MATCH-009','Procurement','Civil','Procurement','L','M','NA',20,13.5,0.113,0.15,0.55,0.20,0.10,2.0,5.0,2023,9],
+  ['MATCH-010','Construction','Civil','Construction','S','S','NA',16,7.8,0.156,0.60,0.18,0.12,0.10,3.2,2.8,2022,10],
+  ['POOL-011','Construction','Piping','Construction','L','M','NA',24,14.0,0.117,0.42,0.25,0.18,0.15,3.0,3.0,2023,11],
+  ['POOL-012','Engineering','Civil','Engineering','L','M','NA',18,8.0,0.080,0.75,0.10,0.05,0.10,1.5,3.0,2022,12],
+  ['POOL-013','Construction','Civil','Construction','XL','XL','APAC',36,45.0,0.150,0.50,0.25,0.15,0.10,3.0,3.0,2019,13],
+  ['POOL-014','Construction','Electrical','Construction','M','S','NA',14,6.5,0.130,0.55,0.20,0.10,0.15,4.0,2.0,2022,14],
+  ['POOL-015','Commissioning','Civil','Commissioning','L','S','NA',12,4.2,0.105,0.62,0.15,0.12,0.11,5.0,2.0,2024,15],
+];
+
+/**
+ * Build pool account objects with pre-computed spend profiles and shape stats.
+ */
+function buildPoolAccounts() {
+  return POOL_RAW.map(r => {
+    const [id, phase, discipline, workType, projSizeCat, acctSizeCat, region,
+      durationMonths, budgetM, acctPct, labor, mat, equip, sub,
+      alpha, betaS, compYear, seed] = r;
+
+    const totalSpend = budgetM * 0.97; // 3% underspend
+    const spendProfile = generateSpendProfile(durationMonths, alpha, betaS, totalSpend, seed);
+
+    // Planned same as actual for completed accounts (they ARE completed)
+    const plannedProfile = generateSpendProfile(durationMonths, alpha, betaS, budgetM, seed + 1000);
+    const plannedStats = computeShapeStats(plannedProfile, plannedProfile.length - 1);
+
+    const completionDate = new Date(compYear, 5, 15);
+
+    return {
+      id, phase, discipline, workType, projSizeCat, acctSizeCat, region,
+      durationMonths, budgetAmount: budgetM, acctPctProject: acctPct,
+      laborMix: labor, materialMix: mat, equipMix: equip, subMix: sub,
+      spendProfile, totalSpend, plannedProfile,
+      plannedSkewness: plannedStats.skewness,
+      plannedFrontLoad: plannedStats.frontLoadRatio,
+      plannedGini:      plannedStats.gini,
+      plannedPeakNorm:  plannedStats.peakPeriodNorm,
+      plannedKurtosis:  plannedStats.kurtosis,
+      completionDate,
+    };
+  });
+}
+
+const POOL = buildPoolAccounts();
+
+/* ──────────────────────────────────────────────────────────────────
+   FEATURE WEIGHTS & RANGES
+   ────────────────────────────────────────────────────────────────── */
+const FEATURE_WEIGHTS = {
+  // Categorical
+  phase_type:    2.0,
+  discipline:    1.5,
+  work_type:     1.5,
+  proj_size_cat: 1.0,
+  acct_size_cat: 1.0,
+  region:        0.5,
+  // Numeric static
+  duration_months:    1.0,
+  budget_amount:      1.0,
+  budget_per_month:   1.0,
+  acct_pct_project:   1.0,
+  labor_mix:          1.5,
+  material_mix:       1.5,
+  equip_mix:          1.5,
+  subcontract_mix:    1.5,
+  // Observed curve shape (computed up to current lifecycle%)
+  skewness:           2.0,
+  front_load_ratio:   1.5,
+  gini:               1.0,
+  peak_period_norm:   1.0,
+  kurtosis:           0.5,
+  plan_vs_actual_skew:1.0,
+  // Planned curve shape
+  planned_skewness:   1.5,
+  planned_front_load: 1.5,
+  planned_gini:       1.0,
+  planned_peak_norm:  1.0,
+  planned_kurtosis:   0.5,
+};
+
+const TOTAL_WEIGHT = Object.values(FEATURE_WEIGHTS).reduce((a, b) => a + b, 0);
+
+// Mutable copy used by algorithm (updated by Settings UI)
+let ACTIVE_WEIGHTS = Object.assign({}, FEATURE_WEIGHTS);
+function getTotalWeight() { return Object.values(ACTIVE_WEIGHTS).reduce((a, b) => a + b, 0); }
+
+let ACTIVE_FORECAST_LINE = 'actual'; // 'actual' | 'incurred' | 'earned'
+
+/* ── AI BANNER DRIVER GROUPS ─────────────────────────────────────── */
+const DRIVER_GROUPS = [
+  {
+    id: 'ca_codes', label: 'CA group codes', icon: 'pi-tags', color: '#1d4ed8', bg: '#dbeafe', textColor: '#1e3a8a',
+    keys: ['phase_type','discipline','work_type'],
+    features: [
+      { key:'phase_type',  label:'Phase type',  val: () => FOCAL.phase },
+      { key:'discipline',  label:'Discipline',  val: () => FOCAL.discipline },
+      { key:'work_type',   label:'Work type',   val: () => FOCAL.workType },
+    ]
+  },
+  {
+    id: 'proj_groups', label: 'Project groups', icon: 'pi-folder', color: '#6366f1', bg: '#ede9fe', textColor: '#3730a3',
+    keys: ['proj_size_cat','acct_size_cat','region'],
+    features: [
+      { key:'proj_size_cat', label:'Project size', val: () => ({S:'Small',M:'Medium',L:'Large',XL:'XL'})[FOCAL.projSizeCat] || FOCAL.projSizeCat },
+      { key:'acct_size_cat', label:'Account size', val: () => ({S:'Small ($<5M)',M:'Medium ($5–15M)',L:'Large ($>15M)'})[FOCAL.acctSizeCat] || FOCAL.acctSizeCat },
+      { key:'region',        label:'Region',       val: () => ({NA:'North America',EU:'Europe',AP:'Asia Pacific',ME:'Middle East'})[FOCAL.region] || FOCAL.region },
+    ]
+  },
+  {
+    id: 'shape', label: 'Curve shape', icon: 'pi-chart-line', color: '#7c3aed', bg: '#f5f3ff', textColor: '#5b21b6',
+    keys: ['skewness','front_load_ratio','gini','peak_period_norm','kurtosis','planned_skewness','planned_front_load','planned_gini','planned_peak_norm','planned_kurtosis','plan_vs_actual_skew'],
+    features: [
+      { key:'skewness',            label:'Observed skewness',   val: () => { const s=_obsStats(); return s.skewness.toFixed(3); } },
+      { key:'front_load_ratio',    label:'Front-load (obs.)',   val: () => { const s=_obsStats(); return (s.frontLoadRatio*100).toFixed(1)+'%'; } },
+      { key:'gini',                label:'Gini coeff. (obs.)',  val: () => { const s=_obsStats(); return s.gini.toFixed(3); } },
+      { key:'peak_period_norm',    label:'Peak period (norm.)', val: () => { const s=_obsStats(); return s.peakPeriodNorm.toFixed(3); } },
+      { key:'kurtosis',            label:'Kurtosis (obs.)',     val: () => { const s=_obsStats(); return s.kurtosis.toFixed(3); } },
+      { key:'planned_skewness',    label:'Planned skewness',    val: () => focalPlannedStats.skewness.toFixed(3) },
+      { key:'planned_front_load',  label:'Front-load (plan.)',  val: () => (focalPlannedStats.frontLoadRatio*100).toFixed(1)+'%' },
+      { key:'planned_gini',        label:'Gini coeff. (plan.)', val: () => focalPlannedStats.gini.toFixed(3) },
+      { key:'planned_peak_norm',   label:'Peak period (plan.)', val: () => focalPlannedStats.peakPeriodNorm.toFixed(3) },
+      { key:'planned_kurtosis',    label:'Kurtosis (plan.)',    val: () => focalPlannedStats.kurtosis.toFixed(3) },
+      { key:'plan_vs_actual_skew', label:'Plan vs actual skew', val: () => { const d=focalPlannedStats.skewness-_obsStats().skewness; return (d>=0?'+':'')+d.toFixed(3); } },
+    ]
+  },
+  {
+    id: 'mix', label: 'Cost mix', icon: 'pi-calculator', color: '#0891b2', bg: '#e0f2fe', textColor: '#0c4a6e',
+    keys: ['labor_mix','material_mix','equip_mix','subcontract_mix'],
+    features: [
+      { key:'labor_mix',       label:'Labor',       val: () => (FOCAL.laborMix*100).toFixed(0)+'%' },
+      { key:'material_mix',    label:'Material',    val: () => (FOCAL.materialMix*100).toFixed(0)+'%' },
+      { key:'equip_mix',       label:'Equipment',   val: () => (FOCAL.equipMix*100).toFixed(0)+'%' },
+      { key:'subcontract_mix', label:'Subcontract', val: () => (FOCAL.subMix*100).toFixed(0)+'%' },
+    ]
+  },
+  {
+    id: 'spi', label: 'SPI / CPI', icon: 'pi-chart-bar', color: '#b45309', bg: '#fef3c7', textColor: '#78350f',
+    keys: [],
+    features: [
+      { key:'spi', label:'Sched. performance (SPI)', val: () => '0.88', fixedWeight: 1.5 },
+      { key:'cpi', label:'Cost performance (CPI)',   val: () => '0.92', fixedWeight: 1.5 },
+    ]
+  },
+  {
+    id: 'duration', label: 'Duration & budget', icon: 'pi-calendar', color: '#059669', bg: '#d1fae5', textColor: '#064e3b',
+    keys: ['duration_months','budget_amount','budget_per_month','acct_pct_project'],
+    features: [
+      { key:'duration_months',  label:'Duration',      val: () => FOCAL.durationMonths+' mo' },
+      { key:'budget_amount',    label:'Budget',        val: () => '$'+FOCAL.budgetAmount.toFixed(1)+'M' },
+      { key:'budget_per_month', label:'Budget/month',  val: () => '$'+(FOCAL.budgetAmount/FOCAL.durationMonths*1000).toFixed(0)+'K' },
+      { key:'acct_pct_project', label:'% of project',  val: () => (FOCAL.acctPctProject*100).toFixed(1)+'%' },
+    ]
+  },
+];
+
+function _obsStats() {
+  return computeShapeStats(FOCAL.actualSpend, FOCAL.actualSpend.length - 1);
+}
+
+window.toggleAiBannerDetail = function() {
+  const panel = document.getElementById('scAiBannerDetail');
+  const btn   = document.getElementById('aiBannerExpandBtn');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  if (!isOpen && !panel.dataset.built) {
+    panel.innerHTML = buildAiBannerDetail();
+    panel.dataset.built = '1';
+  }
+  panel.style.display = isOpen ? 'none' : 'block';
+  btn && btn.setAttribute('aria-expanded', String(!isOpen));
+};
+
+function buildAiBannerDetail() {
+  const total = getTotalWeight();
+  const SPI_FIXED_WEIGHT = 3.0; // fixed contribution for SPI/CPI group (toggle-based)
+
+  function groupPct(group) {
+    if (group.id === 'spi') {
+      // SPI/CPI is toggle-controlled; show fixed share only if toggle is on
+      const togEl = document.getElementById('toggleEvm');
+      const on = !togEl || togEl.checked;
+      return on ? Math.round(SPI_FIXED_WEIGHT / (total + SPI_FIXED_WEIGHT) * 100) : 0;
+    }
+    const sum = group.keys.reduce((acc, k) => acc + (ACTIVE_WEIGHTS[k] || 0), 0);
+    return Math.round(sum / total * 100);
+  }
+
+  function featureBarPct(feat) {
+    if (feat.fixedWeight != null) return Math.round(feat.fixedWeight / 5 * 100);
+    const w = ACTIVE_WEIGHTS[feat.key];
+    return w != null ? Math.round(w / 5 * 100) : 0;
+  }
+
+  const cards = DRIVER_GROUPS.map(group => {
+    const pct = groupPct(group);
+    const featureRows = group.features.map(f => {
+      const barPct = featureBarPct(f);
+      const w = f.fixedWeight != null ? f.fixedWeight : (ACTIVE_WEIGHTS[f.key] || 0);
+      const dimmed = w === 0 ? 'opacity:0.4;' : '';
+      return `<div class="sc-ai-df-row" style="${dimmed}">
+        <span class="sc-ai-df-label" title="${f.label}">${f.label}</span>
+        <span class="sc-ai-df-value">${f.val()}</span>
+        <div class="sc-ai-df-bar-wrap" title="Weight: ${w.toFixed(1)}">
+          <div class="sc-ai-df-bar" style="width:${barPct}%;background:${group.color}"></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="sc-ai-detail-group">
+      <div class="sc-ai-dg-header" style="background:${group.bg};color:${group.textColor}">
+        <span><i class="pi ${group.icon}"></i>${group.label}</span>
+        <span class="sc-ai-dg-pct">${pct}%</span>
+      </div>
+      <div class="sc-ai-dg-features">${featureRows}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="sc-ai-detail-grid">${cards}</div>
+    <div style="padding-top:10px;font-size:11px;color:#64748b;display:flex;align-items:center;gap:5px">
+      <i class="pi pi-info-circle" style="color:#6366f1"></i>
+      Contribution % is computed from active feature weights. Bar length = weight relative to maximum (5.0). Adjust weights in <button onclick="kebabOpenSettings();toggleAiBannerDetail()" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-size:11px;font-weight:600;padding:0;font-family:inherit">Driver settings</button>.
+    </div>`;
+}
+
+window.setForecastLine = function(line) {
+  ACTIVE_FORECAST_LINE = line;
+  document.querySelectorAll('.sc-forecast-btn').forEach(b => {
+    b.classList.toggle('sc-forecast-btn--active', b.dataset.line === line);
+  });
+};
+
+/** Compute numeric ranges across all pool accounts for normalisation */
+function computeNumericRanges() {
+  const fields = [
+    'duration_months','budget_amount','budget_per_month','acct_pct_project',
+    'labor_mix','material_mix','equip_mix','subcontract_mix',
+  ];
+
+  const ranges = {};
+  for (const f of fields) {
+    const vals = POOL.map(p => poolFieldVal(p, f));
+    ranges[f] = Math.max(...vals) - Math.min(...vals) || 1;
+  }
+  return ranges;
+}
+
+function poolFieldVal(p, f) {
+  switch (f) {
+    case 'duration_months':   return p.durationMonths;
+    case 'budget_amount':     return p.budgetAmount;
+    case 'budget_per_month':  return p.budgetAmount / p.durationMonths;
+    case 'acct_pct_project':  return p.acctPctProject;
+    case 'labor_mix':         return p.laborMix;
+    case 'material_mix':      return p.materialMix;
+    case 'equip_mix':         return p.equipMix;
+    case 'subcontract_mix':   return p.subMix;
+    default: return 0;
+  }
+}
+
+function focalFieldVal(f) {
+  switch (f) {
+    case 'duration_months':   return FOCAL.durationMonths;
+    case 'budget_amount':     return FOCAL.budgetAmount;
+    case 'budget_per_month':  return FOCAL.budgetAmount / FOCAL.durationMonths;
+    case 'acct_pct_project':  return FOCAL.acctPctProject;
+    case 'labor_mix':         return FOCAL.laborMix;
+    case 'material_mix':      return FOCAL.materialMix;
+    case 'equip_mix':         return FOCAL.equipMix;
+    case 'subcontract_mix':   return FOCAL.subMix;
+    default: return 0;
+  }
+}
+
+const NUMERIC_RANGES = computeNumericRanges();
+
+/* ──────────────────────────────────────────────────────────────────
+   GOWER DISTANCE
+   ────────────────────────────────────────────────────────────────── */
+/**
+ * Compute Gower distance between focal and a pool account at a given
+ * lifecycle position (0-100%).
+ */
+function gowerDistance(pool, lifecyclePct, focalObsStats) {
+  let weightedDist = 0;
+
+  // -- Categorical features --
+  function catDist(a, b, w) {
+    weightedDist += w * (a === b ? 0 : 1);
+  }
+  catDist(FOCAL.phase,       pool.phase,        ACTIVE_WEIGHTS.phase_type);
+  catDist(FOCAL.discipline,  pool.discipline,   ACTIVE_WEIGHTS.discipline);
+  catDist(FOCAL.workType,    pool.workType,      ACTIVE_WEIGHTS.work_type);
+  catDist(FOCAL.projSizeCat, pool.projSizeCat,  ACTIVE_WEIGHTS.proj_size_cat);
+  catDist(FOCAL.acctSizeCat, pool.acctSizeCat,  ACTIVE_WEIGHTS.acct_size_cat);
+  catDist(FOCAL.region,      pool.region,        ACTIVE_WEIGHTS.region);
+
+  // -- Numeric static features --
+  function numDist(fVal, pVal, range, w) {
+    const d = Math.abs(fVal - pVal) / range;
+    weightedDist += w * Math.min(d, 1);
+  }
+  const numFields = ['duration_months','budget_amount','budget_per_month','acct_pct_project',
+                     'labor_mix','material_mix','equip_mix','subcontract_mix'];
+  for (const f of numFields) {
+    numDist(focalFieldVal(f), poolFieldVal(pool, f), NUMERIC_RANGES[f], ACTIVE_WEIGHTS[f]);
+  }
+
+  // -- Observed curve shape (only available if lifecyclePct > 0) --
+  if (lifecyclePct > 0) {
+    // Pool's equivalent lifecycle position in its own timeline
+    const poolObsIdx = Math.max(0, Math.round((lifecyclePct / 100) * pool.durationMonths) - 1);
+    const poolObs = computeShapeStats(pool.spendProfile, poolObsIdx);
+
+    // Ranges for shape stats computed across all pool accounts at this lifecycle
+    const poolShapeStats = POOL.map(p => {
+      const idx = Math.max(0, Math.round((lifecyclePct / 100) * p.durationMonths) - 1);
+      return computeShapeStats(p.spendProfile, idx);
+    });
+
+    function shapeRange(key) {
+      const vals = poolShapeStats.map(s => s[key]);
+      return Math.max(...vals) - Math.min(...vals) || 1;
+    }
+
+    function shapeNumDist(fVal, pVal, key, w) {
+      const d = Math.abs(fVal - pVal) / shapeRange(key);
+      weightedDist += w * Math.min(d, 1);
+    }
+
+    shapeNumDist(focalObsStats.skewness,       poolObs.skewness,       'skewness',       ACTIVE_WEIGHTS.skewness);
+    shapeNumDist(focalObsStats.frontLoadRatio,  poolObs.frontLoadRatio, 'frontLoadRatio', ACTIVE_WEIGHTS.front_load_ratio);
+    shapeNumDist(focalObsStats.gini,            poolObs.gini,           'gini',           ACTIVE_WEIGHTS.gini);
+    shapeNumDist(focalObsStats.peakPeriodNorm,  poolObs.peakPeriodNorm, 'peakPeriodNorm', ACTIVE_WEIGHTS.peak_period_norm);
+    shapeNumDist(focalObsStats.kurtosis,        poolObs.kurtosis,       'kurtosis',       ACTIVE_WEIGHTS.kurtosis);
+
+    // plan_vs_actual_skew
+    const focalPlanSkewFull = focalPlannedStats.skewness;
+    const focalActSkew      = focalObsStats.skewness;
+    const focalSkewDiff     = focalActSkew - focalPlanSkewFull;
+
+    const poolPlanSkew = computeShapeStats(pool.plannedProfile, pool.plannedProfile.length - 1).skewness;
+    const poolActSkew  = poolObs.skewness;
+    const poolSkewDiff = poolActSkew - poolPlanSkew;
+
+    const skewDiffVals = POOL.map(p => {
+      const idxP = Math.max(0, Math.round((lifecyclePct / 100) * p.durationMonths) - 1);
+      const pActS = computeShapeStats(p.spendProfile, idxP).skewness;
+      const pPlanS = computeShapeStats(p.plannedProfile, p.plannedProfile.length - 1).skewness;
+      return pActS - pPlanS;
+    });
+    const skewDiffRange = Math.max(...skewDiffVals) - Math.min(...skewDiffVals) || 1;
+    weightedDist += ACTIVE_WEIGHTS.plan_vs_actual_skew * Math.min(Math.abs(focalSkewDiff - poolSkewDiff) / skewDiffRange, 1);
+  } else {
+    // Lifecycle = 0, observed shape features are zero (no observed data)
+    weightedDist += ACTIVE_WEIGHTS.skewness + ACTIVE_WEIGHTS.front_load_ratio +
+                    ACTIVE_WEIGHTS.gini + ACTIVE_WEIGHTS.peak_period_norm +
+                    ACTIVE_WEIGHTS.kurtosis + ACTIVE_WEIGHTS.plan_vs_actual_skew;
+  }
+
+  // -- Planned curve shape --
+  const poolPlannedStats = computeShapeStats(pool.plannedProfile, pool.plannedProfile.length - 1);
+
+  function plannedShapeRange(key) {
+    const vals = POOL.map(p => computeShapeStats(p.plannedProfile, p.plannedProfile.length - 1)[key]);
+    return Math.max(...vals) - Math.min(...vals) || 1;
+  }
+
+  function plannedNumDist(fVal, pVal, key, w) {
+    const d = Math.abs(fVal - pVal) / plannedShapeRange(key);
+    weightedDist += w * Math.min(d, 1);
+  }
+
+  plannedNumDist(focalPlannedStats.skewness,       poolPlannedStats.skewness,       'skewness',       ACTIVE_WEIGHTS.planned_skewness);
+  plannedNumDist(focalPlannedStats.frontLoadRatio,  poolPlannedStats.frontLoadRatio, 'frontLoadRatio', ACTIVE_WEIGHTS.planned_front_load);
+  plannedNumDist(focalPlannedStats.gini,            poolPlannedStats.gini,           'gini',           ACTIVE_WEIGHTS.planned_gini);
+  plannedNumDist(focalPlannedStats.peakPeriodNorm,  poolPlannedStats.peakPeriodNorm, 'peakPeriodNorm', ACTIVE_WEIGHTS.planned_peak_norm);
+  plannedNumDist(focalPlannedStats.kurtosis,        poolPlannedStats.kurtosis,       'kurtosis',       ACTIVE_WEIGHTS.planned_kurtosis);
+
+  const distance = weightedDist / getTotalWeight();
+  return distance;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   RECENCY ADJUSTMENT
+   adjusted_sim = base_sim × 0.5^(years_ago / 5)
+   ────────────────────────────────────────────────────────────────── */
+const TODAY = new Date(2026, 4, 29); // 2026-05-29
+
+function recencyAdjustedSimilarity(baseSim, completionDate) {
+  const yearsAgo = (TODAY - completionDate) / (365.25 * 24 * 3600 * 1000);
+  return baseSim * Math.pow(0.5, yearsAgo / 5);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   MATCHING ENGINE
+   Returns top-10 neighbors sorted by adjusted similarity desc.
+   ────────────────────────────────────────────────────────────────── */
+const MIN_SIMILARITY = 0.30;
+const TOP_K = 10;
+
+function matchNeighbors(lifecyclePct) {
+  // Compute focal's observed stats up to current lifecycle position
+  const currentMonth = Math.round((lifecyclePct / 100) * FOCAL.durationMonths);
+  let focalObsStats;
+  if (lifecyclePct === 0 || currentMonth === 0) {
+    focalObsStats = { skewness: 0, kurtosis: 0, frontLoadRatio: 0, gini: 0, peakPeriodNorm: 0 };
+  } else {
+    const knownMonths = Math.min(currentMonth, FOCAL.actualSpend.length);
+    focalObsStats = computeShapeStats(FOCAL.actualSpend, knownMonths - 1);
+  }
+
+  const scored = POOL.map(pool => {
+    const dist = gowerDistance(pool, lifecyclePct, focalObsStats);
+    const baseSim = 1 - dist;
+    const adjSim  = recencyAdjustedSimilarity(baseSim, pool.completionDate);
+    return { pool, baseSim, adjSim };
+  });
+
+  // Filter by minimum similarity threshold, sort desc
+  const filtered = scored.filter(s => s.adjSim >= MIN_SIMILARITY);
+  filtered.sort((a, b) => b.adjSim - a.adjSim);
+
+  return filtered.slice(0, TOP_K);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   FORECAST COMPUTATION
+   Returns { grid (101 points), p10, p50, p90 } all in $M cumulative
+   ────────────────────────────────────────────────────────────────── */
+
+/** Cumulative sum array */
+function cumsum(arr) {
+  const out = [];
+  let s = 0;
+  for (const v of arr) { s += v; out.push(s); }
+  return out;
+}
+
+/** Linear interpolation of cumulative fraction at grid x in [0,1] */
+function interpCumFrac(normX, normCum) {
+  // normX: 101 points from 0 to 1
+  // normCum: cumulative fractions at each of the account's period midpoints
+  const n = normCum.length;
+  return normX.map(x => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    // period positions as fractions (0..1) using midpoints
+    const pos = normCum.map((_, i) => (i + 0.5) / n);
+    // find bracket
+    let lo = 0, hi = n - 1;
+    while (lo < hi - 1) {
+      const mid = (lo + hi) >> 1;
+      if (pos[mid] <= x) lo = mid; else hi = mid;
+    }
+    const t = (x - pos[lo]) / (pos[hi] - pos[lo] || 1);
+    return normCum[lo] + t * (normCum[hi] - normCum[lo]);
+  });
+}
+
+const GRID_N = 101;
+const GRID = Array.from({ length: GRID_N }, (_, i) => i / (GRID_N - 1)); // 0 to 1
+
+function computeForecast(neighbors, lifecyclePct) {
+  if (!neighbors.length) return null;
+
+  const currentPos = lifecyclePct / 100;
+
+  // For each neighbor, build normalised cumulative curve on GRID
+  const neighborCurves = neighbors.map(({ pool, adjSim }) => {
+    const total = pool.totalSpend;
+    if (total === 0) return null;
+    const cum = cumsum(pool.spendProfile);
+    const normCum = cum.map(v => v / total); // 0..1
+    const gridCum = interpCumFrac(GRID, normCum); // 101 points
+    return { gridCum, weight: adjSim };
+  }).filter(Boolean);
+
+  if (!neighborCurves.length) return null;
+
+  // Compute weighted P10, P50, P90 at each grid point
+  const p10 = new Array(GRID_N);
+  const p50 = new Array(GRID_N);
+  const p90 = new Array(GRID_N);
+
+  for (let g = 0; g < GRID_N; g++) {
+    const vals    = neighborCurves.map(c => c.gridCum[g]);
+    const weights = neighborCurves.map(c => c.weight);
+    p10[g] = weightedPercentile(vals, weights, 10);
+    p50[g] = weightedPercentile(vals, weights, 50);
+    p90[g] = weightedPercentile(vals, weights, 90);
+  }
+
+  // Widen confidence bands for lifecycle < 33%
+  const widened = lifecyclePct < 33;
+  const loPerc = widened ? 5 : 10;
+  const hiPerc = widened ? 95 : 90;
+  const pLo = widened ? new Array(GRID_N) : p10;
+  const pHi = widened ? new Array(GRID_N) : p90;
+  if (widened) {
+    for (let g = 0; g < GRID_N; g++) {
+      const vals    = neighborCurves.map(c => c.gridCum[g]);
+      const weights = neighborCurves.map(c => c.weight);
+      pLo[g] = weightedPercentile(vals, weights, loPerc);
+      pHi[g] = weightedPercentile(vals, weights, hiPerc);
+    }
+  }
+
+  // Re-anchor to dollars
+  const bac = FOCAL.budgetAmount;
+  const actd = FOCAL.actualSpend.slice(0, Math.round(currentPos * FOCAL.durationMonths))
+                 .reduce((a, b) => a + b, 0);
+
+  // Find the cumulative fraction at currentPos
+  function fracAtPos(curve) {
+    const gIdx = Math.round(currentPos * (GRID_N - 1));
+    return curve[gIdx];
+  }
+
+  function anchorCurve(cumFracArr) {
+    const fp = fracAtPos(cumFracArr);
+    return GRID.map((x, i) => {
+      if (x <= currentPos) {
+        // Map actual spend: scale actual proportion
+        if (fp === 0) return actd * (x / (currentPos || 0.001));
+        return actd * (cumFracArr[i] / fp);
+      } else {
+        // forecast
+        const numerator = cumFracArr[i] - fp;
+        const denominator = 1 - fp;
+        if (denominator === 0) return actd;
+        return actd + (bac - actd) * (numerator / denominator);
+      }
+    });
+  }
+
+  const dollarP50 = anchorCurve(p50);
+  const dollarLo  = anchorCurve(pLo);
+  const dollarHi  = anchorCurve(pHi);
+
+  // EAC values at 100% (last grid point) for forecast line modifier
+  let eacP50 = dollarP50[GRID_N - 1];
+  let eacP10 = dollarLo[GRID_N - 1];
+  let eacP90 = dollarHi[GRID_N - 1];
+
+  if (ACTIVE_FORECAST_LINE === 'incurred') {
+    eacP10 *= 1.04; eacP50 *= 1.04; eacP90 *= 1.04;
+  } else if (ACTIVE_FORECAST_LINE === 'earned') {
+    const bac2 = FOCAL.budgetAmount;
+    eacP10 = bac2; eacP50 = bac2; eacP90 = bac2;
+  }
+
+  return { grid: GRID, p50: dollarP50, pLo: dollarLo, pHi: dollarHi, actd, bac, currentPos, eacP50, eacP10, eacP90 };
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   FORECAST EXPLANATION
+   ────────────────────────────────────────────────────────────────── */
+function buildForecastExplanation(neighbors, lifecyclePct) {
+  const n = neighbors.length;
+  if (n === 0) {
+    return {
+      confidence: 'LOW',
+      text: 'No sufficiently similar historical accounts found in the internal database. Forecast is unreliable — consider using a predefined curve profile (middle, front-loaded, or back-loaded).'
+    };
+  }
+  const sims = neighbors.map(x => x.adjSim);
+  const medSim = sims.slice().sort((a,b)=>a-b)[Math.floor(sims.length/2)];
+  const topIds = neighbors.slice(0, 3).map(x => x.pool.id).join(', ');
+
+  let confidence, confNote;
+  if (lifecyclePct < 20) {
+    confidence = 'LOW'; confNote = 'Early lifecycle — limited observed spend data to match against.';
+  } else if (lifecyclePct < 40 || medSim < 0.55) {
+    confidence = 'MEDIUM'; confNote = lifecyclePct < 40 ? 'Moderate lifecycle position.' : 'Match quality below optimal threshold.';
+  } else {
+    confidence = 'HIGH'; confNote = 'Strong lifecycle position and match quality.';
+  }
+
+  const lineNote = ACTIVE_FORECAST_LINE === 'incurred'
+    ? ' Incurred line includes estimated accruals (+4%).'
+    : ACTIVE_FORECAST_LINE === 'earned'
+    ? ' Earned value line is bounded by approved budget (BAC = $15.0M).'
+    : '';
+
+  const text = `Forecast based on ${n} historical control account${n>1?'s':''} from the internal project database (private data only). `
+    + `Top matches: ${topIds}. Median similarity: ${(medSim*100).toFixed(0)}%. `
+    + confNote + lineNote
+    + ` P10–P90 confidence band ${lifecyclePct < 33 ? 'widened to P5–P95' : 'at standard P10–P90'} due to lifecycle position.`;
+
+  return { confidence, text };
+}
+
+function updateExplanationPanel(neighbors, lifecyclePct) {
+  const exp = buildForecastExplanation(neighbors, lifecyclePct);
+  const badge = document.getElementById('confidenceBadge');
+  const textEl = document.getElementById('explanationText');
+  if (!badge || !textEl) return;
+  badge.textContent = exp.confidence;
+  badge.className = 'sc-confidence-badge sc-confidence-badge--' + exp.confidence.toLowerCase();
+  textEl.textContent = exp.text;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   SCHEDULE WARNING
+   ────────────────────────────────────────────────────────────────── */
+function checkScheduleWarning(lifecyclePct, forecast) {
+  const banner = document.getElementById('scheduleWarning');
+  const textEl = document.getElementById('scheduleWarningText');
+  if (!banner || !textEl) return;
+
+  // Simulate: if lifecycle > 80% and remaining > 40% of BAC → anomaly
+  const remainingPct = forecast ? ((forecast.eacP50 - ACTD_COMPUTED) / FOCAL.budgetAmount) : 0;
+  if (lifecyclePct >= 80 && remainingPct > 0.4) {
+    textEl.textContent = `Schedule anomaly detected: ${lifecyclePct}% lifecycle elapsed but ${(remainingPct*100).toFixed(0)}% of budget remains. Verify that forecasted completion dates are current — schedule data may need review.`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   AI SETTINGS TAB
+   ────────────────────────────────────────────────────────────────── */
+const SETTINGS_FEATURE_DEFS = [
+  // Categorical
+  { key: 'phase_type',    label: 'Phase type',       group: 'cat', desc: 'Construction, Engineering, Procurement…' },
+  { key: 'discipline',    label: 'Discipline',        group: 'cat', desc: 'Civil, Mechanical, Electrical…' },
+  { key: 'work_type',     label: 'Work type',         group: 'cat', desc: 'Construction, Procurement, Commissioning…' },
+  { key: 'proj_size_cat', label: 'Project size',      group: 'cat', desc: 'XS / S / M / L / XL bucket' },
+  { key: 'acct_size_cat', label: 'Account size',      group: 'cat', desc: 'Size of this control account' },
+  { key: 'region',        label: 'Region',            group: 'cat', desc: 'NA / EMEA / APAC / LATAM' },
+  // Numeric
+  { key: 'duration_months',  label: 'Duration (months)',     group: 'num', desc: 'Planned account duration' },
+  { key: 'budget_amount',    label: 'Budget ($M)',           group: 'num', desc: 'Total approved budget' },
+  { key: 'labor_mix',        label: 'Labor mix',             group: 'num', desc: 'Proportion of cost that is labor' },
+  { key: 'material_mix',     label: 'Material mix',          group: 'num', desc: 'Proportion that is materials' },
+  { key: 'equip_mix',        label: 'Equipment mix',         group: 'num', desc: 'Proportion that is equipment' },
+  { key: 'subcontract_mix',  label: 'Subcontract mix',       group: 'num', desc: 'Proportion subcontracted' },
+  // Curve shape
+  { key: 'skewness',         label: 'Observed skewness',     group: 'shape', desc: 'Shape of actual spend curve so far' },
+  { key: 'front_load_ratio', label: 'Front-load ratio',      group: 'shape', desc: 'How front-loaded the spend is' },
+  { key: 'planned_skewness', label: 'Planned skewness',      group: 'plan',  desc: 'Shape of the planned/baseline curve' },
+  { key: 'planned_front_load', label: 'Planned front-load',  group: 'plan',  desc: 'Front-load ratio of planned curve' },
+];
+
+function initSettingsTab() {
+  const container = document.getElementById('settings-features-container');
+  if (!container || container.dataset.built) return;
+  container.dataset.built = '1';
+
+  const groups = [
+    { id: 'cat',   title: 'Categorical features', icon: 'pi-tags',      desc: 'Classification features used to find similar accounts. These are client-specific — adjust based on your project grouping codes.' },
+    { id: 'num',   title: 'Numerical features',   icon: 'pi-calculator', desc: 'Quantitative account attributes. Disable cost-element mix if your client uses a single combined cost element.' },
+    { id: 'shape', title: 'Observed curve shape', icon: 'pi-chart-line', desc: 'Statistical features computed from actual spend to date.' },
+    { id: 'plan',  title: 'Planned curve shape',  icon: 'pi-map',       desc: 'Statistical features computed from the baseline plan curve.' },
+  ];
+
+  let html = '';
+  for (const g of groups) {
+    const feats = SETTINGS_FEATURE_DEFS.filter(f => f.group === g.id);
+    html += `
+      <div class="sc-settings-section">
+        <div class="sc-settings-section-header">
+          <i class="pi ${g.icon}"></i> ${g.title}
+          <span class="sc-settings-section-desc">${g.desc}</span>
+        </div>
+        <div class="sc-settings-features">
+          ${feats.map(f => `
+            <div class="sc-settings-feature-row">
+              <div class="sc-settings-feat-info">
+                <span class="sc-settings-feat-label">${f.label}</span>
+                <span class="sc-settings-feat-desc">${f.desc}</span>
+              </div>
+              <div class="sc-settings-weight-control">
+                <span class="sc-settings-weight-val" id="wval-${f.key}">${ACTIVE_WEIGHTS[f.key] != null ? ACTIVE_WEIGHTS[f.key].toFixed(1) : '—'}</span>
+                <input type="range" class="sc-weight-slider" id="wslider-${f.key}"
+                  min="0" max="5" step="0.5"
+                  value="${ACTIVE_WEIGHTS[f.key] != null ? ACTIVE_WEIGHTS[f.key] : 1}"
+                  oninput="updateSettingsWeight('${f.key}', parseFloat(this.value))" />
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+window.updateSettingsWeight = function(key, value) {
+  ACTIVE_WEIGHTS[key] = value;
+  const valEl = document.getElementById('wval-' + key);
+  if (valEl) valEl.textContent = value.toFixed(1);
+  const slider = document.getElementById('wslider-' + key);
+  if (slider) slider.style.setProperty('--fill-pct', (value / 5 * 100).toFixed(0) + '%');
+  const row = document.getElementById('row-' + key);
+  if (row) row.style.opacity = value === 0 ? '0.45' : '';
+};
+
+window.resetSettingsWeights = function() {
+  // Reset AI forecast state and restore original SIM-based chart
+  if (AI_FORECAST_ACTIVE) {
+    AI_FORECAST_ACTIVE = false;
+    window.updateChartTime(TODAY_IDX);
+  }
+  ACTIVE_WEIGHTS = Object.assign({}, FEATURE_WEIGHTS);
+  for (const f of SETTINGS_FEATURE_DEFS) {
+    const v = ACTIVE_WEIGHTS[f.key];
+    if (v == null) continue;
+    const slider = document.getElementById('wslider-' + f.key);
+    const valEl  = document.getElementById('wval-'    + f.key);
+    const row    = document.getElementById('row-'     + f.key);
+    if (slider) { slider.value = v; slider.disabled = false; slider.style.setProperty('--fill-pct', (v / 5 * 100).toFixed(0) + '%'); }
+    if (valEl)  valEl.textContent = v.toFixed(1);
+    if (row)    row.style.opacity = '';
+  }
+  // Re-sync applied summary if visible
+  const txt = document.getElementById('num-applied-text');
+  if (txt) txt.textContent = '6 of 6 numerical features applied';
+  const summary = document.getElementById('num-applied-summary');
+  if (summary) { summary.style.background = '#f0fdf4'; summary.style.color = '#166534'; summary.querySelector('i').className = 'pi pi-check-circle'; }
+  const cbx = document.getElementById('toggleCostBreakdown');
+  if (cbx) cbx.checked = true;
+};
+
+window.toggleEvmFeature = function(enabled) {
+  const note = document.getElementById('evmNote');
+  if (note) note.style.display = enabled ? 'block' : 'none';
+};
+
+window.toggleCostBreakdown = function(enabled) {
+  const mixKeys = ['labor_mix','material_mix','equip_mix','subcontract_mix'];
+  const newWeight = enabled ? FEATURE_WEIGHTS.labor_mix : 0;
+  for (const k of mixKeys) {
+    ACTIVE_WEIGHTS[k] = newWeight;
+    const slider = document.getElementById('wslider-' + k);
+    const valEl  = document.getElementById('wval-' + k);
+    const row    = document.getElementById('row-' + k);
+    if (slider) {
+      slider.value = newWeight;
+      slider.disabled = !enabled;
+      slider.style.setProperty('--fill-pct', (newWeight / 5 * 100).toFixed(0) + '%');
+    }
+    if (valEl) valEl.textContent = newWeight.toFixed(1);
+    if (row)   row.style.opacity = enabled ? '' : '0.45';
+  }
+  const txt     = document.getElementById('num-applied-text');
+  const summary = document.getElementById('num-applied-summary');
+  const icon    = summary && summary.querySelector('i');
+  if (enabled) {
+    if (txt)     txt.textContent = '6 of 6 numerical features applied';
+    if (summary) { summary.style.background = '#f0fdf4'; summary.style.color = '#166534'; }
+    if (icon)    icon.className = 'pi pi-check-circle';
+  } else {
+    if (txt)     txt.textContent = '2 of 6 numerical features applied — cost element breakdown excluded';
+    if (summary) { summary.style.background = '#fef3c7'; summary.style.color = '#92400e'; }
+    if (icon)    icon.className = 'pi pi-exclamation-circle';
+  }
+};
+
+/* ── CHART DATA ─────────────────────────────────────────────────── */
+// Full project span: Dec 2024 – Nov 2026 (24 months)
+const CHART_LABELS = [
+  'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan',
+  'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+  'Sep', 'Oct', 'Nov'
+];
+let REAL_TODAY_IDX = 6; // Jun 2025 — actual calendar today
+let TODAY_IDX = REAL_TODAY_IDX;  // mutable for time-slider simulation
+
+// Chart-scale constants
+let CHART_BAC = 40.0; // BAC shown on chart ($M)
+const MONTH_CALENDAR = [
+  'Dec 2024','Jan 2025','Feb 2025','Mar 2025','Apr 2025','May 2025','Jun 2025',
+  'Jul 2025','Aug 2025','Sep 2025','Oct 2025','Nov 2025','Dec 2025','Jan 2026',
+  'Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026','Aug 2026',
+  'Sep 2026','Oct 2026','Nov 2026'
+];
+let SCHEDULED_END_IDX = 20; // Aug 2026
+
+// Periodic spend data ($M) — 24 months, Dec 2024 – Nov 2026
+// CA-1042 · Civil Foundations P2 · Budget: $40M
+//
+// Story: Front-loaded civil foundations work. Unexpected soil conditions in
+// Feb (month 2) required additional dewatering scope (+$1.8M change order,
+// approved in Apr). Actuals track ~$1M/mo above baseline through month 5.
+// CPI = EV/AC = 21.6/23.6 = 0.916 ≈ 0.92 ✓
+// SPI = EV/PV = 21.6/24.7 = 0.875 ≈ 0.88 ✓ (PV = baseline months 0-6)
+const BAR_DATA = {
+  // Baseline: original approved plan — bell peak at month 6–7, total ~$39.5M
+  baseline:  [1.5, 2.5, 3.5, 4.2, 4.5, 4.5, 4.0, 3.2, 2.5, 1.8, 1.4, 1.1, 0.9, 0.7, 0.6, 0.5, 0.5, 0.4, 0.3, 0.3, 0.2, 0.2, 0.1, 0.1],
+  // Approved: baseline + CO-001 (dewatering scope, months 2–4), total ~$41M
+  approved:  [1.5, 2.5, 3.8, 4.6, 4.8, 4.7, 4.1, 3.3, 2.6, 1.9, 1.5, 1.1, 0.9, 0.7, 0.6, 0.5, 0.5, 0.4, 0.3, 0.3, 0.2, 0.2, 0.1, 0.1],
+  // Control: PMO stretch target — tighter spend, earlier finish, total ~$36M
+  control:   [1.5, 2.4, 3.3, 3.9, 4.2, 4.2, 3.8, 3.0, 2.3, 1.6, 1.3, 1.0, 0.8, 0.6, 0.5, 0.4, 0.4, 0.3, 0.2, 0.2, 0.1, 0.1, 0.0, 0.0],
+  // Financial: accounting estimate — mirrors actuals to date, pessimistic forward, total ~$41.5M
+  financial: [1.2, 2.1, 3.4, 4.2, 4.5, 4.3, 3.9, 3.8, 3.4, 3.0, 2.5, 2.0, 1.7, 1.3, 1.0, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2, 0.2, 0.1, 0.1],
+  // Earned Value (EV): work accomplished — CPI 0.92 vs actuals (null after TODAY)
+  earned:   [1.1, 1.9, 3.1, 3.9, 4.1, 3.9, 3.6, null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  // Actuals (AC): cash spent — includes labour, equipment, materials (null after TODAY)
+  actuals:  [1.2, 2.1, 3.4, 4.2, 4.5, 4.3, 3.9, null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  // Incurred: actuals + accruals (~4% uplift for goods-received-not-invoiced)
+  incurred: [1.3, 2.2, 3.6, 4.4, 4.7, 4.5, 4.1, null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  // Commitment: new purchase orders/subcontracts signed each month — front-loaded
+  commitment:[2.0, 5.8, 7.2, 4.1, 2.6, 1.8, 1.2, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2, 0.2, 0.1, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+};
+
+// Extend a real data series (nulls after real today) with a declining spend curve
+// so the time slider can animate the S-curve growing beyond the real today date.
+function _buildSimSeries(realData, totalTarget) {
+  const arr = [...realData];
+  const lastReal = arr.reduce((li, v, i) => v !== null ? i : li, -1);
+  if (lastReal < 0) return arr;
+  const realSum = arr.slice(0, lastReal + 1).reduce((a, b) => a + (b || 0), 0);
+  const remaining = Math.max(0, totalTarget - realSum);
+  const n = arr.length - lastReal - 1;
+  if (n <= 0 || remaining <= 0) return arr;
+  const wts = Array.from({ length: n }, (_, i) => Math.exp(-i * 0.18));
+  const wSum = wts.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < n; i++) arr[lastReal + 1 + i] = +(((wts[i] / wSum) * remaining).toFixed(2));
+  return arr;
+}
+let EAC_ACTUAL   = 42.2;
+let EAC_INCURRED = 43.9;
+let EAC_EARNED   = 40.0;
+let ACTIVE_BAR_DATA = BAR_DATA;
+
+let SIM_ACTUALS  = _buildSimSeries(BAR_DATA.actuals,  EAC_ACTUAL);
+let SIM_INCURRED = _buildSimSeries(BAR_DATA.incurred, EAC_INCURRED);
+let SIM_EARNED   = _buildSimSeries(BAR_DATA.earned,   EAC_EARNED);
+
+/* ── CONTROL ACCOUNT MOCK DATA ───────────────────────────────────── */
+const _N = Array(14).fill(null);  // 14 trailing nulls helper
+const _N11 = Array(11).fill(null);
+const _N18 = Array(18).fill(null);
+const _Z6  = Array(6).fill(0);
+
+const CA_DATA = {
+  'ca-1042': {
+    label:    'CA-1042 · Civil Foundations — P2',
+    subtitle: 'Control account: CA-1042 · Civil Foundations — Phase 2',
+    realTodayIdx:    6,
+    scheduledEndIdx: 20,
+    chartBac:   40.0,
+    eacActual:  42.2,
+    eacIncurred:43.9,
+    eacEarned:  40.0,
+    yMax: 50, yStep: 10,
+    bannerConf: 87, bannerSimilar: 24,
+    bars: BAR_DATA,
+    explanation: "Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks. Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned/ETC) are each matched using their own historical data series. Matching uses Gower distance across CA group codes (PHASE_TYPE, DISCIPLINE, WORK_TYPE) and project groups (PROJ_SIZE, REGION). SPI (0.88) and CPI (0.92) active as weighting factors — accounts with similar performance profiles weighted higher. Top 9 matched neighbors (avg similarity 0.78, min 0.30) re-anchor to $23.6M actuals → $42.2M EAC. Curve shape signals (skewness, front-load ratio, Gini, peak period) indicate deviation from the baseline plan."
+  },
+  'ca-1043': {
+    label:    'CA-1043 · Structural Steel — P1',
+    subtitle: 'Control account: CA-1043 · Structural Steel — Phase 1',
+    realTodayIdx:    9,
+    scheduledEndIdx: 17,
+    chartBac:   28.0,
+    eacActual:  26.7,
+    eacIncurred:27.2,
+    eacEarned:  28.0,
+    yMax: 35, yStep: 5,
+    bannerConf: 82, bannerSimilar: 18,
+    bars: {
+      baseline:  [0.60,1.60,3.00,3.75,3.85,3.50,2.90,2.30,1.80,1.30,0.75,0.55,0.40,0.30,0.20,0.15,0.10,0.05,0,0,0,0,0,0],
+      approved:  [0.60,1.70,3.20,3.90,3.95,3.60,2.95,2.35,1.85,1.35,0.80,0.60,0.45,0.35,0.25,0.18,0.10,0.07,0,0,0,0,0,0],
+      control:   [0.55,1.40,2.70,3.40,3.50,3.20,2.60,2.00,1.50,1.10,0.65,0.45,0.30,0.20,0.15,0.10,0.05,0.05,0,0,0,0,0,0],
+      financial: [0.70,1.80,3.40,3.80,3.40,2.70,2.20,1.80,1.50,1.10,0.80,0.60,0.45,0.35,0.25,0.18,0.10,0.07,0,0,0,0,0,0],
+      earned:    [0.74,1.89,3.57,3.99,3.57,2.84,2.31,1.89,1.58,1.16,..._N],
+      actuals:   [0.70,1.80,3.40,3.80,3.40,2.70,2.20,1.80,1.50,1.10,..._N],
+      incurred:  [0.73,1.87,3.54,3.95,3.54,2.81,2.29,1.87,1.56,1.14,..._N],
+      commitment:[3.0,7.0,6.0,4.0,2.0,0.8,0.3,0.2,0.1,0.1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    },
+    explanation: "Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks. Front-loaded structural steel profile shows strong cost performance (CPI 1.05) with a modestly compressed schedule (SPI 0.96). Matching uses Gower distance across CA group codes and project groups — structural discipline is well-represented in the historical pool. SPI (0.96) and CPI (1.05) active as weighting factors — under-budget trajectory weighted favorably. Top 8 matched neighbors (avg similarity 0.81, min 0.35) re-anchor to $22.4M actuals → $26.7M EAC. Curve shape signals indicate front-load ratio above baseline plan — typical for steel erection phase sequences."
+  },
+  'ca-1044': {
+    label:    'CA-1044 · MEP Systems',
+    subtitle: 'Control account: CA-1044 · MEP Systems',
+    realTodayIdx:    5,
+    scheduledEndIdx: 21,
+    chartBac:   35.0,
+    eacActual:  39.8,
+    eacIncurred:41.8,
+    eacEarned:  35.0,
+    yMax: 50, yStep: 10,
+    bannerConf: 72, bannerSimilar: 31,
+    bars: {
+      baseline:  [0.60,1.00,1.80,2.50,2.80,2.70,2.70,2.60,2.50,2.30,2.10,1.90,1.70,1.50,1.30,1.10,0.90,0.70,0.55,0.45,0.35,0.30,0,0],
+      approved:  [0.65,1.10,1.90,2.60,2.95,2.80,2.80,2.70,2.60,2.40,2.20,2.00,1.80,1.60,1.40,1.20,1.00,0.80,0.60,0.50,0.40,0.30,0,0],
+      control:   [0.55,0.90,1.70,2.30,2.60,2.50,2.50,2.40,2.30,2.10,1.90,1.70,1.50,1.30,1.10,0.90,0.70,0.55,0.40,0.35,0.28,0.22,0,0],
+      financial: [0.80,1.20,2.00,2.50,2.40,1.70,2.20,2.40,2.60,2.70,2.60,2.40,2.20,1.90,1.60,1.30,1.00,0.80,0.65,0.50,0.40,0.35,0,0],
+      earned:    [0.70,1.06,1.76,2.20,2.11,1.50,..._N18],
+      actuals:   [0.80,1.20,2.00,2.50,2.40,1.70,..._N18],
+      incurred:  [0.83,1.25,2.08,2.60,2.50,1.77,..._N18],
+      commitment:[1.5,3.0,5.5,6.0,5.0,3.5,3.0,2.5,2.0,1.5,1.0,0.8,0.5,0.3,0.2,0.1,0.1,0.0,0,0,0,0,0,0],
+    },
+    explanation: "Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks. MEP systems showing cost pressure (CPI 0.88) and schedule delay (SPI 0.82) — back-loaded spend profile with significant remaining scope. Matching uses Gower distance with heavier weighting on discipline (MEP) and cost mix (labor/equipment ratio). SPI (0.82) and CPI (0.88) active as weighting factors — accounts with similar underperformance profiles weighted higher. Top 11 matched neighbors (avg similarity 0.72, min 0.28) re-anchor to $10.6M actuals → $39.8M EAC. Confidence is lower than typical due to early lifecycle position (26.6% complete) — wider P10–P90 band reflects forecast uncertainty."
+  },
+  'ca-1045': {
+    label:    'CA-1045 · Site Preparation',
+    subtitle: 'Control account: CA-1045 · Site Preparation',
+    realTodayIdx:    12,
+    scheduledEndIdx: 13,
+    chartBac:   12.0,
+    eacActual:  12.24,
+    eacIncurred:12.50,
+    eacEarned:  12.0,
+    yMax: 15, yStep: 5,
+    bannerConf: 91, bannerSimilar: 42,
+    bars: {
+      baseline:  [1.40,1.90,1.75,1.50,1.25,0.95,0.75,0.55,0.45,0.38,0.28,0.28,0.27,0.29,0,0,0,0,0,0,0,0,0,0],
+      approved:  [1.40,1.90,1.75,1.50,1.25,0.95,0.75,0.55,0.45,0.38,0.28,0.28,0.27,0.29,0,0,0,0,0,0,0,0,0,0],
+      control:   [1.35,1.80,1.65,1.40,1.15,0.85,0.65,0.50,0.40,0.33,0.25,0.25,0.22,0.25,0,0,0,0,0,0,0,0,0,0],
+      financial: [1.50,2.00,1.80,1.50,1.30,1.00,0.80,0.60,0.50,0.40,0.30,0.30,0.20,0.30,0,0,0,0,0,0,0,0,0,0],
+      earned:    [1.47,1.96,1.76,1.47,1.27,0.98,0.78,0.59,0.49,0.39,0.29,0.29,0.20,..._N11],
+      actuals:   [1.50,2.00,1.80,1.50,1.30,1.00,0.80,0.60,0.50,0.40,0.30,0.30,0.20,..._N11],
+      incurred:  [1.56,2.08,1.87,1.56,1.35,1.04,0.83,0.62,0.52,0.42,0.31,0.31,0.21,..._N11],
+      commitment:[4.0,3.5,2.0,1.0,0.5,0.3,0.2,0.1,0.0,0.0,0.0,0.0,0.0,0.0,0,0,0,0,0,0,0,0,0,0],
+    },
+    explanation: "Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks. Site preparation nearing completion (99.7% complete) — final month of activity remaining. Near-complete status yields very high model confidence; matching is primarily informational at this lifecycle stage. SPI (1.02) and CPI (0.98) indicate on-budget, on-schedule performance throughout the project lifecycle. Top 14 matched neighbors (avg similarity 0.91, min 0.52) confirm typical closeout pattern. Forecast EAC of $12.2M is within 2% of $12.0M budget — routine close-out variance."
+  }
+};
+
+let ACTIVE_CA_ID = 'ca-1042';
+
+window.selectAccount = function(id) {
+  const ca = CA_DATA[id];
+  if (!ca) return;
+
+  // Close dropdown regardless
+  const dropdown = document.getElementById('acctDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  const acctSBtn = document.getElementById('acctSelectorBtn');
+  if (acctSBtn) acctSBtn.setAttribute('aria-expanded', 'false');
+
+  if (id === ACTIVE_CA_ID) return;
+  ACTIVE_CA_ID = id;
+
+  // Update mutable globals
+  REAL_TODAY_IDX    = ca.realTodayIdx;
+  TODAY_IDX         = REAL_TODAY_IDX;
+  SCHEDULED_END_IDX = ca.scheduledEndIdx;
+  CHART_BAC         = ca.chartBac;
+  EAC_ACTUAL        = ca.eacActual;
+  EAC_INCURRED      = ca.eacIncurred;
+  EAC_EARNED        = ca.eacEarned;
+  ACTIVE_BAR_DATA   = ca.bars;
+  AI_FORECAST_ACTIVE = false; // new CA = fresh data, AI forecast is no longer valid
+  AI_PROJ_ACTUAL = null;
+
+  // Rebuild simulation series for new CA
+  SIM_ACTUALS  = _buildSimSeries(ca.bars.actuals,  EAC_ACTUAL);
+  SIM_INCURRED = _buildSimSeries(ca.bars.incurred, EAC_INCURRED);
+  SIM_EARNED   = _buildSimSeries(ca.bars.earned,   EAC_EARNED);
+
+  if (scurveChart) {
+    const ds = scurveChart.data.datasets;
+
+    // Bar datasets 0-7
+    ds[0].data = ca.bars.baseline;
+    ds[1].data = ca.bars.approved;
+    ds[2].data = ca.bars.control;
+    ds[3].data = ca.bars.financial;
+    ds[4].data = ca.bars.earned;
+    ds[5].data = ca.bars.actuals;
+    ds[6].data = ca.bars.incurred;
+    ds[7].data = ca.bars.commitment;
+
+    // Rebuild line + band datasets
+    const ha  = buildActualHistLine();
+    const hi  = buildIncurredHistLine();
+    const he  = buildEarnedHistLine();
+    const pa  = buildActualForecastLine();
+    const pi  = buildIncurredForecastLine();
+    const pe  = buildEarnedForecastLine();
+    const p90 = buildBandLine(pa, 1.08);
+    const p10 = buildBandLine(pa, 0.92);
+
+    ds[8].data  = p90;
+    ds[9].data  = p10;
+    ds[10].data = ha;
+    ds[11].data = hi;
+    ds[12].data = he;
+    ds[13].data = pa;
+    ds[14].data = pi;
+    ds[15].data = pe;
+    ds[16].data = Array(24).fill(CHART_BAC);
+
+    // Update Y-axis scale
+    scurveChart.options.scales.y.max = ca.yMax;
+    scurveChart.options.scales.y.ticks.stepSize = ca.yStep;
+
+    scurveChart.update('none');
+  }
+
+  // Update KPI cards
+  _updateKpiFromTime(TODAY_IDX);
+
+  // Update AI banner
+  const confPill = document.querySelector('.sc-high-confidence-pill');
+  if (confPill) confPill.textContent = `High confidence: ${ca.bannerConf}%`;
+  const simAccts = document.querySelector('.sc-similar-accts');
+  if (simAccts) simAccts.textContent = `${ca.bannerSimilar} similar accounts`;
+
+  // Update forecast explanation
+  const expBox = document.querySelector('.sc-forecast-exp-box');
+  if (expBox) expBox.textContent = ca.explanation;
+
+  // Update page subtitle
+  const subEl = document.querySelector('.sc-page-subtitle');
+  if (subEl) subEl.textContent = ca.subtitle;
+
+  // Update selector button label
+  if (acctSBtn) {
+    acctSBtn.innerHTML = `${ca.label} <i class="pi pi-chevron-down sc-acct-chevron"></i>`;
+  }
+
+  // Update dropdown active state
+  document.querySelectorAll('.sc-acct-drop-item').forEach(el => {
+    el.classList.toggle('sc-acct-drop-item--active', el.dataset.id === id);
+  });
+
+  // Reset time slider to the new CA's real today
+  const slider = document.getElementById('scTimeSlider');
+  if (slider) {
+    slider.value = REAL_TODAY_IDX;
+    const pct = ((REAL_TODAY_IDX - +slider.min) / (+slider.max - +slider.min)) * 100;
+    slider.style.setProperty('--fill-pct', pct + '%');
+  }
+  const tsLabel = document.getElementById('scTsMonth');
+  if (tsLabel) tsLabel.textContent = MONTH_CALENDAR[TODAY_IDX];
+  const tsBadge = document.getElementById('scTsSimBadge');
+  if (tsBadge) tsBadge.style.display = 'none';
+};
+
+// Cumulative S-curves — compute from periodic data
+function buildCumulative(arr) {
+  let sum = 0;
+  return arr.map(v => { sum += (v || 0); return sum; });
+}
+
+// Build cumulative historical lines (solid segment, 0 → TODAY_IDX, then null)
+// Use SIM arrays so lines work beyond the real today when the time slider is active
+function buildActualHistLine() {
+  let sum = 0;
+  return SIM_ACTUALS.map((v, i) => {
+    if (i > TODAY_IDX) return null;
+    sum += (v || 0);
+    return sum;
+  });
+}
+
+function buildIncurredHistLine() {
+  let sum = 0;
+  return SIM_INCURRED.map((v, i) => {
+    if (i > TODAY_IDX) return null;
+    sum += (v || 0);
+    return sum;
+  });
+}
+
+function buildEarnedHistLine() {
+  let sum = 0;
+  return SIM_EARNED.map((v, i) => {
+    if (i > TODAY_IDX) return null;
+    sum += (v || 0);
+    return sum;
+  });
+}
+
+// Forecast line: start from simulated cumulative at TODAY_IDX, project forward to target
+function _buildForecastLine(simSeries, target) {
+  const cumAtToday = simSeries.slice(0, TODAY_IDX + 1).reduce((a, b) => a + (b || 0), 0);
+  const remaining  = Math.max(0, target - cumAtToday);
+  const forecastMonths = 24 - TODAY_IDX - 1;
+  const result = Array(24).fill(null);
+  result[TODAY_IDX] = cumAtToday;
+  if (forecastMonths <= 0) return result;
+  const wts = Array.from({ length: forecastMonths }, (_, i) => Math.max(0.08, 1 - i * 0.055));
+  const wSum = wts.reduce((a, b) => a + b, 0);
+  let runSum = cumAtToday;
+  for (let i = 0; i < forecastMonths; i++) {
+    runSum += (wts[i] / wSum) * remaining;
+    result[TODAY_IDX + 1 + i] = runSum;
+  }
+  return result;
+}
+
+function buildActualForecastLine()   { return _buildForecastLine(SIM_ACTUALS,  EAC_ACTUAL); }
+function buildIncurredForecastLine() { return _buildForecastLine(SIM_INCURRED, EAC_INCURRED); }
+function buildEarnedForecastLine()   { return _buildForecastLine(SIM_EARNED,   EAC_EARNED); }
+
+// P10/P90 confidence band around the actual/ETC forecast.
+// The junction point (TODAY_IDX) anchors to the actual value so the band starts
+// at zero width there and fans out — prevents a bezier kink at the cutpoint.
+function buildBandLine(forecastLine, multiplier) {
+  return forecastLine.map((v, i) => {
+    if (v === null) return null;
+    if (i <= TODAY_IDX) return v; // anchor: no fan at or before today
+    return v * multiplier;
+  });
+}
+
+let scurveChart = null;
+let showConfidenceBand = true;
+let AI_FORECAST_ACTIVE = false; // true when AI forecast curves are shown on chart
+let AI_PROJ_ACTUAL = null;      // stored AI forecast line — used to recompute band on slider move
+
+function initScurveChart() {
+  const ctx = document.getElementById('scurve-chart');
+  if (!ctx) return;
+
+  const truncAtToday = (arr) => arr.map((v, i) => i > TODAY_IDX ? null : v);
+
+  const histActual   = buildActualHistLine();
+  const histIncurred = buildIncurredHistLine();
+  const histEarned   = buildEarnedHistLine();
+  const projActual   = buildActualForecastLine();
+  const projIncurred = buildIncurredForecastLine();
+  const projEarned   = buildEarnedForecastLine();
+  const p10Band = buildBandLine(projActual, 0.92);
+  const p90Band = buildBandLine(projActual, 1.08);
+
+  // Dot at junction (Today) only
+  const junctionDot = (c) => c.dataIndex === TODAY_IDX ? 6 : 0;
+
+  const verticalLinePlugin = {
+    id: 'currentPeriodLine',
+    afterDatasetsDraw(chart) {
+      const { ctx: c, scales: { x, y } } = chart;
+      const xPos = x.getPixelForValue(TODAY_IDX);
+      c.save();
+      c.setLineDash([4, 4]);
+      c.beginPath();
+      c.moveTo(xPos, y.top);
+      c.lineTo(xPos, y.bottom);
+      c.strokeStyle = '#e31b0c';
+      c.lineWidth = 1.5;
+      c.stroke();
+      c.setLineDash([]);
+      c.font = '600 11px Inter, sans-serif';
+      c.fillStyle = '#e31b0c';
+      c.textAlign = 'center';
+      c.fillText('Today', xPos, y.top - 6);
+      c.restore();
+    }
+  };
+
+  scurveChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: CHART_LABELS,
+      datasets: [
+        // Bar datasets — indices 0-7 (hidden in Cumulative, shown in Periodic)
+        { label: 'Baseline',   data: BAR_DATA.baseline,   backgroundColor: '#3949ab', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Approved',   data: BAR_DATA.approved,   backgroundColor: '#1565c0', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Control',    data: BAR_DATA.control,    backgroundColor: '#283593', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Financial',  data: BAR_DATA.financial,  backgroundColor: '#5c6bc0', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Earned',     data: BAR_DATA.earned,     backgroundColor: '#42a5f5', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Actuals',    data: BAR_DATA.actuals,    backgroundColor: '#2563eb', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Incurred',   data: BAR_DATA.incurred,   backgroundColor: '#f59e0b', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Commitment', data: BAR_DATA.commitment, backgroundColor: '#43a047', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        // Confidence band — indices 8 (_p90), 9 (_p10) — around Actual/ETC forecast
+        { type: 'line', label: '_p90', data: p90Band, borderWidth: 0, pointRadius: 0, fill: '+1', backgroundColor: 'rgba(37,99,235,0.10)', borderColor: 'transparent', tension: 0.45, spanGaps: false, order: 1 },
+        { type: 'line', label: '_p10', data: p10Band, borderWidth: 0, pointRadius: 0, fill: false, backgroundColor: 'transparent',          borderColor: 'transparent', tension: 0.45, spanGaps: false, order: 1 },
+        // Historical solid lines — indices 10 (_hist_actual), 11 (_hist_incurred), 12 (_hist_earned)
+        { type: 'line', label: '_hist_actual',   data: histActual,   borderColor: '#2563eb', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: '_hist_incurred', data: histIncurred, borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: '_hist_earned',   data: histEarned,   borderColor: '#059669', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        // Forecast dashed lines — indices 13 (Actual/ETC), 14 (Incurred/ETC), 15 (Earned/ETC)
+        { type: 'line', label: 'Actual / ETC',   data: projActual,   borderColor: '#2563eb', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#2563eb', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
+        { type: 'line', label: 'Incurred / ETC', data: projIncurred, borderColor: '#f59e0b', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
+        { type: 'line', label: 'Earned / ETC',   data: projEarned,   borderColor: '#059669', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#059669', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
+        // BAC reference — index 16
+        { type: 'line', label: '_bac', data: Array(24).fill(40), borderColor: '#9ca3af', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false, order: 3 },
+      ]
+    },
+    plugins: [verticalLinePlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 22 } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          filter: (i) => !i.dataset.label.startsWith('_'),
+          callbacks: {
+            label: (c) => c.raw === null ? null : ` ${c.dataset.label}: $${c.raw.toFixed(1)}M`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 11 }, color: '#6b7280' } },
+        y: {
+          position: 'left',
+          title: { display: true, text: 'Cumulative cost', font: { size: 11 }, color: '#9ca3af' },
+          min: 0, max: 50,
+          grid: { color: '#f3f4f6' },
+          ticks: {
+            font: { size: 11 }, color: '#6b7280',
+            callback: v => '$' + v + 'M',
+            stepSize: 10
+          }
+        }
+      }
+    }
+  });
+}
+
+window.toggleConfidenceBand = function(show) {
+  showConfidenceBand = show;
+  if (!scurveChart) return;
+  // dataset index 8 is _p90 (top of band)
+  scurveChart.data.datasets[8].backgroundColor = show ? 'rgba(59,130,246,0.12)' : 'transparent';
+  scurveChart.update();
+};
+
+// Each key maps to [histIdx, forecastIdx] — toggling hides/shows both segments
+const LINE_DATASETS = { actual: [10, 13], incurred: [11, 14], earned: [12, 15] };
+const LINE_VISIBILITY = { actual: true, incurred: true, earned: true };
+
+window.toggleForecastLine = function(key) {
+  if (!scurveChart) return;
+  LINE_VISIBILITY[key] = !LINE_VISIBILITY[key];
+  for (const idx of LINE_DATASETS[key]) {
+    const ds = scurveChart.data.datasets[idx];
+    if (ds) ds.hidden = !LINE_VISIBILITY[key];
+  }
+  scurveChart.update();
+  const btn = document.querySelector(`.sc-line-toggle[data-line="${key}"]`);
+  if (btn) {
+    btn.setAttribute('aria-pressed', String(LINE_VISIBILITY[key]));
+    btn.classList.toggle('sc-line-toggle--off', !LINE_VISIBILITY[key]);
+  }
+};
+
+window.toggleChartView = function(periodic) {
+  if (!scurveChart) return;
+  for (let i = 0; i <= 7; i++) {
+    scurveChart.data.datasets[i].hidden = !periodic;
+  }
+  scurveChart.update();
+};
+
+/* ── TIME SLIDER ─────────────────────────────────────────────────── */
+
+function _updateKpiFromTime(idx) {
+  const ac  = SIM_ACTUALS.slice(0, idx + 1).reduce((a, b) => a + (b || 0), 0);
+  const ev  = SIM_EARNED.slice(0, idx + 1).reduce((a, b) => a + (b || 0), 0);
+  const pv  = ACTIVE_BAR_DATA.baseline.slice(0, idx + 1).reduce((a, b) => a + (b || 0), 0);
+  const cpi = ac > 0 ? Math.max(0.3, ev / ac) : 1;
+  const spi = pv > 0 ? Math.max(0.3, ev / pv) : 1;
+  const eac = +(CHART_BAC / cpi).toFixed(1);
+  const pct = ac > 0 ? Math.min(100, (ac / eac) * 100) : 0;
+  const overPct = +((eac / CHART_BAC - 1) * 100).toFixed(2);
+
+  // EAC card
+  const eacEl = document.getElementById('m-eac');
+  if (eacEl) eacEl.textContent = '$' + eac.toFixed(1) + 'M';
+  const eacSubEl = document.getElementById('m-eac-sub');
+  if (eacSubEl) eacSubEl.innerHTML = `Budget: $${CHART_BAC.toFixed(1)}M · <span class="${overPct >= 0 ? 'sc-metric-over' : 'sc-metric-under'}">${overPct >= 0 ? '+' : ''}${overPct}%</span>`;
+
+  // % Complete card
+  const pctEl = document.getElementById('m-pct');
+  if (pctEl) pctEl.textContent = pct.toFixed(1) + '%';
+  const pctSubEl = document.getElementById('m-pct-sub');
+  if (pctSubEl) pctSubEl.textContent = 'Actuals to date: $' + ac.toFixed(1) + 'M';
+
+  // CPI / SPI card
+  const cpiEl = document.getElementById('m-cpispi');
+  if (cpiEl) {
+    cpiEl.textContent = cpi.toFixed(2) + ' / ' + spi.toFixed(2);
+    const isWarn = cpi < 1 || spi < 1;
+    cpiEl.classList.toggle('sc-metric-value--warn', isWarn);
+    const sub = cpiEl.closest('.sc-metric-card')?.querySelector('.sc-metric-sub');
+    if (sub) {
+      sub.textContent = (cpi < 1 ? 'Cost overrun' : 'On/under budget') + ' · ' + (spi < 1 ? 'Behind schedule' : 'On/ahead schedule');
+      sub.classList.toggle('sc-metric-sub--warn', isWarn);
+    }
+  }
+
+  // Estimated completion: schedule slip = planned duration × (1/SPI − 1)
+  const slipMonths = Math.round(CHART_LABELS.length * Math.max(-6, (1 / spi) - 1));
+  const compIdx    = Math.min(23, Math.max(0, SCHEDULED_END_IDX + slipMonths));
+  const compLabel    = MONTH_CALENDAR[compIdx] || MONTH_CALENDAR[23];
+  const schedLabel   = MONTH_CALENDAR[SCHEDULED_END_IDX];
+  const slipMos      = compIdx - SCHEDULED_END_IDX;
+  const compEl       = document.getElementById('m-completion');
+  if (compEl) compEl.textContent = compLabel;
+  const compSubEl    = document.getElementById('m-completion-sub');
+  if (compSubEl) compSubEl.innerHTML = `Scheduled: ${schedLabel} · <span class="${slipMos > 0 ? 'sc-metric-over' : 'sc-metric-under'}">${slipMos > 0 ? '+' : ''}${slipMos} mo.</span>`;
+}
+
+window.updateChartTime = function(idx) {
+  if (!scurveChart) return;
+  TODAY_IDX = idx;
+
+  // When AI forecast is active, preserve its curves — only move the Today marker
+  if (!AI_FORECAST_ACTIVE) {
+    const ha  = buildActualHistLine();
+    const hi  = buildIncurredHistLine();
+    const he  = buildEarnedHistLine();
+    const pa  = buildActualForecastLine();
+    const pi  = buildIncurredForecastLine();
+    const pe  = buildEarnedForecastLine();
+    const p90 = buildBandLine(pa, 1.08);
+    const p10 = buildBandLine(pa, 0.92);
+
+    scurveChart.data.datasets[8].data  = p90;
+    scurveChart.data.datasets[9].data  = p10;
+    scurveChart.data.datasets[10].data = ha;
+    scurveChart.data.datasets[11].data = hi;
+    scurveChart.data.datasets[12].data = he;
+    scurveChart.data.datasets[13].data = pa;
+    scurveChart.data.datasets[14].data = pi;
+    scurveChart.data.datasets[15].data = pe;
+  } else if (AI_PROJ_ACTUAL) {
+    // AI forecast active — re-anchor band at new TODAY_IDX so it fans from the slider position
+    scurveChart.data.datasets[8].data = buildBandLine(AI_PROJ_ACTUAL, 1.08);
+    scurveChart.data.datasets[9].data = buildBandLine(AI_PROJ_ACTUAL, 0.92);
+  }
+
+  // 'none' = instant redraw, no animation — keeps the Today line and data curves
+  // in sync; regular update() animates curves while the plugin line jumps, looking broken
+  scurveChart.update('none');
+
+  const label = document.getElementById('scTsMonth');
+  if (label) label.textContent = MONTH_CALENDAR[idx];
+  const isReal = idx === REAL_TODAY_IDX;
+  const badge  = document.getElementById('scTsSimBadge');
+  if (badge) badge.style.display = isReal ? 'none' : 'inline-flex';
+
+  _updateKpiFromTime(idx);
+};
+
+window.resetToRealToday = function() {
+  const slider = document.getElementById('scTimeSlider');
+  if (slider) {
+    slider.value = REAL_TODAY_IDX;
+    const pct = ((REAL_TODAY_IDX - +slider.min) / (+slider.max - +slider.min)) * 100;
+    slider.style.setProperty('--fill-pct', pct + '%');
+  }
+  window.updateChartTime(REAL_TODAY_IDX);
+};
+
+/* ── REAL AI FORECAST COMPUTATION & CHART UPDATE ────────────────── */
+
+/**
+ * Compute implied EAC by comparing actual spend rate against the
+ * weighted-median spend rate of matched neighbors at the current lifecycle %.
+ * Returns implied EAC in model scale ($M, FOCAL budget).
+ */
+function computeImpliedEAC(neighbors, lifecyclePct) {
+  if (!neighbors.length) return FOCAL.budgetAmount;
+  const currentPos = lifecyclePct / 100;
+  const currentGIdx = Math.round(currentPos * (GRID_N - 1));
+
+  // Weighted-median cumulative fraction at currentPos across neighbors
+  const vals = [], wts = [];
+  for (const { pool, adjSim } of neighbors) {
+    const total = pool.totalSpend;
+    if (!total) continue;
+    const cum = cumsum(pool.spendProfile);
+    const normCum = cum.map(v => v / total);
+    const gridCum = interpCumFrac(GRID, normCum);
+    vals.push(gridCum[currentGIdx]);
+    wts.push(adjSim);
+  }
+  const medianFrac = weightedPercentile(vals, wts, 50);
+  if (!medianFrac) return FOCAL.budgetAmount;
+
+  // Use SIM_ACTUALS (chart scale, covers full simulated timeline) to derive actual fraction.
+  // FOCAL.actualSpend only covers 10 real months — using it past the real today gives a
+  // stale fraction that makes chartEAC fall below the cumulative (descending forecast).
+  const chartActualSpent = SIM_ACTUALS.slice(0, TODAY_IDX + 1).reduce((a, b) => a + (b || 0), 0);
+  const actualFrac = chartActualSpent / CHART_BAC;
+
+  return FOCAL.budgetAmount * (actualFrac / medianFrac);
+}
+
+window.runAiForecast = function() {
+  if (!ACTIVE_USER.perms.runForecast) return;
+  const btn = document.querySelector('.sc-run-btn');
+  if (!btn || btn.disabled) return;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="pi pi-spin pi-spinner btn-icon-left"></i> Running…';
+  btn.disabled = true;
+
+  const chartWrap = document.querySelector('.sc-chart-wrap');
+  if (chartWrap) chartWrap.classList.add('sc-chart-loading');
+
+  setTimeout(() => {
+    const lifecyclePct = Math.round((TODAY_IDX + 1) / CHART_LABELS.length * 100);
+    const neighbors    = matchNeighbors(lifecyclePct);
+    const forecast     = computeForecast(neighbors, lifecyclePct);
+
+    if (forecast && scurveChart) {
+      const impliedEAC = computeImpliedEAC(neighbors, lifecyclePct);
+      _applyForecastToChart(forecast, impliedEAC);
+      AI_FORECAST_ACTIVE = true;
+      _updateKpiFromForecast(impliedEAC, neighbors);
+      _updateBannerFromForecast(neighbors);
+      _updateExplanationFromForecast(forecast, neighbors, lifecyclePct, impliedEAC);
+    }
+
+    if (chartWrap) chartWrap.classList.remove('sc-chart-loading');
+    btn.innerHTML = orig;
+    btn.disabled = !ACTIVE_USER.perms.runForecast;
+
+    // Refresh expanded driver detail if open
+    const bannerDetail = document.getElementById('scAiBannerDetail');
+    if (bannerDetail && bannerDetail.dataset.built) {
+      bannerDetail.innerHTML = buildAiBannerDetail();
+    }
+  }, 1100);
+};
+
+function _applyForecastToChart(forecast, impliedEAC) {
+  const overrunRatio = impliedEAC / FOCAL.budgetAmount;
+  const chartActualSum   = SIM_ACTUALS.slice(0, TODAY_IDX + 1).reduce((a, b) => a + (b || 0), 0);
+  const chartIncurredSum = SIM_INCURRED.slice(0, TODAY_IDX + 1).reduce((a, b) => a + (b || 0), 0);
+  const chartEarnedSum   = SIM_EARNED.slice(0, TODAY_IDX + 1).reduce((a, b) => a + (b || 0), 0);
+
+  // Clamp so forecast never descends (chartEAC must exceed current cumulative)
+  const chartEAC         = Math.max(chartActualSum * 1.001, CHART_BAC * overrunRatio);
+  const chartEACIncurred = Math.max(chartIncurredSum * 1.001, chartEAC * 1.04);
+  const chartEACEarned   = Math.max(chartEarnedSum  * 1.001, CHART_BAC);
+  const chartBandHiEnd   = chartEAC * 1.08;
+  const chartBandLoEnd   = Math.max(chartActualSum * 1.001, chartEAC * 0.92);
+
+  // Map model P50 shape (actd → bac) to chart scale (chartActualSum → chartEAC)
+  const modelRange = forecast.bac - forecast.actd || 1;
+  function shapeProgress(gridArr, m) {
+    const frac = (m + 0.5) / CHART_LABELS.length;
+    const gIdx = Math.round(Math.min(frac, 1) * (GRID_N - 1));
+    return Math.max(0, Math.min(1, (gridArr[gIdx] - forecast.actd) / modelRange));
+  }
+
+  const projActual   = Array(CHART_LABELS.length).fill(null);
+  const projIncurred = Array(CHART_LABELS.length).fill(null);
+  const projEarned   = Array(CHART_LABELS.length).fill(null);
+  const bandHi       = Array(CHART_LABELS.length).fill(null);
+  const bandLo       = Array(CHART_LABELS.length).fill(null);
+
+  projActual[TODAY_IDX]   = chartActualSum;
+  projIncurred[TODAY_IDX] = chartIncurredSum;
+  projEarned[TODAY_IDX]   = chartEarnedSum;
+  bandHi[TODAY_IDX]       = chartActualSum;
+  bandLo[TODAY_IDX]       = chartActualSum;
+
+  for (let m = TODAY_IDX + 1; m < CHART_LABELS.length; m++) {
+    const prog = shapeProgress(forecast.p50, m);
+    projActual[m]   = chartActualSum   + (chartEAC         - chartActualSum)   * prog;
+    projIncurred[m] = chartIncurredSum + (chartEACIncurred  - chartIncurredSum) * prog;
+    projEarned[m]   = chartEarnedSum   + (chartEACEarned    - chartEarnedSum)   * prog;
+
+    const hiProg = shapeProgress(forecast.pHi, m);
+    const loProg = shapeProgress(forecast.pLo, m);
+    bandHi[m] = chartActualSum + (chartBandHiEnd - chartActualSum) * hiProg;
+    bandLo[m] = chartActualSum + (chartBandLoEnd - chartActualSum) * loProg;
+  }
+
+  AI_PROJ_ACTUAL = projActual; // save so band can re-anchor as slider moves
+
+  scurveChart.data.datasets[8].data  = bandHi;
+  scurveChart.data.datasets[9].data  = bandLo;
+  scurveChart.data.datasets[13].data = projActual;
+  scurveChart.data.datasets[14].data = projIncurred;
+  scurveChart.data.datasets[15].data = projEarned;
+  scurveChart.update('active');
+}
+
+function _updateKpiFromForecast(impliedEAC, neighbors) {
+  const overrunRatio = impliedEAC / FOCAL.budgetAmount;
+  const chartEAC     = CHART_BAC * overrunRatio;
+  const varPct       = (chartEAC - CHART_BAC) / CHART_BAC * 100;
+  const chartActualSum = SIM_ACTUALS.slice(0, TODAY_IDX + 1).reduce((a, b) => a + (b || 0), 0);
+
+  // EAC card
+  const eacEl    = document.getElementById('m-eac');
+  const eacSubEl = document.getElementById('m-eac-sub');
+  if (eacEl) eacEl.textContent = '$' + chartEAC.toFixed(1) + 'M';
+  if (eacSubEl) {
+    const sign   = varPct >= 0 ? '+' : '';
+    const varCls = varPct > 1 ? 'sc-metric-over' : varPct < -1 ? 'sc-metric-under' : '';
+    eacSubEl.innerHTML = `Budget: $${CHART_BAC.toFixed(1)}M · <span class="${varCls}">${sign}${varPct.toFixed(2)}%</span>`;
+  }
+
+  // % Complete
+  const pctEl    = document.getElementById('m-pct');
+  const pctSubEl = document.getElementById('m-pct-sub');
+  const pct      = chartEAC > 0 ? (chartActualSum / chartEAC) * 100 : 0;
+  if (pctEl) pctEl.textContent = pct.toFixed(1) + '%';
+  if (pctSubEl) pctSubEl.textContent = `Actuals to date: $${chartActualSum.toFixed(1)}M`;
+
+  // Completion date
+  const overrunMonths   = Math.max(0, Math.round((overrunRatio - 1) * FOCAL.durationMonths));
+  const completionIdx   = Math.min(MONTH_CALENDAR.length - 1, SCHEDULED_END_IDX + overrunMonths);
+  const completionEl    = document.getElementById('m-completion');
+  const completionSubEl = document.getElementById('m-completion-sub');
+  if (completionEl) completionEl.textContent = MONTH_CALENDAR[completionIdx];
+  if (completionSubEl) {
+    const delayCls = overrunMonths > 0 ? 'sc-metric-over' : 'sc-metric-under';
+    const delayStr = overrunMonths > 0 ? `+${overrunMonths} mo.` : 'On schedule';
+    completionSubEl.innerHTML = `Scheduled: ${MONTH_CALENDAR[SCHEDULED_END_IDX]} · <span class="${overrunMonths !== 0 ? delayCls : ''}">${delayStr}</span>`;
+  }
+
+  // Confidence pill + similar-accounts count
+  const n      = neighbors.length;
+  const sims   = neighbors.map(x => x.adjSim);
+  const medSim = sims.length ? sims.slice().sort((a, b) => a - b)[Math.floor(sims.length / 2)] : 0;
+  const confPct = Math.round(medSim * 100);
+  const level   = confPct >= 70 ? 'High' : confPct >= 50 ? 'Medium' : 'Low';
+
+  const confEl = document.querySelector('.sc-high-confidence-pill');
+  if (confEl) {
+    confEl.textContent = `${level} confidence: ${confPct}%`;
+    const [bg, border, color] = confPct >= 70
+      ? ['#f0fdf4', '#86efac', '#15803d']
+      : confPct >= 50
+        ? ['#fef3c7', '#fde68a', '#92400e']
+        : ['#fef2f2', '#fca5a5', '#991b1b'];
+    Object.assign(confEl.style, { background: bg, borderColor: border, color });
+  }
+
+  const simEl = document.querySelector('.sc-similar-accts');
+  if (simEl) simEl.textContent = `${n} similar account${n !== 1 ? 's' : ''}`;
+}
+
+function _updateBannerFromForecast(neighbors) {
+  const pills = document.getElementById('scAiDriverPills');
+  if (!pills) return;
+  const total  = getTotalWeight();
+  const togEl  = document.getElementById('toggleEvm');
+  const spiOn  = !togEl || togEl.checked;
+  const SPI_W  = 3.0;
+  const denom  = spiOn ? total + SPI_W : total;
+
+  pills.innerHTML = DRIVER_GROUPS.map(g => {
+    const sum = g.id === 'spi'
+      ? (spiOn ? SPI_W : 0)
+      : g.keys.reduce((acc, k) => acc + (ACTIVE_WEIGHTS[k] || 0), 0);
+    const pct = Math.round(sum / denom * 100);
+    return pct > 0 ? `<span class="sc-driver-pill">${g.label}: ${pct}%</span>` : '';
+  }).join('');
+}
+
+function _updateExplanationFromForecast(forecast, neighbors, lifecyclePct, impliedEAC) {
+  const box = document.querySelector('.sc-forecast-exp-box');
+  if (!box) return;
+
+  const exp         = buildForecastExplanation(neighbors, lifecyclePct);
+  const n           = neighbors.length;
+  const sims        = neighbors.map(x => x.adjSim);
+  const medSim      = sims.length ? sims.slice().sort((a, b) => a - b)[Math.floor(sims.length / 2)] : 0;
+  const chartEAC    = (CHART_BAC * impliedEAC / FOCAL.budgetAmount).toFixed(1);
+  const chartActual = SIM_ACTUALS.slice(0, TODAY_IDX + 1).reduce((a, b) => a + (b || 0), 0).toFixed(1);
+  const topIds      = neighbors.slice(0, 3).map(x => x.pool.id).join(', ');
+
+  box.textContent = `Forecast based on ${n} matched account${n !== 1 ? 's' : ''} from the internal project database (private data only). `
+    + `Top matches: ${topIds}. Median similarity: ${(medSim * 100).toFixed(0)}%. `
+    + `${exp.confidence} confidence — ${exp.confidence === 'HIGH' ? 'strong lifecycle position and match quality' : exp.confidence === 'MEDIUM' ? 'moderate lifecycle position or match quality' : 'early lifecycle — limited observed spend data'}. `
+    + `Gower distance matching across ${Object.values(ACTIVE_WEIGHTS).filter(v => v > 0).length} active features. `
+    + `Actuals to date: $${chartActual}M → Implied EAC: $${chartEAC}M (${((impliedEAC / FOCAL.budgetAmount - 1) * 100).toFixed(1)}% vs budget).`;
+
+  // Brief highlight to signal update
+  box.style.background = '#dbeafe';
+  box.style.transition = 'background 0.6s ease';
+  setTimeout(() => { box.style.background = ''; box.style.transition = ''; }, 900);
+}
+
+window.toggleAcc = function(id) {
+  const section = document.getElementById(id);
+  if (!section) return;
+  const body = document.getElementById(id + '-body');
+  const chevron = section.querySelector('.sc-acc-chevron');
+  const header = section.querySelector('.sc-acc-header');
+  const isOpen = header.getAttribute('aria-expanded') === 'true';
+
+  if (isOpen) {
+    body.style.display = 'none';
+    chevron.className = 'pi pi-chevron-right sc-acc-chevron';
+    header.setAttribute('aria-expanded', 'false');
+    section.classList.add('sc-acc-section--collapsed');
+  } else {
+    body.style.display = '';
+    chevron.className = 'pi pi-chevron-down sc-acc-chevron';
+    header.setAttribute('aria-expanded', 'true');
+    section.classList.remove('sc-acc-section--collapsed');
+    // Lazy-init content
+    if (id === 'acc-drivers') initDriverSettingsContent();
+    if (id === 'acc-appendix') initAppendixContent();
+    if (id === 'acc-warnings') initWarningsContent();
+  }
+};
+
+window.toggleAcctDropdown = function() {
+  const dropdown = document.getElementById('acctDropdown');
+  const btn = document.getElementById('acctSelectorBtn');
+  if (!dropdown) return;
+  const isOpen = dropdown.style.display !== 'none';
+  dropdown.style.display = isOpen ? 'none' : 'block';
+  btn && btn.setAttribute('aria-expanded', String(!isOpen));
+  if (!isOpen) {
+    const search = document.getElementById('acctSearch');
+    if (search) { search.value = ''; filterAcctDropdown(''); }
+    setTimeout(() => { const s = document.getElementById('acctSearch'); if (s) s.focus(); }, 30);
+  }
+};
+
+window.filterAcctDropdown = function(query) {
+  const q = (query || '').trim().toLowerCase();
+  const items = document.querySelectorAll('#acctDropdown .sc-acct-drop-item');
+  let visible = 0;
+  items.forEach(item => {
+    const match = !q || item.textContent.toLowerCase().includes(q);
+    item.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  const noResults = document.getElementById('acctDropNoResults');
+  if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
+};
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#acctSelectorWrap')) {
+    const d = document.getElementById('acctDropdown');
+    if (d) d.style.display = 'none';
+    const sBtn = document.getElementById('acctSelectorBtn');
+    if (sBtn) sBtn.setAttribute('aria-expanded', 'false');
+  }
+  if (!e.target.closest('#kebabWrap')) {
+    const d = document.getElementById('kebabDropdown');
+    if (d) d.style.display = 'none';
+    const btn = document.getElementById('kebabBtn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+window.toggleKebabMenu = function() {
+  const dropdown = document.getElementById('kebabDropdown');
+  const btn = document.getElementById('kebabBtn');
+  if (!dropdown) return;
+  const isOpen = dropdown.style.display !== 'none';
+  dropdown.style.display = isOpen ? 'none' : 'block';
+  btn && btn.setAttribute('aria-expanded', String(!isOpen));
+};
+
+/* ── SWITCH USER MODAL ───────────────────────────────────────────── */
+const USERS = [
+  {
+    id: 'sarah', initials: 'SC', name: 'Sarah Chen', role: 'Project manager', color: '#6366f1',
+    perms: { runForecast: true, modifyWeights: false, configureGroups: false, exportData: true, changeAccount: true }
+  },
+  {
+    id: 'michael', initials: 'MT', name: 'Michael Torres', role: 'Cost engineer', color: '#0891b2',
+    perms: { runForecast: true, modifyWeights: true, configureGroups: false, exportData: true, changeAccount: true }
+  },
+  {
+    id: 'david', initials: 'DP', name: 'David Park', role: 'Project controls director', color: '#7c3aed',
+    perms: { runForecast: false, modifyWeights: false, configureGroups: false, exportData: true, changeAccount: false }
+  },
+  {
+    id: 'admin', initials: 'AU', name: 'Admin User', role: 'Super user', color: '#dc2626',
+    perms: { runForecast: true, modifyWeights: true, configureGroups: true, exportData: true, changeAccount: true }
+  },
+  {
+    id: 'jennifer', initials: 'JL', name: 'Jennifer Lee', role: 'Read only', color: '#64748b',
+    perms: { runForecast: false, modifyWeights: false, configureGroups: false, exportData: false, changeAccount: false }
+  }
+];
+
+const PERM_LABELS = [
+  { key: 'runForecast',    label: 'Run AI forecast' },
+  { key: 'modifyWeights',  label: 'Modify feature weights' },
+  { key: 'configureGroups',label: 'Configure group codes' },
+  { key: 'exportData',     label: 'Export data' },
+  { key: 'changeAccount',  label: 'Change account' }
+];
+
+let ACTIVE_USER = USERS.find(u => u.id === 'admin');
+
+window.openSwitchUserModal = function() {
+  const dropdown = document.getElementById('kebabDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  const btn = document.getElementById('kebabBtn');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sc-modal-overlay';
+  overlay.id = 'switchUserOverlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Switch user');
+
+  overlay.innerHTML = `
+    <div class="sc-modal" id="switchUserModal">
+      <div class="sc-modal-header">
+        <div class="sc-modal-title"><i class="pi pi-users"></i> Switch user</div>
+        <button class="sc-modal-close" onclick="closeSwitchUserModal()" aria-label="Close"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="sc-modal-body">
+        <p class="sc-modal-subtitle">Select a user to preview the forecasting page with their role permissions applied.</p>
+        <div class="sc-user-cards-grid">
+          ${USERS.map(u => `
+            <div class="sc-ucard${u.id === ACTIVE_USER.id ? ' sc-ucard--active' : ''}" onclick="switchToUser('${u.id}')" role="button" tabindex="0" aria-pressed="${u.id === ACTIVE_USER.id}">
+              ${u.id === ACTIVE_USER.id ? '<span class="sc-ucard--active-badge">Active</span>' : ''}
+              <div class="sc-ucard-avatar" style="background:${u.color}">${u.initials}</div>
+              <div class="sc-ucard-name">${u.name}</div>
+              <div class="sc-ucard-role">${u.role}</div>
+              <div class="sc-ucard-perms">
+                ${PERM_LABELS.map(p => `
+                  <div class="sc-ucard-perm ${u.perms[p.key] ? 'sc-ucard-perm--allow' : 'sc-ucard-perm--deny'}">
+                    <i class="pi ${u.perms[p.key] ? 'pi-check-circle' : 'pi-times-circle'}"></i>
+                    <span class="sc-ucard-perm-label">${p.label}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeSwitchUserModal();
+  });
+
+  document.addEventListener('keydown', _modalEscHandler);
+  document.body.appendChild(overlay);
+};
+
+function _modalEscHandler(e) {
+  if (e.key === 'Escape') closeSwitchUserModal();
+}
+
+window.closeSwitchUserModal = function() {
+  const overlay = document.getElementById('switchUserOverlay');
+  if (overlay) overlay.remove();
+  document.removeEventListener('keydown', _modalEscHandler);
+};
+
+window.switchToUser = function(id) {
+  const user = USERS.find(u => u.id === id);
+  if (!user) return;
+  ACTIVE_USER = user;
+  closeSwitchUserModal();
+  applyUserPermissions(user);
+  updateRoleBanner(user);
+};
+
+function applyUserPermissions(user) {
+  const p = user.perms;
+
+  // Run AI Forecast button
+  const runBtn = document.querySelector('.sc-run-btn');
+  if (runBtn) {
+    runBtn.disabled = !p.runForecast;
+    runBtn.title = p.runForecast ? '' : 'Your role does not have permission to run AI forecasts';
+    runBtn.style.opacity = p.runForecast ? '' : '0.5';
+  }
+
+  // Account selector button
+  const acctBtn = document.getElementById('acctSelectorBtn');
+  if (acctBtn) {
+    acctBtn.disabled = !p.changeAccount;
+    acctBtn.style.opacity = p.changeAccount ? '' : '0.55';
+    acctBtn.style.cursor = p.changeAccount ? '' : 'not-allowed';
+    acctBtn.title = p.changeAccount ? '' : 'Your role cannot change the account';
+    const chevron = acctBtn.querySelector('i');
+    if (chevron) {
+      chevron.className = p.changeAccount ? 'pi pi-chevron-down sc-acct-chevron' : 'pi pi-lock sc-acct-chevron';
+    }
+  }
+
+  // Export gate flag (checked in kebabExportExcel)
+  window._canExport = p.exportData;
+
+  // Lock badge on Settings accordion header
+  _updateSettingsAccLockBadge(user);
+
+  // Apply restrictions within settings panel (if already built)
+  _applySettingsPermissions(user);
+}
+
+function _updateSettingsAccLockBadge(user) {
+  const header = document.querySelector('#acc-drivers .sc-acc-title');
+  if (!header) return;
+  const existing = header.querySelector('.sc-acc-lock-badge');
+  if (existing) existing.remove();
+  const p = user.perms;
+  const locked = !p.modifyWeights || !p.configureGroups;
+  if (locked && user.id !== 'admin') {
+    const badge = document.createElement('span');
+    badge.className = 'sc-acc-lock-badge';
+    badge.innerHTML = '<i class="pi pi-lock"></i> Read-only';
+    header.appendChild(badge);
+  }
+}
+
+function _applySettingsPermissions(user) {
+  const container = document.getElementById('driver-settings-container');
+  if (!container || !container.dataset.built) return;
+  const p = user.perms;
+
+  // Remove any existing notice first
+  const prev = container.querySelector('.sc-perm-notice');
+  if (prev) prev.remove();
+
+  // Insert restriction notice at top if user has any settings restriction
+  if (user.id !== 'admin' && (!p.modifyWeights || !p.configureGroups)) {
+    const notice = document.createElement('div');
+    notice.className = 'sc-perm-notice';
+    let msg = '';
+    if (!p.modifyWeights && !p.configureGroups) {
+      msg = `All settings are <strong>read-only</strong> for the <em>${user.role}</em> role. You can view weights and configuration but cannot make changes.`;
+    } else if (!p.modifyWeights) {
+      msg = `Feature weights (sliders) are <strong>read-only</strong> for the <em>${user.role}</em> role. Group code configuration is not restricted.`;
+    } else {
+      msg = `Group code configuration is <strong>restricted</strong> for the <em>${user.role}</em> role. Feature weights can still be adjusted.`;
+    }
+    notice.innerHTML = `<i class="pi pi-lock" style="flex-shrink:0;margin-top:1px"></i><span>${msg}</span>`;
+    container.insertBefore(notice, container.firstChild);
+  }
+
+  // Classification Groups section — lock based on configureGroups
+  const catSection = container.querySelectorAll('.sc-settings-section')[0];
+  if (catSection) {
+    const canEdit = p.configureGroups;
+    catSection.querySelectorAll('.sc-weight-slider').forEach(s => { s.disabled = !canEdit; });
+    catSection.style.opacity = canEdit ? '' : '0.6';
+    let secLock = catSection.querySelector('.sc-section-lock');
+    if (!canEdit) {
+      if (!secLock) {
+        secLock = document.createElement('span');
+        secLock.className = 'sc-section-lock';
+        secLock.innerHTML = '<i class="pi pi-lock"></i> Restricted';
+        const hdr = catSection.querySelector('.sc-settings-section-header');
+        if (hdr) hdr.appendChild(secLock);
+      }
+    } else {
+      if (secLock) secLock.remove();
+    }
+  }
+
+  // Numerical Features section — cost element breakdown toggle (needs configureGroups)
+  const costToggle = document.getElementById('toggleCostBreakdown');
+  if (costToggle) costToggle.disabled = !p.configureGroups;
+
+  // All other sliders (Numerical, SPI/CPI, Shape) — controlled by modifyWeights
+  const numSection   = container.querySelectorAll('.sc-settings-section')[1];
+  const evm          = container.querySelectorAll('.sc-settings-section')[2];
+  const shapeSection = container.querySelectorAll('.sc-settings-section')[3];
+  [numSection, evm, shapeSection].forEach(sec => {
+    if (!sec) return;
+    sec.querySelectorAll('.sc-weight-slider').forEach(s => { s.disabled = !p.modifyWeights; });
+    sec.style.opacity = p.modifyWeights ? '' : '0.6';
+    const toggle = sec.querySelector('input[type="checkbox"]:not(#toggleCostBreakdown)');
+    if (toggle) toggle.disabled = !p.modifyWeights;
+    let secLock = sec.querySelector('.sc-section-lock');
+    if (!p.modifyWeights) {
+      if (!secLock) {
+        secLock = document.createElement('span');
+        secLock.className = 'sc-section-lock';
+        secLock.innerHTML = '<i class="pi pi-lock"></i> Restricted';
+        const hdr = sec.querySelector('.sc-settings-section-header');
+        if (hdr) hdr.appendChild(secLock);
+      }
+    } else {
+      if (secLock) secLock.remove();
+    }
+  });
+
+  // Reset button
+  const resetBtn = container.querySelector('[onclick="resetSettingsWeights()"]');
+  if (resetBtn) {
+    resetBtn.disabled = !p.modifyWeights;
+    resetBtn.style.opacity = p.modifyWeights ? '' : '0.45';
+  }
+
+  // Numerical section summary banner — read-only label when restricted
+  const numSummary = document.getElementById('num-applied-summary');
+  const existingReadOnly = numSummary && numSummary.querySelector('.sc-perm-readonly-tag');
+  if (numSummary) {
+    if (!p.modifyWeights && !existingReadOnly) {
+      const tag = document.createElement('span');
+      tag.className = 'sc-perm-readonly-tag';
+      tag.innerHTML = ' &nbsp;<i class="pi pi-lock"></i> read-only';
+      numSummary.appendChild(tag);
+    } else if (p.modifyWeights && existingReadOnly) {
+      existingReadOnly.remove();
+    }
+  }
+}
+
+function updateRoleBanner(user) {
+  const toolbar = document.querySelector('.sc-toolbar');
+  if (!toolbar) return;
+
+  const existing = document.getElementById('sc-role-banner');
+  if (existing) existing.remove();
+
+  if (user.id === 'admin') return; // super user — no restriction banner
+
+  const restrictions = PERM_LABELS
+    .filter(p => !user.perms[p.key])
+    .map(p => p.label.toLowerCase());
+
+  let bannerClass = 'sc-role-banner';
+  let icon = 'pi-user';
+  if (restrictions.length >= 4) {
+    bannerClass += ' sc-role-banner--danger';
+    icon = 'pi-lock';
+  } else if (restrictions.length >= 2) {
+    bannerClass += ' sc-role-banner--warning';
+    icon = 'pi-exclamation-triangle';
+  }
+
+  const restrictionText = restrictions.length
+    ? `Restricted: ${restrictions.join(', ')}.`
+    : 'Full access.';
+
+  const banner = document.createElement('div');
+  banner.id = 'sc-role-banner';
+  banner.className = bannerClass;
+  banner.innerHTML = `
+    <i class="pi ${icon}"></i>
+    <span>Viewing as <strong>${user.name}</strong> (${user.role}) — ${restrictionText}</span>
+    <div class="sc-role-banner-actions">
+      <button class="sc-kebab-item" style="padding:8px var(--space-4);font-size:13px;font-weight:var(--font-weight-bold);gap:var(--space-1half);border-radius:var(--radius-md);border:1px solid currentColor;background:transparent;cursor:pointer;width:auto" onclick="openSwitchUserModal()">
+        Switch user
+      </button>
+    </div>
+  `;
+
+  toolbar.insertAdjacentElement('afterend', banner);
+}
+
+window.kebabOpenSettings = function() {
+  openSettingsModal();
+};
+
+window.kebabExportExcel = function() {
+  const dropdown = document.getElementById('kebabDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  if (window._canExport === false) {
+    alert('Your role does not have permission to export data.');
+    return;
+  }
+
+  // Capture chart as image before opening print window
+  const canvas = document.getElementById('scurve-chart');
+  const chartImg = canvas ? canvas.toDataURL('image/png') : '';
+
+  // Read live KPI values from DOM
+  const eac        = document.getElementById('m-eac')?.textContent        || '—';
+  const pct        = document.getElementById('m-pct')?.textContent        || '—';
+  const pctSub     = document.getElementById('m-pct-sub')?.textContent    || '';
+  const cpiSpi     = document.getElementById('m-cpispi')?.textContent     || '—';
+  const completion = document.getElementById('m-completion')?.textContent || '—';
+  const compSub    = document.getElementById('m-completion-sub')?.textContent || '';
+  const eacSub     = document.getElementById('m-eac-sub')?.textContent    || '';
+  const cpiSub     = document.getElementById('m-cpispi')?.closest('.sc-metric-card')?.querySelector('.sc-metric-sub')?.textContent || '';
+
+  // Read AI banner
+  const confPill   = document.querySelector('.sc-high-confidence-pill')?.textContent || '';
+  const simAccts   = document.querySelector('.sc-similar-accts')?.textContent        || '';
+  const driverPills = [...document.querySelectorAll('.sc-driver-pill')].map(p => p.textContent).join(' · ');
+  const expText    = document.querySelector('.sc-forecast-exp-box')?.textContent     || '';
+
+  // Active CA & subtitle
+  const caLabel    = document.getElementById('acctSelectorBtn')?.textContent?.trim().replace(/\s*$/, '') || '';
+  const subtitle   = document.querySelector('.sc-page-subtitle')?.textContent || '';
+
+  // Simulation state
+  const simMonth   = document.getElementById('scTsMonth')?.textContent || '';
+  const isSimulated = document.getElementById('scTsSimBadge')?.style.display !== 'none';
+
+  // Driver settings — build weight table rows
+  const weightDefs = [
+    { group: 'Classification groups', rows: [
+      { key: 'phase_type',    label: 'Phase type'       },
+      { key: 'discipline',    label: 'Discipline'        },
+      { key: 'work_type',     label: 'Work type'         },
+      { key: 'proj_size_cat', label: 'Project size'      },
+      { key: 'acct_size_cat', label: 'Account size'      },
+      { key: 'region',        label: 'Region'            },
+    ]},
+    { group: 'Numerical features', rows: [
+      { key: 'duration_months',   label: 'Duration (months)'     },
+      { key: 'budget_amount',     label: 'Budget amount'          },
+      { key: 'budget_per_month',  label: 'Budget / month'         },
+      { key: 'acct_pct_project',  label: 'Acct % of project'      },
+      { key: 'labor_mix',         label: 'Labor mix'              },
+      { key: 'material_mix',      label: 'Material mix'           },
+      { key: 'equip_mix',         label: 'Equipment mix'          },
+      { key: 'subcontract_mix',   label: 'Subcontract mix'        },
+    ]},
+    { group: 'Curve shape', rows: [
+      { key: 'skewness',          label: 'Skewness'               },
+      { key: 'front_load_ratio',  label: 'Front-load ratio'       },
+      { key: 'gini',              label: 'Gini coefficient'        },
+      { key: 'peak_period_norm',  label: 'Peak period'            },
+      { key: 'kurtosis',          label: 'Kurtosis'               },
+    ]},
+  ];
+
+  const totalW = getTotalWeight();
+  const weightRows = weightDefs.map(g => {
+    const rows = g.rows.map(r => {
+      const v = ACTIVE_WEIGHTS[r.key] ?? 0;
+      const contrib = totalW > 0 ? ((v / totalW) * 100).toFixed(1) : '0.0';
+      const bar = Math.round((v / 5) * 100);
+      return `<tr>
+        <td style="padding:4px 8px;color:#374151">${r.label}</td>
+        <td style="padding:4px 8px;text-align:center;font-weight:600;color:${v === 0 ? '#9ca3af' : '#1d4ed8'}">${v.toFixed(1)}</td>
+        <td style="padding:4px 8px;text-align:center;color:#6b7280">${contrib}%</td>
+        <td style="padding:4px 8px"><div style="height:6px;border-radius:3px;background:#e5e7eb;width:100%"><div style="height:6px;border-radius:3px;background:${v === 0 ? '#e5e7eb' : '#3b82f6'};width:${bar}%"></div></div></td>
+      </tr>`;
+    }).join('');
+    return `<tr><td colspan="4" style="padding:8px 8px 2px;font-weight:700;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;background:#f9fafb">${g.group}</td></tr>${rows}`;
+  }).join('');
+
+  // Periodic spend table (using ACTIVE_BAR_DATA)
+  const spendRows = CHART_LABELS.map((lbl, i) => {
+    const isToday = i === TODAY_IDX;
+    const bg = isToday ? '#dbeafe' : i % 2 === 0 ? '#f9fafb' : '#fff';
+    const fmt = v => (v == null ? '—' : '$' + v.toFixed(2) + 'M');
+    return `<tr style="background:${bg}${isToday ? ';font-weight:600' : ''}">
+      <td style="padding:3px 8px;white-space:nowrap">${MONTH_CALENDAR[i]}${isToday ? ' ◀' : ''}</td>
+      <td style="padding:3px 8px;text-align:right">${fmt(ACTIVE_BAR_DATA.baseline[i])}</td>
+      <td style="padding:3px 8px;text-align:right">${fmt(ACTIVE_BAR_DATA.actuals[i])}</td>
+      <td style="padding:3px 8px;text-align:right">${fmt(ACTIVE_BAR_DATA.earned[i])}</td>
+      <td style="padding:3px 8px;text-align:right">${fmt(ACTIVE_BAR_DATA.incurred[i])}</td>
+      <td style="padding:3px 8px;text-align:right">${fmt(ACTIVE_BAR_DATA.commitment[i])}</td>
+    </tr>`;
+  }).join('');
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+  <title>S-curve forecast report — ${caLabel}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,system-ui,sans-serif;font-size:12px;color:#111827;background:#fff;padding:0}
+    @page{size:A4 landscape;margin:15mm 12mm}
+    @media print{.no-print{display:none!important}}
+    .page{padding:24px 28px;max-width:1100px;margin:0 auto}
+    .page-break{page-break-before:always;padding-top:24px}
+    h1{font-size:20px;font-weight:800;color:#1e3a8a;margin-bottom:2px}
+    h2{font-size:13px;font-weight:700;color:#1e3a8a;margin:18px 0 8px;border-bottom:2px solid #dbeafe;padding-bottom:4px}
+    h3{font-size:11px;font-weight:700;color:#374151;margin:12px 0 6px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:14px;border-bottom:3px solid #1e3a8a}
+    .header-left h1{font-size:22px}
+    .header-left .ca-label{font-size:13px;color:#3b82f6;font-weight:600;margin-top:2px}
+    .header-left .subtitle{font-size:11px;color:#6b7280;margin-top:1px}
+    .header-right{text-align:right;font-size:11px;color:#6b7280;line-height:1.6}
+    .header-right strong{display:block;font-size:12px;color:#111827}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+    .kpi-card{border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#f9fafb}
+    .kpi-label{font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+    .kpi-value{font-size:20px;font-weight:800;color:#111827;margin-bottom:2px}
+    .kpi-value.warn{color:#d97706}
+    .kpi-sub{font-size:10px;color:#6b7280}
+    .over{color:#dc2626;font-weight:600}
+    .under{color:#059669;font-weight:600}
+    .ai-banner{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:18px;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+    .ai-active-tag{background:#1d4ed8;color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:.04em}
+    .ai-conf{background:#f0fdf4;border:1px solid #86efac;color:#15803d;border-radius:12px;padding:2px 10px;font-size:10px;font-weight:700}
+    .ai-sim{font-size:10px;color:#6b7280}
+    .pill{background:#dbeafe;color:#1e3a8a;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:600;display:inline-block;margin:1px}
+    .sim-badge{background:#7c3aed;color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:4px}
+    .chart-box{border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:18px;background:#fff}
+    .chart-box img{width:100%;height:auto;display:block}
+    .exp-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:11px;line-height:1.6;color:#374151;margin-bottom:18px}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th{background:#1e3a8a;color:#fff;padding:5px 8px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+    th.r{text-align:right}
+    td{border-bottom:1px solid #f3f4f6;color:#374151;vertical-align:middle}
+    .footer{margin-top:24px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af}
+    .tag{display:inline-block;background:#f3f4f6;border-radius:4px;padding:1px 7px;font-size:10px;color:#374151;margin-right:4px}
+  </style></head><body>
+  <div class="page">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-left">
+        <div style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Contruent · Cisco Systems</div>
+        <h1>S-curve forecast report</h1>
+        <div class="ca-label">${caLabel.replace(/<[^>]+>/g, '').trim()}</div>
+        <div class="subtitle">${subtitle}</div>
+      </div>
+      <div class="header-right">
+        <strong>Generated ${dateStr}</strong>
+        ${timeStr} · ${ACTIVE_USER.name} (${ACTIVE_USER.role})
+        ${isSimulated ? `<br><span style="color:#7c3aed;font-weight:700">Simulated to ${simMonth}</span>` : `<br>As of ${simMonth}`}
+        ${AI_FORECAST_ACTIVE ? '<br><span style="color:#1d4ed8;font-weight:700">AI forecast applied</span>' : ''}
+      </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <h2>Key performance indicators</h2>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Est. at completion (EAC)</div>
+        <div class="kpi-value">${eac}</div>
+        <div class="kpi-sub">${eacSub.replace(/\+/g,'<span class="over">+').replace(/%/,'%</span>')}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">% Complete (actuals)</div>
+        <div class="kpi-value">${pct}</div>
+        <div class="kpi-sub">${pctSub}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">CPI / SPI</div>
+        <div class="kpi-value warn">${cpiSpi}</div>
+        <div class="kpi-sub">${cpiSub}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Forecast completion</div>
+        <div class="kpi-value">${completion}</div>
+        <div class="kpi-sub">${compSub}</div>
+      </div>
+    </div>
+
+    <!-- AI BANNER -->
+    <div class="ai-banner">
+      <span class="ai-active-tag">${AI_FORECAST_ACTIVE ? 'AI forecast active' : 'Standard forecast'}</span>
+      <span class="ai-conf">${confPill}</span>
+      <span class="ai-sim">${simAccts}</span>
+      <span style="font-size:10px;color:#6b7280;margin-left:4px">Driven by:</span>
+      ${driverPills.split(' · ').map(p => `<span class="pill">${p}</span>`).join('')}
+      ${isSimulated ? `<span class="sim-badge">Simulated: ${simMonth}</span>` : ''}
+    </div>
+
+    <!-- CHART -->
+    <h2>S-curve</h2>
+    <div class="chart-box">
+      ${chartImg ? `<img src="${chartImg}" alt="S-curve chart"/>` : '<div style="height:200px;display:flex;align-items:center;justify-content:center;color:#9ca3af">Chart not available</div>'}
+    </div>
+
+    <!-- FORECAST EXPLANATION -->
+    <h2>Forecast methodology</h2>
+    <div class="exp-box">${expText}</div>
+
+    <!-- PAGE BREAK: DETAILS -->
+    <div class="page-break">
+
+    <h2>Periodic spend data ($M)</h2>
+    <table>
+      <thead><tr>
+        <th>Period</th>
+        <th class="r">Baseline</th>
+        <th class="r">Actuals</th>
+        <th class="r">Earned value</th>
+        <th class="r">Incurred</th>
+        <th class="r">Commitment</th>
+      </tr></thead>
+      <tbody>${spendRows}</tbody>
+    </table>
+
+    <h2 style="margin-top:24px">AI matching driver weights</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <table>
+          <thead><tr><th>Feature</th><th>Weight</th><th>Contribution</th><th style="width:80px">Relative</th></tr></thead>
+          <tbody>${weightRows}</tbody>
+        </table>
+      </div>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px">
+        <h3>Matching summary</h3>
+        <div style="margin-bottom:8px">
+          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Active features</div>
+          <div style="font-size:14px;font-weight:700;color:#1e3a8a">${Object.values(ACTIVE_WEIGHTS).filter(v => v > 0).length} of ${Object.keys(ACTIVE_WEIGHTS).length}</div>
+        </div>
+        <div style="margin-bottom:8px">
+          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Total weight</div>
+          <div style="font-size:14px;font-weight:700;color:#1e3a8a">${getTotalWeight().toFixed(1)}</div>
+        </div>
+        <div style="margin-bottom:8px">
+          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Similar accounts matched</div>
+          <div style="font-size:14px;font-weight:700;color:#1e3a8a">${simAccts}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Model confidence</div>
+          <div style="font-size:14px;font-weight:700;color:#15803d">${confPill}</div>
+        </div>
+        <div style="margin-top:14px;border-top:1px solid #e5e7eb;padding-top:10px">
+          <h3>Account info</h3>
+          <div style="font-size:11px;line-height:1.8;color:#374151">
+            <div><span class="tag">Phase</span> ${FOCAL.phase}</div>
+            <div><span class="tag">Discipline</span> ${FOCAL.discipline}</div>
+            <div><span class="tag">Work type</span> ${FOCAL.workType}</div>
+            <div><span class="tag">Region</span> ${FOCAL.region}</div>
+            <div><span class="tag">BAC</span> $${CHART_BAC.toFixed(1)}M</div>
+            <div><span class="tag">Duration</span> ${CHART_LABELS.length} months</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>Contruent · S-curve forecasting · ${caLabel.replace(/<[^>]+>/g, '').trim()}</span>
+      <span>Generated ${dateStr} at ${timeStr} by ${ACTIVE_USER.name} · CONFIDENTIAL</span>
+    </div>
+
+    </div><!-- page-break -->
+  </div><!-- page -->
+  </body></html>`;
+
+  const win = window.open('', '_blank', 'width=1200,height=850');
+  if (!win) { alert('Please allow pop-ups to export the report.'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 600);
+};
+
+function _buildAndMountSettings(container) {
+  function sliderRow(key, label, desc) {
+    const v = ACTIVE_WEIGHTS[key] != null ? ACTIVE_WEIGHTS[key] : 1;
+    const pct = (v / 5 * 100).toFixed(0) + '%';
+    return `<div class="sc-settings-feature-row" id="row-${key}" style="${v === 0 ? 'opacity:0.45' : ''}">
+      <div class="sc-settings-feat-info">
+        <span class="sc-settings-feat-label">${label}</span>
+        <span class="sc-settings-feat-desc">${desc}</span>
+      </div>
+      <div class="sc-settings-weight-control">
+        <span class="sc-settings-weight-val" id="wval-${key}">${v.toFixed(1)}</span>
+        <input type="range" class="sc-weight-slider" id="wslider-${key}" min="0" max="5" step="0.5" value="${v}"
+          style="--fill-pct:${pct}"
+          oninput="updateSettingsWeight('${key}', parseFloat(this.value))" />
+      </div>
+    </div>`;
+  }
+
+  const catFeatures = [
+    { key: 'phase_type',    code: 'PHASE_TYPE',  source: 'CA standard',   cls: 'ca' },
+    { key: 'discipline',    code: 'DISCIPLINE',  source: 'CA standard',   cls: 'ca' },
+    { key: 'work_type',     code: 'WORK_TYPE',   source: 'CA standard',   cls: 'ca' },
+    { key: 'proj_size_cat', code: 'PROJ_SIZE',   source: 'Project group', cls: 'proj' },
+    { key: 'acct_size_cat', code: 'ACCT_SIZE',   source: 'Project group', cls: 'proj' },
+    { key: 'region',        code: 'REGION',      source: 'Project group', cls: 'proj' },
+  ];
+
+  let html = `
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+      <i class="pi pi-lock" style="color:#1d4ed8;flex-shrink:0;margin-top:2px"></i>
+      <div style="font-size:12.5px;color:#1e40af;line-height:1.6">
+        <strong>Private data only.</strong> AI matching uses Cisco Systems' internal project database exclusively.
+        No external benchmarks or shared data pools are referenced. All matched accounts are from this client's own completed project history.
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <p style="font-size:13px;color:#64748b;margin:0">Adjust classification groups and feature weights used by the Gower distance matching algorithm. Changes apply immediately to all three forecast lines.</p>
+      <button class="sc-settings-reset-btn" onclick="resetSettingsWeights()"><i class="pi pi-refresh"></i> Reset to defaults</button>
+    </div>`;
+
+  // Section 1: Classification Groups
+  html += `<div class="sc-settings-section">
+    <div class="sc-settings-section-header">
+      <i class="pi pi-tags"></i> Classification groups
+      <span class="sc-settings-section-desc">Enterprise/standard group codes from control account ID and top 3 project groups. Driven by the key groupings associated with a Contruent project ID and control account ID — configurable per client during setup.</span>
+    </div>
+    <div style="background:#fff">
+      <div style="display:grid;grid-template-columns:1fr 110px 50px 160px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;padding:8px 14px;border-bottom:1px solid #f1f5f9;background:#fafbfc">
+        <span>Group code</span><span>Source</span><span style="text-align:center">Wt</span><span>Adjust</span>
+      </div>
+      ${catFeatures.map(f => {
+        const v = ACTIVE_WEIGHTS[f.key] != null ? ACTIVE_WEIGHTS[f.key] : 1;
+        const bg = f.cls === 'ca' ? '#eef3fb' : '#f0fdf4';
+        const tx = f.cls === 'ca' ? '#1a4a9f' : '#15803d';
+        return `<div style="display:grid;grid-template-columns:1fr 110px 50px 160px;align-items:center;padding:9px 14px;border-bottom:1px solid #f8f9fb">
+          <span style="font-size:12.5px;font-weight:600;color:#1a1a2e;font-family:monospace">${f.code}</span>
+          <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:${bg};color:${tx};font-weight:500;white-space:nowrap">${f.source}</span>
+          <span style="font-size:13px;font-weight:700;color:#1a4a9f;text-align:center;font-family:monospace" id="wval-${f.key}">${v.toFixed(1)}</span>
+          <input type="range" class="sc-weight-slider" id="wslider-${f.key}" min="0" max="5" step="0.5" value="${v}"
+            style="width:140px;--fill-pct:${(v/5*100).toFixed(0)}%"
+            oninput="updateSettingsWeight('${f.key}', parseFloat(this.value))" />
+        </div>`;
+      }).join('')}
+      <div style="padding:10px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;font-size:11.5px;color:#64748b;display:flex;align-items:flex-start;gap:6px">
+        <i class="pi pi-info-circle" style="color:#6366f1;flex-shrink:0;margin-top:1px"></i>
+        Project-specific module groups are matched within the same Contruent project ID only and do not cross-match with accounts from other projects.
+      </div>
+    </div>
+  </div>`;
+
+  // Section 2: Numerical Features
+  html += `<div class="sc-settings-section">
+    <div class="sc-settings-section-header">
+      <i class="pi pi-calculator"></i> Numerical features
+      <span class="sc-settings-section-desc">Quantitative account attributes. Disable cost element breakdown if the client uses a single combined element rather than labor / materials / equipment / subcontracts.</span>
+    </div>
+    <div style="background:#fff">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid #f1f5f9">
+        <div>
+          <span style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Cost element breakdown (labor / materials / equipment / subcontracts)</span>
+          <span style="font-size:12px;color:var(--text-muted)">Detected: 4 cost elements active on this client. Disable for single-element clients.</span>
+        </div>
+        <label class="sc-toggle-switch" aria-label="Enable cost element breakdown">
+          <input type="checkbox" id="toggleCostBreakdown" checked onchange="toggleCostBreakdown(this.checked)" />
+          <span class="sc-toggle-track"></span>
+        </label>
+      </div>
+      <div id="num-applied-summary" style="padding:8px 14px;background:#f0fdf4;border-bottom:1px solid #dcfce7;font-size:12px;color:#166534;display:flex;align-items:center;gap:6px">
+        <i class="pi pi-check-circle" style="font-size:13px"></i>
+        <span id="num-applied-text">6 of 6 numerical features applied</span>
+      </div>
+      ${sliderRow('duration_months', 'Duration (months)', 'Planned account duration in months')}
+      ${sliderRow('budget_amount',   'Budget ($M)',       'Total approved budget')}
+      ${sliderRow('labor_mix',       'Labor mix',         'Proportion of cost that is labor')}
+      ${sliderRow('material_mix',    'Material mix',      'Proportion that is materials')}
+      ${sliderRow('equip_mix',       'Equipment mix',     'Proportion that is equipment')}
+      ${sliderRow('subcontract_mix', 'Subcontract mix',   'Proportion subcontracted')}
+    </div>
+  </div>`;
+
+  // Section 3: SPI / CPI
+  html += `<div class="sc-settings-section">
+    <div class="sc-settings-section-header">
+      <i class="pi pi-chart-line"></i> SPI / CPI integration (earned value)
+      <span class="sc-settings-section-desc">Applies to clients where earned value reporting is active. SPI and CPI influence curve shape matching independently for all three forecast lines. Disable for actuals-only clients.</span>
+    </div>
+    <div style="background:#fff">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid #f1f5f9">
+        <div>
+          <span style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Enable SPI / CPI as matching factors</span>
+          <span style="font-size:12px;color:var(--text-muted)">Accounts with similar performance index profiles are weighted higher during curve matching for all 3 forecast lines.</span>
+        </div>
+        <label class="sc-toggle-switch" aria-label="Enable SPI/CPI integration">
+          <input type="checkbox" id="toggleEvm" checked onchange="toggleEvmFeature(this.checked)" />
+          <span class="sc-toggle-track"></span>
+        </label>
+      </div>
+      <div id="evmNote" style="padding:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="padding:12px 14px;background:#fffbeb;border-radius:6px;border:1px solid #fde68a">
+            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Schedule performance index</div>
+            <div style="font-size:24px;font-weight:700;color:#d97706;margin-bottom:4px">0.88</div>
+            <div style="font-size:11.5px;color:#92400e">Behind schedule — accounts with similar SPI curve profiles weighted higher in matching</div>
+          </div>
+          <div style="padding:12px 14px;background:#fffbeb;border-radius:6px;border:1px solid #fde68a">
+            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Cost performance index</div>
+            <div style="font-size:24px;font-weight:700;color:#d97706;margin-bottom:4px">0.92</div>
+            <div style="font-size:11.5px;color:#92400e">Cost overrun — overrun curve shape patterns applied across all 3 forecast lines</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  // Section 4: Curve Shape Statistics
+  html += `<div class="sc-settings-section">
+    <div class="sc-settings-section-header">
+      <i class="pi pi-chart-bar"></i> Curve shape statistics
+      <span class="sc-settings-section-desc">Statistical features computed from observed actuals to date (observed) and the planned baseline (planned). Each forecast line runs a separate shape-matching pass.</span>
+    </div>
+    <div style="background:#fff">
+      ${sliderRow('skewness',           'Observed skewness',   'Shape asymmetry of actual spend curve to date')}
+      ${sliderRow('front_load_ratio',   'Front-load ratio',    'Proportion of spend occurring in the first half of the account')}
+      ${sliderRow('planned_skewness',   'Planned skewness',    'Shape asymmetry of the planned/baseline curve')}
+      ${sliderRow('planned_front_load', 'Planned front-load',  'Front-load ratio of the planned curve')}
+    </div>
+  </div>`;
+
+  container.innerHTML = html;
+
+  const footer = document.createElement('div');
+  footer.className = 'sc-settings-footer';
+  footer.innerHTML = '<i class="pi pi-info-circle" style="color:#6366f1"></i> Weight of 0 disables a feature. Weights are relative — only their ratio matters. Each forecast line (Actual/ETC, Incurred/ETC, Earned/ETC) runs an independent matching pass using its own historical data series from this client\'s project database.';
+  container.appendChild(footer);
+
+  _applySettingsPermissions(ACTIVE_USER);
+}
+
+function initDriverSettingsContent() {
+  const container = document.getElementById('driver-settings-container');
+  if (!container || container.dataset.built) return;
+  container.dataset.built = '1';
+  _buildAndMountSettings(container);
+  _updateSettingsAccLockBadge(ACTIVE_USER);
+}
+
+/* ── SETTINGS MODAL ──────────────────────────────────────────────── */
+window.openSettingsModal = function() {
+  const dropdown = document.getElementById('kebabDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  const btn = document.getElementById('kebabBtn');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+
+  // Teardown accordion's built content so IDs aren't duplicated in the DOM
+  const accContainer = document.getElementById('driver-settings-container');
+  if (accContainer && accContainer.dataset.built) {
+    accContainer.innerHTML = '';
+    delete accContainer.dataset.built;
+  }
+
+  const canRun    = ACTIVE_USER.perms.runForecast;
+  const canModify = ACTIVE_USER.perms.modifyWeights;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sc-modal-overlay';
+  overlay.id = 'settingsModalOverlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'AI forecast settings');
+
+  overlay.innerHTML = `
+    <div class="sc-modal sc-settings-modal" id="settingsModal">
+      <div class="sc-modal-header">
+        <div class="sc-modal-title"><i class="pi pi-cog"></i> AI forecast settings</div>
+        <button class="sc-modal-close" onclick="closeSettingsModal()" aria-label="Close"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="sc-modal-body sc-settings-modal-body" id="settingsModalBody">
+        <div id="settings-modal-container"></div>
+      </div>
+      <div class="sc-settings-modal-footer">
+        <button class="sc-settings-modal-reset" onclick="resetSettingsWeights();closeSettingsModal()" ${canModify ? '' : 'disabled'} style="${canModify ? '' : 'opacity:0.45'}">
+          <i class="pi pi-refresh"></i> Reset to defaults
+        </button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
+          <button class="btn btn-primary sc-settings-modal-run" onclick="closeSettingsModal();runAiForecast()" ${canRun ? '' : 'disabled'} style="${canRun ? '' : 'opacity:0.5'}" title="${canRun ? '' : 'Your role cannot run AI forecasts'}">
+            <i class="pi pi-play btn-icon-left"></i> Run analysis
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeSettingsModal(); });
+  document.addEventListener('keydown', _settingsModalEscHandler);
+  document.body.appendChild(overlay);
+
+  _buildAndMountSettings(document.getElementById('settings-modal-container'));
+  _updateSettingsModalLockNotice();
+};
+
+function _settingsModalEscHandler(e) {
+  if (e.key === 'Escape') closeSettingsModal();
+}
+
+window.closeSettingsModal = function() {
+  const overlay = document.getElementById('settingsModalOverlay');
+  if (overlay) overlay.remove();
+  document.removeEventListener('keydown', _settingsModalEscHandler);
+};
+
+function _updateSettingsModalLockNotice() {
+  const p = ACTIVE_USER.perms;
+  if (ACTIVE_USER.id === 'admin' || (p.modifyWeights && p.configureGroups)) return;
+  const body = document.getElementById('settingsModalBody');
+  if (!body) return;
+  const notice = document.createElement('div');
+  notice.className = 'sc-perm-notice';
+  notice.style.marginBottom = '14px';
+  let msg = '';
+  if (!p.modifyWeights && !p.configureGroups) {
+    msg = `All settings are <strong>read-only</strong> for the <em>${ACTIVE_USER.role}</em> role.`;
+  } else if (!p.modifyWeights) {
+    msg = `Feature weights are <strong>read-only</strong> for the <em>${ACTIVE_USER.role}</em> role.`;
+  } else {
+    msg = `Group code configuration is <strong>restricted</strong> for the <em>${ACTIVE_USER.role}</em> role.`;
+  }
+  notice.innerHTML = `<i class="pi pi-lock" style="flex-shrink:0"></i><span>${msg}</span>`;
+  body.insertBefore(notice, body.firstChild);
+}
+
+const SIM_ACCOUNT_PROJECTS = [
+  { id: 'CA-0812 · Civil fnds.',  project: 'Port Arthur Exp.', region: 'NA',   budget: 14.2, match: 96, varPct:  4.1 },
+  { id: 'CA-0634 · Civil P3',     project: 'Sabine Pass LNG',  region: 'NA',   budget: 16.1, match: 91, varPct:  8.3 },
+  { id: 'CA-1001 · Grading',      project: 'Freeport Complex', region: 'NA',   budget: 11.8, match: 88, varPct:  2.8 },
+  { id: 'CA-0778 · Grading P2',   project: 'Golden Pass',      region: 'NA',   budget: 15.5, match: 82, varPct: 11.5 },
+  { id: 'CA-0523 · Civil fnds.',  project: 'Texas LNG',        region: 'NA',   budget: 13.8, match: 80, varPct:  3.6 },
+  { id: 'CA-0419 · Civil P1',     project: 'Cameron LNG',      region: 'NA',   budget: 18.3, match: 76, varPct:  6.2 },
+  { id: 'CA-0907 · Foundations',  project: 'Driftwood LNG',    region: 'NA',   budget:  9.5, match: 71, varPct: -1.4 },
+  { id: 'CA-0288 · Civil P2',     project: 'Plaquemines LNG',  region: 'NA',   budget: 14.9, match: 68, varPct:  5.9 },
+];
+
+function _buildAppendixSummaryCards() {
+  const ca = CA_DATA[ACTIVE_CA_ID] || CA_DATA['ca-1042'];
+  const bac      = ca.chartBac;
+  const eacP50   = ca.eacActual;
+  const eacP10   = +(eacP50 * 0.92).toFixed(1);
+  const eacP90   = +(eacP50 * 1.08).toFixed(1);
+  const pctOver  = ((eacP50 / bac - 1) * 100).toFixed(2);
+  const pctUnder = ((1 - eacP10 / bac) * 100).toFixed(1);
+  const pctHi    = ((eacP90 / bac - 1) * 100).toFixed(1);
+
+  // Confidence ring geometry
+  const conf = ca.bannerConf;
+  const radius = 56;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - conf / 100);
+  const confLabel = conf >= 70 ? 'High' : conf >= 50 ? 'Medium' : 'Low';
+
+  // Range markers: P10 anchors left edge, P90 anchors right edge; budget + P50 positioned between
+  const rangeMin = eacP10;
+  const rangeMax = eacP90;
+  const pos = v => Math.max(0, Math.min(100, ((v - rangeMin) / (rangeMax - rangeMin)) * 100));
+
+  // Basis of forecast — dynamic from CA
+  const cpiAdjLine = `<li><strong>CPI adjustment:</strong> CPI of 0.92 applied — late-growth correction shapes cost escalation pattern in remaining curve.</li>`;
+  const spiAdjLine = `<li><strong>SPI adjustment:</strong> Duration extended ~3 months based on SPI of 0.88.</li>`;
+
+  return `
+    <div class="sc-appx-grid">
+      <!-- Card 1: Forecast confidence -->
+      <div class="sc-appx-card">
+        <div class="sc-appx-card-header">
+          <i class="pi pi-star"></i>
+          <h3>Forecast confidence</h3>
+        </div>
+        <div class="sc-appx-conf-wrap">
+          <div class="sc-appx-conf-ring">
+            <svg width="132" height="132" viewBox="0 0 132 132">
+              <circle class="sc-appx-conf-ring-bg" cx="66" cy="66" r="${radius}" fill="none" stroke-width="10"/>
+              <circle class="sc-appx-conf-ring-fg" cx="66" cy="66" r="${radius}" fill="none" stroke-width="10"
+                stroke-linecap="round"
+                stroke-dasharray="${circumference.toFixed(2)}"
+                stroke-dashoffset="${offset.toFixed(2)}"/>
+            </svg>
+            <div class="sc-appx-conf-center">
+              <span class="sc-appx-conf-pct">${conf}%</span>
+              <span class="sc-appx-conf-label">${confLabel}</span>
+            </div>
+          </div>
+          <div class="sc-appx-conf-meta">
+            Based on ${ca.bannerSimilar} similar historical accounts
+            <span>Minimum match threshold: ≥ 80%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: EAC forecast range -->
+      <div class="sc-appx-card">
+        <div class="sc-appx-card-header">
+          <i class="pi pi-chart-line"></i>
+          <h3>EAC forecast range</h3>
+        </div>
+        <p class="sc-appx-card-sub">Probabilistic range from model uncertainty and historical variance.</p>
+        <div class="sc-appx-range-block">
+          <div class="sc-appx-range-cats">
+            <span class="lo">Optimistic (P10)</span>
+            <span class="mid">Base (P50)</span>
+            <span class="hi">Pessimistic (P90)</span>
+          </div>
+          <div class="sc-appx-range-budget">
+            <div class="sc-appx-range-budget-tag" style="left:${pos(bac)}%">Budget<strong>$${bac.toFixed(0)}M</strong></div>
+          </div>
+          <div class="sc-appx-range-track">
+            <div class="sc-appx-range-marker is-budget" style="left:${pos(bac)}%"></div>
+            <div class="sc-appx-range-marker is-p50" style="left:${pos(eacP50)}%"></div>
+          </div>
+          <div class="sc-appx-range-values">
+            <span class="lo">$${eacP10.toFixed(1)}M</span>
+            <span class="mid">$${eacP50.toFixed(1)}M base</span>
+            <span class="hi">$${eacP90.toFixed(1)}M</span>
+          </div>
+          <div class="sc-appx-range-legend">
+            <div><span class="sc-appx-legend-dot lo"></span><span><strong>P10 ($${eacP10.toFixed(1)}M)</strong> — Best case; ${eacP10 < bac ? `slightly under budget` : `+${pctUnder}% over budget`}</span></div>
+            <div><span class="sc-appx-legend-dot mid"></span><span><strong>P50 ($${eacP50.toFixed(1)}M)</strong> — Base case; +${pctOver}% over budget</span></div>
+            <div><span class="sc-appx-legend-dot hi"></span><span><strong>P90 ($${eacP90.toFixed(1)}M)</strong> — Downside; +${pctHi}% over budget</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Basis of forecast -->
+      <div class="sc-appx-card">
+        <div class="sc-appx-card-header">
+          <i class="pi pi-list"></i>
+          <h3>Basis of forecast</h3>
+        </div>
+        <ul class="sc-appx-bullets">
+          <li><strong>Pattern matching:</strong> ${ca.bannerSimilar} completed accounts with ≥80% similarity across Phase type, Discipline, Work type, Region, and Project size.</li>
+          ${cpiAdjLine}
+          ${spiAdjLine}
+          <li><strong>Earned value ceiling:</strong> Earned/ETC bounded by approved budget ($${bac.toFixed(1)}M). Cannot earn over budget.</li>
+          <li><strong>Incurred/actual gap:</strong> 4.2% accrual spread reflected as divergence between Actual and Incurred lines.</li>
+        </ul>
+      </div>
+
+      <!-- Card 4: Top similar historical accounts -->
+      <div class="sc-appx-card">
+        <div class="sc-appx-card-header">
+          <i class="pi pi-link"></i>
+          <h3>Top similar historical accounts</h3>
+        </div>
+        <div class="sc-appx-sim-table-wrap">
+          <table class="sc-appx-sim-table">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Project</th>
+                <th class="r">EAC vs budget</th>
+                <th class="r">Match</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${SIM_ACCOUNT_PROJECTS.map(row => {
+                const cls    = row.match >= 90 ? 'high' : row.match >= 80 ? 'med' : 'low';
+                const varCls = row.varPct >= 0 ? 'var-pos' : 'var-neg';
+                const sign   = row.varPct >= 0 ? '+' : '';
+                return `<tr>
+                  <td>${row.id}</td>
+                  <td>${row.project}</td>
+                  <td class="${varCls} r">${sign}${row.varPct.toFixed(1)}%</td>
+                  <td class="r"><span class="sc-appx-match-pill ${cls}">${row.match}%</span></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function initAppendixContent() {
+  const container = document.getElementById('appendix-container');
+  if (!container || container.dataset.built) return;
+  container.dataset.built = '1';
+  container.innerHTML = _buildAppendixSummaryCards();
+}
+
+function initWarningsContent() {
+  const container = document.getElementById('warnings-container');
+  if (!container || container.dataset.built) return;
+  container.dataset.built = '1';
+  container.innerHTML = `
+    <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:12px 16px;font-size:13px;color:#991b1b;display:flex;gap:10px;align-items:flex-start;margin-bottom:8px">
+      <i class="pi pi-ban" style="color:#dc2626;flex-shrink:0;margin-top:1px"></i>
+      <div>
+        <strong>Forecast blocked — schedule date review required (2 accounts):</strong>
+        CA-1043 and CA-1047 have forecasted completion dates within the next 30 days but remaining cost balance exceeds 60% of approved budget.
+        AI forecast is blocked for these accounts until schedule dates are updated in the scheduling tool.
+        <span style="display:block;margin-top:5px;font-size:12px;color:#b91c1c">
+          Contruent does not own the schedule forecast. Verify and update completion dates with the project scheduler, then re-run the AI forecast.
+        </span>
+      </div>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;padding:12px 16px;font-size:13px;color:#92400e;display:flex;gap:10px;align-items:flex-start;margin-bottom:8px">
+      <i class="pi pi-exclamation-triangle" style="color:#d97706;flex-shrink:0;margin-top:1px"></i>
+      <div>
+        <strong>Schedule variance — CA-1042 (this account):</strong> AI forecast completion (Nov 2026) is 3 months later than the scheduled completion date (Aug 2026).
+        The AI forecast reflects historical curve patterns from similar accounts and does not override schedule data. Review with the project scheduler.
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;font-size:13px;color:#374151;display:flex;gap:10px;align-items:flex-start">
+      <i class="pi pi-info-circle" style="color:#6366f1;flex-shrink:0;margin-top:1px"></i>
+      <div>
+        <strong>CPI below threshold — CA-1042:</strong> Cost performance index (0.92) is below the acceptable threshold of 0.95.
+        Historical accounts with CPI in the 0.88–0.95 range show an average cost overrun of 8–12% at completion. Current EAC ($42.2M) reflects this pattern.
+      </div>
+    </div>`;
+}
+
+/* ── INIT ───────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  initScurveChart();
+  initAppendixContent();
+  initWarningsContent();
+});

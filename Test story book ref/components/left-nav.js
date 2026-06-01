@@ -16,9 +16,11 @@
   var ITEMS = [
     { key: 'project-home', icon: 'pi-home',      label: 'Project Home',      href: 'project-home.html' },
     { key: 'cost',         icon: 'pi-dollar',    label: 'Cost',              children: [
-      { key: 'cost-summary',  label: 'Cost Summary',  href: '#' },
-      { key: 'budget',        label: 'Budget',        href: '#' },
-      { key: 'commitments',   label: 'Commitments',   href: '#' },
+      { key: 'control-accounts', label: 'Control Accounts', href: '#' },
+      { key: 'progress',         label: 'Progress',         href: '#' },
+      { key: 'cost-summary',     label: 'Summary',          href: '#' },
+      { key: 'cost-reports',     label: 'Reports',          href: '#' },
+      { key: 'ai-forecasting',   label: 'AI Forecasting',   href: 'scurve-forecast.html' },
     ]},
     { key: 'field',        icon: 'pi-map',       label: 'Field Management',  href: '#' },
     { key: 'procurement',  icon: 'pi-box',       label: 'Procurement',       children: [
