@@ -77,13 +77,34 @@
             <button class="sc-kebab-item" type="button" onclick="openSwitchUserModal()">
               <i class="pi pi-users"></i> Switch user
             </button>
+            <div class="sc-kebab-divider"></div>
+            <div class="sc-kebab-section-label">View (A/B test)</div>
+            <button class="sc-kebab-item sc-kebab-item--radio" type="button" data-view-choice="accordion" onclick="setSectionsView('accordion')" aria-checked="true">
+              <i class="pi pi-list"></i> Accordion view
+              <i class="pi pi-check sc-kebab-check"></i>
+            </button>
+            <button class="sc-kebab-item sc-kebab-item--radio" type="button" data-view-choice="tabs" onclick="setSectionsView('tabs')" aria-checked="false">
+              <i class="pi pi-window-maximize"></i> Tab view
+              <i class="pi pi-check sc-kebab-check"></i>
+            </button>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Sections wrapper — supports accordion view (default) and tab view -->
+    <div class="sc-sections" id="scSections" data-view="accordion">
+
+    <!-- Tab bar (only shown in tab view) -->
+    <div class="sc-tabs-bar" id="scTabsBar" role="tablist">
+      <button class="sc-tab-btn is-active" type="button" role="tab" data-tab="acc-forecast" onclick="setActiveTab('acc-forecast')">Cumulative spend forecast</button>
+      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-drivers" onclick="setActiveTab('acc-drivers')">Settings</button>
+      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-appendix" onclick="setActiveTab('acc-appendix')">Forecast appendix</button>
+      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-warnings" onclick="setActiveTab('acc-warnings')">Warnings <span class="sc-tab-badge" id="scWarningsBadge">3</span></button>
+    </div>
+
     <!-- ACCORDION 1: Forecast curves (open) -->
-    <div class="sc-acc-section" id="acc-forecast">
+    <div class="sc-acc-section is-active-tab" id="acc-forecast" data-tab-id="acc-forecast">
       <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-forecast')" aria-expanded="true">
         <i class="pi pi-chevron-down sc-acc-chevron"></i>
         <span class="sc-acc-title">Cumulative spend forecast</span>
@@ -93,9 +114,6 @@
         <!-- AI Banner -->
         <div class="sc-ai-banner" id="scAiBanner">
           <div class="sc-ai-banner-row">
-            <button class="sc-ai-banner-expand" id="aiBannerExpandBtn" onclick="toggleAiBannerDetail()" title="Expand forecast drivers" aria-label="Expand AI forecast details" aria-expanded="false">
-              <i class="pi pi-chevron-right"></i>
-            </button>
             <span class="sc-ai-active-tag">AI forecast active</span>
             <span class="sc-ai-driven-label">Driven by:</span>
             <div class="sc-ai-driver-pills" id="scAiDriverPills">
@@ -106,9 +124,12 @@
               <span class="sc-driver-pill">SPI / CPI: 10%</span>
               <span class="sc-driver-pill">Duration: 5%</span>
             </div>
+            <button type="button" class="sc-ai-detail-toggle" id="scAiDetailToggle" onclick="toggleAiDriverDetail()" aria-expanded="false" aria-controls="scAiBannerDetail">
+              <i class="pi pi-chevron-down"></i> Show detailed view
+            </button>
             <div class="sc-ai-banner-right">
               <span class="sc-high-confidence-pill">High confidence: 87%</span>
-              <span class="sc-similar-accts">24 similar accounts</span>
+              <span class="sc-similar-accts">Form 24 CA</span> <i class="pi pi-info-circle sc-chart-info-icon" title="Cumulative cost S-curve with periodic bar chart"></i>
             </div>
           </div>
           <div class="sc-ai-banner-detail" id="scAiBannerDetail" style="display:none"></div>
@@ -205,19 +226,24 @@
           </div>
           <div class="sc-chart-wrap" style="height:320px">
             <canvas id="scurve-chart"></canvas>
+            <div class="sc-chart-dragger" id="scChartDragger" style="display:none" aria-hidden="true">
+              <div class="sc-chart-dragger-line"></div>
+              <button type="button" class="sc-chart-dragger-handle" aria-label="Drag to simulate a different point in time" title="Drag to scrub time">
+                <i class="pi pi-arrows-h"></i>
+              </button>
+              <div class="sc-chart-dragger-label" id="scChartDraggerLabel">Jun 2025</div>
+            </div>
           </div>
         </div>
 
         <!-- Chart legend (below chart) -->
         <div class="sc-bottom-legend">
-          <span class="sc-bl-item sc-bl-solid sc-bl-actual">Actual/ETC · historical</span>
-          <span class="sc-bl-item sc-bl-dashed sc-bl-actual">Actual/ETC · forecast</span>
-          <span class="sc-bl-item sc-bl-solid sc-bl-incurred">Incurred/ETC · historical</span>
-          <span class="sc-bl-item sc-bl-dashed sc-bl-incurred">Incurred/ETC · forecast</span>
-          <span class="sc-bl-item sc-bl-solid sc-bl-earned">Earned/ETC · historical</span>
-          <span class="sc-bl-item sc-bl-dashed sc-bl-earned">Earned/ETC · forecast</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-actual">Actual/ETC</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-incurred">Incurred/ETC</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-earned">Earned/ETC</span>
           <span class="sc-bl-item sc-bl-band">P10–P90 band</span>
           <span class="sc-bl-item sc-bl-today">| Today</span>
+          <span class="sc-bl-key">Solid = historical · Dashed = forecast</span>
         </div>
 
         <!-- Forecast explanation (light green box) -->
@@ -233,19 +259,19 @@
       </div><!-- /.sc-acc-body -->
     </div><!-- /.sc-acc-section #acc-forecast -->
 
-    <!-- ACCORDION 2: Driver settings (collapsed) -->
-    <!-- <div class="sc-acc-section sc-acc-section--collapsed" id="acc-drivers">
-      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-drivers')" aria-expanded="false">
-        <i class="pi pi-chevron-right sc-acc-chevron"></i>
-        <span class="sc-acc-title">Driver settings</span>
+    <!-- ACCORDION 2: Driver settings -->
+    <div class="sc-acc-section" id="acc-drivers" data-tab-id="acc-drivers">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-drivers')" aria-expanded="true">
+        <i class="pi pi-chevron-down sc-acc-chevron"></i>
+        <span class="sc-acc-title">Settings</span>
       </button>
-      <div class="sc-acc-body" id="acc-drivers-body" style="display:none">
+      <div class="sc-acc-body" id="acc-drivers-body">
         <div id="driver-settings-container"></div>
       </div>
-    </div> -->
+    </div>
 
     <!-- ACCORDION 3: Forecast appendix -->
-    <div class="sc-acc-section" id="acc-appendix">
+    <div class="sc-acc-section" id="acc-appendix" data-tab-id="acc-appendix">
       <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-appendix')" aria-expanded="true">
         <i class="pi pi-chevron-down sc-acc-chevron"></i>
         <span class="sc-acc-title">Forecast appendix</span>
@@ -256,7 +282,7 @@
     </div>
 
     <!-- ACCORDION 4: Warnings -->
-    <div class="sc-acc-section" id="acc-warnings">
+    <div class="sc-acc-section" id="acc-warnings" data-tab-id="acc-warnings">
       <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-warnings')" aria-expanded="true">
         <i class="pi pi-chevron-down sc-acc-chevron"></i>
         <span class="sc-acc-title">Warnings</span>
@@ -265,6 +291,8 @@
         <div id="warnings-container"></div>
       </div>
     </div>
+
+    </div><!-- /.sc-sections -->
 
   </div><!-- /.proj-content -->
 

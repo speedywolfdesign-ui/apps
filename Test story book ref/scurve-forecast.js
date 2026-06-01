@@ -359,26 +359,20 @@ function _obsStats() {
   return computeShapeStats(FOCAL.actualSpend, FOCAL.actualSpend.length - 1);
 }
 
-window.toggleAiBannerDetail = function() {
-  const panel = document.getElementById('scAiBannerDetail');
-  const btn   = document.getElementById('aiBannerExpandBtn');
-  if (!panel) return;
-  const isOpen = panel.style.display !== 'none';
-  if (!isOpen && !panel.dataset.built) {
-    panel.innerHTML = buildAiBannerDetail();
-    panel.dataset.built = '1';
-  }
-  panel.style.display = isOpen ? 'none' : 'block';
-  btn && btn.setAttribute('aria-expanded', String(!isOpen));
-};
+
+function _buildDriverPill(group, pct) {
+  return `<span class="sc-driver-pill sc-driver-pill--themed"
+    style="background:${group.bg};color:${group.textColor};border-color:${group.bg}">
+    <i class="pi ${group.icon}"></i> ${group.label}: ${pct}%
+  </span>`;
+}
 
 function buildAiBannerDetail() {
   const total = getTotalWeight();
-  const SPI_FIXED_WEIGHT = 3.0; // fixed contribution for SPI/CPI group (toggle-based)
+  const SPI_FIXED_WEIGHT = 3.0;
 
   function groupPct(group) {
     if (group.id === 'spi') {
-      // SPI/CPI is toggle-controlled; show fixed share only if toggle is on
       const togEl = document.getElementById('toggleEvm');
       const on = !togEl || togEl.checked;
       return on ? Math.round(SPI_FIXED_WEIGHT / (total + SPI_FIXED_WEIGHT) * 100) : 0;
@@ -409,20 +403,57 @@ function buildAiBannerDetail() {
     }).join('');
 
     return `<div class="sc-ai-detail-group">
-      <div class="sc-ai-dg-header" style="background:${group.bg};color:${group.textColor}">
-        <span><i class="pi ${group.icon}"></i>${group.label}</span>
-        <span class="sc-ai-dg-pct">${pct}%</span>
-      </div>
+      <div class="sc-ai-dg-header">${_buildDriverPill(group, pct)}</div>
       <div class="sc-ai-dg-features">${featureRows}</div>
     </div>`;
   }).join('');
 
   return `<div class="sc-ai-detail-grid">${cards}</div>
-    <div style="padding-top:10px;font-size:11px;color:#64748b;display:flex;align-items:center;gap:5px">
-      <i class="pi pi-info-circle" style="color:#6366f1"></i>
-      Contribution % is computed from active feature weights. Bar length = weight relative to maximum (5.0). Adjust weights in <button onclick="kebabOpenSettings();toggleAiBannerDetail()" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-size:11px;font-weight:600;padding:0;font-family:inherit">Driver settings</button>.
+    <div class="sc-ai-detail-foot">
+      <i class="pi pi-info-circle"></i>
+      Contribution % is computed from active feature weights. Bar length = weight relative to maximum (5.0).
+      <button type="button" class="sc-ai-detail-foot-link" onclick="openDriverSettings()">
+        <i class="pi pi-cog"></i> Settings
+      </button>
     </div>`;
 }
+
+window.openDriverSettings = function() {
+  const wrap = document.getElementById('scSections');
+  const view = wrap ? wrap.dataset.view : 'accordion';
+  if (view === 'tabs') {
+    setActiveTab('acc-drivers');
+    document.getElementById('acc-drivers')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  // Accordion view: expand the Settings section if collapsed, then scroll
+  const section = document.getElementById('acc-drivers');
+  if (!section) return;
+  const header = section.querySelector('.sc-acc-header');
+  const body   = document.getElementById('acc-drivers-body');
+  const isOpen = header && header.getAttribute('aria-expanded') === 'true';
+  if (!isOpen) toggleAcc('acc-drivers');
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.toggleAiDriverDetail = function(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const panel = document.getElementById('scAiBannerDetail');
+  const btn   = document.getElementById('scAiDetailToggle');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  if (!isOpen) {
+    panel.innerHTML = buildAiBannerDetail();
+    panel.dataset.built = '1';
+  }
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (btn) {
+    btn.setAttribute('aria-expanded', String(!isOpen));
+    btn.innerHTML = isOpen
+      ? '<i class="pi pi-chevron-down"></i> Show detailed view'
+      : '<i class="pi pi-chevron-up"></i> Hide detailed view';
+  }
+};
 
 window.setForecastLine = function(line) {
   ACTIVE_FORECAST_LINE = line;
@@ -1330,22 +1361,7 @@ function initScurveChart() {
   const verticalLinePlugin = {
     id: 'currentPeriodLine',
     afterDatasetsDraw(chart) {
-      const { ctx: c, scales: { x, y } } = chart;
-      const xPos = x.getPixelForValue(TODAY_IDX);
-      c.save();
-      c.setLineDash([4, 4]);
-      c.beginPath();
-      c.moveTo(xPos, y.top);
-      c.lineTo(xPos, y.bottom);
-      c.strokeStyle = '#e31b0c';
-      c.lineWidth = 1.5;
-      c.stroke();
-      c.setLineDash([]);
-      c.font = '600 11px Inter, sans-serif';
-      c.fillStyle = '#e31b0c';
-      c.textAlign = 'center';
-      c.fillText('Today', xPos, y.top - 6);
-      c.restore();
+      _positionChartDragger(chart);
     }
   };
 
@@ -1411,6 +1427,75 @@ function initScurveChart() {
   });
 }
 
+/* ── CHART DRAGGER (in-chart time scrubber) ─────────────────────── */
+function _positionChartDragger(chart) {
+  const dragger = document.getElementById('scChartDragger');
+  if (!dragger || !chart) return;
+  const xScale = chart.scales.x;
+  if (!xScale) return;
+  const xPos = xScale.getPixelForValue(TODAY_IDX);
+  dragger.style.left = xPos + 'px';
+  dragger.style.display = '';
+  dragger.classList.toggle('is-simulated', TODAY_IDX !== REAL_TODAY_IDX);
+  const label = document.getElementById('scChartDraggerLabel');
+  if (label) label.textContent = MONTH_CALENDAR[TODAY_IDX] || '';
+}
+
+function _setupChartDragger() {
+  const dragger = document.getElementById('scChartDragger');
+  if (!dragger || dragger.dataset.bound) return;
+  dragger.dataset.bound = '1';
+  const handle = dragger.querySelector('.sc-chart-dragger-handle');
+  if (!handle) return;
+
+  let dragging = false;
+
+  function pointerToIdx(clientX) {
+    if (!scurveChart) return TODAY_IDX;
+    const canvas = scurveChart.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const xScale = scurveChart.scales.x;
+    const x = clientX - rect.left;
+    let idx = Math.round(xScale.getValueForPixel(x));
+    return Math.max(2, Math.min(22, idx));
+  }
+
+  function syncSlider(idx) {
+    const slider = document.getElementById('scTimeSlider');
+    if (!slider) return;
+    slider.value = idx;
+    const pct = ((idx - +slider.min) / (+slider.max - +slider.min)) * 100;
+    slider.style.setProperty('--fill-pct', pct + '%');
+  }
+
+  function onPointerMove(e) {
+    if (!dragging) return;
+    const idx = pointerToIdx(e.clientX);
+    if (idx !== TODAY_IDX) {
+      window.updateChartTime(idx);
+      syncSlider(idx);
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!dragging) return;
+    dragging = false;
+    handle.releasePointerCapture && handle.releasePointerCapture(e.pointerId);
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
+    document.removeEventListener('pointercancel', onPointerUp);
+  }
+
+  handle.addEventListener('pointerdown', e => {
+    dragging = true;
+    handle.setPointerCapture && handle.setPointerCapture(e.pointerId);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
+    e.preventDefault();
+  });
+}
+
 window.toggleConfidenceBand = function(show) {
   showConfidenceBand = show;
   if (!scurveChart) return;
@@ -1444,6 +1529,8 @@ window.toggleChartView = function(periodic) {
     scurveChart.data.datasets[i].hidden = !periodic;
   }
   scurveChart.update();
+  const outer = document.querySelector('.sc-chart-outer');
+  if (outer) outer.classList.toggle('is-periodic', periodic);
 };
 
 /* ── TIME SLIDER ─────────────────────────────────────────────────── */
@@ -1611,10 +1698,10 @@ window.runAiForecast = function() {
     btn.innerHTML = orig;
     btn.disabled = !ACTIVE_USER.perms.runForecast;
 
-    // Refresh expanded driver detail if open
-    const bannerDetail = document.getElementById('scAiBannerDetail');
-    if (bannerDetail && bannerDetail.dataset.built) {
-      bannerDetail.innerHTML = buildAiBannerDetail();
+    // If the detailed view is currently open, rebuild it with fresh weights
+    const detailPanel = document.getElementById('scAiBannerDetail');
+    if (detailPanel && detailPanel.dataset.built && detailPanel.style.display !== 'none') {
+      detailPanel.innerHTML = buildAiBannerDetail();
     }
   }, 1100);
 };
@@ -1731,9 +1818,9 @@ function _updateKpiFromForecast(impliedEAC, neighbors) {
   if (simEl) simEl.textContent = `${n} similar account${n !== 1 ? 's' : ''}`;
 }
 
-function _updateBannerFromForecast(neighbors) {
+function _renderSummaryPills() {
   const pills = document.getElementById('scAiDriverPills');
-  if (!pills) return;
+  if (!pills) return 0;
   const total  = getTotalWeight();
   const togEl  = document.getElementById('toggleEvm');
   const spiOn  = !togEl || togEl.checked;
@@ -1745,8 +1832,12 @@ function _updateBannerFromForecast(neighbors) {
       ? (spiOn ? SPI_W : 0)
       : g.keys.reduce((acc, k) => acc + (ACTIVE_WEIGHTS[k] || 0), 0);
     const pct = Math.round(sum / denom * 100);
-    return pct > 0 ? `<span class="sc-driver-pill">${g.label}: ${pct}%</span>` : '';
+    return pct > 0 ? _buildDriverPill(g, pct) : '';
   }).join('');
+}
+
+function _updateBannerFromForecast(neighbors) {
+  _renderSummaryPills();
 }
 
 function _updateExplanationFromForecast(forecast, neighbors, lifecyclePct, impliedEAC) {
@@ -2651,6 +2742,8 @@ window.closeSettingsModal = function() {
   const overlay = document.getElementById('settingsModalOverlay');
   if (overlay) overlay.remove();
   document.removeEventListener('keydown', _settingsModalEscHandler);
+  // Modal opening tore down the inline driver settings — rebuild it
+  initDriverSettingsContent();
 };
 
 function _updateSettingsModalLockNotice() {
@@ -2705,10 +2798,6 @@ function _buildAppendixSummaryCards() {
   const rangeMin = eacP10;
   const rangeMax = eacP90;
   const pos = v => Math.max(0, Math.min(100, ((v - rangeMin) / (rangeMax - rangeMin)) * 100));
-
-  // Basis of forecast — dynamic from CA
-  const cpiAdjLine = `<li><strong>CPI adjustment:</strong> CPI of 0.92 applied — late-growth correction shapes cost escalation pattern in remaining curve.</li>`;
-  const spiAdjLine = `<li><strong>SPI adjustment:</strong> Duration extended ~3 months based on SPI of 0.88.</li>`;
 
   return `
     <div class="sc-appx-grid">
@@ -2780,8 +2869,8 @@ function _buildAppendixSummaryCards() {
         </div>
         <ul class="sc-appx-bullets">
           <li><strong>Pattern matching:</strong> ${ca.bannerSimilar} completed accounts with ≥80% similarity across Phase type, Discipline, Work type, Region, and Project size.</li>
-          ${cpiAdjLine}
-          ${spiAdjLine}
+          <li><strong>CPI adjustment:</strong> CPI of 0.92 applied — late-growth correction shapes cost escalation pattern in remaining curve.</li>
+          <li><strong>SPI adjustment:</strong> Duration extended ~3 months based on SPI of 0.88.</li>
           <li><strong>Earned value ceiling:</strong> Earned/ETC bounded by approved budget ($${bac.toFixed(1)}M). Cannot earn over budget.</li>
           <li><strong>Incurred/actual gap:</strong> 4.2% accrual spread reflected as divergence between Actual and Incurred lines.</li>
         </ul>
@@ -2862,9 +2951,76 @@ function initWarningsContent() {
     </div>`;
 }
 
+/* ── SECTIONS VIEW SWITCHER (A/B test: accordion vs tabs) ────────── */
+const SECTIONS_VIEW_KEY = 'sc-sections-view';
+const SECTIONS_TAB_KEY  = 'sc-sections-active-tab';
+
+window.setSectionsView = function(view) {
+  if (view !== 'accordion' && view !== 'tabs') view = 'accordion';
+  const wrap = document.getElementById('scSections');
+  if (!wrap) return;
+  wrap.dataset.view = view;
+  try { localStorage.setItem(SECTIONS_VIEW_KEY, view); } catch (e) {}
+
+  // Update kebab radio check marks
+  document.querySelectorAll('.sc-kebab-item--radio[data-view-choice]').forEach(btn => {
+    btn.setAttribute('aria-checked', String(btn.dataset.viewChoice === view));
+  });
+
+  // Close the kebab dropdown
+  const drop = document.getElementById('kebabDropdown');
+  if (drop) drop.style.display = 'none';
+  const kBtn = document.getElementById('kebabBtn');
+  if (kBtn) kBtn.setAttribute('aria-expanded', 'false');
+
+  // Tab mode needs an active section; pick saved or fall back to first
+  if (view === 'tabs') {
+    let savedTab;
+    try { savedTab = localStorage.getItem(SECTIONS_TAB_KEY); } catch (e) {}
+    const active = document.querySelector('.sc-acc-section.is-active-tab');
+    const tabId = savedTab || (active && active.id) || 'acc-forecast';
+    setActiveTab(tabId);
+  }
+
+  // The chart needs to redraw when its container becomes visible again
+  if (scurveChart) {
+    requestAnimationFrame(() => scurveChart.resize());
+  }
+};
+
+window.setActiveTab = function(id) {
+  document.querySelectorAll('.sc-acc-section').forEach(s => {
+    s.classList.toggle('is-active-tab', s.id === id);
+  });
+  document.querySelectorAll('.sc-tab-btn').forEach(b => {
+    b.classList.toggle('is-active', b.dataset.tab === id);
+  });
+  try { localStorage.setItem(SECTIONS_TAB_KEY, id); } catch (e) {}
+
+  // Lazy-init content when a tab opens for the first time
+  if (id === 'acc-drivers') initDriverSettingsContent();
+  if (id === 'acc-appendix') initAppendixContent();
+  if (id === 'acc-warnings') initWarningsContent();
+
+  // Chart needs a resize when the forecast tab becomes visible
+  if (id === 'acc-forecast' && scurveChart) {
+    requestAnimationFrame(() => scurveChart.resize());
+  }
+};
+
+function _restoreSectionsView() {
+  let saved;
+  try { saved = localStorage.getItem(SECTIONS_VIEW_KEY); } catch (e) {}
+  setSectionsView(saved || 'accordion');
+}
+
 /* ── INIT ───────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initScurveChart();
+  _setupChartDragger();
+  _renderSummaryPills();
   initAppendixContent();
   initWarningsContent();
+  initDriverSettingsContent();
+  _restoreSectionsView();
 });
