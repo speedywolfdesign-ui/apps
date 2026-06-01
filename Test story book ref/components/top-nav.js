@@ -109,12 +109,15 @@
     </li>
     <li class="tnav-item tnav-has-dropdown" id="tnd-admin">
       <button class="tnav-link tnav-link-dropdown" onclick="toggleNavDropdown('tnd-admin')" aria-expanded="false">
-        Admin <i class="pi pi-chevron-down tnav-chevron"></i>
+        Administration <i class="pi pi-chevron-down tnav-chevron"></i>
       </button>
       <ul class="tnav-dropdown" role="menu">
-        <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-users"></i> Users</li>
-        <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-cog"></i> Settings</li>
-        <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-shield"></i> Permissions</li>
+        <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-database"></i> Data Warehouse</li>
+        <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-box"></i> Archive</li>
+        <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-calculator"></i> Calculations</li>
+        <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-shield"></i> User Permissions</li>
+        <li class="tnav-dropdown-item" role="menuitem"><i class="pi pi-sitemap"></i> Workflow Configuration</li>
+        <li class="tnav-dropdown-item" role="menuitem" onclick="window.location.href='scurve-forecast.html?context=admin'" style="cursor:pointer"><i class="pi pi-chart-line"></i> S-curve forecasting</li>
       </ul>
     </li>
   </ul>

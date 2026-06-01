@@ -48,6 +48,8 @@
 <body>
 
   <div id="top-nav-mount"></div>
+  <script src="components/top-nav.js"></script>
+  <script>renderTopNav({ activeItem: 'projects' });</script>
   <div id="left-nav-mount"></div>
 
   <!-- ===== MAIN CONTENT ===== -->
@@ -375,12 +377,10 @@
 
   </div><!-- /proj-content -->
 
-  <script src="components/top-nav.js"></script>
   <script src="components/left-nav.js"></script>
   <script src="components/ai-panel.js"></script>
   <script src="components/script.js"></script>
   <script>
-    renderTopNav({ activeItem: 'projects' });
     renderLeftNav({ activeLink: 'project-home' });
     applyProjectContext();
 

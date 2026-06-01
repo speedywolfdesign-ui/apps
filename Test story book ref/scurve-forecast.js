@@ -422,15 +422,14 @@ window.openDriverSettings = function() {
   const wrap = document.getElementById('scSections');
   const view = wrap ? wrap.dataset.view : 'accordion';
   if (view === 'tabs') {
-    setActiveTab('acc-drivers');
-    document.getElementById('acc-drivers')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // In tab view, open the settings modal instead of switching tabs
+    openSettingsModal();
     return;
   }
   // Accordion view: expand the Settings section if collapsed, then scroll
   const section = document.getElementById('acc-drivers');
   if (!section) return;
   const header = section.querySelector('.sc-acc-header');
-  const body   = document.getElementById('acc-drivers-body');
   const isOpen = header && header.getAttribute('aria-expanded') === 'true';
   if (!isOpen) toggleAcc('acc-drivers');
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });

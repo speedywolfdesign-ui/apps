@@ -15,6 +15,8 @@
 <body>
 
   <div id="top-nav-mount"></div>
+  <script src="components/top-nav.js"></script>
+  <script>renderTopNav({ activeItem: 'home' });</script>
 
   <!-- ===== MAIN ===== -->
   <main class="home-main">
@@ -304,12 +306,9 @@
 
   </main><!-- /home-main -->
 
-  <script src="components/top-nav.js"></script>
   <script src="components/ai-panel.js"></script>
   <script src="components/script.js"></script>
   <script>
-    renderTopNav({ activeItem: 'home' });
-
     /* ===== S-CURVE CHART ===== */
     (function () {
       const labels = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

@@ -14,6 +14,8 @@
 <body>
 
   <div id="top-nav-mount"></div>
+  <script src="components/top-nav.js"></script>
+  <script>renderTopNav({ activeItem: 'projects' });</script>
 
   <!-- ===== MAIN ===== -->
   <main class="proj-main">
@@ -103,12 +105,9 @@
 
   </main>
 
-  <script src="components/top-nav.js"></script>
   <script src="components/ai-panel.js"></script>
   <script src="components/script.js"></script>
   <script>
-    renderTopNav({ activeItem: 'projects' });
-
     /* ===== PROJECT DATA ===== */
     const PROJECTS = [
       { id: '9810...2024', name: 'PRISM Lem Manager', access: 'Apr 12, 2024 – 01:34PM', manager: 'Iara Moran', initials: 'IM', budget: '18.4M', budgetNum: 18.4, etc: '18.4M', etcNum: 18.4, start: 'Apr 12, 2024', finish: 'Apr 12, 2024', pct: 68, favorite: true },

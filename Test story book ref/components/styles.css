@@ -404,6 +404,11 @@ ul { list-style: none; }
   width: 18px;
   text-align: center;
 }
+.lnav-icon-svg {
+  display: inline-flex; align-items: center; justify-content: center;
+  line-height: 0;
+}
+.lnav-icon-svg svg { display: block; }
 
 /* Label */
 .lnav-label {

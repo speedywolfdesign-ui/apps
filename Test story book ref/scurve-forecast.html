@@ -16,6 +16,11 @@
 <body>
 
   <div id="top-nav-mount"></div>
+  <script src="components/top-nav.js"></script>
+  <script>
+    var _isAdminContext = new URLSearchParams(window.location.search).get('context') === 'admin';
+    renderTopNav({ activeItem: _isAdminContext ? 'admin' : 'projects' });
+  </script>
   <div id="left-nav-mount"></div>
 
   <div class="proj-content">
@@ -259,35 +264,35 @@
       </div><!-- /.sc-acc-body -->
     </div><!-- /.sc-acc-section #acc-forecast -->
 
-    <!-- ACCORDION 2: Driver settings -->
-    <div class="sc-acc-section" id="acc-drivers" data-tab-id="acc-drivers">
-      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-drivers')" aria-expanded="true">
-        <i class="pi pi-chevron-down sc-acc-chevron"></i>
+    <!-- ACCORDION 2: Driver settings (collapsed) -->
+    <div class="sc-acc-section sc-acc-section--collapsed" id="acc-drivers" data-tab-id="acc-drivers">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-drivers')" aria-expanded="false">
+        <i class="pi pi-chevron-right sc-acc-chevron"></i>
         <span class="sc-acc-title">Settings</span>
       </button>
-      <div class="sc-acc-body" id="acc-drivers-body">
+      <div class="sc-acc-body" id="acc-drivers-body" style="display:none">
         <div id="driver-settings-container"></div>
       </div>
     </div>
 
-    <!-- ACCORDION 3: Forecast appendix -->
-    <div class="sc-acc-section" id="acc-appendix" data-tab-id="acc-appendix">
-      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-appendix')" aria-expanded="true">
-        <i class="pi pi-chevron-down sc-acc-chevron"></i>
+    <!-- ACCORDION 3: Forecast appendix (collapsed) -->
+    <div class="sc-acc-section sc-acc-section--collapsed" id="acc-appendix" data-tab-id="acc-appendix">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-appendix')" aria-expanded="false">
+        <i class="pi pi-chevron-right sc-acc-chevron"></i>
         <span class="sc-acc-title">Forecast appendix</span>
       </button>
-      <div class="sc-acc-body" id="acc-appendix-body">
+      <div class="sc-acc-body" id="acc-appendix-body" style="display:none">
         <div id="appendix-container"></div>
       </div>
     </div>
 
-    <!-- ACCORDION 4: Warnings -->
-    <div class="sc-acc-section" id="acc-warnings" data-tab-id="acc-warnings">
-      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-warnings')" aria-expanded="true">
-        <i class="pi pi-chevron-down sc-acc-chevron"></i>
+    <!-- ACCORDION 4: Warnings (collapsed) -->
+    <div class="sc-acc-section sc-acc-section--collapsed" id="acc-warnings" data-tab-id="acc-warnings">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-warnings')" aria-expanded="false">
+        <i class="pi pi-chevron-right sc-acc-chevron"></i>
         <span class="sc-acc-title">Warnings</span>
       </button>
-      <div class="sc-acc-body" id="acc-warnings-body">
+      <div class="sc-acc-body" id="acc-warnings-body" style="display:none">
         <div id="warnings-container"></div>
       </div>
     </div>
@@ -296,15 +301,19 @@
 
   </div><!-- /.proj-content -->
 
-  <script src="components/top-nav.js"></script>
   <script src="components/left-nav.js"></script>
   <script src="components/dialog.js"></script>
   <script src="components/ai-panel.js"></script>
   <script src="components/script.js"></script>
   <script src="scurve-forecast.js"></script>
   <script>
-    renderTopNav({ activeItem: 'projects' });
-    renderLeftNav({ expandedGroup: 'cost', activeSub: 'ai-forecasting' });
+    if (_isAdminContext) {
+      renderLeftNav({ context: 'admin', activeLink: 'scurve-forecasting', expandedGroup: 'change-mgmt' });
+      var _bc = document.querySelector('.page-top-row');
+      if (_bc) _bc.style.display = 'none';
+    } else {
+      renderLeftNav({ expandedGroup: 'cost', activeSub: 'ai-forecasting' });
+    }
     applyProjectContext();
   </script>
 </body>
