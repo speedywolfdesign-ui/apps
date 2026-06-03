@@ -3650,9 +3650,7 @@ window.openAdminSettingsModal = function() {
       <div class="sc-settings-modal-footer" style="justify-content:flex-end">
         <div style="display:flex;gap:8px">
           <button class="btn btn-secondary" type="button" onclick="cancelAdminSettingsModal()">Cancel</button>
-          <button class="btn btn-primary" type="button" onclick="saveAdminSettingsModal()">
-            <i class="pi pi-check btn-icon-left"></i> Save settings
-          </button>
+          <button class="btn btn-primary" type="button" onclick="saveAdminSettingsModal()">Save settings</button>
         </div>
       </div>
     </div>`;
