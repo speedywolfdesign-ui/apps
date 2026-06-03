@@ -1121,48 +1121,43 @@ body.lnav-collapsed .main-content {
 }
 .message-close:hover { opacity: 1; background: rgba(0,0,0,0.06); }
 
-/* ===== TOAST ===== */
+/* ===== TOAST (Contruent DS — Storybook: Components/Base/Toast) =====
+   Severity-tinted surface, icon + text + divider + close.
+   40px tall (8px vertical padding), 16px icon→text gap.
+   Position: bottom-center, 24px above the bottom edge. */
 .toast-container {
-  position: fixed; bottom: var(--space-6); right: var(--space-6);
-  display: flex; flex-direction: column; gap: var(--space-2);
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
   z-index: var(--z-toast); pointer-events: none;
 }
 .toast {
-  display: flex; align-items: flex-start; gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface-900); color: var(--color-white);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  min-width: 280px; max-width: 360px;
+  display: flex; align-items: center;
+  min-height: 40px; padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+  max-width: 480px;
   pointer-events: all;
-  animation: toast-in 0.25s ease;
-  border-left: var(--border-4) solid var(--primary-500);
+  animation: toast-in 0.3s ease;
 }
-.toast.toast-info    { border-left-color: var(--blue-500); }
-.toast.toast-success { border-left-color: var(--success-fill); }
-.toast.toast-warn    { border-left-color: var(--warning-fill); }
-.toast.toast-error   { border-left-color: var(--danger-fill); }
-.toast-icon { font-size: 18px; margin-top: 1px; flex-shrink: 0; }
-.toast-info    .toast-icon { color: var(--blue-300); }
-.toast-success .toast-icon { color: var(--green-400); }
-.toast-warn    .toast-icon { color: var(--orange-400); }
-.toast-error   .toast-icon { color: var(--red-400); }
-.toast-body { flex: 1; }
-.toast-title  { font-size: 13px; font-weight: var(--font-weight-bold); margin-bottom: var(--space-half); }
-.toast-detail { font-size: 12px; opacity: 0.8; }
-.toast-close {
-  background: transparent; border: none; cursor: pointer;
-  color: rgba(255,255,255,0.5); font-size: 13px;
-  padding: var(--space-half); transition: color var(--transition-fast);
+/* Severity surfaces — message tokens (text, icon and divider inherit the color) */
+.toast.toast-info    { background: var(--msg-info-bg);    color: var(--msg-info-color); }
+.toast.toast-success { background: var(--msg-success-bg); color: var(--msg-success-color); }
+.toast.toast-warn    { background: var(--msg-warning-bg); color: var(--msg-warning-color); }
+.toast.toast-error   { background: var(--msg-error-bg);   color: var(--msg-error-color); }
+.toast-icon { font-size: 16px; flex-shrink: 0; margin-right: var(--space-4); color: inherit; }
+.toast-body {
+  flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
 }
-.toast-close:hover { color: var(--color-white); }
+.toast-title  { font-size: 13px; font-weight: var(--font-weight-bold); }
+.toast-detail { font-size: 13px; line-height: 18px; }
 @keyframes toast-in {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(50%); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes toast-out {
-  from { opacity: 1; transform: translateX(0); max-height: 80px; }
-  to   { opacity: 0; transform: translateX(20px); max-height: 0; padding: 0; margin: 0; }
+  from { opacity: 1; transform: translateY(0); max-height: 80px; }
+  to   { opacity: 0; transform: translateY(20%); max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0; }
 }
 
 /* ===== AVATAR ===== */
@@ -1313,6 +1308,8 @@ img.avatar  { object-fit: cover; }
   flex: 1;
   padding: 16px 20px;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 .chart-header {
   display: flex;
@@ -1341,7 +1338,8 @@ img.avatar  { object-fit: cover; }
   border-radius: 2px;
   flex-shrink: 0;
 }
-.chart-canvas-wrap { position: relative; height: 260px; }
+/* Fill the row height (gauges column sets it) — no dead space below the chart */
+.chart-canvas-wrap { position: relative; flex: 1; min-height: 260px; }
 
 /* Metrics grid — 5 columns (desktop) */
 .perf-metrics {

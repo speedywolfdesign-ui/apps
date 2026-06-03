@@ -124,12 +124,10 @@
             <span class="sc-ai-active-tag">AI forecast active</span>
             <span class="sc-ai-driven-label">Driven by: <i class="pi pi-info-circle sc-ai-driven-info" title="Percentages derived from points allocated in AI forecast settings — always sums to 100%"></i></span>
             <div class="sc-ai-driver-pills" id="scAiDriverPills">
-              <span class="sc-driver-pill">CA group codes: 14%</span>
-              <span class="sc-driver-pill">Project groups: 7%</span>
-              <span class="sc-driver-pill">Curve shape: 35%</span>
-              <span class="sc-driver-pill">Cost mix: 25%</span>
-              <span class="sc-driver-pill">SPI / CPI: 8%</span>
-              <span class="sc-driver-pill">Duration: 11%</span>
+              <span class="sc-driver-pill">Classification groups: 22%</span>
+              <span class="sc-driver-pill">Numerical features: 32%</span>
+              <span class="sc-driver-pill">SPI / CPI integration (earned value): 9%</span>
+              <span class="sc-driver-pill">Curve shape statistics: 37%</span>
             </div>
             <button type="button" class="sc-ai-detail-toggle" id="scAiDetailToggle" onclick="toggleAiDriverDetail()" aria-expanded="false" aria-controls="scAiBannerDetail">
               <i class="pi pi-chevron-down"></i> Show detailed view
@@ -211,6 +209,7 @@
             <div class="sc-line-more-wrap" id="lineMoreWrap">
               <button class="sc-line-toggle sc-line-more-btn" type="button" id="lineMoreBtn" onclick="toggleLineMoreMenu()" aria-expanded="false" aria-haspopup="true">
                 More <i class="pi pi-chevron-down"></i>
+                <span class="sc-line-more-active-dot" aria-hidden="true"></span>
               </button>
               <div class="sc-line-more-dropdown" id="lineMoreDropdown" style="display:none">
                 <button class="sc-line-toggle sc-line-toggle--off" type="button" onclick="toggleForecastLine('control')" data-line="control" aria-pressed="false">
@@ -306,14 +305,18 @@
           </div>
         </div>
 
-        <!-- Chart legend (below chart) -->
+        <!-- Chart legend (below chart) — mirrors the line toggles -->
         <div class="sc-bottom-legend">
-          <span class="sc-bl-item sc-bl-combined sc-bl-actual">Actual/ETC</span>
-          <span class="sc-bl-item sc-bl-combined sc-bl-incurred">Incurred/ETC</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-budget">Budget</span>
           <span class="sc-bl-item sc-bl-combined sc-bl-earned">Earned</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-actual">Actual / ETC</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-incurred">Incurred / ETC</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-control">Control budget</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-finance">Finance budget</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-cashflow">Cashflow</span>
           <span class="sc-bl-item sc-bl-band">P10–P90 band</span>
           <span class="sc-bl-item sc-bl-today">| Today</span>
-          <span class="sc-bl-key">Solid = historical · Dashed = forecast</span>
+          <span class="sc-bl-key">Solid line = Historical / Planned ・ Dashed line = Forecast</span>
         </div>
 
         <!-- Forecast explanation (light green box) -->
@@ -365,6 +368,8 @@
     </div><!-- /.sc-sections -->
 
   </div><!-- /.proj-content -->
+
+  <div class="toast-container" id="toastContainer"></div>
 
   <script src="components/left-nav.js"></script>
   <script src="components/dialog.js"></script>

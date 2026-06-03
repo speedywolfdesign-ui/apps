@@ -296,75 +296,150 @@ let ACTIVE_FORECAST_LINE = 'actual'; // 'actual' | 'incurred' | 'earned'
 // SPI/CPI matching weight (user-adjustable, 0 = off — replaces the old on/off toggle)
 let SPI_CPI_WEIGHT = 3.0;
 
+/* ── CLASSIFICATION GROUPS (shared by settings modal + driver detail) ─ */
+const CLASSIFICATION_GROUPS = [
+  { source: 'Project groups', items: [
+    { key: 'proj_program',         title: 'Program'                 },
+    { key: 'proj_portfolio',       title: 'Portfolio'               },
+    { key: 'proj_type',            title: 'Project type'            },
+    { key: 'proj_phase',           title: 'Project phase'           },
+    { key: 'proj_stage_gate',      title: 'Stage gate'              },
+    { key: 'proj_delivery_method', title: 'Delivery method'         },
+    { key: 'proj_contract_model',  title: 'Contract model'          },
+    { key: 'proj_funding_type',    title: 'Funding type'            },
+    { key: 'proj_client_sector',   title: 'Client sector'           },
+    { key: 'proj_industry',        title: 'Industry segment'        },
+    { key: 'proj_region',          title: 'Region'                  },
+    { key: 'proj_country',         title: 'Country'                 },
+    { key: 'proj_state',           title: 'State / province'        },
+    { key: 'proj_city',            title: 'City'                    },
+    { key: 'proj_site_type',       title: 'Site type'               },
+    { key: 'proj_environment',     title: 'Greenfield / brownfield' },
+    { key: 'proj_size_band',       title: 'Size band'               },
+    { key: 'proj_duration_band',   title: 'Duration band'           },
+    { key: 'proj_complexity',      title: 'Complexity rating'       },
+    { key: 'proj_risk_class',      title: 'Risk class'              },
+    { key: 'proj_priority',        title: 'Priority tier'           },
+    { key: 'proj_currency',        title: 'Currency'                },
+    { key: 'proj_business_unit',   title: 'Business unit'           },
+    { key: 'proj_division',        title: 'Division'                },
+    { key: 'proj_sponsor',         title: 'Sponsor org'             },
+    { key: 'proj_execution_model', title: 'Execution model'         },
+  ]},
+  { source: 'Enterprise', items: [
+    { key: 'ent_program',        title: 'Capital program'   },
+    { key: 'ent_portfolio',      title: 'Portfolio'         },
+    { key: 'ent_business_unit',  title: 'Business unit'     },
+    { key: 'ent_region',         title: 'Region'            },
+    { key: 'ent_country',        title: 'Country'           },
+    { key: 'ent_funding_source', title: 'Funding source'    },
+    { key: 'ent_asset_class',    title: 'Asset class'       },
+    { key: 'ent_sponsor_org',    title: 'Sponsor org'       },
+    { key: 'ent_fiscal_year',    title: 'Fiscal year'       },
+  ]},
+  { source: 'Standard', items: [
+    { key: 'phase_type',         title: 'Phase type'        },
+    { key: 'discipline',         title: 'Discipline'        },
+    { key: 'work_type',          title: 'Work type'         },
+    { key: 'std_cost_category',  title: 'Cost category'     },
+    { key: 'std_commodity',      title: 'Commodity class'   },
+    { key: 'std_contract_type',  title: 'Contract type'     },
+    { key: 'std_account_status', title: 'Account status'    },
+    { key: 'std_wbs_level',      title: 'WBS level'         },
+    { key: 'std_milestone_type', title: 'Milestone type'    },
+  ]},
+  { source: 'Module', items: [
+    { key: 'proj_size_cat',      title: 'Project size'         },
+    { key: 'acct_size_cat',      title: 'Account size'         },
+    { key: 'region',             title: 'Region'               },
+    { key: 'mod_facility_type',  title: 'Facility type'        },
+    { key: 'mod_plant_area',     title: 'Plant area'           },
+    { key: 'mod_system',         title: 'System'               },
+    { key: 'mod_subsystem',      title: 'Subsystem'            },
+    { key: 'mod_equipment_class',title: 'Equipment class'      },
+    { key: 'mod_material_group', title: 'Material group'       },
+    { key: 'mod_vendor_category',title: 'Vendor category'      },
+    { key: 'mod_procurement_pkg',title: 'Procurement package'  },
+    { key: 'mod_construction_zone',title: 'Construction zone'  },
+    { key: 'mod_work_package',   title: 'Work package'         },
+    { key: 'mod_activity_type',  title: 'Schedule activity type'},
+    { key: 'mod_resource_type',  title: 'Resource type'        },
+    { key: 'mod_craft_type',     title: 'Craft type'           },
+    { key: 'mod_shift_pattern',  title: 'Shift pattern'        },
+    { key: 'mod_site_location',  title: 'Site location'        },
+    { key: 'mod_building',       title: 'Building'             },
+    { key: 'mod_level',          title: 'Floor / level'        },
+    { key: 'mod_unit_operation', title: 'Unit operation'       },
+    { key: 'mod_process_area',   title: 'Process area'         },
+    { key: 'mod_discipline_lead',title: 'Discipline lead'      },
+    { key: 'mod_deliverable',    title: 'Engineering deliverable'},
+    { key: 'mod_permit_type',    title: 'Permit type'          },
+    { key: 'mod_risk_category',  title: 'Risk category'        },
+  ]},
+];
+// Flatten selected classification sub-groups into driver-detail features (with sub-headers)
+function _clsFeatures(...sources) {
+  const out = [];
+  for (const src of sources) {
+    const g = CLASSIFICATION_GROUPS.find(x => x.source === src);
+    if (!g) continue;
+    out.push({ header: src });
+    g.items.forEach(it => out.push({ key: it.key, label: it.title }));
+  }
+  return out;
+}
+function _clsKeys(...sources) {
+  return sources.flatMap(src => (CLASSIFICATION_GROUPS.find(x => x.source === src)?.items || []).map(it => it.key));
+}
+
 /* ── AI BANNER DRIVER GROUPS ─────────────────────────────────────── */
 const DRIVER_GROUPS = [
   {
-    id: 'ca_codes', label: 'CA group codes', icon: 'pi-tags', color: '#1d4ed8', bg: '#dbeafe', textColor: '#1e3a8a',
-    keys: ['phase_type','discipline','work_type'],
+    id: 'classification', label: 'Classification groups', icon: 'pi-tags', color: '#1d4ed8', bg: '#dbeafe', textColor: '#1e3a8a',
+    keys: _clsKeys('Project groups', 'Enterprise', 'Standard', 'Module'),
+    features: _clsFeatures('Project groups', 'Enterprise', 'Standard', 'Module'),
+  },
+  {
+    id: 'numerical', label: 'Numerical features', icon: 'pi-calculator', color: '#0891b2', bg: '#e0f2fe', textColor: '#0c4a6e',
+    keys: ['duration_months','budget_amount','labor_mix','material_mix','equip_mix','subcontract_mix','craft_labour','supervision','internal_cost'],
     features: [
-      { key:'phase_type',  label:'Phase type',  val: () => FOCAL.phase },
-      { key:'discipline',  label:'Discipline',  val: () => FOCAL.discipline },
-      { key:'work_type',   label:'Work type',   val: () => FOCAL.workType },
+      { key:'duration_months', label:'Duration (months)' },
+      { key:'budget_amount',   label:'Budget ($M)' },
+      { header: 'Cost driven breakdown',    metric: 'cost' },
+      { key:'labor_mix',       label:'Labor mix',       metric: 'cost' },
+      { key:'material_mix',    label:'Material mix',    metric: 'cost' },
+      { key:'equip_mix',       label:'Equipment mix',   metric: 'cost' },
+      { key:'subcontract_mix', label:'Subcontract mix', metric: 'cost' },
+      { header: 'Hours driven breakdown',   metric: 'hours' },
+      { key:'craft_labour',    label:'Craft labour',    metric: 'hours' },
+      { key:'supervision',     label:'Supervision',     metric: 'hours' },
+      { header: 'Company driven breakdown', metric: 'company' },
+      { key:'internal_cost',   label:'Internal cost',   metric: 'company' },
     ]
   },
   {
-    id: 'proj_groups', label: 'Project groups', icon: 'pi-folder', color: '#6366f1', bg: '#ede9fe', textColor: '#3730a3',
-    keys: ['proj_size_cat','acct_size_cat','region'],
-    features: [
-      { key:'proj_size_cat', label:'Project size', val: () => ({S:'Small',M:'Medium',L:'Large',XL:'XL'})[FOCAL.projSizeCat] || FOCAL.projSizeCat },
-      { key:'acct_size_cat', label:'Account size', val: () => ({S:'Small ($<5M)',M:'Medium ($5–15M)',L:'Large ($>15M)'})[FOCAL.acctSizeCat] || FOCAL.acctSizeCat },
-      { key:'region',        label:'Region',       val: () => ({NA:'North America',EU:'Europe',AP:'Asia Pacific',ME:'Middle East'})[FOCAL.region] || FOCAL.region },
-    ]
-  },
-  {
-    id: 'shape', label: 'Curve shape', icon: 'pi-chart-line', color: '#7c3aed', bg: '#f5f3ff', textColor: '#5b21b6',
-    keys: ['skewness','front_load_ratio','gini','peak_period_norm','kurtosis','planned_skewness','planned_front_load','planned_gini','planned_peak_norm','planned_kurtosis','plan_vs_actual_skew'],
-    features: [
-      { key:'skewness',            label:'Skewness',                        val: () => _shapeDisplayVals().skewness },
-      { key:'front_load_ratio',    label:'Front-load ratio',                val: () => _shapeDisplayVals().front_load_ratio },
-      { key:'gini',                label:'Concentration (Gini)',            val: () => _shapeDisplayVals().gini },
-      { key:'peak_period_norm',    label:'Peak period (normalized)',        val: () => _shapeDisplayVals().peak_period_norm },
-      { key:'kurtosis',            label:'Kurtosis',                        val: () => _shapeDisplayVals().kurtosis },
-      { key:'plan_vs_actual_skew', label:'Plan vs. actual skew difference', val: () => _shapeDisplayVals().plan_vs_actual_skew },
-      { key:'planned_skewness',    label:'Planned skewness',                val: () => _shapeDisplayVals().planned_skewness },
-      { key:'planned_front_load',  label:'Planned front-load ratio',        val: () => _shapeDisplayVals().planned_front_load },
-      { key:'planned_gini',        label:'Planned concentration',           val: () => _shapeDisplayVals().planned_gini },
-      { key:'planned_peak_norm',   label:'Planned peak period',             val: () => _shapeDisplayVals().planned_peak_norm },
-      { key:'planned_kurtosis',    label:'Planned kurtosis',                val: () => _shapeDisplayVals().planned_kurtosis },
-    ]
-  },
-  {
-    id: 'mix', label: 'Cost mix', icon: 'pi-calculator', color: '#0891b2', bg: '#e0f2fe', textColor: '#0c4a6e',
-    keys: ['labor_mix','material_mix','equip_mix','subcontract_mix','craft_labour','supervision','internal_cost'],
-    features: [
-      { header: 'Cost element breakdown' },
-      { key:'labor_mix',       label:'Labor',       val: () => (FOCAL.laborMix*100).toFixed(0)+'%' },
-      { key:'material_mix',    label:'Material',    val: () => (FOCAL.materialMix*100).toFixed(0)+'%' },
-      { key:'equip_mix',       label:'Equipment',   val: () => (FOCAL.equipMix*100).toFixed(0)+'%' },
-      { key:'subcontract_mix', label:'Subcontract', val: () => (FOCAL.subMix*100).toFixed(0)+'%' },
-      { header: 'Hours element breakdown' },
-      { key:'craft_labour',    label:'Craft labour', val: () => '78%' },
-      { key:'supervision',     label:'Supervision',  val: () => '22%' },
-      { header: 'Company cost element breakdown' },
-      { key:'internal_cost',   label:'Internal cost', val: () => '15%' },
-    ]
-  },
-  {
-    id: 'spi', label: 'SPI / CPI', icon: 'pi-chart-bar', color: '#b45309', bg: '#fef3c7', textColor: '#78350f',
+    id: 'spi', label: 'SPI / CPI integration (earned value)', icon: 'pi-chart-line', color: '#b45309', bg: '#fef3c7', textColor: '#78350f',
     keys: [],
     features: [
-      { key:'spi', label:'Sched. performance (SPI)', val: () => '0.88', fixedWeight: 1.5 },
-      { key:'cpi', label:'Cost performance (CPI)',   val: () => '0.92', fixedWeight: 1.5 },
+      { key:'spi', label:'Sched. performance (SPI)', fixedWeight: 1.5 },
+      { key:'cpi', label:'Cost performance (CPI)',   fixedWeight: 1.5 },
     ]
   },
   {
-    id: 'duration', label: 'Duration & budget', icon: 'pi-calendar', color: '#059669', bg: '#d1fae5', textColor: '#064e3b',
-    keys: ['duration_months','budget_amount','budget_per_month','acct_pct_project'],
+    id: 'shape', label: 'Curve shape statistics', icon: 'pi-chart-bar', color: '#7c3aed', bg: '#f5f3ff', textColor: '#5b21b6',
+    keys: ['skewness','front_load_ratio','gini','peak_period_norm','kurtosis','planned_skewness','planned_front_load','planned_gini','planned_peak_norm','planned_kurtosis','plan_vs_actual_skew'],
     features: [
-      { key:'duration_months',  label:'Duration',      val: () => FOCAL.durationMonths+' mo' },
-      { key:'budget_amount',    label:'Budget',        val: () => '$'+FOCAL.budgetAmount.toFixed(1)+'M' },
-      { key:'budget_per_month', label:'Budget/month',  val: () => '$'+(FOCAL.budgetAmount/FOCAL.durationMonths*1000).toFixed(0)+'K' },
-      { key:'acct_pct_project', label:'% of project',  val: () => (FOCAL.acctPctProject*100).toFixed(1)+'%' },
+      { key:'skewness',            label:'Skewness' },
+      { key:'front_load_ratio',    label:'Front-load ratio' },
+      { key:'gini',                label:'Concentration (Gini)' },
+      { key:'peak_period_norm',    label:'Peak period (normalized)' },
+      { key:'kurtosis',            label:'Kurtosis' },
+      { key:'plan_vs_actual_skew', label:'Plan vs. actual skew difference' },
+      { key:'planned_skewness',    label:'Planned skewness' },
+      { key:'planned_front_load',  label:'Planned front-load ratio' },
+      { key:'planned_gini',        label:'Planned concentration' },
+      { key:'planned_peak_norm',   label:'Planned peak period' },
+      { key:'planned_kurtosis',    label:'Planned kurtosis' },
     ]
   },
 ];
@@ -381,13 +456,13 @@ function _shapeDisplayVals() {
   const nn = (x) => Math.max(0, x);
   return {
     skewness:            nn(s.skewness).toFixed(3),
-    front_load_ratio:    (nn(s.frontLoadRatio) * 100).toFixed(1) + '%',
+    front_load_ratio:    nn(s.frontLoadRatio).toFixed(3),
     gini:                nn(s.gini).toFixed(3),
     peak_period_norm:    nn(s.peakPeriodNorm).toFixed(3),
     kurtosis:            nn(s.kurtosis).toFixed(3),
     plan_vs_actual_skew: nn(focalPlannedStats.skewness - s.skewness).toFixed(3),
     planned_skewness:    nn(focalPlannedStats.skewness).toFixed(3),
-    planned_front_load:  (nn(focalPlannedStats.frontLoadRatio) * 100).toFixed(1) + '%',
+    planned_front_load:  nn(focalPlannedStats.frontLoadRatio).toFixed(3),
     planned_gini:        nn(focalPlannedStats.gini).toFixed(3),
     planned_peak_norm:   nn(focalPlannedStats.peakPeriodNorm).toFixed(3),
     planned_kurtosis:    nn(focalPlannedStats.kurtosis).toFixed(3),
@@ -405,9 +480,11 @@ function _buildDriverPill(group, pct) {
 // Integer % per driver group, normalized from allocated points so they sum to exactly 100
 // (largest-remainder rounding). Returns one value per DRIVER_GROUPS entry.
 function _groupPctsSum100() {
+  // Element breakdowns are metric-specific — only the selected Data type's rows count
+  const metricOk = (f) => !f.metric || f.metric === CHART_METRIC;
   const pts = DRIVER_GROUPS.map(g => g.id === 'spi'
     ? SPI_CPI_WEIGHT
-    : g.keys.reduce((a, k) => a + (ACTIVE_WEIGHTS[k] || 0), 0));
+    : g.features.filter(f => !f.header && metricOk(f)).reduce((a, f) => a + (ACTIVE_WEIGHTS[f.key] || 0), 0));
   const total = pts.reduce((a, b) => a + b, 0);
   if (total <= 0) return pts.map(() => 0);
   const raw    = pts.map(p => p / total * 100);
@@ -422,40 +499,41 @@ function _groupPctsSum100() {
 }
 
 function buildAiBannerDetail() {
+  // Separate card per driver group; each card uses the Feature / Weight / Contribution / Relative design.
+  // Weight mirrors the settings sliders exactly (unset features default to 1.0, same as the modal).
   const groupPcts = _groupPctsSum100();
-
-  function featureBarPct(feat) {
-    if (feat.fixedWeight != null) return Math.round((SPI_CPI_WEIGHT / 2) / 5 * 100);
-    const w = ACTIVE_WEIGHTS[feat.key];
-    return w != null ? Math.round(w / 5 * 100) : 0;
-  }
+  const eff = (f) => f.fixedWeight != null ? SPI_CPI_WEIGHT / 2 : (ACTIVE_WEIGHTS[f.key] != null ? ACTIVE_WEIGHTS[f.key] : 1);
+  // Element breakdowns are metric-specific — only show the one matching the selected Data type
+  const metricOk = (f) => !f.metric || f.metric === CHART_METRIC;
+  const denom = DRIVER_GROUPS.flatMap(g => g.features).filter(f => !f.header && metricOk(f)).reduce((a, f) => a + eff(f), 0);
+  const contribOf = (w) => denom > 0 ? (w / denom * 100).toFixed(1) + '%' : '0.0%';
 
   const cards = DRIVER_GROUPS.map((group, gi) => {
     const pct = groupPcts[gi];
-    const featureRows = group.features.map(f => {
+    const rows = group.features.filter(metricOk).map(f => {
       if (f.header) return `<div class="sc-ai-df-subhead">${f.header}</div>`;
-      const barPct = featureBarPct(f);
-      const w = f.fixedWeight != null ? SPI_CPI_WEIGHT / 2 : (ACTIVE_WEIGHTS[f.key] || 0);
-      const dimmed = w === 0 ? 'opacity:0.4;' : '';
-      return `<div class="sc-ai-df-row" style="${dimmed}">
+      const w = eff(f);
+      const barPct = Math.round(w / 5 * 100);
+      const zero = w === 0;
+      return `<div class="sc-ai-df-row${zero ? ' is-zero' : ''}">
         <span class="sc-ai-df-label" title="${f.label}">${f.label}</span>
-        <span class="sc-ai-df-value">${f.val()}</span>
-        <div class="sc-ai-df-bar-wrap" title="Weight: ${w.toFixed(1)}">
-          <div class="sc-ai-df-bar" style="width:${barPct}%;background:${group.color}"></div>
-        </div>
+        <span class="sc-ai-df-wt">${w.toFixed(1)}</span>
+        <span class="sc-ai-df-contrib">${contribOf(w)}</span>
+        <div class="sc-ai-df-bar-wrap"><div class="sc-ai-df-bar" style="width:${barPct}%;background:${zero ? '#e5e7eb' : group.color}"></div></div>
       </div>`;
     }).join('');
 
     return `<div class="sc-ai-detail-group">
       <div class="sc-ai-dg-header">${_buildDriverPill(group, pct)}</div>
-      <div class="sc-ai-dg-features">${featureRows}</div>
+      <div class="sc-ai-dg-colhead"><span>Feature</span><span>Wt</span><span>Contrib</span><span>Rel</span></div>
+      <div class="sc-ai-dg-features">${rows}</div>
     </div>`;
   }).join('');
 
   return `<div class="sc-ai-detail-grid">${cards}</div>
     <div class="sc-ai-detail-foot">
       <i class="pi pi-info-circle"></i>
-      Contribution % is normalized from points allocated in forecast settings (sums to 100%). Bar length = weight relative to maximum (5.0).
+      Weight and contribution mirror the values set in AI forecast settings. Bar length = weight relative to maximum (5.0).
       <button type="button" class="sc-ai-detail-foot-link" onclick="openDriverSettings()">
         <i class="pi pi-cog"></i> Settings
       </button>
@@ -963,6 +1041,17 @@ function initSettingsTab() {
   container.innerHTML = html;
 }
 
+// "Detected: N control elements active" — counts cost-element keys with a non-zero weight
+const COST_ELEMENT_KEYS = ['labor_mix', 'material_mix', 'equip_mix', 'subcontract_mix', 'craft_labour', 'supervision', 'internal_cost'];
+function _controlElementsLabel() {
+  const n = COST_ELEMENT_KEYS.filter(k => (ACTIVE_WEIGHTS[k] || 0) > 0).length;
+  return `Detected: ${n} of ${COST_ELEMENT_KEYS.length} control elements active.`;
+}
+function _refreshControlElementCount() {
+  const el = document.getElementById('cost-elements-count');
+  if (el) el.textContent = _controlElementsLabel();
+}
+
 // Re-sum the "x.x pts" badges on every settings accordion header
 function _refreshSettingsGroupPoints() {
   document.querySelectorAll('[data-pts-keys]').forEach(el => {
@@ -970,6 +1059,19 @@ function _refreshSettingsGroupPoints() {
     const sum = el.dataset.ptsKeys.split(',').reduce((a, k) => a + (ACTIVE_WEIGHTS[k] != null ? ACTIVE_WEIGHTS[k] : 1), 0);
     el.textContent = sum.toFixed(1) + ' pts';
   });
+  _refreshSettingsSectionPcts();
+  _refreshControlElementCount();
+}
+
+// Recalculate the per-section contribution % badges in the settings modal
+// (same source as the "Driven by" pills — DRIVER_GROUPS order: classification, numerical, spi, shape)
+function _refreshSettingsSectionPcts() {
+  const pcts = _groupPctsSum100();
+  document.querySelectorAll('.sc-settings-section-pct').forEach((el, i) => {
+    if (pcts[i] != null) el.textContent = pcts[i] + '%';
+  });
+  // Keep the "Driven by" pills in sync with the same numbers
+  _renderSummaryPills();
 }
 
 // Format a weight for display: one decimal normally, two when needed (e.g. 2.25)
@@ -1051,6 +1153,7 @@ window.setSpiCpiWeight = function(v) {
   const slider = document.getElementById('wslider-spi_cpi');
   if (valEl)  valEl.value = _fmtWeight(v);
   if (slider) { slider.value = v; slider.style.setProperty('--fill-pct', (v / 5 * 100).toFixed(0) + '%'); }
+  _refreshSettingsSectionPcts();
 };
 
 window.spiCpiWeightInput = function(raw) {
@@ -1491,6 +1594,13 @@ let CHART_METRIC = 'cost';
 window.setChartMetric = function (metric) {
   if (!CHART_METRICS[metric]) return;
   CHART_METRIC = metric;
+  // Contribution % is metric-specific (only the active breakdown counts) — recalculate everywhere
+  _refreshSettingsSectionPcts();
+  // Rebuild the "Driven by" detail if it's open — its element breakdown + contributions are metric-specific
+  const detailPanel = document.getElementById('scAiBannerDetail');
+  if (detailPanel && detailPanel.dataset.built && detailPanel.style.display !== 'none') {
+    detailPanel.innerHTML = buildAiBannerDetail();
+  }
   if (!scurveChart) return;
   // Tick + tooltip callbacks read CHART_METRIC live, so an update() re-labels
   // them; only the static axis title needs an explicit refresh.
@@ -1545,10 +1655,10 @@ function initScurveChart() {
       labels: CHART_LABELS,
       datasets: [
         // Bar datasets — indices 0-7 (hidden in Cumulative, shown in Periodic)
-        { label: 'Baseline',   data: BAR_DATA.baseline,   backgroundColor: '#3949ab', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Baseline',   data: BAR_DATA.baseline,   backgroundColor: '#7c3aed', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
         { label: 'Approved',   data: BAR_DATA.approved,   backgroundColor: '#1565c0', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
-        { label: 'Control',    data: BAR_DATA.control,    backgroundColor: '#283593', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
-        { label: 'Financial',  data: BAR_DATA.financial,  backgroundColor: '#5c6bc0', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Control',    data: BAR_DATA.control,    backgroundColor: '#db2777', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Financial',  data: BAR_DATA.financial,  backgroundColor: '#0d9488', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
         { label: 'Earned',     data: BAR_DATA.earned,     backgroundColor: '#059669', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
         { label: 'Actuals',    data: BAR_DATA.actuals,    backgroundColor: '#2563eb', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
         { label: 'Incurred',   data: BAR_DATA.incurred,   backgroundColor: '#f59e0b', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
@@ -1557,9 +1667,9 @@ function initScurveChart() {
         { type: 'line', label: '_p90', data: p90Band, borderWidth: 0, pointRadius: 0, fill: '+1', backgroundColor: 'rgba(37,99,235,0.10)', borderColor: 'transparent', tension: 0.45, spanGaps: false, order: 1 },
         { type: 'line', label: '_p10', data: p10Band, borderWidth: 0, pointRadius: 0, fill: false, backgroundColor: 'transparent',          borderColor: 'transparent', tension: 0.45, spanGaps: false, order: 1 },
         // Historical solid lines — indices 10 (_hist_actual), 11 (_hist_incurred), 12 (_hist_earned)
-        { type: 'line', label: '_hist_actual',   data: histActual,   borderColor: '#2563eb', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
-        { type: 'line', label: '_hist_incurred', data: histIncurred, borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
-        { type: 'line', label: '_hist_earned',   data: histEarned,   borderColor: '#059669', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Actual / ETC',   data: histActual,   borderColor: '#2563eb', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Incurred / ETC', data: histIncurred, borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Earned',         data: histEarned,   borderColor: '#059669', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
         // Forecast dashed lines — indices 13 (Actual/ETC), 14 (Incurred/ETC), 15 (Earned)
         { type: 'line', label: 'Actual / ETC',   data: projActual,   borderColor: '#2563eb', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#2563eb', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
         { type: 'line', label: 'Incurred / ETC', data: projIncurred, borderColor: '#f59e0b', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
@@ -1567,9 +1677,9 @@ function initScurveChart() {
         // BAC reference — index 16
         { type: 'line', label: '_bac', data: Array(24).fill(40), borderColor: '#9ca3af', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false, order: 3 },
         // Budget comparison lines — indices 17 (Budget), 18 (Control budget), 19 (Finance budget), 20 (Cashflow)
-        { type: 'line', label: 'Budget',         data: lineBudget,   borderColor: '#3949ab', borderWidth: 2,   pointRadius: 0, fill: false, tension: 0.45, order: 1 },
-        { type: 'line', label: 'Control budget', data: lineControl,  borderColor: '#283593', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
-        { type: 'line', label: 'Finance budget', data: lineFinance,  borderColor: '#5c6bc0', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
+        { type: 'line', label: 'Budget',         data: lineBudget,   borderColor: '#7c3aed', borderWidth: 2,   pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Control budget', data: lineControl,  borderColor: '#db2777', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
+        { type: 'line', label: 'Finance budget', data: lineFinance,  borderColor: '#0d9488', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
         { type: 'line', label: 'Cashflow',       data: lineCashflow, borderColor: '#0891b2', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
       ]
     },
@@ -1582,8 +1692,21 @@ function initScurveChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          filter: (i) => !i.dataset.label.startsWith('_'),
+          filter: (item, index, array) => {
+            if (item.dataset.label.startsWith('_') || item.raw == null) return false;
+            // Drop duplicate same-series entries (historical + forecast halves overlap at "today");
+            // keep line-vs-bar distinction by keying on label + type.
+            const key = item.dataset.label + '|' + item.dataset.type;
+            return array.findIndex(x => x.raw != null && (x.dataset.label + '|' + x.dataset.type) === key) === index;
+          },
+          usePointStyle: true,
           callbacks: {
+            // Line datasets get a line swatch; bar datasets get a filled box — so it's clear which is which
+            labelPointStyle: (c) => ({ pointStyle: c.dataset.type === 'bar' ? 'rect' : 'line', rotation: 0 }),
+            labelColor: (c) => {
+              const col = c.dataset.borderColor || c.dataset.backgroundColor || '#9ca3af';
+              return { borderColor: col, backgroundColor: col, borderWidth: c.dataset.type === 'bar' ? 0 : 3 };
+            },
             label: (c) => c.raw === null ? null : ` ${c.dataset.label}: ${CHART_METRICS[CHART_METRIC].valFmt(c.raw)}`
           }
         }
@@ -1716,7 +1839,16 @@ window.toggleForecastLine = function(key) {
     btn.setAttribute('aria-pressed', String(LINE_VISIBILITY[key]));
     btn.classList.toggle('sc-line-toggle--off', !LINE_VISIBILITY[key]);
   }
+  _updateLineMoreDot();
 };
+
+// Show a dot on the "More" button when any line inside the More menu is active
+function _updateLineMoreDot() {
+  const moreBtn = document.getElementById('lineMoreBtn');
+  if (!moreBtn) return;
+  const anyOn = ['control', 'finance', 'cashflow'].some(k => LINE_VISIBILITY[k]);
+  moreBtn.classList.toggle('has-active', anyOn);
+}
 
 /* ── DATE RANGE SELECTOR (dual-handle slider) ────────────────────── */
 let DATE_RANGE = { start: 0, end: MONTH_CALENDAR.length - 1 };
@@ -2777,7 +2909,7 @@ function _exportRenderSelectStep() {
       </div>
       <div class="sc-export-footer">
         <button class="btn btn-secondary" onclick="closeExportModal()">Cancel</button>
-        <button class="btn btn-primary" id="exportNextBtn" onclick="exportGoFinal()"><i class="pi pi-arrow-right btn-icon-left"></i> Export</button>
+        <button class="btn btn-primary" id="exportNextBtn" onclick="exportGoFinal()">Confirm <i class="pi pi-arrow-right"></i></button>
       </div>
     </div>`;
 
@@ -2824,7 +2956,7 @@ window.exportGoFinal = function() {
       <div class="sc-exp-final-frame"><iframe id="exportFinalFrame" title="Final report preview"></iframe></div>
       <div class="sc-export-footer">
         <button class="btn btn-secondary" onclick="exportGoBack()"><i class="pi pi-arrow-left btn-icon-left"></i> Back</button>
-        <button class="btn btn-primary" onclick="doExportPrint()"><i class="pi pi-download btn-icon-left"></i> Export PDF</button>
+        <button class="btn btn-primary" onclick="doExportPrint()"><i class="pi pi-download btn-icon-left"></i> Export</button>
       </div>
     </div>`;
   const frame = document.getElementById('exportFinalFrame');
@@ -2883,95 +3015,16 @@ function _buildAndMountSettings(container) {
     </div>`;
   }
 
-  const catGroups = [
-    { source: 'Project groups', items: [
-      { key: 'proj_program',         title: 'Program'                 },
-      { key: 'proj_portfolio',       title: 'Portfolio'               },
-      { key: 'proj_type',            title: 'Project type'            },
-      { key: 'proj_phase',           title: 'Project phase'           },
-      { key: 'proj_stage_gate',      title: 'Stage gate'              },
-      { key: 'proj_delivery_method', title: 'Delivery method'         },
-      { key: 'proj_contract_model',  title: 'Contract model'          },
-      { key: 'proj_funding_type',    title: 'Funding type'            },
-      { key: 'proj_client_sector',   title: 'Client sector'           },
-      { key: 'proj_industry',        title: 'Industry segment'        },
-      { key: 'proj_region',          title: 'Region'                  },
-      { key: 'proj_country',         title: 'Country'                 },
-      { key: 'proj_state',           title: 'State / province'        },
-      { key: 'proj_city',            title: 'City'                    },
-      { key: 'proj_site_type',       title: 'Site type'               },
-      { key: 'proj_environment',     title: 'Greenfield / brownfield' },
-      { key: 'proj_size_band',       title: 'Size band'               },
-      { key: 'proj_duration_band',   title: 'Duration band'           },
-      { key: 'proj_complexity',      title: 'Complexity rating'       },
-      { key: 'proj_risk_class',      title: 'Risk class'              },
-      { key: 'proj_priority',        title: 'Priority tier'           },
-      { key: 'proj_currency',        title: 'Currency'                },
-      { key: 'proj_business_unit',   title: 'Business unit'           },
-      { key: 'proj_division',        title: 'Division'                },
-      { key: 'proj_sponsor',         title: 'Sponsor org'             },
-      { key: 'proj_execution_model', title: 'Execution model'         },
-    ]},
-    { source: 'Enterprise', items: [
-      { key: 'ent_program',        title: 'Capital program'   },
-      { key: 'ent_portfolio',      title: 'Portfolio'         },
-      { key: 'ent_business_unit',  title: 'Business unit'     },
-      { key: 'ent_region',         title: 'Region'            },
-      { key: 'ent_country',        title: 'Country'           },
-      { key: 'ent_funding_source', title: 'Funding source'    },
-      { key: 'ent_asset_class',    title: 'Asset class'       },
-      { key: 'ent_sponsor_org',    title: 'Sponsor org'       },
-      { key: 'ent_fiscal_year',    title: 'Fiscal year'       },
-    ]},
-    { source: 'Standard', items: [
-      { key: 'phase_type',         title: 'Phase type'        },
-      { key: 'discipline',         title: 'Discipline'        },
-      { key: 'work_type',          title: 'Work type'         },
-      { key: 'std_cost_category',  title: 'Cost category'     },
-      { key: 'std_commodity',      title: 'Commodity class'   },
-      { key: 'std_contract_type',  title: 'Contract type'     },
-      { key: 'std_account_status', title: 'Account status'    },
-      { key: 'std_wbs_level',      title: 'WBS level'         },
-      { key: 'std_milestone_type', title: 'Milestone type'    },
-    ]},
-    { source: 'Module', items: [
-      { key: 'proj_size_cat',      title: 'Project size'         },
-      { key: 'acct_size_cat',      title: 'Account size'         },
-      { key: 'region',             title: 'Region'               },
-      { key: 'mod_facility_type',  title: 'Facility type'        },
-      { key: 'mod_plant_area',     title: 'Plant area'           },
-      { key: 'mod_system',         title: 'System'               },
-      { key: 'mod_subsystem',      title: 'Subsystem'            },
-      { key: 'mod_equipment_class',title: 'Equipment class'      },
-      { key: 'mod_material_group', title: 'Material group'       },
-      { key: 'mod_vendor_category',title: 'Vendor category'      },
-      { key: 'mod_procurement_pkg',title: 'Procurement package'  },
-      { key: 'mod_construction_zone',title: 'Construction zone'  },
-      { key: 'mod_work_package',   title: 'Work package'         },
-      { key: 'mod_activity_type',  title: 'Schedule activity type'},
-      { key: 'mod_resource_type',  title: 'Resource type'        },
-      { key: 'mod_craft_type',     title: 'Craft type'           },
-      { key: 'mod_shift_pattern',  title: 'Shift pattern'        },
-      { key: 'mod_site_location',  title: 'Site location'        },
-      { key: 'mod_building',       title: 'Building'             },
-      { key: 'mod_level',          title: 'Floor / level'        },
-      { key: 'mod_unit_operation', title: 'Unit operation'       },
-      { key: 'mod_process_area',   title: 'Process area'         },
-      { key: 'mod_discipline_lead',title: 'Discipline lead'      },
-      { key: 'mod_deliverable',    title: 'Engineering deliverable'},
-      { key: 'mod_permit_type',    title: 'Permit type'          },
-      { key: 'mod_risk_category',  title: 'Risk category'        },
-    ]},
-  ];
+  // Admin context configures enterprise/standard defaults only — the
+  // project-specific Module group is not shown there
+  const catGroups = IS_ADMIN_CONTEXT
+    ? CLASSIFICATION_GROUPS.filter(g => g.source !== 'Module')
+    : CLASSIFICATION_GROUPS;
+
+  // Section contribution % — same source as the "Driven by" pills (DRIVER_GROUPS order: classification, numerical, spi, shape)
+  const secPcts = _groupPctsSum100();
 
   let html = `
-    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
-      <i class="pi pi-lock" style="color:#1d4ed8;flex-shrink:0;margin-top:2px"></i>
-      <div style="font-size:12.5px;color:#1e40af;line-height:1.6">
-        <strong>Private data only.</strong> AI matching uses Cisco Systems' internal project database exclusively.
-        No external benchmarks or shared data pools are referenced. All matched accounts are from this client's own completed project history.
-      </div>
-    </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <p style="font-size:13px;color:#64748b;margin:0">Adjust classification groups and feature weights used by the Gower distance matching algorithm. Changes apply immediately to all three forecast lines.</p>
       <button class="sc-settings-reset-btn" onclick="resetSettingsWeights()"><i class="pi pi-refresh"></i> Reset to defaults</button>
@@ -2981,6 +3034,7 @@ function _buildAndMountSettings(container) {
   html += `<div class="sc-settings-section">
     <div class="sc-settings-section-header">
       <i class="pi pi-tags"></i> Classification groups
+      <span class="sc-settings-section-pct">${secPcts[0]}%</span>
       <span class="sc-settings-section-desc">Enterprise/standard group codes from control account ID and top 3 project groups. Driven by the key groupings associated with a Contruent project ID and control account ID — configurable per client during setup.</span>
     </div>
     <div style="background:#fff">
@@ -3013,10 +3067,10 @@ function _buildAndMountSettings(container) {
         }).join('')}
         </div>
       `).join('')}
-      <div style="padding:10px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;font-size:11.5px;color:#64748b;display:flex;align-items:flex-start;gap:6px">
+      ${IS_ADMIN_CONTEXT ? '' : `<div style="padding:10px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;font-size:11.5px;color:#64748b;display:flex;align-items:flex-start;gap:6px">
         <i class="pi pi-info-circle" style="color:#6366f1;flex-shrink:0;margin-top:1px"></i>
         Project-specific module groups are matched within the same Contruent project ID only and do not cross-match with accounts from other projects.
-      </div>
+      </div>`}
     </div>
   </div>`;
 
@@ -3024,22 +3078,19 @@ function _buildAndMountSettings(container) {
   html += `<div class="sc-settings-section">
     <div class="sc-settings-section-header">
       <i class="pi pi-calculator"></i> Numerical features
+      <span class="sc-settings-section-pct">${secPcts[1]}%</span>
       <span class="sc-settings-section-desc">Quantitative account attributes.</span>
     </div>
     <div style="background:#fff">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid #f1f5f9">
         <div>
-          <span style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Control element breakdown (labor / materials / equipment / subcontracts)</span>
-          <span style="font-size:12px;color:var(--text-muted)">Detected: 4 control elements active.</span>
+          <span style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Control element breakdown</span>
+          <span style="font-size:12px;color:var(--text-muted)" id="cost-elements-count">${_controlElementsLabel()}</span>
         </div>
         <label class="sc-toggle-switch" aria-label="Enable control element breakdown">
           <input type="checkbox" id="toggleCostBreakdown" checked onchange="toggleCostBreakdown(this.checked)" />
           <span class="sc-toggle-track"></span>
         </label>
-      </div>
-      <div id="num-applied-summary" style="padding:8px 14px;background:#f0fdf4;border-bottom:1px solid #dcfce7;font-size:12px;color:#166534;display:flex;align-items:center;gap:6px">
-        <i class="pi pi-check-circle" style="font-size:13px"></i>
-        <span id="num-applied-text">6 of 6 numerical features applied</span>
       </div>
       <div style="padding:10px 14px;background:#eff6ff;border-bottom:1px solid #dbeafe;font-size:11.5px;color:#1e40af;display:flex;align-items:flex-start;gap:6px">
         <i class="pi pi-info-circle" style="flex-shrink:0;margin-top:1px"></i>
@@ -3070,6 +3121,7 @@ function _buildAndMountSettings(container) {
   html += `<div class="sc-settings-section">
     <div class="sc-settings-section-header">
       <i class="pi pi-chart-line"></i> SPI / CPI integration (earned value)
+      <span class="sc-settings-section-pct">${secPcts[2]}%</span>
       <span class="sc-settings-section-desc">Applies to clients where earned value reporting is active. SPI and CPI influence curve shape matching independently for all three forecast lines.</span>
     </div>
     <div style="background:#fff">
@@ -3101,6 +3153,7 @@ function _buildAndMountSettings(container) {
   html += `<div class="sc-settings-section">
     <div class="sc-settings-section-header">
       <i class="pi pi-chart-bar"></i> Curve shape statistics
+      <span class="sc-settings-section-pct">${secPcts[3]}%</span>
       <span class="sc-settings-section-desc">Statistical features computed from observed actuals to date (observed) and the planned baseline (planned). Each forecast line runs a separate shape-matching pass.</span>
     </div>
     <div style="background:#fff">
@@ -3405,6 +3458,34 @@ function initWarningsContent() {
         <strong>CPI below threshold — CA-1042:</strong> Cost performance index (0.92) is below the acceptable threshold of 0.95.
         Historical accounts with CPI in the 0.88–0.95 range show an average cost overrun of 8–12% at completion. Current EAC ($42.2M) reflects this pattern.
       </div>
+    </div>
+
+    <h3 class="sc-warn-table-title">Account warnings</h3>
+    <div class="sc-warn-table-wrap">
+      <table class="sc-warn-table">
+        <thead>
+          <tr>
+            <th>Control Account ID</th>
+            <th>Control Account Description</th>
+            <th>Issue Type</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[
+            { id: 'CA-1042', desc: 'Civil Foundations — Phase 2',  type: 'CPI below threshold',          sev: 'med',  remark: 'CPI 0.92 is below the 0.95 threshold. Similar accounts show 8–12% cost overrun at completion; EAC $42.2M reflects this.' },
+            { id: 'CA-1042', desc: 'Civil Foundations — Phase 2',  type: 'Potentially outdated forecast date', sev: 'med', remark: 'AI forecast completion (Nov 2026) is 3 months later than the scheduled date (Aug 2026). Verify with the project scheduler.' },
+            { id: 'CA-1043', desc: 'Structural Steel — Phase 1',   type: 'Potentially outdated forecast date', sev: 'high', remark: 'Completion date within 30 days but >60% of budget remains. AI forecast blocked until schedule dates are updated.' },
+            { id: 'CA-1047', desc: 'Electrical Distribution',      type: 'Potentially outdated forecast date', sev: 'high', remark: 'Completion date within 30 days but >60% of budget remains. AI forecast blocked until schedule dates are updated.' },
+          ].map(r => `
+            <tr>
+              <td class="sc-warn-id">${r.id}</td>
+              <td>${r.desc}</td>
+              <td><span class="sc-warn-tag sc-warn-tag--${r.sev}">${r.type}${r.sev === 'high' ? '<i class="pi pi-info-circle sc-warn-info" tabindex="0" title="Please verify and update completion dates with the project scheduler, then re-run the AI forecast"></i>' : ''}</span></td>
+              <td class="sc-warn-remark">${r.remark}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
     </div>`;
 }
 
@@ -3473,8 +3554,209 @@ function _restoreSectionsView() {
   setSectionsView(saved || 'accordion');
 }
 
+/* ── ADMIN SETTINGS PAGE (?context=admin) ───────────────────────── */
+// In the administrator context the page becomes a plain settings page:
+// the forecast toolbar/sections are hidden (kept in the DOM so they can
+// be brought back later) and the AI forecast settings render inline
+// with a Save action — no modal.
+const IS_ADMIN_CONTEXT = new URLSearchParams(window.location.search).get('context') === 'admin';
+
+/* Change log — persisted to localStorage, seeded with demo history */
+const ADMIN_LOG_KEY = 'scurve-admin-settings-log';
+const ADMIN_LOG_SEED = [
+  { initials: 'AU', name: 'Admin User',     role: 'Super user',    color: '#dc2626', action: 'Updated 4 feature weights in Curve shape statistics', ts: '2026-05-28T14:32:00' },
+  { initials: 'MT', name: 'Michael Torres', role: 'Cost engineer', color: '#0891b2', action: 'Adjusted SPI / CPI integration weight 2.5 → 3.0',      ts: '2026-05-19T09:08:00' },
+  { initials: 'AU', name: 'Admin User',     role: 'Super user',    color: '#dc2626', action: 'Enabled Enterprise classification group',              ts: '2026-05-12T16:45:00' },
+  { initials: 'AU', name: 'Admin User',     role: 'Super user',    color: '#dc2626', action: 'Initial configuration created',                        ts: '2026-04-30T11:20:00' },
+];
+
+function _adminLogEntries() {
+  try {
+    const raw = localStorage.getItem(ADMIN_LOG_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return ADMIN_LOG_SEED.slice();
+}
+
+function _adminLogSave(entries) {
+  try { localStorage.setItem(ADMIN_LOG_KEY, JSON.stringify(entries)); } catch (e) {}
+}
+
+function _adminLogFmtTs(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return `${date} · ${time}`;
+}
+
+function _renderAdminLog() {
+  const list = document.getElementById('adminLogList');
+  if (!list) return;
+  list.innerHTML = _adminLogEntries().map(e => `
+    <div class="sc-admin-log-entry">
+      <span class="sc-admin-log-avatar" style="background:${e.color}">${e.initials}</span>
+      <div class="sc-admin-log-entry-body">
+        <div class="sc-admin-log-who">${e.name} <span class="sc-admin-log-role">· ${e.role}</span></div>
+        <div class="sc-admin-log-action">${e.action}</div>
+        <div class="sc-admin-log-ts"><i class="pi pi-clock"></i> ${_adminLogFmtTs(e.ts)}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* Edit flow — the inline page is always read-only; Edit opens the settings
+   in a modal, Save commits + logs, Cancel/Esc discards the edits */
+let _adminEditSnapshot = null;
+
+function _adminSetInlineReadonly() {
+  const container = document.getElementById('admin-settings-container');
+  if (!container) return;
+  container.classList.add('sc-admin-settings--readonly');
+  container.querySelectorAll('input').forEach(el => { el.disabled = true; });
+}
+
+function _adminRebuildInline() {
+  const container = document.getElementById('admin-settings-container');
+  if (!container) return;
+  container.innerHTML = '';
+  _buildAndMountSettings(container);
+  _adminSetInlineReadonly();
+}
+
+window.openAdminSettingsModal = function() {
+  // Snapshot weights — used to restore on cancel and to describe the change on save
+  _adminEditSnapshot = Object.assign({}, ACTIVE_WEIGHTS, { __spi_cpi: SPI_CPI_WEIGHT });
+
+  // Tear down the inline settings so control IDs aren't duplicated in the DOM
+  const inline = document.getElementById('admin-settings-container');
+  if (inline) inline.innerHTML = '';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sc-modal-overlay';
+  overlay.id = 'adminSettingsModalOverlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Edit AI forecast settings');
+
+  overlay.innerHTML = `
+    <div class="sc-modal sc-settings-modal">
+      <div class="sc-modal-header">
+        <div class="sc-modal-title"><i class="pi pi-cog"></i> Edit AI forecast settings</div>
+        <button class="sc-modal-close" onclick="cancelAdminSettingsModal()" aria-label="Close"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="sc-modal-body sc-settings-modal-body">
+        <div id="admin-settings-modal-container"></div>
+      </div>
+      <div class="sc-settings-modal-footer" style="justify-content:flex-end">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" type="button" onclick="cancelAdminSettingsModal()">Cancel</button>
+          <button class="btn btn-primary" type="button" onclick="saveAdminSettingsModal()">
+            <i class="pi pi-check btn-icon-left"></i> Save settings
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  // Deliberate close only — outside clicks don't dismiss (Esc still cancels)
+  document.addEventListener('keydown', _adminModalEscHandler);
+  document.body.appendChild(overlay);
+
+  _buildAndMountSettings(document.getElementById('admin-settings-modal-container'));
+};
+
+function _adminModalEscHandler(e) {
+  if (e.key === 'Escape') cancelAdminSettingsModal();
+}
+
+function _closeAdminSettingsModal() {
+  const overlay = document.getElementById('adminSettingsModalOverlay');
+  if (overlay) overlay.remove();
+  document.removeEventListener('keydown', _adminModalEscHandler);
+  _adminRebuildInline(); // restore the read-only inline view
+}
+
+window.cancelAdminSettingsModal = function() {
+  // Discard edits — restore the snapshot taken when the modal opened
+  if (_adminEditSnapshot) {
+    SPI_CPI_WEIGHT = _adminEditSnapshot.__spi_cpi;
+    const snap = Object.assign({}, _adminEditSnapshot);
+    delete snap.__spi_cpi;
+    ACTIVE_WEIGHTS = snap;
+  }
+  _adminEditSnapshot = null;
+  _closeAdminSettingsModal();
+};
+
+window.saveAdminSettingsModal = function() {
+  // Count changed weights for the log entry
+  const snap = _adminEditSnapshot || {};
+  let changed = Object.keys(ACTIVE_WEIGHTS).filter(k => ACTIVE_WEIGHTS[k] !== snap[k]).length;
+  if (SPI_CPI_WEIGHT !== snap.__spi_cpi) changed++;
+  const action = changed > 0
+    ? `Updated ${changed} feature weight${changed === 1 ? '' : 's'}`
+    : 'Saved settings (no changes)';
+
+  const entries = _adminLogEntries();
+  entries.unshift({
+    initials: ACTIVE_USER.initials, name: ACTIVE_USER.name, role: ACTIVE_USER.role,
+    color: ACTIVE_USER.color, action, ts: new Date().toISOString()
+  });
+  _adminLogSave(entries);
+  _renderAdminLog();
+
+  _adminEditSnapshot = null;
+  _closeAdminSettingsModal();
+  showToast('success', '', 'Settings saved');
+};
+
+function initAdminSettingsPage() {
+  // Hide the forecast experience — admin only does the settings job here
+  const toolbar = document.querySelector('.sc-toolbar');
+  if (toolbar) toolbar.style.display = 'none';
+  const sections = document.getElementById('scSections');
+  if (sections) sections.style.display = 'none';
+
+  // Retitle the page for the admin context
+  const title = document.querySelector('.page-title');
+  if (title) title.textContent = 'S-curve forecasting settings';
+  const subtitle = document.querySelector('.sc-page-subtitle');
+  if (subtitle) subtitle.textContent = 'Configure the classification groups and feature weights used by the AI forecast matching algorithm';
+
+  // Two-column layout: settings card (white) + change log on the right
+  const page = document.createElement('div');
+  page.className = 'sc-admin-settings-layout';
+  page.innerHTML = `
+    <div class="sc-admin-settings-main">
+      <div class="sc-admin-card-head">
+        <div class="sc-admin-card-title">
+          <i class="pi pi-cog"></i> AI forecast settings
+          <span class="sc-admin-mode-badge" id="adminModeBadge">View only</span>
+        </div>
+        <button class="btn btn-secondary" type="button" id="adminEditBtn" onclick="openAdminSettingsModal()">
+          <i class="pi pi-pencil btn-icon-left"></i> Edit
+        </button>
+      </div>
+      <div id="admin-settings-container"></div>
+    </div>
+    <aside class="sc-admin-log" aria-label="Settings change log">
+      <div class="sc-admin-log-head"><i class="pi pi-history"></i> Change log</div>
+      <div class="sc-admin-log-list" id="adminLogList"></div>
+    </aside>`;
+  document.querySelector('.proj-content').appendChild(page);
+
+  _buildAndMountSettings(document.getElementById('admin-settings-container'));
+  _renderAdminLog();
+  _adminSetInlineReadonly(); // inline view is always read-only — Edit opens the modal
+}
+
 /* ── INIT ───────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  if (IS_ADMIN_CONTEXT) {
+    // Admin context: settings page only — skip chart/accordion init so
+    // the hidden forecast sections stay inert (no duplicate control IDs)
+    initAdminSettingsPage();
+    return;
+  }
   initScurveChart();
   _setupChartDragger();
   _renderSummaryPills();

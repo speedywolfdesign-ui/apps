@@ -1097,15 +1097,21 @@
       <section id="toast" class="component-section">
         <div class="section-header">
           <h1 class="section-title">Toast</h1>
-          <p class="section-desc">Transient notification messages in a corner overlay.</p>
+          <p class="section-desc">Transient notification messages on a severity-tinted surface — icon, message, divider and close. Appears bottom-center, 24px above the bottom edge. (Storybook: Components/Base/Toast)</p>
         </div>
         <div class="story-block">
-          <h3 class="story-label">Trigger Toasts</h3>
+          <h3 class="story-label">Severities</h3>
           <div class="story-canvas" style="gap:10px;flex-wrap:wrap">
             <button class="btn btn-info btn-sm" onclick="showToast('info','Info Message','This is an informational toast.')">Info</button>
             <button class="btn btn-success btn-sm" onclick="showToast('success','Success','Your action completed successfully.')">Success</button>
             <button class="btn btn-warning btn-sm" onclick="showToast('warn','Warning','Please review before proceeding.')">Warning</button>
             <button class="btn btn-danger btn-sm" onclick="showToast('error','Error','Something went wrong.')">Error</button>
+          </div>
+        </div>
+        <div class="story-block">
+          <h3 class="story-label">Single-line (detail only)</h3>
+          <div class="story-canvas" style="gap:10px;flex-wrap:wrap">
+            <button class="btn btn-success btn-sm" onclick="showToast('success','','Approved')">Approved</button>
           </div>
         </div>
       </section>

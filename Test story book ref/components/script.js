@@ -220,24 +220,27 @@ function switchTab(menuId, clickedItem, contentId, panelId) {
 /* ===== TOAST ===== */
 const toastIcons = {
   info:    'pi-info-circle',
-  success: 'pi-check-circle',
+  success: 'pi-check',
   warn:    'pi-exclamation-triangle',
   error:   'pi-times-circle'
 };
+/* Contruent DS toast (Storybook: Components/Base/Toast) — severity surface,
+   icon + message + divider + close. Title and detail are both optional. */
 function showToast(type, title, detail) {
   const container = document.getElementById('toastContainer');
+  if (!container) return;
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
+  toast.setAttribute('role', 'status');
   toast.innerHTML = `
     <i class="pi ${toastIcons[type]} toast-icon"></i>
     <div class="toast-body">
-      <div class="toast-title">${title}</div>
-      <div class="toast-detail">${detail}</div>
+      ${title ? `<div class="toast-title">${title}</div>` : ''}
+      ${detail ? `<div class="toast-detail">${detail}</div>` : ''}
     </div>
-    <button class="toast-close" onclick="dismissToast(this.closest('.toast'))"><i class="pi pi-times"></i></button>
   `;
   container.appendChild(toast);
-  setTimeout(() => dismissToast(toast), 4000);
+  setTimeout(() => dismissToast(toast), 3000);
 }
 function dismissToast(toast) {
   if (!toast || !toast.parentNode) return;
