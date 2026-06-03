@@ -36,7 +36,7 @@
 
     <!-- Page title block -->
     <div class="sc-page-title-block">
-      <h1 class="page-title" style="margin-bottom:2px">S-curve forecasting</h1>
+      <h1 class="page-title" style="margin-bottom:2px">AI diven forecast curves</h1>
       <div class="sc-page-subtitle">Control account: CA-1042 · Civil Foundations — Phase 2</div>
     </div>
 
@@ -67,16 +67,19 @@
         </button> -->
       </div>
       <div class="sc-toolbar-right">
-        <button class="btn btn-primary sc-run-btn" onclick="openSettingsModal()">
-          <i class="pi pi-cog btn-icon-left"></i> Run forecast
+        <button class="btn btn-primary sc-run-btn" onclick="runAiForecast()">
+          <i class="pi pi-play btn-icon-left"></i> Run forecast
+        </button>
+        <button class="sc-toolbar-icon-btn sc-forecast-settings-btn" onclick="openSettingsModal()" title="AI forecast settings" aria-label="AI forecast settings">
+          <i class="pi pi-cog"></i>
         </button>
         <div class="sc-kebab-wrap" id="kebabWrap">
           <button class="sc-toolbar-icon-btn" id="kebabBtn" onclick="toggleKebabMenu()" aria-expanded="false" title="More options" aria-label="More options">
             <i class="pi pi-ellipsis-v"></i>
           </button>
           <div class="sc-kebab-dropdown" id="kebabDropdown" style="display:none">
-            <button class="sc-kebab-item" type="button" onclick="kebabExportExcel()">
-              <i class="pi pi-file-excel"></i> Export
+            <button class="sc-kebab-item" type="button" onclick="openExportModal()">
+              <i class="pi pi-file-pdf"></i> Export to PDF
             </button>
             <div class="sc-kebab-divider"></div>
             <button class="sc-kebab-item" type="button" onclick="openSwitchUserModal()">
@@ -103,7 +106,6 @@
     <!-- Tab bar (only shown in tab view) -->
     <div class="sc-tabs-bar" id="scTabsBar" role="tablist">
       <button class="sc-tab-btn is-active" type="button" role="tab" data-tab="acc-forecast" onclick="setActiveTab('acc-forecast')">Cumulative spend forecast</button>
-      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-drivers" onclick="setActiveTab('acc-drivers')">Settings</button>
       <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-appendix" onclick="setActiveTab('acc-appendix')">Forecast appendix</button>
       <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-warnings" onclick="setActiveTab('acc-warnings')">Warnings <span class="sc-tab-badge" id="scWarningsBadge">3</span></button>
     </div>
@@ -120,14 +122,14 @@
         <div class="sc-ai-banner" id="scAiBanner">
           <div class="sc-ai-banner-row">
             <span class="sc-ai-active-tag">AI forecast active</span>
-            <span class="sc-ai-driven-label">Driven by:</span>
+            <span class="sc-ai-driven-label">Driven by: <i class="pi pi-info-circle sc-ai-driven-info" title="Percentages derived from points allocated in AI forecast settings — always sums to 100%"></i></span>
             <div class="sc-ai-driver-pills" id="scAiDriverPills">
-              <span class="sc-driver-pill">CA group codes: 30%</span>
-              <span class="sc-driver-pill">Project groups: 20%</span>
-              <span class="sc-driver-pill">Curve shape: 20%</span>
-              <span class="sc-driver-pill">Cost mix: 15%</span>
-              <span class="sc-driver-pill">SPI / CPI: 10%</span>
-              <span class="sc-driver-pill">Duration: 5%</span>
+              <span class="sc-driver-pill">CA group codes: 14%</span>
+              <span class="sc-driver-pill">Project groups: 7%</span>
+              <span class="sc-driver-pill">Curve shape: 35%</span>
+              <span class="sc-driver-pill">Cost mix: 25%</span>
+              <span class="sc-driver-pill">SPI / CPI: 8%</span>
+              <span class="sc-driver-pill">Duration: 11%</span>
             </div>
             <button type="button" class="sc-ai-detail-toggle" id="scAiDetailToggle" onclick="toggleAiDriverDetail()" aria-expanded="false" aria-controls="scAiBannerDetail">
               <i class="pi pi-chevron-down"></i> Show detailed view
@@ -140,51 +142,124 @@
           <div class="sc-ai-banner-detail" id="scAiBannerDetail" style="display:none"></div>
         </div>
 
-        <!-- KPI row (4 metric cards) -->
+        <!-- KPI matrix (2 rows × 5 metric tiles) -->
         <div class="sc-metric-row">
           <div class="sc-metric-card">
-            <div class="sc-metric-label">Est. at completion (EAC)</div>
-            <div class="sc-metric-value" id="m-eac">$42.2M</div>
-            <div class="sc-metric-sub" id="m-eac-sub">Budget: $40.0M · <span class="sc-metric-over">+5.50%</span></div>
+            <div class="sc-metric-label">Approved budget</div>
+            <div class="sc-metric-value">$31.76</div>
+            <div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$9.11</span>&nbsp;<span class="sc-delta-pct">(40.20%)</span></div>
           </div>
-          <div class="sc-metric-card sc-metric-card--border-left">
-            <div class="sc-metric-label">% Complete (actuals)</div>
-            <div class="sc-metric-value" id="m-pct">55.9%</div>
-            <div class="sc-metric-sub" id="m-pct-sub">Actuals to date: $23.6M</div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Actual to date</div>
+            <div class="sc-metric-value">$6.47</div>
+            <div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$230.45m</span>&nbsp;<span class="sc-delta-pct">(3.69%)</span></div>
           </div>
-          <div class="sc-metric-card sc-metric-card--border-left">
-            <div class="sc-metric-label">CPI / SPI</div>
-            <div class="sc-metric-value sc-metric-value--warn" id="m-cpispi">0.92 / 0.88</div>
-            <div class="sc-metric-sub sc-metric-sub--warn">Cost overrun · behind schedule</div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Total committed</div>
+            <div class="sc-metric-value">$7.56</div>
+            <div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-down"></i></span><span class="sc-delta-amt">$7.35</span>&nbsp;<span class="sc-delta-pct">(-49.31%)</span></div>
           </div>
-          <div class="sc-metric-card sc-metric-card--border-left">
-            <div class="sc-metric-label">Forecast completion</div>
-            <div class="sc-metric-value" id="m-completion">Nov 2026</div>
-            <div class="sc-metric-sub" id="m-completion-sub">Scheduled: Aug 2026 · <span class="sc-metric-over">+3 mo.</span></div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Estimate at completion</div>
+            <div class="sc-metric-value">$47.14</div>
+            <div class="sc-metric-delta sc-metric-delta--bad"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$33.42</span>&nbsp;<span class="sc-delta-pct">(243.70%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Planned completion date</div>
+            <div class="sc-metric-value">6 Sept 2033</div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Budget to date</div>
+            <div class="sc-metric-value">$11.26</div>
+            <div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$1.15</span>&nbsp;<span class="sc-delta-pct">(11.32%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Earned to date</div>
+            <div class="sc-metric-value">$11.57</div>
+            <div class="sc-metric-delta sc-metric-delta--good"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$11.53</span>&nbsp;<span class="sc-delta-pct">(25.26k%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label sc-metric-label--info">Estimate to complete <i class="pi pi-info-circle" title="Estimate to complete (ETC)"></i></div>
+            <div class="sc-metric-value">$40.55</div>
+            <div class="sc-metric-delta sc-metric-delta--bad"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$33.20</span>&nbsp;<span class="sc-delta-pct">(451.63%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Previous estimate at completion</div>
+            <div class="sc-metric-value">$13.71</div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Forecast completion date</div>
+            <div class="sc-metric-value">5 May 2032</div>
           </div>
         </div>
 
         <!-- Chart controls row -->
         <div class="sc-chart-controls">
           <div class="sc-chart-controls-left">
+            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('budget')" data-line="budget" aria-pressed="true">
+              <span class="sc-line-dot sc-line-dot--budget"></span> Budget
+            </button>
+            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('earned')" data-line="earned" aria-pressed="true">
+              <span class="sc-line-dot sc-line-dot--earned"></span> Earned
+            </button>
             <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('actual')" data-line="actual" aria-pressed="true">
               <span class="sc-line-dot sc-line-dot--actual"></span> Actual / ETC
             </button>
             <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('incurred')" data-line="incurred" aria-pressed="true">
               <span class="sc-line-dot sc-line-dot--incurred"></span> Incurred / ETC
             </button>
-            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('earned')" data-line="earned" aria-pressed="true">
-              <span class="sc-line-dot sc-line-dot--earned"></span> Earned / ETC
-            </button>
+            <div class="sc-line-more-wrap" id="lineMoreWrap">
+              <button class="sc-line-toggle sc-line-more-btn" type="button" id="lineMoreBtn" onclick="toggleLineMoreMenu()" aria-expanded="false" aria-haspopup="true">
+                More <i class="pi pi-chevron-down"></i>
+              </button>
+              <div class="sc-line-more-dropdown" id="lineMoreDropdown" style="display:none">
+                <button class="sc-line-toggle sc-line-toggle--off" type="button" onclick="toggleForecastLine('control')" data-line="control" aria-pressed="false">
+                  <span class="sc-line-dot sc-line-dot--control"></span> Control budget
+                </button>
+                <button class="sc-line-toggle sc-line-toggle--off" type="button" onclick="toggleForecastLine('finance')" data-line="finance" aria-pressed="false">
+                  <span class="sc-line-dot sc-line-dot--finance"></span> Finance budget
+                </button>
+                <button class="sc-line-toggle sc-line-toggle--off" type="button" onclick="toggleForecastLine('cashflow')" data-line="cashflow" aria-pressed="false">
+                  <span class="sc-line-dot sc-line-dot--cashflow"></span> Cashflow
+                </button>
+              </div>
+            </div>
             <label class="sc-line-toggle sc-line-toggle--checkbox">
               <input type="checkbox" id="cbConfidenceBand" checked onchange="toggleConfidenceBand(this.checked)" />
               <span>Confidence band</span>
             </label>
           </div>
           <div class="sc-chart-controls-right">
-            <div class="sc-date-range">
-              <button class="sc-date-btn">Jan 2025 <i class="pi pi-calendar"></i></button>
-              <button class="sc-date-btn">Dec 2026 <i class="pi pi-calendar"></i></button>
+            <div class="sc-metric-select">
+              <span class="sc-view-label">Data type</span>
+              <select id="scMetricSelect" onchange="setChartMetric(this.value)" aria-label="Chart metric">
+                <option value="cost">Cost</option>
+                <option value="hours">Hours</option>
+                <option value="company">Company</option>
+              </select>
+            </div>
+            <div class="sc-date-range" id="dateRangeWrap">
+              <button class="sc-date-btn sc-date-range-btn" id="dateRangeBtn" onclick="toggleDateRangePicker()" aria-expanded="false" aria-haspopup="true">
+                <i class="pi pi-calendar"></i>
+                <span id="dateRangeLabel">Dec 2024 – Nov 2026</span>
+                <i class="pi pi-chevron-down sc-date-range-caret"></i>
+              </button>
+              <div class="sc-date-range-pop" id="dateRangePop" style="display:none">
+                <div class="sc-drp-title">Period</div>
+                <div class="sc-drp-boxes">
+                  <span class="sc-drp-box" id="drpStartBox">Dec 2024</span>
+                  <span class="sc-drp-box" id="drpEndBox">Nov 2026</span>
+                </div>
+                <div class="sc-dual-slider">
+                  <div class="sc-dual-track"></div>
+                  <div class="sc-dual-fill" id="drpFill" style="left:0%;width:100%"></div>
+                  <input type="range" min="0" max="23" value="0"  id="drpStartR" oninput="dateRangeSliderInput('start')" aria-label="Range start month" />
+                  <input type="range" min="0" max="23" value="23" id="drpEndR"   oninput="dateRangeSliderInput('end')"   aria-label="Range end month" />
+                </div>
+                <div class="sc-drp-actions">
+                  <button type="button" class="sc-drp-reset" onclick="resetDateRange()">Reset</button>
+                </div>
+              </div>
             </div>
             <div class="sc-view-toggle">
               <span class="sc-view-label">Cumulative</span>
@@ -218,16 +293,6 @@
         <div class="sc-chart-outer">
           <div class="sc-chart-title-row">
             <span class="sc-chart-title-label">S-curve <i class="pi pi-info-circle sc-chart-info-icon" title="Cumulative cost S-curve with periodic bar chart"></i></span>
-            <div class="sc-chart-inner-legend">
-              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#3949ab"></span> Baseline</span>
-              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#1565c0"></span> Approved</span>
-              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#283593"></span> Control</span>
-              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#5c6bc0"></span> Financial</span>
-              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#42a5f5"></span> Earned</span>
-              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#1e88e5"></span> Actuals</span>
-              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#26a69a"></span> Incurred</span>
-              <span class="sc-cil-item"><span class="sc-cil-swatch" style="background:#43a047"></span> Commitment</span>
-            </div>
           </div>
           <div class="sc-chart-wrap" style="height:320px">
             <canvas id="scurve-chart"></canvas>
@@ -245,7 +310,7 @@
         <div class="sc-bottom-legend">
           <span class="sc-bl-item sc-bl-combined sc-bl-actual">Actual/ETC</span>
           <span class="sc-bl-item sc-bl-combined sc-bl-incurred">Incurred/ETC</span>
-          <span class="sc-bl-item sc-bl-combined sc-bl-earned">Earned/ETC</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-earned">Earned</span>
           <span class="sc-bl-item sc-bl-band">P10–P90 band</span>
           <span class="sc-bl-item sc-bl-today">| Today</span>
           <span class="sc-bl-key">Solid = historical · Dashed = forecast</span>
@@ -254,7 +319,7 @@
         <!-- Forecast explanation (light green box) -->
         <div class="sc-forecast-exp-box">
           Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks.
-          Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned/ETC) are each matched using their own historical data series.
+          Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned) are each matched using their own historical data series.
           Matching uses Gower distance across CA group codes (PHASE_TYPE, DISCIPLINE, WORK_TYPE) and project groups (PROJ_SIZE, REGION).
           SPI (0.88) and CPI (0.92) active as weighting factors — accounts with similar performance profiles weighted higher.
           Top 9 matched neighbors (avg similarity 0.78, min 0.30) re-anchor to $23.6M actuals → $42.2M EAC.

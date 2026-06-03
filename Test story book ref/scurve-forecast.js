@@ -265,6 +265,11 @@ const FEATURE_WEIGHTS = {
   material_mix:       1.5,
   equip_mix:          1.5,
   subcontract_mix:    1.5,
+  // Hours element breakdown
+  craft_labour:       1.0,
+  supervision:        1.0,
+  // Company cost element breakdown
+  internal_cost:      1.0,
   // Observed curve shape (computed up to current lifecycle%)
   skewness:           2.0,
   front_load_ratio:   1.5,
@@ -287,6 +292,9 @@ let ACTIVE_WEIGHTS = Object.assign({}, FEATURE_WEIGHTS);
 function getTotalWeight() { return Object.values(ACTIVE_WEIGHTS).reduce((a, b) => a + b, 0); }
 
 let ACTIVE_FORECAST_LINE = 'actual'; // 'actual' | 'incurred' | 'earned'
+
+// SPI/CPI matching weight (user-adjustable, 0 = off — replaces the old on/off toggle)
+let SPI_CPI_WEIGHT = 3.0;
 
 /* ── AI BANNER DRIVER GROUPS ─────────────────────────────────────── */
 const DRIVER_GROUPS = [
@@ -312,27 +320,33 @@ const DRIVER_GROUPS = [
     id: 'shape', label: 'Curve shape', icon: 'pi-chart-line', color: '#7c3aed', bg: '#f5f3ff', textColor: '#5b21b6',
     keys: ['skewness','front_load_ratio','gini','peak_period_norm','kurtosis','planned_skewness','planned_front_load','planned_gini','planned_peak_norm','planned_kurtosis','plan_vs_actual_skew'],
     features: [
-      { key:'skewness',            label:'Observed skewness',   val: () => { const s=_obsStats(); return s.skewness.toFixed(3); } },
-      { key:'front_load_ratio',    label:'Front-load (obs.)',   val: () => { const s=_obsStats(); return (s.frontLoadRatio*100).toFixed(1)+'%'; } },
-      { key:'gini',                label:'Gini coeff. (obs.)',  val: () => { const s=_obsStats(); return s.gini.toFixed(3); } },
-      { key:'peak_period_norm',    label:'Peak period (norm.)', val: () => { const s=_obsStats(); return s.peakPeriodNorm.toFixed(3); } },
-      { key:'kurtosis',            label:'Kurtosis (obs.)',     val: () => { const s=_obsStats(); return s.kurtosis.toFixed(3); } },
-      { key:'planned_skewness',    label:'Planned skewness',    val: () => focalPlannedStats.skewness.toFixed(3) },
-      { key:'planned_front_load',  label:'Front-load (plan.)',  val: () => (focalPlannedStats.frontLoadRatio*100).toFixed(1)+'%' },
-      { key:'planned_gini',        label:'Gini coeff. (plan.)', val: () => focalPlannedStats.gini.toFixed(3) },
-      { key:'planned_peak_norm',   label:'Peak period (plan.)', val: () => focalPlannedStats.peakPeriodNorm.toFixed(3) },
-      { key:'planned_kurtosis',    label:'Kurtosis (plan.)',    val: () => focalPlannedStats.kurtosis.toFixed(3) },
-      { key:'plan_vs_actual_skew', label:'Plan vs actual skew', val: () => { const d=focalPlannedStats.skewness-_obsStats().skewness; return (d>=0?'+':'')+d.toFixed(3); } },
+      { key:'skewness',            label:'Skewness',                        val: () => _shapeDisplayVals().skewness },
+      { key:'front_load_ratio',    label:'Front-load ratio',                val: () => _shapeDisplayVals().front_load_ratio },
+      { key:'gini',                label:'Concentration (Gini)',            val: () => _shapeDisplayVals().gini },
+      { key:'peak_period_norm',    label:'Peak period (normalized)',        val: () => _shapeDisplayVals().peak_period_norm },
+      { key:'kurtosis',            label:'Kurtosis',                        val: () => _shapeDisplayVals().kurtosis },
+      { key:'plan_vs_actual_skew', label:'Plan vs. actual skew difference', val: () => _shapeDisplayVals().plan_vs_actual_skew },
+      { key:'planned_skewness',    label:'Planned skewness',                val: () => _shapeDisplayVals().planned_skewness },
+      { key:'planned_front_load',  label:'Planned front-load ratio',        val: () => _shapeDisplayVals().planned_front_load },
+      { key:'planned_gini',        label:'Planned concentration',           val: () => _shapeDisplayVals().planned_gini },
+      { key:'planned_peak_norm',   label:'Planned peak period',             val: () => _shapeDisplayVals().planned_peak_norm },
+      { key:'planned_kurtosis',    label:'Planned kurtosis',                val: () => _shapeDisplayVals().planned_kurtosis },
     ]
   },
   {
     id: 'mix', label: 'Cost mix', icon: 'pi-calculator', color: '#0891b2', bg: '#e0f2fe', textColor: '#0c4a6e',
-    keys: ['labor_mix','material_mix','equip_mix','subcontract_mix'],
+    keys: ['labor_mix','material_mix','equip_mix','subcontract_mix','craft_labour','supervision','internal_cost'],
     features: [
+      { header: 'Cost element breakdown' },
       { key:'labor_mix',       label:'Labor',       val: () => (FOCAL.laborMix*100).toFixed(0)+'%' },
       { key:'material_mix',    label:'Material',    val: () => (FOCAL.materialMix*100).toFixed(0)+'%' },
       { key:'equip_mix',       label:'Equipment',   val: () => (FOCAL.equipMix*100).toFixed(0)+'%' },
       { key:'subcontract_mix', label:'Subcontract', val: () => (FOCAL.subMix*100).toFixed(0)+'%' },
+      { header: 'Hours element breakdown' },
+      { key:'craft_labour',    label:'Craft labour', val: () => '78%' },
+      { key:'supervision',     label:'Supervision',  val: () => '22%' },
+      { header: 'Company cost element breakdown' },
+      { key:'internal_cost',   label:'Internal cost', val: () => '15%' },
     ]
   },
   {
@@ -359,6 +373,27 @@ function _obsStats() {
   return computeShapeStats(FOCAL.actualSpend, FOCAL.actualSpend.length - 1);
 }
 
+// Curve shape data points shown in the UI — single source shared by the
+// "Driven by" detail card and the settings modal so the two always match.
+// Clamped non-negative: values cannot be negative anywhere they're displayed.
+function _shapeDisplayVals() {
+  const s  = _obsStats();
+  const nn = (x) => Math.max(0, x);
+  return {
+    skewness:            nn(s.skewness).toFixed(3),
+    front_load_ratio:    (nn(s.frontLoadRatio) * 100).toFixed(1) + '%',
+    gini:                nn(s.gini).toFixed(3),
+    peak_period_norm:    nn(s.peakPeriodNorm).toFixed(3),
+    kurtosis:            nn(s.kurtosis).toFixed(3),
+    plan_vs_actual_skew: nn(focalPlannedStats.skewness - s.skewness).toFixed(3),
+    planned_skewness:    nn(focalPlannedStats.skewness).toFixed(3),
+    planned_front_load:  (nn(focalPlannedStats.frontLoadRatio) * 100).toFixed(1) + '%',
+    planned_gini:        nn(focalPlannedStats.gini).toFixed(3),
+    planned_peak_norm:   nn(focalPlannedStats.peakPeriodNorm).toFixed(3),
+    planned_kurtosis:    nn(focalPlannedStats.kurtosis).toFixed(3),
+  };
+}
+
 
 function _buildDriverPill(group, pct) {
   return `<span class="sc-driver-pill sc-driver-pill--themed"
@@ -367,31 +402,40 @@ function _buildDriverPill(group, pct) {
   </span>`;
 }
 
-function buildAiBannerDetail() {
-  const total = getTotalWeight();
-  const SPI_FIXED_WEIGHT = 3.0;
-
-  function groupPct(group) {
-    if (group.id === 'spi') {
-      const togEl = document.getElementById('toggleEvm');
-      const on = !togEl || togEl.checked;
-      return on ? Math.round(SPI_FIXED_WEIGHT / (total + SPI_FIXED_WEIGHT) * 100) : 0;
-    }
-    const sum = group.keys.reduce((acc, k) => acc + (ACTIVE_WEIGHTS[k] || 0), 0);
-    return Math.round(sum / total * 100);
+// Integer % per driver group, normalized from allocated points so they sum to exactly 100
+// (largest-remainder rounding). Returns one value per DRIVER_GROUPS entry.
+function _groupPctsSum100() {
+  const pts = DRIVER_GROUPS.map(g => g.id === 'spi'
+    ? SPI_CPI_WEIGHT
+    : g.keys.reduce((a, k) => a + (ACTIVE_WEIGHTS[k] || 0), 0));
+  const total = pts.reduce((a, b) => a + b, 0);
+  if (total <= 0) return pts.map(() => 0);
+  const raw    = pts.map(p => p / total * 100);
+  const floors = raw.map(Math.floor);
+  let rem = 100 - floors.reduce((a, b) => a + b, 0);
+  const byFraction = raw.map((r, i) => [r - floors[i], i]).sort((a, b) => b[0] - a[0]);
+  for (const [, i] of byFraction) {
+    if (rem <= 0) break;
+    if (pts[i] > 0) { floors[i]++; rem--; }
   }
+  return floors;
+}
+
+function buildAiBannerDetail() {
+  const groupPcts = _groupPctsSum100();
 
   function featureBarPct(feat) {
-    if (feat.fixedWeight != null) return Math.round(feat.fixedWeight / 5 * 100);
+    if (feat.fixedWeight != null) return Math.round((SPI_CPI_WEIGHT / 2) / 5 * 100);
     const w = ACTIVE_WEIGHTS[feat.key];
     return w != null ? Math.round(w / 5 * 100) : 0;
   }
 
-  const cards = DRIVER_GROUPS.map(group => {
-    const pct = groupPct(group);
+  const cards = DRIVER_GROUPS.map((group, gi) => {
+    const pct = groupPcts[gi];
     const featureRows = group.features.map(f => {
+      if (f.header) return `<div class="sc-ai-df-subhead">${f.header}</div>`;
       const barPct = featureBarPct(f);
-      const w = f.fixedWeight != null ? f.fixedWeight : (ACTIVE_WEIGHTS[f.key] || 0);
+      const w = f.fixedWeight != null ? SPI_CPI_WEIGHT / 2 : (ACTIVE_WEIGHTS[f.key] || 0);
       const dimmed = w === 0 ? 'opacity:0.4;' : '';
       return `<div class="sc-ai-df-row" style="${dimmed}">
         <span class="sc-ai-df-label" title="${f.label}">${f.label}</span>
@@ -411,7 +455,7 @@ function buildAiBannerDetail() {
   return `<div class="sc-ai-detail-grid">${cards}</div>
     <div class="sc-ai-detail-foot">
       <i class="pi pi-info-circle"></i>
-      Contribution % is computed from active feature weights. Bar length = weight relative to maximum (5.0).
+      Contribution % is normalized from points allocated in forecast settings (sums to 100%). Bar length = weight relative to maximum (5.0).
       <button type="button" class="sc-ai-detail-foot-link" onclick="openDriverSettings()">
         <i class="pi pi-cog"></i> Settings
       </button>
@@ -919,14 +963,51 @@ function initSettingsTab() {
   container.innerHTML = html;
 }
 
+// Re-sum the "x.x pts" badges on every settings accordion header
+function _refreshSettingsGroupPoints() {
+  document.querySelectorAll('[data-pts-keys]').forEach(el => {
+    // Missing keys default to 1 — same default the sliders render with
+    const sum = el.dataset.ptsKeys.split(',').reduce((a, k) => a + (ACTIVE_WEIGHTS[k] != null ? ACTIVE_WEIGHTS[k] : 1), 0);
+    el.textContent = sum.toFixed(1) + ' pts';
+  });
+}
+
+// Format a weight for display: one decimal normally, two when needed (e.g. 2.25)
+function _fmtWeight(v) {
+  const r = Math.round(v * 100) / 100;
+  return (r * 10) % 1 ? r.toFixed(2) : r.toFixed(1);
+}
+
 window.updateSettingsWeight = function(key, value) {
   ACTIVE_WEIGHTS[key] = value;
   const valEl = document.getElementById('wval-' + key);
-  if (valEl) valEl.textContent = value.toFixed(1);
+  if (valEl) valEl.value = _fmtWeight(value);
   const slider = document.getElementById('wslider-' + key);
   if (slider) slider.style.setProperty('--fill-pct', (value / 5 * 100).toFixed(0) + '%');
   const row = document.getElementById('row-' + key);
   if (row) row.style.opacity = value === 0 ? '0.45' : '';
+  _refreshSettingsGroupPoints();
+};
+
+// Typed weight entry — clamp to 0–5, sync slider, then run the normal update path
+window.weightValInput = function(key, raw) {
+  let v = parseFloat(raw);
+  if (isNaN(v)) v = ACTIVE_WEIGHTS[key] != null ? ACTIVE_WEIGHTS[key] : 1;
+  v = Math.min(5, Math.max(0, Math.round(v * 100) / 100));
+  const slider = document.getElementById('wslider-' + key);
+  if (slider) slider.value = v;
+  updateSettingsWeight(key, v);
+};
+
+// Arrow steppers on the weight input — ±0.1 per press, clamped to 0–5
+window.stepWeight = function(key, delta) {
+  const input = document.getElementById('wval-' + key);
+  if (input && input.disabled) return;
+  const cur = ACTIVE_WEIGHTS[key] != null ? ACTIVE_WEIGHTS[key] : 1;
+  const v = Math.min(5, Math.max(0, Math.round((cur + delta) * 100) / 100));
+  const slider = document.getElementById('wslider-' + key);
+  if (slider) slider.value = v;
+  updateSettingsWeight(key, v);
 };
 
 window.resetSettingsWeights = function() {
@@ -943,7 +1024,7 @@ window.resetSettingsWeights = function() {
     const valEl  = document.getElementById('wval-'    + f.key);
     const row    = document.getElementById('row-'     + f.key);
     if (slider) { slider.value = v; slider.disabled = false; slider.style.setProperty('--fill-pct', (v / 5 * 100).toFixed(0) + '%'); }
-    if (valEl)  valEl.textContent = v.toFixed(1);
+    if (valEl)  { valEl.value = v.toFixed(1); valEl.disabled = false; }
     if (row)    row.style.opacity = '';
   }
   // Re-sync applied summary if visible
@@ -953,11 +1034,53 @@ window.resetSettingsWeights = function() {
   if (summary) { summary.style.background = '#f0fdf4'; summary.style.color = '#166534'; summary.querySelector('i').className = 'pi pi-check-circle'; }
   const cbx = document.getElementById('toggleCostBreakdown');
   if (cbx) cbx.checked = true;
+  // Re-sync the SPI/CPI weight control
+  SPI_CPI_WEIGHT = 3.0;
+  const spiVal    = document.getElementById('wval-spi_cpi');
+  const spiSlider = document.getElementById('wslider-spi_cpi');
+  if (spiVal)    { spiVal.value = _fmtWeight(SPI_CPI_WEIGHT); spiVal.disabled = false; }
+  if (spiSlider) { spiSlider.value = SPI_CPI_WEIGHT; spiSlider.disabled = false; spiSlider.style.setProperty('--fill-pct', '60%'); }
+  _refreshSettingsGroupPoints();
 };
 
-window.toggleEvmFeature = function(enabled) {
-  const note = document.getElementById('evmNote');
-  if (note) note.style.display = enabled ? 'block' : 'none';
+// SPI/CPI matching weight — replaces the old on/off toggle. 0 = excluded.
+window.setSpiCpiWeight = function(v) {
+  v = Math.min(5, Math.max(0, Math.round((isNaN(v) ? 0 : v) * 100) / 100));
+  SPI_CPI_WEIGHT = v;
+  const valEl  = document.getElementById('wval-spi_cpi');
+  const slider = document.getElementById('wslider-spi_cpi');
+  if (valEl)  valEl.value = _fmtWeight(v);
+  if (slider) { slider.value = v; slider.style.setProperty('--fill-pct', (v / 5 * 100).toFixed(0) + '%'); }
+};
+
+window.spiCpiWeightInput = function(raw) {
+  let v = parseFloat(raw);
+  if (isNaN(v)) v = SPI_CPI_WEIGHT;
+  setSpiCpiWeight(v);
+};
+
+window.stepSpiCpi = function(delta) {
+  const input = document.getElementById('wval-spi_cpi');
+  if (input && input.disabled) return;
+  setSpiCpiWeight(SPI_CPI_WEIGHT + delta);
+};
+
+window.toggleCatGroup = function(gi) {
+  const body    = document.getElementById('catgrp-' + gi);
+  const chevron = document.getElementById('catgrp-chevron-' + gi);
+  if (!body) return;
+  const collapsed = body.style.display === 'none';
+  body.style.display = collapsed ? '' : 'none';
+  if (chevron) chevron.style.transform = collapsed ? '' : 'rotate(-90deg)';
+};
+
+window.toggleNumGroup = function(id) {
+  const body    = document.getElementById('numgrp-' + id);
+  const chevron = document.getElementById('numgrp-chevron-' + id);
+  if (!body) return;
+  const collapsed = body.style.display === 'none';
+  body.style.display = collapsed ? '' : 'none';
+  if (chevron) chevron.style.transform = collapsed ? '' : 'rotate(-90deg)';
 };
 
 window.toggleCostBreakdown = function(enabled) {
@@ -973,9 +1096,10 @@ window.toggleCostBreakdown = function(enabled) {
       slider.disabled = !enabled;
       slider.style.setProperty('--fill-pct', (newWeight / 5 * 100).toFixed(0) + '%');
     }
-    if (valEl) valEl.textContent = newWeight.toFixed(1);
+    if (valEl) { valEl.value = newWeight.toFixed(1); valEl.disabled = !enabled; }
     if (row)   row.style.opacity = enabled ? '' : '0.45';
   }
+  _refreshSettingsGroupPoints();
   const txt     = document.getElementById('num-applied-text');
   const summary = document.getElementById('num-applied-summary');
   const icon    = summary && summary.querySelector('i');
@@ -988,6 +1112,7 @@ window.toggleCostBreakdown = function(enabled) {
     if (summary) { summary.style.background = '#fef3c7'; summary.style.color = '#92400e'; }
     if (icon)    icon.className = 'pi pi-exclamation-circle';
   }
+  _refreshSettingsGroupPoints();
 };
 
 /* ── CHART DATA ─────────────────────────────────────────────────── */
@@ -1081,7 +1206,7 @@ const CA_DATA = {
     yMax: 50, yStep: 10,
     bannerConf: 87, bannerSimilar: 24,
     bars: BAR_DATA,
-    explanation: "Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks. Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned/ETC) are each matched using their own historical data series. Matching uses Gower distance across CA group codes (PHASE_TYPE, DISCIPLINE, WORK_TYPE) and project groups (PROJ_SIZE, REGION). SPI (0.88) and CPI (0.92) active as weighting factors — accounts with similar performance profiles weighted higher. Top 9 matched neighbors (avg similarity 0.78, min 0.30) re-anchor to $23.6M actuals → $42.2M EAC. Curve shape signals (skewness, front-load ratio, Gini, peak period) indicate deviation from the baseline plan."
+    explanation: "Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks. Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned) are each matched using their own historical data series. Matching uses Gower distance across CA group codes (PHASE_TYPE, DISCIPLINE, WORK_TYPE) and project groups (PROJ_SIZE, REGION). SPI (0.88) and CPI (0.92) active as weighting factors — accounts with similar performance profiles weighted higher. Top 9 matched neighbors (avg similarity 0.78, min 0.30) re-anchor to $23.6M actuals → $42.2M EAC. Curve shape signals (skewness, front-load ratio, Gini, peak period) indicate deviation from the baseline plan."
   },
   'ca-1043': {
     label:    'CA-1043 · Structural Steel — P1',
@@ -1336,6 +1461,42 @@ function buildBandLine(forecastLine, multiplier) {
 
 let scurveChart = null;
 let showConfidenceBand = true;
+
+/* ── Chart metric (Cost / Hours / Company) ──────────────────────────
+   The chart plots cumulative cost in $M. Switching metric only re-labels
+   the y-axis, tick values and tooltips — the curve shape is identical
+   (mock-data demo). valFmt(raw) and axisFmt(v) both receive $M-scale
+   numbers and convert/relabel them for the active metric.            */
+const CHART_METRICS = {
+  cost: {
+    title: 'Cumulative cost',
+    valFmt: (v) => '$' + v.toFixed(1) + 'M',
+    axisFmt: (v) => '$' + v + 'M',
+  },
+  hours: {
+    // Cost ($M) → labour hours at a blended ~$125/hr ⇒ ~8k hrs per $1M
+    title: 'Cumulative hours',
+    valFmt: (v) => (v * 8).toFixed(0) + 'k hrs',
+    axisFmt: (v) => (v * 8) + 'k',
+  },
+  company: {
+    // Company cost = direct cost grossed up ~15% for overhead & markup
+    title: 'Cumulative company cost',
+    valFmt: (v) => '$' + (v * 1.15).toFixed(1) + 'M',
+    axisFmt: (v) => '$' + Math.round(v * 1.15) + 'M',
+  },
+};
+let CHART_METRIC = 'cost';
+
+window.setChartMetric = function (metric) {
+  if (!CHART_METRICS[metric]) return;
+  CHART_METRIC = metric;
+  if (!scurveChart) return;
+  // Tick + tooltip callbacks read CHART_METRIC live, so an update() re-labels
+  // them; only the static axis title needs an explicit refresh.
+  scurveChart.options.scales.y.title.text = CHART_METRICS[metric].title;
+  scurveChart.update();
+};
 let AI_FORECAST_ACTIVE = false; // true when AI forecast curves are shown on chart
 let AI_PROJ_ACTUAL = null;      // stored AI forecast line — used to recompute band on slider move
 
@@ -1348,6 +1509,18 @@ function initScurveChart() {
   const histActual   = buildActualHistLine();
   const histIncurred = buildIncurredHistLine();
   const histEarned   = buildEarnedHistLine();
+
+  // Cumulative budget comparison lines (static plan curves)
+  const cum = (arr) => { let s = 0; return arr.map(v => v === null ? null : +(s += v).toFixed(2)); };
+  const lineBudget   = cum(BAR_DATA.baseline);
+  const lineControl  = cum(BAR_DATA.control);
+  const lineFinance  = cum(BAR_DATA.financial);
+  // Cashflow: cash out the door — actuals paid with ~1-month lag and 5% retention held
+  const lineCashflow = cum(BAR_DATA.actuals.map((v, i) => {
+    if (i > TODAY_IDX) return null;
+    const lagged = i >= 1 ? BAR_DATA.actuals[i - 1] : 0;
+    return lagged === null ? null : +(lagged * 0.95).toFixed(2);
+  }));
   const projActual   = buildActualForecastLine();
   const projIncurred = buildIncurredForecastLine();
   const projEarned   = buildEarnedForecastLine();
@@ -1364,6 +1537,8 @@ function initScurveChart() {
     }
   };
 
+  const m = CHART_METRICS[CHART_METRIC];
+
   scurveChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -1374,7 +1549,7 @@ function initScurveChart() {
         { label: 'Approved',   data: BAR_DATA.approved,   backgroundColor: '#1565c0', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
         { label: 'Control',    data: BAR_DATA.control,    backgroundColor: '#283593', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
         { label: 'Financial',  data: BAR_DATA.financial,  backgroundColor: '#5c6bc0', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
-        { label: 'Earned',     data: BAR_DATA.earned,     backgroundColor: '#42a5f5', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
+        { label: 'Earned',     data: BAR_DATA.earned,     backgroundColor: '#059669', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
         { label: 'Actuals',    data: BAR_DATA.actuals,    backgroundColor: '#2563eb', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
         { label: 'Incurred',   data: BAR_DATA.incurred,   backgroundColor: '#f59e0b', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
         { label: 'Commitment', data: BAR_DATA.commitment, backgroundColor: '#43a047', barPercentage: 0.85, categoryPercentage: 0.85, order: 2, hidden: true },
@@ -1385,12 +1560,17 @@ function initScurveChart() {
         { type: 'line', label: '_hist_actual',   data: histActual,   borderColor: '#2563eb', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
         { type: 'line', label: '_hist_incurred', data: histIncurred, borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
         { type: 'line', label: '_hist_earned',   data: histEarned,   borderColor: '#059669', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
-        // Forecast dashed lines — indices 13 (Actual/ETC), 14 (Incurred/ETC), 15 (Earned/ETC)
+        // Forecast dashed lines — indices 13 (Actual/ETC), 14 (Incurred/ETC), 15 (Earned)
         { type: 'line', label: 'Actual / ETC',   data: projActual,   borderColor: '#2563eb', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#2563eb', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
         { type: 'line', label: 'Incurred / ETC', data: projIncurred, borderColor: '#f59e0b', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
-        { type: 'line', label: 'Earned / ETC',   data: projEarned,   borderColor: '#059669', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#059669', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
+        { type: 'line', label: 'Earned',   data: projEarned,   borderColor: '#059669', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#059669', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
         // BAC reference — index 16
         { type: 'line', label: '_bac', data: Array(24).fill(40), borderColor: '#9ca3af', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false, order: 3 },
+        // Budget comparison lines — indices 17 (Budget), 18 (Control budget), 19 (Finance budget), 20 (Cashflow)
+        { type: 'line', label: 'Budget',         data: lineBudget,   borderColor: '#3949ab', borderWidth: 2,   pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Control budget', data: lineControl,  borderColor: '#283593', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
+        { type: 'line', label: 'Finance budget', data: lineFinance,  borderColor: '#5c6bc0', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
+        { type: 'line', label: 'Cashflow',       data: lineCashflow, borderColor: '#0891b2', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
       ]
     },
     plugins: [verticalLinePlugin],
@@ -1404,7 +1584,7 @@ function initScurveChart() {
         tooltip: {
           filter: (i) => !i.dataset.label.startsWith('_'),
           callbacks: {
-            label: (c) => c.raw === null ? null : ` ${c.dataset.label}: $${c.raw.toFixed(1)}M`
+            label: (c) => c.raw === null ? null : ` ${c.dataset.label}: ${CHART_METRICS[CHART_METRIC].valFmt(c.raw)}`
           }
         }
       },
@@ -1412,12 +1592,12 @@ function initScurveChart() {
         x: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 11 }, color: '#6b7280' } },
         y: {
           position: 'left',
-          title: { display: true, text: 'Cumulative cost', font: { size: 11 }, color: '#9ca3af' },
+          title: { display: true, text: m.title, font: { size: 11 }, color: '#9ca3af' },
           min: 0, max: 50,
           grid: { color: '#f3f4f6' },
           ticks: {
             font: { size: 11 }, color: '#6b7280',
-            callback: v => '$' + v + 'M',
+            callback: v => CHART_METRICS[CHART_METRIC].axisFmt(v),
             stepSize: 10
           }
         }
@@ -1503,9 +1683,19 @@ window.toggleConfidenceBand = function(show) {
   scurveChart.update();
 };
 
-// Each key maps to [histIdx, forecastIdx] — toggling hides/shows both segments
-const LINE_DATASETS = { actual: [10, 13], incurred: [11, 14], earned: [12, 15] };
-const LINE_VISIBILITY = { actual: true, incurred: true, earned: true };
+// Each key maps to its dataset indices — toggling hides/shows all segments
+const LINE_DATASETS = {
+  actual: [10, 13], incurred: [11, 14], earned: [12, 15],
+  budget: [17], control: [18], finance: [19], cashflow: [20],
+};
+const LINE_VISIBILITY = {
+  actual: true, incurred: true, earned: true,
+  budget: true, control: false, finance: false, cashflow: false,
+};
+
+// Bar dataset index for each toggle key — bars (periodic view) follow the same legend switches
+const BAR_FOR_LINE = { budget: 0, control: 2, finance: 3, earned: 4, actual: 5, incurred: 6 };
+let CHART_PERIODIC = false;
 
 window.toggleForecastLine = function(key) {
   if (!scurveChart) return;
@@ -1513,6 +1703,12 @@ window.toggleForecastLine = function(key) {
   for (const idx of LINE_DATASETS[key]) {
     const ds = scurveChart.data.datasets[idx];
     if (ds) ds.hidden = !LINE_VISIBILITY[key];
+  }
+  // Keep the matching bar dataset in sync (only visible in periodic view)
+  const barIdx = BAR_FOR_LINE[key];
+  if (barIdx != null) {
+    const bds = scurveChart.data.datasets[barIdx];
+    if (bds) bds.hidden = !CHART_PERIODIC || !LINE_VISIBILITY[key];
   }
   scurveChart.update();
   const btn = document.querySelector(`.sc-line-toggle[data-line="${key}"]`);
@@ -1522,10 +1718,83 @@ window.toggleForecastLine = function(key) {
   }
 };
 
+/* ── DATE RANGE SELECTOR (dual-handle slider) ────────────────────── */
+let DATE_RANGE = { start: 0, end: MONTH_CALENDAR.length - 1 };
+
+function _syncDateRangeUI() {
+  const { start: s, end: e } = DATE_RANGE;
+  const max = MONTH_CALENDAR.length - 1;
+  const sr = document.getElementById('drpStartR');
+  const er = document.getElementById('drpEndR');
+  if (sr) sr.value = s;
+  if (er) er.value = e;
+  const sb = document.getElementById('drpStartBox');
+  const eb = document.getElementById('drpEndBox');
+  if (sb) sb.textContent = MONTH_CALENDAR[s];
+  if (eb) eb.textContent = MONTH_CALENDAR[e];
+  const fill = document.getElementById('drpFill');
+  if (fill) {
+    fill.style.left  = (s / max * 100) + '%';
+    fill.style.width = ((e - s) / max * 100) + '%';
+  }
+  const label = document.getElementById('dateRangeLabel');
+  if (label) label.textContent = `${MONTH_CALENDAR[s]} – ${MONTH_CALENDAR[e]}`;
+}
+
+function _applyDateRangeToChart() {
+  if (!scurveChart) return;
+  scurveChart.options.scales.x.min = DATE_RANGE.start;
+  scurveChart.options.scales.x.max = DATE_RANGE.end;
+  scurveChart.update();
+}
+
+window.dateRangeSliderInput = function(which) {
+  const sr = document.getElementById('drpStartR');
+  const er = document.getElementById('drpEndR');
+  if (!sr || !er) return;
+  let s = +sr.value, e = +er.value;
+  // Handles can't cross
+  if (which === 'start' && s > e) s = e;
+  if (which === 'end'   && e < s) e = s;
+  DATE_RANGE = { start: s, end: e };
+  _syncDateRangeUI();
+  _applyDateRangeToChart();
+};
+
+window.toggleDateRangePicker = function() {
+  const pop = document.getElementById('dateRangePop');
+  const btn = document.getElementById('dateRangeBtn');
+  if (!pop) return;
+  const isOpen = pop.style.display !== 'none';
+  if (!isOpen) _syncDateRangeUI();
+  pop.style.display = isOpen ? 'none' : 'block';
+  if (btn) btn.setAttribute('aria-expanded', String(!isOpen));
+};
+
+window.resetDateRange = function() {
+  DATE_RANGE = { start: 0, end: MONTH_CALENDAR.length - 1 };
+  _syncDateRangeUI();
+  _applyDateRangeToChart();
+};
+
+window.toggleLineMoreMenu = function() {
+  const dropdown = document.getElementById('lineMoreDropdown');
+  const btn = document.getElementById('lineMoreBtn');
+  if (!dropdown) return;
+  const isOpen = dropdown.style.display !== 'none';
+  dropdown.style.display = isOpen ? 'none' : 'block';
+  if (btn) btn.setAttribute('aria-expanded', String(!isOpen));
+};
+
 window.toggleChartView = function(periodic) {
   if (!scurveChart) return;
+  CHART_PERIODIC = periodic;
+  const keyForBar = {};
+  for (const [k, i] of Object.entries(BAR_FOR_LINE)) keyForBar[i] = k;
   for (let i = 0; i <= 7; i++) {
-    scurveChart.data.datasets[i].hidden = !periodic;
+    const key = keyForBar[i];
+    // Only bars with a legend toggle are shown (Approved/Commitment have none)
+    scurveChart.data.datasets[i].hidden = !periodic || !key || !LINE_VISIBILITY[key];
   }
   scurveChart.update();
   const outer = document.querySelector('.sc-chart-outer');
@@ -1820,19 +2089,10 @@ function _updateKpiFromForecast(impliedEAC, neighbors) {
 function _renderSummaryPills() {
   const pills = document.getElementById('scAiDriverPills');
   if (!pills) return 0;
-  const total  = getTotalWeight();
-  const togEl  = document.getElementById('toggleEvm');
-  const spiOn  = !togEl || togEl.checked;
-  const SPI_W  = 3.0;
-  const denom  = spiOn ? total + SPI_W : total;
-
-  pills.innerHTML = DRIVER_GROUPS.map(g => {
-    const sum = g.id === 'spi'
-      ? (spiOn ? SPI_W : 0)
-      : g.keys.reduce((acc, k) => acc + (ACTIVE_WEIGHTS[k] || 0), 0);
-    const pct = Math.round(sum / denom * 100);
-    return pct > 0 ? _buildDriverPill(g, pct) : '';
-  }).join('');
+  const pcts = _groupPctsSum100();
+  pills.innerHTML = DRIVER_GROUPS.map((g, gi) =>
+    pcts[gi] > 0 ? _buildDriverPill(g, pcts[gi]) : ''
+  ).join('');
 }
 
 function _updateBannerFromForecast(neighbors) {
@@ -1926,6 +2186,18 @@ document.addEventListener('click', e => {
     const d = document.getElementById('kebabDropdown');
     if (d) d.style.display = 'none';
     const btn = document.getElementById('kebabBtn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+  if (!e.target.closest('#lineMoreWrap')) {
+    const d = document.getElementById('lineMoreDropdown');
+    if (d) d.style.display = 'none';
+    const btn = document.getElementById('lineMoreBtn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+  if (!e.target.closest('#dateRangeWrap')) {
+    const d = document.getElementById('dateRangePop');
+    if (d) d.style.display = 'none';
+    const btn = document.getElementById('dateRangeBtn');
     if (btn) btn.setAttribute('aria-expanded', 'false');
   }
 });
@@ -2121,7 +2393,7 @@ function _applySettingsPermissions(user) {
   const catSection = container.querySelectorAll('.sc-settings-section')[0];
   if (catSection) {
     const canEdit = p.configureGroups;
-    catSection.querySelectorAll('.sc-weight-slider').forEach(s => { s.disabled = !canEdit; });
+    catSection.querySelectorAll('.sc-weight-slider, .sc-settings-weight-val').forEach(s => { s.disabled = !canEdit; });
     catSection.style.opacity = canEdit ? '' : '0.6';
     let secLock = catSection.querySelector('.sc-section-lock');
     if (!canEdit) {
@@ -2147,7 +2419,7 @@ function _applySettingsPermissions(user) {
   const shapeSection = container.querySelectorAll('.sc-settings-section')[3];
   [numSection, evm, shapeSection].forEach(sec => {
     if (!sec) return;
-    sec.querySelectorAll('.sc-weight-slider').forEach(s => { s.disabled = !p.modifyWeights; });
+    sec.querySelectorAll('.sc-weight-slider, .sc-settings-weight-val').forEach(s => { s.disabled = !p.modifyWeights; });
     sec.style.opacity = p.modifyWeights ? '' : '0.6';
     const toggle = sec.querySelector('input[type="checkbox"]:not(#toggleCostBreakdown)');
     if (toggle) toggle.disabled = !p.modifyWeights;
@@ -2234,71 +2506,73 @@ window.kebabOpenSettings = function() {
   openSettingsModal();
 };
 
-window.kebabExportExcel = function() {
-  const dropdown = document.getElementById('kebabDropdown');
-  if (dropdown) dropdown.style.display = 'none';
-  if (window._canExport === false) {
-    alert('Your role does not have permission to export data.');
-    return;
-  }
+/* ── PDF EXPORT ──────────────────────────────────────────────────── */
 
-  // Capture chart as image before opening print window
+const EXPORT_REPORT_CSS = `
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,sans-serif;font-size:12px;color:#111827;background:#fff;padding:0}
+  @page{size:A4 landscape;margin:15mm 12mm}
+  @media print{.no-print{display:none!important}}
+  .page{padding:24px 28px;max-width:1100px;margin:0 auto}
+  h1{font-size:20px;font-weight:800;color:#1e3a8a;margin-bottom:2px}
+  h2{font-size:13px;font-weight:700;color:#1e3a8a;margin:18px 0 8px;border-bottom:2px solid #dbeafe;padding-bottom:4px}
+  h3{font-size:11px;font-weight:700;color:#374151;margin:12px 0 6px}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:14px;border-bottom:3px solid #1e3a8a}
+  .header-left h1{font-size:22px}
+  .header-left .ca-label{font-size:13px;color:#3b82f6;font-weight:600;margin-top:2px}
+  .header-left .subtitle{font-size:11px;color:#6b7280;margin-top:1px}
+  .header-right{text-align:right;font-size:11px;color:#6b7280;line-height:1.6}
+  .header-right strong{display:block;font-size:12px;color:#111827}
+  .section{margin-bottom:6px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+  .kpi-card{border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#f9fafb}
+  .kpi-label{font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+  .kpi-value{font-size:20px;font-weight:800;color:#111827;margin-bottom:2px}
+  .kpi-value.warn{color:#d97706}
+  .kpi-sub{font-size:10px;color:#6b7280}
+  .over{color:#dc2626;font-weight:600}
+  .under{color:#059669;font-weight:600}
+  .ai-banner{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:18px;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  .ai-active-tag{background:#1d4ed8;color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:.04em}
+  .ai-conf{background:#f0fdf4;border:1px solid #86efac;color:#15803d;border-radius:12px;padding:2px 10px;font-size:10px;font-weight:700}
+  .ai-sim{font-size:10px;color:#6b7280}
+  .pill{background:#dbeafe;color:#1e3a8a;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:600;display:inline-block;margin:1px}
+  .sim-badge{background:#7c3aed;color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:4px}
+  .chart-box{border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:18px;background:#fff}
+  .chart-box img{width:100%;height:auto;display:block}
+  .exp-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:11px;line-height:1.6;color:#374151;margin-bottom:18px}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  th{background:#1e3a8a;color:#fff;padding:5px 8px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+  th.r{text-align:right}
+  td{border-bottom:1px solid #f3f4f6;color:#374151;vertical-align:middle}
+  .footer{margin-top:24px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af}
+  .tag{display:inline-block;background:#f3f4f6;border-radius:4px;padding:1px 7px;font-size:10px;color:#374151;margin-right:4px}
+  .empty-msg{padding:60px 20px;text-align:center;color:#9ca3af;font-size:13px}
+`;
+
+// Snapshot all live values the report needs (chart image must be read before any new window opens)
+function _gatherExportData() {
   const canvas = document.getElementById('scurve-chart');
-  const chartImg = canvas ? canvas.toDataURL('image/png') : '';
+  const now = new Date();
 
-  // Read live KPI values from DOM
-  const eac        = document.getElementById('m-eac')?.textContent        || '—';
-  const pct        = document.getElementById('m-pct')?.textContent        || '—';
-  const pctSub     = document.getElementById('m-pct-sub')?.textContent    || '';
-  const cpiSpi     = document.getElementById('m-cpispi')?.textContent     || '—';
-  const completion = document.getElementById('m-completion')?.textContent || '—';
-  const compSub    = document.getElementById('m-completion-sub')?.textContent || '';
-  const eacSub     = document.getElementById('m-eac-sub')?.textContent    || '';
-  const cpiSub     = document.getElementById('m-cpispi')?.closest('.sc-metric-card')?.querySelector('.sc-metric-sub')?.textContent || '';
-
-  // Read AI banner
-  const confPill   = document.querySelector('.sc-high-confidence-pill')?.textContent || '';
-  const simAccts   = document.querySelector('.sc-similar-accts')?.textContent        || '';
-  const driverPills = [...document.querySelectorAll('.sc-driver-pill')].map(p => p.textContent).join(' · ');
-  const expText    = document.querySelector('.sc-forecast-exp-box')?.textContent     || '';
-
-  // Active CA & subtitle
-  const caLabel    = document.getElementById('acctSelectorBtn')?.textContent?.trim().replace(/\s*$/, '') || '';
-  const subtitle   = document.querySelector('.sc-page-subtitle')?.textContent || '';
-
-  // Simulation state
-  const simMonth   = document.getElementById('scTsMonth')?.textContent || '';
-  const isSimulated = document.getElementById('scTsSimBadge')?.style.display !== 'none';
-
-  // Driver settings — build weight table rows
   const weightDefs = [
     { group: 'Classification groups', rows: [
-      { key: 'phase_type',    label: 'Phase type'       },
-      { key: 'discipline',    label: 'Discipline'        },
-      { key: 'work_type',     label: 'Work type'         },
-      { key: 'proj_size_cat', label: 'Project size'      },
-      { key: 'acct_size_cat', label: 'Account size'      },
-      { key: 'region',        label: 'Region'            },
+      { key: 'phase_type',    label: 'Phase type'   }, { key: 'discipline',    label: 'Discipline'   },
+      { key: 'work_type',     label: 'Work type'    }, { key: 'proj_size_cat', label: 'Project size' },
+      { key: 'acct_size_cat', label: 'Account size' }, { key: 'region',        label: 'Region'       },
     ]},
     { group: 'Numerical features', rows: [
-      { key: 'duration_months',   label: 'Duration (months)'     },
-      { key: 'budget_amount',     label: 'Budget amount'          },
-      { key: 'budget_per_month',  label: 'Budget / month'         },
-      { key: 'acct_pct_project',  label: 'Acct % of project'      },
-      { key: 'labor_mix',         label: 'Labor mix'              },
-      { key: 'material_mix',      label: 'Material mix'           },
-      { key: 'equip_mix',         label: 'Equipment mix'          },
-      { key: 'subcontract_mix',   label: 'Subcontract mix'        },
+      { key: 'duration_months',  label: 'Duration (months)' }, { key: 'budget_amount',    label: 'Budget amount'     },
+      { key: 'budget_per_month', label: 'Budget / month'    }, { key: 'acct_pct_project', label: 'Acct % of project' },
+      { key: 'labor_mix',        label: 'Labor mix'         }, { key: 'material_mix',     label: 'Material mix'      },
+      { key: 'equip_mix',        label: 'Equipment mix'     }, { key: 'subcontract_mix',  label: 'Subcontract mix'   },
     ]},
     { group: 'Curve shape', rows: [
-      { key: 'skewness',          label: 'Skewness'               },
-      { key: 'front_load_ratio',  label: 'Front-load ratio'       },
-      { key: 'gini',              label: 'Gini coefficient'        },
-      { key: 'peak_period_norm',  label: 'Peak period'            },
-      { key: 'kurtosis',          label: 'Kurtosis'               },
+      { key: 'skewness',         label: 'Skewness'         }, { key: 'front_load_ratio', label: 'Front-load ratio' },
+      { key: 'gini',             label: 'Gini coefficient' }, { key: 'peak_period_norm', label: 'Peak period'      },
+      { key: 'kurtosis',         label: 'Kurtosis'         },
     ]},
   ];
-
   const totalW = getTotalWeight();
   const weightRows = weightDefs.map(g => {
     const rows = g.rows.map(r => {
@@ -2315,7 +2589,6 @@ window.kebabExportExcel = function() {
     return `<tr><td colspan="4" style="padding:8px 8px 2px;font-weight:700;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;background:#f9fafb">${g.group}</td></tr>${rows}`;
   }).join('');
 
-  // Periodic spend table (using ACTIVE_BAR_DATA)
   const spendRows = CHART_LABELS.map((lbl, i) => {
     const isToday = i === TODAY_IDX;
     const bg = isToday ? '#dbeafe' : i % 2 === 0 ? '#f9fafb' : '#fff';
@@ -2330,199 +2603,266 @@ window.kebabExportExcel = function() {
     </tr>`;
   }).join('');
 
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  return {
+    chartImg: canvas ? canvas.toDataURL('image/png') : '',
+    eac:        document.getElementById('m-eac')?.textContent        || '—',
+    pct:        document.getElementById('m-pct')?.textContent        || '—',
+    pctSub:     document.getElementById('m-pct-sub')?.textContent    || '',
+    cpiSpi:     document.getElementById('m-cpispi')?.textContent     || '—',
+    completion: document.getElementById('m-completion')?.textContent || '—',
+    compSub:    document.getElementById('m-completion-sub')?.textContent || '',
+    eacSub:     document.getElementById('m-eac-sub')?.textContent    || '',
+    cpiSub:     document.getElementById('m-cpispi')?.closest('.sc-metric-card')?.querySelector('.sc-metric-sub')?.textContent || '',
+    confPill:   document.querySelector('.sc-high-confidence-pill')?.textContent || '',
+    simAccts:   document.querySelector('.sc-similar-accts')?.textContent || '',
+    driverPills:[...document.querySelectorAll('.sc-driver-pill')].map(p => p.textContent).join(' · '),
+    expText:    document.querySelector('.sc-forecast-exp-box')?.textContent || '',
+    caLabel:    (document.getElementById('acctSelectorBtn')?.textContent || '').trim().replace(/\s*$/, '').replace(/<[^>]+>/g, '').trim(),
+    subtitle:   document.querySelector('.sc-page-subtitle')?.textContent || '',
+    simMonth:   document.getElementById('scTsMonth')?.textContent || '',
+    isSimulated:document.getElementById('scTsSimBadge')?.style.display !== 'none',
+    weightRows, spendRows,
+    dateStr: now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    timeStr: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+  };
+}
 
-  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
-  <title>S-curve forecast report — ${caLabel}</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Inter,system-ui,sans-serif;font-size:12px;color:#111827;background:#fff;padding:0}
-    @page{size:A4 landscape;margin:15mm 12mm}
-    @media print{.no-print{display:none!important}}
-    .page{padding:24px 28px;max-width:1100px;margin:0 auto}
-    .page-break{page-break-before:always;padding-top:24px}
-    h1{font-size:20px;font-weight:800;color:#1e3a8a;margin-bottom:2px}
-    h2{font-size:13px;font-weight:700;color:#1e3a8a;margin:18px 0 8px;border-bottom:2px solid #dbeafe;padding-bottom:4px}
-    h3{font-size:11px;font-weight:700;color:#374151;margin:12px 0 6px}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:14px;border-bottom:3px solid #1e3a8a}
-    .header-left h1{font-size:22px}
-    .header-left .ca-label{font-size:13px;color:#3b82f6;font-weight:600;margin-top:2px}
-    .header-left .subtitle{font-size:11px;color:#6b7280;margin-top:1px}
-    .header-right{text-align:right;font-size:11px;color:#6b7280;line-height:1.6}
-    .header-right strong{display:block;font-size:12px;color:#111827}
-    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
-    .kpi-card{border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#f9fafb}
-    .kpi-label{font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
-    .kpi-value{font-size:20px;font-weight:800;color:#111827;margin-bottom:2px}
-    .kpi-value.warn{color:#d97706}
-    .kpi-sub{font-size:10px;color:#6b7280}
-    .over{color:#dc2626;font-weight:600}
-    .under{color:#059669;font-weight:600}
-    .ai-banner{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:18px;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
-    .ai-active-tag{background:#1d4ed8;color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:.04em}
-    .ai-conf{background:#f0fdf4;border:1px solid #86efac;color:#15803d;border-radius:12px;padding:2px 10px;font-size:10px;font-weight:700}
-    .ai-sim{font-size:10px;color:#6b7280}
-    .pill{background:#dbeafe;color:#1e3a8a;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:600;display:inline-block;margin:1px}
-    .sim-badge{background:#7c3aed;color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:4px}
-    .chart-box{border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:18px;background:#fff}
-    .chart-box img{width:100%;height:auto;display:block}
-    .exp-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:11px;line-height:1.6;color:#374151;margin-bottom:18px}
-    table{width:100%;border-collapse:collapse;font-size:11px}
-    th{background:#1e3a8a;color:#fff;padding:5px 8px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
-    th.r{text-align:right}
-    td{border-bottom:1px solid #f3f4f6;color:#374151;vertical-align:middle}
-    .footer{margin-top:24px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af}
-    .tag{display:inline-block;background:#f3f4f6;border-radius:4px;padding:1px 7px;font-size:10px;color:#374151;margin-right:4px}
-  </style></head><body>
-  <div class="page">
-
-    <!-- HEADER -->
-    <div class="header">
-      <div class="header-left">
-        <div style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Contruent · Cisco Systems</div>
-        <h1>S-curve forecast report</h1>
-        <div class="ca-label">${caLabel.replace(/<[^>]+>/g, '').trim()}</div>
-        <div class="subtitle">${subtitle}</div>
-      </div>
-      <div class="header-right">
-        <strong>Generated ${dateStr}</strong>
-        ${timeStr} · ${ACTIVE_USER.name} (${ACTIVE_USER.role})
-        ${isSimulated ? `<br><span style="color:#7c3aed;font-weight:700">Simulated to ${simMonth}</span>` : `<br>As of ${simMonth}`}
-        ${AI_FORECAST_ACTIVE ? '<br><span style="color:#1d4ed8;font-weight:700">AI forecast applied</span>' : ''}
-      </div>
-    </div>
-
-    <!-- KPI CARDS -->
-    <h2>Key performance indicators</h2>
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Est. at completion (EAC)</div>
-        <div class="kpi-value">${eac}</div>
-        <div class="kpi-sub">${eacSub.replace(/\+/g,'<span class="over">+').replace(/%/,'%</span>')}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">% Complete (actuals)</div>
-        <div class="kpi-value">${pct}</div>
-        <div class="kpi-sub">${pctSub}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">CPI / SPI</div>
-        <div class="kpi-value warn">${cpiSpi}</div>
-        <div class="kpi-sub">${cpiSub}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Forecast completion</div>
-        <div class="kpi-value">${completion}</div>
-        <div class="kpi-sub">${compSub}</div>
-      </div>
-    </div>
-
-    <!-- AI BANNER -->
-    <div class="ai-banner">
+// Selectable report sections — left list ↔ rendered output
+const EXPORT_SECTIONS = [
+  { id: 'kpi', label: 'Key performance indicators', icon: 'pi-th-large', desc: 'EAC, % complete, CPI / SPI, forecast completion',
+    render: d => `<div class="section"><h2>Key performance indicators</h2>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Est. at completion (EAC)</div><div class="kpi-value">${d.eac}</div><div class="kpi-sub">${d.eacSub.replace(/\+/g,'<span class="over">+').replace(/%/,'%</span>')}</div></div>
+        <div class="kpi-card"><div class="kpi-label">% Complete (actuals)</div><div class="kpi-value">${d.pct}</div><div class="kpi-sub">${d.pctSub}</div></div>
+        <div class="kpi-card"><div class="kpi-label">CPI / SPI</div><div class="kpi-value warn">${d.cpiSpi}</div><div class="kpi-sub">${d.cpiSub}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Forecast completion</div><div class="kpi-value">${d.completion}</div><div class="kpi-sub">${d.compSub}</div></div>
+      </div></div>` },
+  { id: 'banner', label: 'AI forecast banner', icon: 'pi-sparkles', desc: 'Confidence, similar accounts, driver mix',
+    render: d => `<div class="section"><div class="ai-banner">
       <span class="ai-active-tag">${AI_FORECAST_ACTIVE ? 'AI forecast active' : 'Standard forecast'}</span>
-      <span class="ai-conf">${confPill}</span>
-      <span class="ai-sim">${simAccts}</span>
+      <span class="ai-conf">${d.confPill}</span>
+      <span class="ai-sim">${d.simAccts}</span>
       <span style="font-size:10px;color:#6b7280;margin-left:4px">Driven by:</span>
-      ${driverPills.split(' · ').map(p => `<span class="pill">${p}</span>`).join('')}
-      ${isSimulated ? `<span class="sim-badge">Simulated: ${simMonth}</span>` : ''}
-    </div>
-
-    <!-- CHART -->
-    <h2>S-curve</h2>
-    <div class="chart-box">
-      ${chartImg ? `<img src="${chartImg}" alt="S-curve chart"/>` : '<div style="height:200px;display:flex;align-items:center;justify-content:center;color:#9ca3af">Chart not available</div>'}
-    </div>
-
-    <!-- FORECAST EXPLANATION -->
-    <h2>Forecast methodology</h2>
-    <div class="exp-box">${expText}</div>
-
-    <!-- PAGE BREAK: DETAILS -->
-    <div class="page-break">
-
-    <h2>Periodic spend data ($M)</h2>
-    <table>
-      <thead><tr>
-        <th>Period</th>
-        <th class="r">Baseline</th>
-        <th class="r">Actuals</th>
-        <th class="r">Earned value</th>
-        <th class="r">Incurred</th>
-        <th class="r">Commitment</th>
-      </tr></thead>
-      <tbody>${spendRows}</tbody>
-    </table>
-
-    <h2 style="margin-top:24px">AI matching driver weights</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div>
-        <table>
-          <thead><tr><th>Feature</th><th>Weight</th><th>Contribution</th><th style="width:80px">Relative</th></tr></thead>
-          <tbody>${weightRows}</tbody>
-        </table>
-      </div>
-      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px">
-        <h3>Matching summary</h3>
-        <div style="margin-bottom:8px">
-          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Active features</div>
-          <div style="font-size:14px;font-weight:700;color:#1e3a8a">${Object.values(ACTIVE_WEIGHTS).filter(v => v > 0).length} of ${Object.keys(ACTIVE_WEIGHTS).length}</div>
-        </div>
-        <div style="margin-bottom:8px">
-          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Total weight</div>
-          <div style="font-size:14px;font-weight:700;color:#1e3a8a">${getTotalWeight().toFixed(1)}</div>
-        </div>
-        <div style="margin-bottom:8px">
-          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Similar accounts matched</div>
-          <div style="font-size:14px;font-weight:700;color:#1e3a8a">${simAccts}</div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">Model confidence</div>
-          <div style="font-size:14px;font-weight:700;color:#15803d">${confPill}</div>
-        </div>
-        <div style="margin-top:14px;border-top:1px solid #e5e7eb;padding-top:10px">
-          <h3>Account info</h3>
-          <div style="font-size:11px;line-height:1.8;color:#374151">
-            <div><span class="tag">Phase</span> ${FOCAL.phase}</div>
-            <div><span class="tag">Discipline</span> ${FOCAL.discipline}</div>
-            <div><span class="tag">Work type</span> ${FOCAL.workType}</div>
-            <div><span class="tag">Region</span> ${FOCAL.region}</div>
-            <div><span class="tag">BAC</span> $${CHART_BAC.toFixed(1)}M</div>
-            <div><span class="tag">Duration</span> ${CHART_LABELS.length} months</div>
+      ${d.driverPills.split(' · ').filter(Boolean).map(p => `<span class="pill">${p}</span>`).join('')}
+      ${d.isSimulated ? `<span class="sim-badge">Simulated: ${d.simMonth}</span>` : ''}
+    </div></div>` },
+  { id: 'chart', label: 'S-curve chart', icon: 'pi-chart-line', desc: 'Cumulative forecast curve image',
+    render: d => `<div class="section"><h2>S-curve</h2><div class="chart-box">
+      ${d.chartImg ? `<img src="${d.chartImg}" alt="S-curve chart"/>` : '<div style="height:200px;display:flex;align-items:center;justify-content:center;color:#9ca3af">Chart not available</div>'}
+    </div></div>` },
+  { id: 'methodology', label: 'Forecast methodology', icon: 'pi-book', desc: 'Narrative explanation of the forecast',
+    render: d => `<div class="section"><h2>Forecast methodology</h2><div class="exp-box">${d.expText}</div></div>` },
+  { id: 'spend', label: 'Periodic spend data', icon: 'pi-table', desc: 'Monthly baseline / actuals / earned / incurred / commitment',
+    render: d => `<div class="section"><h2>Periodic spend data ($M)</h2><table>
+      <thead><tr><th>Period</th><th class="r">Baseline</th><th class="r">Actuals</th><th class="r">Earned value</th><th class="r">Incurred</th><th class="r">Commitment</th></tr></thead>
+      <tbody>${d.spendRows}</tbody></table></div>` },
+  { id: 'weights', label: 'AI matching driver weights', icon: 'pi-sliders-h', desc: 'Feature weights and matching summary',
+    render: d => `<div class="section"><h2>AI matching driver weights</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div><table><thead><tr><th>Feature</th><th>Weight</th><th>Contribution</th><th style="width:80px">Relative</th></tr></thead><tbody>${d.weightRows}</tbody></table></div>
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px">
+          <h3>Matching summary</h3>
+          <div style="margin-bottom:8px"><div style="font-size:10px;color:#6b7280;margin-bottom:2px">Active features</div><div style="font-size:14px;font-weight:700;color:#1e3a8a">${Object.values(ACTIVE_WEIGHTS).filter(v => v > 0).length} of ${Object.keys(ACTIVE_WEIGHTS).length}</div></div>
+          <div style="margin-bottom:8px"><div style="font-size:10px;color:#6b7280;margin-bottom:2px">Total weight</div><div style="font-size:14px;font-weight:700;color:#1e3a8a">${getTotalWeight().toFixed(1)}</div></div>
+          <div style="margin-bottom:8px"><div style="font-size:10px;color:#6b7280;margin-bottom:2px">Similar accounts matched</div><div style="font-size:14px;font-weight:700;color:#1e3a8a">${d.simAccts}</div></div>
+          <div><div style="font-size:10px;color:#6b7280;margin-bottom:2px">Model confidence</div><div style="font-size:14px;font-weight:700;color:#15803d">${d.confPill}</div></div>
+          <div style="margin-top:14px;border-top:1px solid #e5e7eb;padding-top:10px"><h3>Account info</h3>
+            <div style="font-size:11px;line-height:1.8;color:#374151">
+              <div><span class="tag">Phase</span> ${FOCAL.phase}</div>
+              <div><span class="tag">Discipline</span> ${FOCAL.discipline}</div>
+              <div><span class="tag">Work type</span> ${FOCAL.workType}</div>
+              <div><span class="tag">Region</span> ${FOCAL.region}</div>
+              <div><span class="tag">BAC</span> $${CHART_BAC.toFixed(1)}M</div>
+              <div><span class="tag">Duration</span> ${CHART_LABELS.length} months</div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div></div>` },
+];
 
-    <div class="footer">
-      <span>Contruent · S-curve forecasting · ${caLabel.replace(/<[^>]+>/g, '').trim()}</span>
-      <span>Generated ${dateStr} at ${timeStr} by ${ACTIVE_USER.name} · CONFIDENTIAL</span>
+function _exportHeaderHtml(d) {
+  return `<div class="header">
+    <div class="header-left">
+      <div style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Contruent · Cisco Systems</div>
+      <h1>S-curve forecast report</h1>
+      <div class="ca-label">${d.caLabel}</div>
+      <div class="subtitle">${d.subtitle}</div>
     </div>
+    <div class="header-right">
+      <strong>Generated ${d.dateStr}</strong>
+      ${d.timeStr} · ${ACTIVE_USER.name} (${ACTIVE_USER.role})
+      ${d.isSimulated ? `<br><span style="color:#7c3aed;font-weight:700">Simulated to ${d.simMonth}</span>` : `<br>As of ${d.simMonth}`}
+      ${AI_FORECAST_ACTIVE ? '<br><span style="color:#1d4ed8;font-weight:700">AI forecast applied</span>' : ''}
+    </div>
+  </div>`;
+}
 
-    </div><!-- page-break -->
-  </div><!-- page -->
+function _exportReportDoc(d, selectedIds) {
+  const body = EXPORT_SECTIONS.filter(s => selectedIds.includes(s.id)).map(s => s.render(d)).join('');
+  const footer = `<div class="footer">
+    <span>Contruent · S-curve forecasting · ${d.caLabel}</span>
+    <span>Generated ${d.dateStr} at ${d.timeStr} by ${ACTIVE_USER.name} · CONFIDENTIAL</span>
+  </div>`;
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+    <title>S-curve forecast report — ${d.caLabel}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css"/>
+    <style>${EXPORT_REPORT_CSS}</style></head><body>
+    <div class="page">${_exportHeaderHtml(d)}${body || '<div class="empty-msg">No sections selected. Choose at least one item on the left to include in the report.</div>'}${footer}</div>
   </body></html>`;
+}
 
+// Module state for the export modal
+let _exportData = null;
+let _exportSel  = EXPORT_SECTIONS.map(s => s.id);
+
+window.kebabExportExcel = function() { openExportModal(); }; // back-compat alias
+
+window.openExportModal = function() {
+  const dropdown = document.getElementById('kebabDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  const kBtn = document.getElementById('kebabBtn');
+  if (kBtn) kBtn.setAttribute('aria-expanded', 'false');
+  if (window._canExport === false) { alert('Your role does not have permission to export data.'); return; }
+
+  _exportData = _gatherExportData();
+  _exportSel  = EXPORT_SECTIONS.map(s => s.id);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sc-modal-overlay';
+  overlay.id = 'exportModalOverlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Export to PDF');
+  document.body.appendChild(overlay);
+  _exportRenderSelectStep();
+};
+
+window.closeExportModal = function() {
+  const overlay = document.getElementById('exportModalOverlay');
+  if (overlay) overlay.remove();
+};
+
+// Step 1 — pick sections (left) + live preview (right)
+function _exportRenderSelectStep() {
+  const overlay = document.getElementById('exportModalOverlay');
+  if (!overlay) return;
+  const items = EXPORT_SECTIONS.map(s => {
+    const on = _exportSel.includes(s.id);
+    return `<label class="sc-exp-item${on ? ' is-on' : ''}">
+      <input type="checkbox" ${on ? 'checked' : ''} onchange="exportToggle('${s.id}', this.checked)" />
+      <i class="pi ${s.icon}"></i>
+      <span class="sc-exp-item-text"><span class="sc-exp-item-label">${s.label}</span><span class="sc-exp-item-desc">${s.desc}</span></span>
+    </label>`;
+  }).join('');
+  const allOn = _exportSel.length === EXPORT_SECTIONS.length;
+
+  overlay.innerHTML = `
+    <div class="sc-modal sc-export-modal">
+      <div class="sc-modal-header">
+        <div class="sc-modal-title"><i class="pi pi-file-pdf"></i> Export to PDF</div>
+        <button class="sc-modal-close" onclick="closeExportModal()" aria-label="Close"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="sc-export-body">
+        <div class="sc-exp-left">
+          <div class="sc-exp-left-head">
+            <span>Include in report</span>
+            <button type="button" class="sc-exp-selall" onclick="exportSelectAll(${allOn ? 'false' : 'true'})">${allOn ? 'Clear all' : 'Select all'}</button>
+          </div>
+          <div class="sc-exp-list">${items}</div>
+        </div>
+        <div class="sc-exp-right">
+          <div class="sc-exp-preview-label">Preview <span id="exportSelCount"></span></div>
+          <div class="sc-exp-preview-frame"><iframe id="exportPreviewFrame" title="Report preview"></iframe></div>
+        </div>
+      </div>
+      <div class="sc-export-footer">
+        <button class="btn btn-secondary" onclick="closeExportModal()">Cancel</button>
+        <button class="btn btn-primary" id="exportNextBtn" onclick="exportGoFinal()"><i class="pi pi-arrow-right btn-icon-left"></i> Export</button>
+      </div>
+    </div>`;
+
+  exportRefreshPreview();
+}
+
+function exportRefreshPreview() {
+  const frame = document.getElementById('exportPreviewFrame');
+  if (frame) frame.srcdoc = _exportReportDoc(_exportData, _exportSel);
+  const count = document.getElementById('exportSelCount');
+  if (count) count.textContent = `· ${_exportSel.length} of ${EXPORT_SECTIONS.length} section${_exportSel.length === 1 ? '' : 's'}`;
+  const nextBtn = document.getElementById('exportNextBtn');
+  if (nextBtn) nextBtn.disabled = _exportSel.length === 0;
+}
+
+window.exportToggle = function(id, on) {
+  _exportSel = on ? [...new Set([..._exportSel, id])] : _exportSel.filter(x => x !== id);
+  const cb = document.querySelector(`.sc-exp-item input[onchange*="'${id}'"]`);
+  if (cb) cb.closest('.sc-exp-item').classList.toggle('is-on', on);
+  const sel = document.querySelector('.sc-exp-selall');
+  if (sel) {
+    sel.textContent = _exportSel.length === EXPORT_SECTIONS.length ? 'Clear all' : 'Select all';
+    sel.setAttribute('onclick', `exportSelectAll(${_exportSel.length === EXPORT_SECTIONS.length ? 'false' : 'true'})`);
+  }
+  exportRefreshPreview();
+};
+
+window.exportSelectAll = function(on) {
+  _exportSel = on ? EXPORT_SECTIONS.map(s => s.id) : [];
+  _exportRenderSelectStep();
+};
+
+// Step 2 — full-page final preview with Back + Export
+window.exportGoFinal = function() {
+  if (_exportSel.length === 0) return;
+  const overlay = document.getElementById('exportModalOverlay');
+  if (!overlay) return;
+  overlay.innerHTML = `
+    <div class="sc-modal sc-export-modal sc-export-modal--final">
+      <div class="sc-modal-header">
+        <div class="sc-modal-title"><i class="pi pi-file-pdf"></i> Export preview</div>
+        <button class="sc-modal-close" onclick="closeExportModal()" aria-label="Close"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="sc-exp-final-frame"><iframe id="exportFinalFrame" title="Final report preview"></iframe></div>
+      <div class="sc-export-footer">
+        <button class="btn btn-secondary" onclick="exportGoBack()"><i class="pi pi-arrow-left btn-icon-left"></i> Back</button>
+        <button class="btn btn-primary" onclick="doExportPrint()"><i class="pi pi-download btn-icon-left"></i> Export PDF</button>
+      </div>
+    </div>`;
+  const frame = document.getElementById('exportFinalFrame');
+  if (frame) frame.srcdoc = _exportReportDoc(_exportData, _exportSel);
+};
+
+window.exportGoBack = function() { _exportRenderSelectStep(); };
+
+window.doExportPrint = function() {
+  const html = _exportReportDoc(_exportData, _exportSel);
   const win = window.open('', '_blank', 'width=1200,height=850');
   if (!win) { alert('Please allow pop-ups to export the report.'); return; }
   win.document.write(html);
   win.document.close();
   win.focus();
   setTimeout(() => { win.print(); }, 600);
+  closeExportModal();
 };
 
 function _buildAndMountSettings(container) {
-  function sliderRow(key, label, desc) {
+  function sliderRow(key, label, desc, indent) {
     const v = ACTIVE_WEIGHTS[key] != null ? ACTIVE_WEIGHTS[key] : 1;
     const pct = (v / 5 * 100).toFixed(0) + '%';
-    return `<div class="sc-settings-feature-row" id="row-${key}" style="${v === 0 ? 'opacity:0.45' : ''}">
+    const indentStyle = indent ? 'padding-left:30px;' : '';
+    return `<div class="sc-settings-feature-row" id="row-${key}" style="${indentStyle}${v === 0 ? 'opacity:0.45' : ''}">
       <div class="sc-settings-feat-info">
         <span class="sc-settings-feat-label">${label}</span>
         <span class="sc-settings-feat-desc">${desc}</span>
       </div>
       <div class="sc-settings-weight-control">
-        <span class="sc-settings-weight-val" id="wval-${key}">${v.toFixed(1)}</span>
+        <span class="sc-wval-wrap">
+          <input type="number" class="sc-settings-weight-val" id="wval-${key}" min="0" max="5" step="0.1" value="${v.toFixed(1)}"
+            onchange="weightValInput('${key}', this.value)" aria-label="Weight for ${label} (0–5)" />
+          <span class="sc-wval-arrows">
+            <button type="button" tabindex="-1" onclick="stepWeight('${key}', 0.1)" aria-label="Increase weight by 0.1"><i class="pi pi-chevron-up"></i></button>
+            <button type="button" tabindex="-1" onclick="stepWeight('${key}', -0.1)" aria-label="Decrease weight by 0.1"><i class="pi pi-chevron-down"></i></button>
+          </span>
+        </span>
         <input type="range" class="sc-weight-slider" id="wslider-${key}" min="0" max="5" step="0.5" value="${v}"
           style="--fill-pct:${pct}"
           oninput="updateSettingsWeight('${key}', parseFloat(this.value))" />
@@ -2530,13 +2870,98 @@ function _buildAndMountSettings(container) {
     </div>`;
   }
 
-  const catFeatures = [
-    { key: 'phase_type',    code: 'PHASE_TYPE',  source: 'CA standard',   cls: 'ca' },
-    { key: 'discipline',    code: 'DISCIPLINE',  source: 'CA standard',   cls: 'ca' },
-    { key: 'work_type',     code: 'WORK_TYPE',   source: 'CA standard',   cls: 'ca' },
-    { key: 'proj_size_cat', code: 'PROJ_SIZE',   source: 'Project group', cls: 'proj' },
-    { key: 'acct_size_cat', code: 'ACCT_SIZE',   source: 'Project group', cls: 'proj' },
-    { key: 'region',        code: 'REGION',      source: 'Project group', cls: 'proj' },
+  function groupPoints(keys) {
+    // Missing keys default to 1 — same default the sliders render with
+    return keys.reduce((a, k) => a + (ACTIVE_WEIGHTS[k] != null ? ACTIVE_WEIGHTS[k] : 1), 0);
+  }
+
+  function numGroupHeader(label, id, keys) {
+    return `<div onclick="toggleNumGroup('${id}')" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;user-select:none">
+      <i class="pi pi-chevron-down" id="numgrp-chevron-${id}" style="font-size:10px;transition:transform .15s"></i>
+      <span>${label}</span>
+      <span data-pts-keys="${keys.join(',')}" style="margin-left:auto;font-size:10.5px;font-weight:600;color:#94a3b8;background:#eef2f7;border-radius:10px;padding:1px 8px">${groupPoints(keys).toFixed(1)} pts</span>
+    </div>`;
+  }
+
+  const catGroups = [
+    { source: 'Project groups', items: [
+      { key: 'proj_program',         title: 'Program'                 },
+      { key: 'proj_portfolio',       title: 'Portfolio'               },
+      { key: 'proj_type',            title: 'Project type'            },
+      { key: 'proj_phase',           title: 'Project phase'           },
+      { key: 'proj_stage_gate',      title: 'Stage gate'              },
+      { key: 'proj_delivery_method', title: 'Delivery method'         },
+      { key: 'proj_contract_model',  title: 'Contract model'          },
+      { key: 'proj_funding_type',    title: 'Funding type'            },
+      { key: 'proj_client_sector',   title: 'Client sector'           },
+      { key: 'proj_industry',        title: 'Industry segment'        },
+      { key: 'proj_region',          title: 'Region'                  },
+      { key: 'proj_country',         title: 'Country'                 },
+      { key: 'proj_state',           title: 'State / province'        },
+      { key: 'proj_city',            title: 'City'                    },
+      { key: 'proj_site_type',       title: 'Site type'               },
+      { key: 'proj_environment',     title: 'Greenfield / brownfield' },
+      { key: 'proj_size_band',       title: 'Size band'               },
+      { key: 'proj_duration_band',   title: 'Duration band'           },
+      { key: 'proj_complexity',      title: 'Complexity rating'       },
+      { key: 'proj_risk_class',      title: 'Risk class'              },
+      { key: 'proj_priority',        title: 'Priority tier'           },
+      { key: 'proj_currency',        title: 'Currency'                },
+      { key: 'proj_business_unit',   title: 'Business unit'           },
+      { key: 'proj_division',        title: 'Division'                },
+      { key: 'proj_sponsor',         title: 'Sponsor org'             },
+      { key: 'proj_execution_model', title: 'Execution model'         },
+    ]},
+    { source: 'Enterprise', items: [
+      { key: 'ent_program',        title: 'Capital program'   },
+      { key: 'ent_portfolio',      title: 'Portfolio'         },
+      { key: 'ent_business_unit',  title: 'Business unit'     },
+      { key: 'ent_region',         title: 'Region'            },
+      { key: 'ent_country',        title: 'Country'           },
+      { key: 'ent_funding_source', title: 'Funding source'    },
+      { key: 'ent_asset_class',    title: 'Asset class'       },
+      { key: 'ent_sponsor_org',    title: 'Sponsor org'       },
+      { key: 'ent_fiscal_year',    title: 'Fiscal year'       },
+    ]},
+    { source: 'Standard', items: [
+      { key: 'phase_type',         title: 'Phase type'        },
+      { key: 'discipline',         title: 'Discipline'        },
+      { key: 'work_type',          title: 'Work type'         },
+      { key: 'std_cost_category',  title: 'Cost category'     },
+      { key: 'std_commodity',      title: 'Commodity class'   },
+      { key: 'std_contract_type',  title: 'Contract type'     },
+      { key: 'std_account_status', title: 'Account status'    },
+      { key: 'std_wbs_level',      title: 'WBS level'         },
+      { key: 'std_milestone_type', title: 'Milestone type'    },
+    ]},
+    { source: 'Module', items: [
+      { key: 'proj_size_cat',      title: 'Project size'         },
+      { key: 'acct_size_cat',      title: 'Account size'         },
+      { key: 'region',             title: 'Region'               },
+      { key: 'mod_facility_type',  title: 'Facility type'        },
+      { key: 'mod_plant_area',     title: 'Plant area'           },
+      { key: 'mod_system',         title: 'System'               },
+      { key: 'mod_subsystem',      title: 'Subsystem'            },
+      { key: 'mod_equipment_class',title: 'Equipment class'      },
+      { key: 'mod_material_group', title: 'Material group'       },
+      { key: 'mod_vendor_category',title: 'Vendor category'      },
+      { key: 'mod_procurement_pkg',title: 'Procurement package'  },
+      { key: 'mod_construction_zone',title: 'Construction zone'  },
+      { key: 'mod_work_package',   title: 'Work package'         },
+      { key: 'mod_activity_type',  title: 'Schedule activity type'},
+      { key: 'mod_resource_type',  title: 'Resource type'        },
+      { key: 'mod_craft_type',     title: 'Craft type'           },
+      { key: 'mod_shift_pattern',  title: 'Shift pattern'        },
+      { key: 'mod_site_location',  title: 'Site location'        },
+      { key: 'mod_building',       title: 'Building'             },
+      { key: 'mod_level',          title: 'Floor / level'        },
+      { key: 'mod_unit_operation', title: 'Unit operation'       },
+      { key: 'mod_process_area',   title: 'Process area'         },
+      { key: 'mod_discipline_lead',title: 'Discipline lead'      },
+      { key: 'mod_deliverable',    title: 'Engineering deliverable'},
+      { key: 'mod_permit_type',    title: 'Permit type'          },
+      { key: 'mod_risk_category',  title: 'Risk category'        },
+    ]},
   ];
 
   let html = `
@@ -2559,22 +2984,35 @@ function _buildAndMountSettings(container) {
       <span class="sc-settings-section-desc">Enterprise/standard group codes from control account ID and top 3 project groups. Driven by the key groupings associated with a Contruent project ID and control account ID — configurable per client during setup.</span>
     </div>
     <div style="background:#fff">
-      <div style="display:grid;grid-template-columns:1fr 110px 50px 160px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;padding:8px 14px;border-bottom:1px solid #f1f5f9;background:#fafbfc">
-        <span>Group code</span><span>Source</span><span style="text-align:center">Wt</span><span>Adjust</span>
+      <div style="display:grid;grid-template-columns:1fr 70px 160px;column-gap:10px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;padding:8px 14px;border-bottom:1px solid #f1f5f9;background:#fafbfc">
+        <span>Group title</span><span style="text-align:center">Wt</span><span>Adjust</span>
       </div>
-      ${catFeatures.map(f => {
-        const v = ACTIVE_WEIGHTS[f.key] != null ? ACTIVE_WEIGHTS[f.key] : 1;
-        const bg = f.cls === 'ca' ? '#eef3fb' : '#f0fdf4';
-        const tx = f.cls === 'ca' ? '#1a4a9f' : '#15803d';
-        return `<div style="display:grid;grid-template-columns:1fr 110px 50px 160px;align-items:center;padding:9px 14px;border-bottom:1px solid #f8f9fb">
-          <span style="font-size:12.5px;font-weight:600;color:#1a1a2e;font-family:monospace">${f.code}</span>
-          <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:${bg};color:${tx};font-weight:500;white-space:nowrap">${f.source}</span>
-          <span style="font-size:13px;font-weight:700;color:#1a4a9f;text-align:center;font-family:monospace" id="wval-${f.key}">${v.toFixed(1)}</span>
-          <input type="range" class="sc-weight-slider" id="wslider-${f.key}" min="0" max="5" step="0.5" value="${v}"
-            style="width:140px;--fill-pct:${(v/5*100).toFixed(0)}%"
-            oninput="updateSettingsWeight('${f.key}', parseFloat(this.value))" />
-        </div>`;
-      }).join('')}
+      ${catGroups.map((g, gi) => `
+        <div onclick="toggleCatGroup(${gi})" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;user-select:none">
+          <i class="pi pi-chevron-down" id="catgrp-chevron-${gi}" style="font-size:10px;transition:transform .15s"></i>
+          <span>${g.source}</span>
+          <span data-pts-keys="${g.items.map(f => f.key).join(',')}" style="margin-left:auto;font-size:10.5px;font-weight:600;color:#94a3b8;background:#eef2f7;border-radius:10px;padding:1px 8px">${groupPoints(g.items.map(f => f.key)).toFixed(1)} pts</span>
+        </div>
+        <div id="catgrp-${gi}">
+        ${g.items.map(f => {
+          const v = ACTIVE_WEIGHTS[f.key] != null ? ACTIVE_WEIGHTS[f.key] : 1;
+          return `<div style="display:grid;grid-template-columns:1fr 70px 160px;column-gap:10px;align-items:center;padding:9px 14px 9px 30px;border-bottom:1px solid #f8f9fb">
+            <span style="font-size:12.5px;font-weight:600;color:#1a1a2e">${f.title}</span>
+            <span class="sc-wval-wrap" style="justify-self:center">
+              <input type="number" class="sc-settings-weight-val" id="wval-${f.key}" min="0" max="5" step="0.1" value="${v.toFixed(1)}"
+                onchange="weightValInput('${f.key}', this.value)" aria-label="Weight for ${f.title} (0–5)" />
+              <span class="sc-wval-arrows">
+                <button type="button" tabindex="-1" onclick="stepWeight('${f.key}', 0.1)" aria-label="Increase weight by 0.1"><i class="pi pi-chevron-up"></i></button>
+                <button type="button" tabindex="-1" onclick="stepWeight('${f.key}', -0.1)" aria-label="Decrease weight by 0.1"><i class="pi pi-chevron-down"></i></button>
+              </span>
+            </span>
+            <input type="range" class="sc-weight-slider" id="wslider-${f.key}" min="0" max="5" step="0.5" value="${v}"
+              style="width:140px;--fill-pct:${(v/5*100).toFixed(0)}%"
+              oninput="updateSettingsWeight('${f.key}', parseFloat(this.value))" />
+          </div>`;
+        }).join('')}
+        </div>
+      `).join('')}
       <div style="padding:10px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;font-size:11.5px;color:#64748b;display:flex;align-items:flex-start;gap:6px">
         <i class="pi pi-info-circle" style="color:#6366f1;flex-shrink:0;margin-top:1px"></i>
         Project-specific module groups are matched within the same Contruent project ID only and do not cross-match with accounts from other projects.
@@ -2586,15 +3024,15 @@ function _buildAndMountSettings(container) {
   html += `<div class="sc-settings-section">
     <div class="sc-settings-section-header">
       <i class="pi pi-calculator"></i> Numerical features
-      <span class="sc-settings-section-desc">Quantitative account attributes. Disable cost element breakdown if the client uses a single combined element rather than labor / materials / equipment / subcontracts.</span>
+      <span class="sc-settings-section-desc">Quantitative account attributes.</span>
     </div>
     <div style="background:#fff">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid #f1f5f9">
         <div>
-          <span style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Cost element breakdown (labor / materials / equipment / subcontracts)</span>
-          <span style="font-size:12px;color:var(--text-muted)">Detected: 4 cost elements active on this client. Disable for single-element clients.</span>
+          <span style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Control element breakdown (labor / materials / equipment / subcontracts)</span>
+          <span style="font-size:12px;color:var(--text-muted)">Detected: 4 control elements active.</span>
         </div>
-        <label class="sc-toggle-switch" aria-label="Enable cost element breakdown">
+        <label class="sc-toggle-switch" aria-label="Enable control element breakdown">
           <input type="checkbox" id="toggleCostBreakdown" checked onchange="toggleCostBreakdown(this.checked)" />
           <span class="sc-toggle-track"></span>
         </label>
@@ -2603,12 +3041,28 @@ function _buildAndMountSettings(container) {
         <i class="pi pi-check-circle" style="font-size:13px"></i>
         <span id="num-applied-text">6 of 6 numerical features applied</span>
       </div>
+      <div style="padding:10px 14px;background:#eff6ff;border-bottom:1px solid #dbeafe;font-size:11.5px;color:#1e40af;display:flex;align-items:flex-start;gap:6px">
+        <i class="pi pi-info-circle" style="flex-shrink:0;margin-top:1px"></i>
+        Kindly note that the cost element breakdown only impacts the cost forecasting curves. Hours element breakdown only impacts hours forecast curves, and company cost element breakdown only impacts the company cost forecast curves.
+      </div>
       ${sliderRow('duration_months', 'Duration (months)', 'Planned account duration in months')}
       ${sliderRow('budget_amount',   'Budget ($M)',       'Total approved budget')}
-      ${sliderRow('labor_mix',       'Labor mix',         'Proportion of cost that is labor')}
-      ${sliderRow('material_mix',    'Material mix',      'Proportion that is materials')}
-      ${sliderRow('equip_mix',       'Equipment mix',     'Proportion that is equipment')}
-      ${sliderRow('subcontract_mix', 'Subcontract mix',   'Proportion subcontracted')}
+      ${numGroupHeader('Cost element breakdown', 'cost', ['labor_mix','material_mix','equip_mix','subcontract_mix'])}
+      <div id="numgrp-cost">
+      ${sliderRow('labor_mix',       'Labor mix',         'Proportion of control that is labor', true)}
+      ${sliderRow('material_mix',    'Material mix',      'Proportion that is materials', true)}
+      ${sliderRow('equip_mix',       'Equipment mix',     'Proportion that is equipment', true)}
+      ${sliderRow('subcontract_mix', 'Subcontract mix',   'Proportion subcontracted', true)}
+      </div>
+      ${numGroupHeader('Hours element breakdown', 'hours', ['craft_labour','supervision'])}
+      <div id="numgrp-hours">
+      ${sliderRow('craft_labour',    'Craft labour',      'Proportion of hours that is craft labour', true)}
+      ${sliderRow('supervision',     'Supervision',       'Proportion of hours that is supervision', true)}
+      </div>
+      ${numGroupHeader('Company cost element breakdown', 'company', ['internal_cost'])}
+      <div id="numgrp-company">
+      ${sliderRow('internal_cost',   'Internal cost',     'Proportion that is internal company cost', true)}
+      </div>
     </div>
   </div>`;
 
@@ -2616,7 +3070,7 @@ function _buildAndMountSettings(container) {
   html += `<div class="sc-settings-section">
     <div class="sc-settings-section-header">
       <i class="pi pi-chart-line"></i> SPI / CPI integration (earned value)
-      <span class="sc-settings-section-desc">Applies to clients where earned value reporting is active. SPI and CPI influence curve shape matching independently for all three forecast lines. Disable for actuals-only clients.</span>
+      <span class="sc-settings-section-desc">Applies to clients where earned value reporting is active. SPI and CPI influence curve shape matching independently for all three forecast lines.</span>
     </div>
     <div style="background:#fff">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid #f1f5f9">
@@ -2624,39 +3078,43 @@ function _buildAndMountSettings(container) {
           <span style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Enable SPI / CPI as matching factors</span>
           <span style="font-size:12px;color:var(--text-muted)">Accounts with similar performance index profiles are weighted higher during curve matching for all 3 forecast lines.</span>
         </div>
-        <label class="sc-toggle-switch" aria-label="Enable SPI/CPI integration">
-          <input type="checkbox" id="toggleEvm" checked onchange="toggleEvmFeature(this.checked)" />
-          <span class="sc-toggle-track"></span>
-        </label>
-      </div>
-      <div id="evmNote" style="padding:14px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div style="padding:12px 14px;background:#fffbeb;border-radius:6px;border:1px solid #fde68a">
-            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Schedule performance index</div>
-            <div style="font-size:24px;font-weight:700;color:#d97706;margin-bottom:4px">0.88</div>
-            <div style="font-size:11.5px;color:#92400e">Behind schedule — accounts with similar SPI curve profiles weighted higher in matching</div>
-          </div>
-          <div style="padding:12px 14px;background:#fffbeb;border-radius:6px;border:1px solid #fde68a">
-            <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Cost performance index</div>
-            <div style="font-size:24px;font-weight:700;color:#d97706;margin-bottom:4px">0.92</div>
-            <div style="font-size:11.5px;color:#92400e">Cost overrun — overrun curve shape patterns applied across all 3 forecast lines</div>
-          </div>
+        <div class="sc-settings-weight-control">
+          <span class="sc-wval-wrap">
+            <input type="number" class="sc-settings-weight-val" id="wval-spi_cpi" min="0" max="5" step="0.1" value="${_fmtWeight(SPI_CPI_WEIGHT)}"
+              onchange="spiCpiWeightInput(this.value)" aria-label="Weight for SPI / CPI matching (0–5)" />
+            <span class="sc-wval-arrows">
+              <button type="button" tabindex="-1" onclick="stepSpiCpi(0.1)" aria-label="Increase weight by 0.1"><i class="pi pi-chevron-up"></i></button>
+              <button type="button" tabindex="-1" onclick="stepSpiCpi(-0.1)" aria-label="Decrease weight by 0.1"><i class="pi pi-chevron-down"></i></button>
+            </span>
+          </span>
+          <input type="range" class="sc-weight-slider" id="wslider-spi_cpi" min="0" max="5" step="0.5" value="${SPI_CPI_WEIGHT}"
+            style="--fill-pct:${(SPI_CPI_WEIGHT / 5 * 100).toFixed(0)}%"
+            oninput="setSpiCpiWeight(parseFloat(this.value))" aria-label="SPI / CPI matching weight" />
         </div>
       </div>
+
     </div>
   </div>`;
 
-  // Section 4: Curve Shape Statistics
+  // Section 4: Curve Shape Statistics — shares values + non-negative clamping with the
+  // "Driven by" detail card via _shapeDisplayVals() so both views always match.
   html += `<div class="sc-settings-section">
     <div class="sc-settings-section-header">
       <i class="pi pi-chart-bar"></i> Curve shape statistics
       <span class="sc-settings-section-desc">Statistical features computed from observed actuals to date (observed) and the planned baseline (planned). Each forecast line runs a separate shape-matching pass.</span>
     </div>
     <div style="background:#fff">
-      ${sliderRow('skewness',           'Observed skewness',   'Shape asymmetry of actual spend curve to date')}
-      ${sliderRow('front_load_ratio',   'Front-load ratio',    'Proportion of spend occurring in the first half of the account')}
-      ${sliderRow('planned_skewness',   'Planned skewness',    'Shape asymmetry of the planned/baseline curve')}
-      ${sliderRow('planned_front_load', 'Planned front-load',  'Front-load ratio of the planned curve')}
+      ${sliderRow('skewness',            'Skewness',                        'Whether spending is front-loaded (negative values) or back-loaded (positive values). An account that spends most of its budget early has negative skewness; one that ramps up late has positive skewness.')}
+      ${sliderRow('front_load_ratio',    'Front-load ratio',                'The fraction of total spend that occurred in the first half of the observed window. A value of 0.7 means 70% of the money was spent in the first half.')}
+      ${sliderRow('gini',                'Concentration (Gini)',            'How evenly spread the spending is across periods. A value near 0 means spending is spread evenly; a value near 1 means almost all spending happened in a single period.')}
+      ${sliderRow('peak_period_norm',    'Peak period (normalized)',        'Where in the observed window the single largest spend period occurred. A value of 0.2 means the peak was near the beginning; 0.8 means near the end.')}
+      ${sliderRow('kurtosis',            'Kurtosis',                        'Whether spending is concentrated in a sharp peak or spread in a flat plateau. High values mean a sharp spike; low values mean a gradual distribution.')}
+      ${sliderRow('plan_vs_actual_skew', 'Plan vs. actual skew difference', 'How much the actual spend shape has diverged from the planned (baseline) shape. Large positive or negative values mean the account is behaving differently than planned.')}
+      ${sliderRow('planned_skewness',    'Planned skewness',                'Whether the baseline plan is front-loaded or back-loaded')}
+      ${sliderRow('planned_front_load',  'Planned front-load ratio',        'Fraction of planned spend in the first half of the baseline schedule')}
+      ${sliderRow('planned_gini',        'Planned concentration',           'How evenly spread the planned spending is across periods')}
+      ${sliderRow('planned_peak_norm',   'Planned peak period',             'Where in the baseline schedule the largest planned spend period falls')}
+      ${sliderRow('planned_kurtosis',    'Planned kurtosis',                'Whether the planned spend is a sharp spike or a flat plateau')}
     </div>
   </div>`;
 
@@ -2664,7 +3122,7 @@ function _buildAndMountSettings(container) {
 
   const footer = document.createElement('div');
   footer.className = 'sc-settings-footer';
-  footer.innerHTML = '<i class="pi pi-info-circle" style="color:#6366f1"></i> Weight of 0 disables a feature. Weights are relative — only their ratio matters. Each forecast line (Actual/ETC, Incurred/ETC, Earned/ETC) runs an independent matching pass using its own historical data series from this client\'s project database.';
+  footer.innerHTML = '<i class="pi pi-info-circle" style="color:#6366f1"></i> Weight of 0 disables a feature. Weights are relative — only their ratio matters. Each forecast line (Actual/ETC, Incurred/ETC, Earned) runs an independent matching pass using its own historical data series from this client\'s project database.';
   container.appendChild(footer);
 
   _applySettingsPermissions(ACTIVE_USER);
@@ -2870,7 +3328,7 @@ function _buildAppendixSummaryCards() {
           <li><strong>Pattern matching:</strong> ${ca.bannerSimilar} completed accounts with ≥80% similarity across Phase type, Discipline, Work type, Region, and Project size.</li>
           <li><strong>CPI adjustment:</strong> CPI of 0.92 applied — late-growth correction shapes cost escalation pattern in remaining curve.</li>
           <li><strong>SPI adjustment:</strong> Duration extended ~3 months based on SPI of 0.88.</li>
-          <li><strong>Earned value ceiling:</strong> Earned/ETC bounded by approved budget ($${bac.toFixed(1)}M). Cannot earn over budget.</li>
+          <li><strong>Earned value ceiling:</strong> Earned bounded by approved budget ($${bac.toFixed(1)}M). Cannot earn over budget.</li>
           <li><strong>Incurred/actual gap:</strong> 4.2% accrual spread reflected as divergence between Actual and Incurred lines.</li>
         </ul>
       </div>
@@ -2930,7 +3388,7 @@ function initWarningsContent() {
         CA-1043 and CA-1047 have forecasted completion dates within the next 30 days but remaining cost balance exceeds 60% of approved budget.
         AI forecast is blocked for these accounts until schedule dates are updated in the scheduling tool.
         <span style="display:block;margin-top:5px;font-size:12px;color:#b91c1c">
-          Contruent does not own the schedule forecast. Verify and update completion dates with the project scheduler, then re-run the AI forecast.
+          Please verify and update completion dates with the project scheduler, then re-run the AI forecast.
         </span>
       </div>
     </div>
@@ -2977,7 +3435,9 @@ window.setSectionsView = function(view) {
     let savedTab;
     try { savedTab = localStorage.getItem(SECTIONS_TAB_KEY); } catch (e) {}
     const active = document.querySelector('.sc-acc-section.is-active-tab');
-    const tabId = savedTab || (active && active.id) || 'acc-forecast';
+    let tabId = savedTab || (active && active.id) || 'acc-forecast';
+    // Settings has no tab in tab view (use the cog/modal instead)
+    if (tabId === 'acc-drivers') tabId = 'acc-forecast';
     setActiveTab(tabId);
   }
 
