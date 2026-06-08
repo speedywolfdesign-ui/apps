@@ -174,6 +174,32 @@
     }
     .usm-pri{font-size:10px; font-weight:700; display:inline-flex; align-items:center; gap:4px}
 
+    /* ---------- Acceptance criteria ---------- */
+    .usm-ac-toggle{
+      margin-top:8px; border:none; background:transparent; padding:0;
+      font-family:inherit; font-size:10.5px; font-weight:700; color:var(--usm-primary-d);
+      cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+    }
+    .usm-ac-toggle .pi{font-size:10px; transition:transform .15s ease}
+    .usm-card.ac-open .usm-ac-toggle .pi{transform:rotate(90deg)}
+    .usm-ac-list{
+      display:none; margin:8px 0 2px; padding:8px 9px;
+      background:var(--usm-bg); border:1px solid var(--usm-border);
+      border-radius:6px; list-style:none;
+    }
+    .usm-card.ac-open .usm-ac-list{display:block}
+    .usm-ac-list li{
+      font-size:10.5px; color:var(--usm-text); line-height:1.45;
+      padding-left:15px; position:relative; margin-bottom:4px;
+    }
+    .usm-ac-list li:last-child{margin-bottom:0}
+    .usm-ac-list li::before{
+      content:'\\2713'; position:absolute; left:0; top:0;
+      color:#16a34a; font-weight:800; font-size:10px;
+    }
+    .usm-ac-list li.usm-ac-given{font-size:9.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--usm-muted); margin-bottom:6px; padding-left:0}
+    .usm-ac-list li.usm-ac-given::before{content:none}
+
     .usm-empty{
       display:none; text-align:center; color:var(--usm-muted);
       padding:70px 20px; font-size:14px;
@@ -272,16 +298,13 @@
       <div class="usm-chips" id="priChips"></div>
     </div>
     <div class="usm-filter-group">
-      <span class="usm-filter-label"><i class="pi pi-bookmark"></i> Release</span>
-      <div class="usm-chips" id="relChips"></div>
-    </div>
-    <div class="usm-filter-group">
       <span class="usm-filter-label"><i class="pi pi-search"></i> Search</span>
       <div class="usm-search-wrap">
         <i class="pi pi-search usm-search-icon"></i>
         <input type="text" class="usm-search" id="searchInput" placeholder="Search stories &amp; features…" autocomplete="off" />
       </div>
     </div>
+    <button class="usm-reset" id="expandBtn" onclick="toggleExpandAll()"><i class="pi pi-list"></i> <span id="expandLbl">Expand all detail</span></button>
     <button class="usm-reset" id="resetBtn"><i class="pi pi-refresh"></i> Reset filters</button>
     <span class="usm-count" id="storyCount"></span>
   </section>
@@ -323,12 +346,14 @@
      Derived from scurve-forecast.html / .js feature set.
      ===================================================================== */
 
+  /* Personas mirror the actual roles & permission matrix in scurve-forecast.js
+     (perms: runForecast / modifyWeights / configureGroups / exportData / changeAccount) */
   const PERSONAS = [
-    { id:'pc', name:'Cost Controller',  short:'Cost Controller',  color:'#326fd1', desc:'Project controls / cost engineer — owns the forecast' },
-    { id:'pm', name:'Project Manager',  short:'Project Manager',  color:'#0d9488', desc:'Accountable for delivery & schedule' },
-    { id:'ex', name:'Executive / PMO',  short:'Executive / PMO',  color:'#7c3aed', desc:'Portfolio oversight & reporting' },
-    { id:'da', name:'Data Analyst',     short:'Data Analyst',     color:'#d97706', desc:'Scheduler / EVM data steward' },
-    { id:'ad', name:'System Admin',     short:'System Admin',     color:'#dc2626', desc:'Configures access, users & defaults' },
+    { id:'ce', name:'Cost Engineer',     short:'Cost Engineer',     color:'#0891b2', desc:'Michael Torres — runs forecasts, tunes driver weights, exports, switches CA' },
+    { id:'pm', name:'Project Manager',   short:'Project Manager',   color:'#6366f1', desc:'Sarah Chen — runs forecasts, switches CA, exports; cannot edit weights/groups' },
+    { id:'cd', name:'Controls Director', short:'Controls Director', color:'#7c3aed', desc:'David Park — oversight: views & exports only, no run or edits' },
+    { id:'ad', name:'Super User (Admin)',short:'Admin',             color:'#dc2626', desc:'Admin User — full control + group config + admin settings & audit log' },
+    { id:'vw', name:'Read-only Viewer',  short:'Viewer',            color:'#737373', desc:'Restricted account — view only; no run, edit, export or CA change' },
   ];
   const P = Object.fromEntries(PERSONAS.map(p=>[p.id,p]));
 
@@ -345,15 +370,16 @@
   ];
 
   const EPICS = [
-    { id:'nav',     title:'Control Account Navigation',  kicker:'Epic 1', color:'#1e437d' },
-    { id:'viz',     title:'S-curve Visualization',       kicker:'Epic 2', color:'#2859a7' },
-    { id:'ai',      title:'AI Forecasting Engine',       kicker:'Epic 3', color:'#326fd1' },
-    { id:'sim',     title:'Time Simulation & What-if',   kicker:'Epic 4', color:'#0d9488' },
-    { id:'kpi',     title:'KPIs & Metrics',              kicker:'Epic 5', color:'#7c3aed' },
-    { id:'assist',  title:'AI Assistant (NL Control)',   kicker:'Epic 6', color:'#9333ea' },
-    { id:'insight', title:'Appendix & Warnings',         kicker:'Epic 7', color:'#d97706' },
-    { id:'report',  title:'Reporting & Export',          kicker:'Epic 8', color:'#0891b2' },
-    { id:'admin',   title:'Administration & Access',     kicker:'Epic 9', color:'#dc2626' },
+    { id:'nav',      title:'Control Account Navigation',  kicker:'Epic 1',  color:'#1e437d' },
+    { id:'viz',      title:'S-curve Visualization',       kicker:'Epic 2',  color:'#2859a7' },
+    { id:'ai',       title:'AI Forecasting Engine',       kicker:'Epic 3',  color:'#326fd1' },
+    { id:'settings', title:'Forecast Settings & Drivers', kicker:'Epic 4',  color:'#1d4ed8' },
+    { id:'sim',      title:'Time Simulation & What-if',   kicker:'Epic 5',  color:'#0d9488' },
+    { id:'kpi',      title:'KPIs & Metrics',              kicker:'Epic 6',  color:'#0e7490' },
+    { id:'assist',   title:'AI Assistant (NL Control)',   kicker:'Epic 7',  color:'#9333ea' },
+    { id:'insight',  title:'Appendix & Warnings',         kicker:'Epic 8',  color:'#d97706' },
+    { id:'report',   title:'Reporting & Export',          kicker:'Epic 9',  color:'#0891b2' },
+    { id:'admin',    title:'Administration, Roles & Access', kicker:'Epic 10', color:'#dc2626' },
   ];
 
   const FEATURES = [
@@ -364,129 +390,235 @@
     // viz
     { id:'scurve',      epic:'viz', title:'Cumulative S-curve chart', icon:'pi-chart-line' },
     { id:'periodic',    epic:'viz', title:'Cumulative ↔ periodic', icon:'pi-chart-bar' },
-    { id:'series',      epic:'viz', title:'Line series controls', icon:'pi-sliders-h' },
-    { id:'datatype',    epic:'viz', title:'Data type & date range', icon:'pi-calendar' },
+    { id:'series',      epic:'viz', title:'Primary line series', icon:'pi-sliders-h' },
+    { id:'series-more', epic:'viz', title:'Secondary series (More)', icon:'pi-ellipsis-h' },
+    { id:'datatype',    epic:'viz', title:'Data type switch', icon:'pi-database' },
+    { id:'daterange',   epic:'viz', title:'Date range filter', icon:'pi-calendar' },
     { id:'legend',      epic:'viz', title:'Chart legend & key', icon:'pi-tags' },
     // ai
     { id:'run-fc',      epic:'ai',  title:'Run AI forecast', icon:'pi-play' },
+    { id:'forecast-lines',epic:'ai',title:'Three independent forecast lines', icon:'pi-chart-line' },
+    { id:'eac-anchor',  epic:'ai',  title:'EAC re-anchoring', icon:'pi-anchor' },
+    { id:'confidence',  epic:'ai',  title:'Confidence band (P10–P90)', icon:'pi-arrows-v' },
     { id:'driver-banner',epic:'ai', title:'AI driver banner', icon:'pi-bolt' },
-    { id:'fc-settings', epic:'ai',  title:'Forecast settings & weights', icon:'pi-cog' },
+    { id:'banner-detail',epic:'ai', title:'Banner detailed view', icon:'pi-search-plus' },
     { id:'methodology', epic:'ai',  title:'Forecast methodology', icon:'pi-info-circle' },
-    { id:'confidence',  epic:'ai',  title:'Confidence band', icon:'pi-chart-line' },
+    // settings
+    { id:'open-settings',epic:'settings', title:'Forecast settings modal', icon:'pi-cog' },
+    { id:'point-alloc', epic:'settings', title:'Driver point allocation', icon:'pi-percentage' },
+    { id:'cls-groups',  epic:'settings', title:'Classification groups', icon:'pi-tags' },
+    { id:'num-features',epic:'settings', title:'Numerical features', icon:'pi-hashtag' },
+    { id:'shape-weights',epic:'settings',title:'Curve-shape weights', icon:'pi-chart-line' },
+    { id:'spicpi-weight',epic:'settings',title:'SPI / CPI integration weight', icon:'pi-sync' },
+    { id:'cost-breakdown',epic:'settings',title:'Cost breakdown toggle', icon:'pi-list' },
+    { id:'inline-drivers',epic:'settings',title:'Inline driver sliders', icon:'pi-sliders-h' },
+    { id:'reset-weights',epic:'settings',title:'Reset weights to default', icon:'pi-refresh' },
+    { id:'settings-locks',epic:'settings',title:'Permission locks', icon:'pi-lock' },
     // sim
     { id:'scrubber',    epic:'sim', title:'Time scrubber', icon:'pi-history' },
+    { id:'sim-badge',   epic:'sim', title:'Simulated badge', icon:'pi-flag' },
+    { id:'reset-today', epic:'sim', title:'Reset to today', icon:'pi-refresh' },
     { id:'drag',        epic:'sim', title:'Drag-to-scrub on chart', icon:'pi-arrows-h' },
     { id:'whatif',      epic:'sim', title:'What-if SPI / CPI', icon:'pi-sync' },
     // kpi
     { id:'kpi-matrix',  epic:'kpi', title:'KPI metric matrix', icon:'pi-th-large' },
     { id:'kpi-delta',   epic:'kpi', title:'Variance / delta chips', icon:'pi-arrow-up-right' },
+    { id:'kpi-live',    epic:'kpi', title:'KPIs update with CA & time', icon:'pi-sync' },
     // assist
     { id:'nl-panel',    epic:'assist', title:'AI panel (chat)', icon:'pi-comments' },
-    { id:'nl-actions',  epic:'assist', title:'NL forecast actions', icon:'pi-microchip-ai' },
+    { id:'nl-simulate', epic:'assist', title:'NL simulate time', icon:'pi-history' },
+    { id:'nl-forecast', epic:'assist', title:'NL run forecast', icon:'pi-microchip-ai' },
+    { id:'nl-ca',       epic:'assist', title:'NL switch account', icon:'pi-list' },
+    { id:'nl-weights',  epic:'assist', title:'NL adjust weights / SPI-CPI', icon:'pi-sliders-h' },
+    { id:'nl-reset',    epic:'assist', title:'NL reset', icon:'pi-refresh' },
     // insight
     { id:'appendix',    epic:'insight', title:'Forecast appendix', icon:'pi-book' },
+    { id:'neighbors',   epic:'insight', title:'Matched neighbors table', icon:'pi-share-alt' },
+    { id:'shape-stats', epic:'insight', title:'Curve-shape statistics', icon:'pi-chart-bar' },
     { id:'warnings',    epic:'insight', title:'Warnings & flags', icon:'pi-exclamation-triangle' },
+    { id:'schedule-warn',epic:'insight',title:'Schedule (SPI) warning', icon:'pi-clock' },
     // report
-    { id:'pdf',         epic:'report', title:'PDF export', icon:'pi-file-pdf' },
+    { id:'export-open', epic:'report', title:'Open export flow', icon:'pi-upload' },
+    { id:'export-select',epic:'report',title:'Select sections to include', icon:'pi-check-square' },
+    { id:'export-preview',epic:'report',title:'Export preview', icon:'pi-eye' },
+    { id:'pdf',         epic:'report', title:'Export to PDF', icon:'pi-file-pdf' },
+    { id:'excel',       epic:'report', title:'Export to Excel', icon:'pi-file-excel' },
     // admin
-    { id:'user-switch', epic:'admin', title:'User switching', icon:'pi-users' },
-    { id:'role-context',epic:'admin', title:'Role-based context', icon:'pi-shield' },
+    { id:'user-switch', epic:'admin', title:'Switch user', icon:'pi-users' },
+    { id:'permissions', epic:'admin', title:'Role-based permissions', icon:'pi-shield' },
+    { id:'role-banner', epic:'admin', title:'Active-role banner', icon:'pi-id-card' },
+    { id:'role-context',epic:'admin', title:'Admin vs project context', icon:'pi-sitemap' },
+    { id:'admin-settings',epic:'admin',title:'Admin settings page', icon:'pi-cog' },
+    { id:'audit-log',   epic:'admin', title:'Configuration audit log', icon:'pi-history' },
   ];
 
-  /* Each story: feature, who (persona id), title (task), benefit, priority, release */
+  /* Each story: feature, who (persona), title (task), benefit, priority, release, ac[] */
   const STORIES = [
-    // --- acct-select ---
-    { f:'acct-select', who:'pc', t:'Switch control account from dropdown', b:'view any CA forecast without leaving the page', pri:'high', rel:'mvp' },
-    { f:'acct-select', who:'pc', t:'See full chart + KPI rebuild on switch', b:'every panel stays consistent with the selected CA', pri:'high', rel:'mvp' },
-    { f:'acct-select', who:'pm', t:'See active CA name in page subtitle', b:'always know which account I am reviewing', pri:'med', rel:'mvp' },
-    // --- acct-search ---
-    { f:'acct-search', who:'pc', t:'Type-ahead search across accounts', b:'jump to a CA fast on large projects', pri:'med', rel:'r1' },
-    { f:'acct-search', who:'pc', t:'See a "no results" empty state', b:'know my search matched nothing', pri:'low', rel:'r1' },
-    // --- section-view ---
-    { f:'section-view', who:'pm', t:'Toggle accordion vs tab layout', b:'read the page the way that suits me', pri:'low', rel:'r2' },
-    { f:'section-view', who:'ex', t:'Persist my chosen view (A/B test)', b:'the layout I prefer sticks between visits', pri:'low', rel:'future' },
+    // ===== nav =====
+    { f:'acct-select', who:'pm', t:'Switch control account from the dropdown', b:'view any CA forecast without leaving the page', pri:'high', rel:'mvp',
+      ac:['Dropdown lists all available control accounts','Selecting a CA closes the dropdown and updates the title','Only roles with changeAccount permission can switch'] },
+    { f:'acct-select', who:'ce', t:'Rebuild chart, KPIs & banner on switch', b:'every panel stays consistent with the selected CA', pri:'high', rel:'mvp',
+      ac:['Chart datasets reload for the chosen CA','KPI tiles, AI banner and explanation all refresh','realToday index & BAC update to the new CA'] },
+    { f:'acct-select', who:'cd', t:'See the active CA name in the page subtitle', b:'always know which account I am reviewing', pri:'med', rel:'mvp',
+      ac:['Subtitle shows "Control account: CA-#### · Name"','Subtitle updates immediately on selection'] },
+    { f:'acct-search', who:'ce', t:'Type-ahead search across accounts', b:'jump to a CA fast on large projects', pri:'med', rel:'r1',
+      ac:['Typing filters the list case-insensitively','Search matches CA code and name','List restores when the query is cleared'] },
+    { f:'acct-search', who:'pm', t:'See a "No accounts found" empty state', b:'know my search matched nothing', pri:'low', rel:'r1',
+      ac:['Empty-state message shows when no items match','Message hides as soon as a match exists'] },
+    { f:'section-view', who:'pm', t:'Toggle accordion vs tab layout', b:'read the page the way that suits me', pri:'low', rel:'r2',
+      ac:['Kebab menu offers Accordion and Tab view (radio)','Switching re-flows the sections without reload','Active choice shows a check mark'] },
+    { f:'section-view', who:'cd', t:'Keep my chosen view between visits (A/B)', b:'the layout I prefer sticks', pri:'low', rel:'future',
+      ac:['Selected view is restored on next load','Tab view shows a Warnings badge count'] },
 
-    // --- scurve ---
-    { f:'scurve', who:'pc', t:'View cumulative cost S-curve', b:'see planned vs actual spend over time', pri:'high', rel:'mvp' },
-    { f:'scurve', who:'pc', t:'Distinguish historical (solid) vs forecast (dashed)', b:'instantly tell actuals from projection', pri:'high', rel:'mvp' },
-    { f:'scurve', who:'pm', t:'See BAC reference line', b:'gauge the curve against budget at completion', pri:'med', rel:'mvp' },
-    // --- periodic ---
-    { f:'periodic', who:'pc', t:'Toggle cumulative ↔ periodic bars', b:'analyse spend rate as well as totals', pri:'med', rel:'r1' },
-    { f:'periodic', who:'da', t:'See period bars aligned to the curve', b:'reconcile period spend with cumulative trend', pri:'med', rel:'r1' },
-    // --- series ---
-    { f:'series', who:'pc', t:'Toggle Budget / Earned / Actual / Incurred lines', b:'focus on the series I care about', pri:'high', rel:'mvp' },
-    { f:'series', who:'pc', t:'Reveal Control / Finance / Cashflow via "More"', b:'access secondary series without clutter', pri:'med', rel:'r1' },
-    { f:'series', who:'pc', t:'Show / hide the confidence band', b:'declutter or assess forecast uncertainty', pri:'med', rel:'r1' },
-    // --- datatype ---
-    { f:'datatype', who:'da', t:'Switch metric: Cost / Hours / Company', b:'analyse the same CA across measures', pri:'med', rel:'r1' },
-    { f:'datatype', who:'pc', t:'Filter chart by a date range slider', b:'zoom into a specific reporting window', pri:'med', rel:'r2' },
-    { f:'datatype', who:'pc', t:'Reset date range to full span', b:'return to the complete timeline quickly', pri:'low', rel:'r2' },
-    // --- legend ---
-    { f:'legend', who:'pm', t:'Read a chart legend mirroring toggles', b:'interpret every line & band on the chart', pri:'low', rel:'mvp' },
-    { f:'legend', who:'ex', t:'See the solid/dashed key', b:'understand the historical-vs-forecast convention', pri:'low', rel:'mvp' },
+    // ===== viz =====
+    { f:'scurve', who:'pm', t:'View the cumulative cost S-curve', b:'see planned vs actual spend over time', pri:'high', rel:'mvp',
+      ac:['Chart renders cumulative cost on the Y axis over months','Budget, Earned, Actual & Incurred lines are drawn','A Today marker is shown on the timeline'] },
+    { f:'scurve', who:'ce', t:'Distinguish historical (solid) vs forecast (dashed)', b:'instantly tell actuals from projection', pri:'high', rel:'mvp',
+      ac:['Lines up to Today render solid','Lines beyond Today render dashed','Legend states the solid/dashed convention'] },
+    { f:'scurve', who:'cd', t:'See the BAC reference line', b:'gauge the curve against budget at completion', pri:'med', rel:'mvp',
+      ac:['A horizontal BAC line is drawn at the CA budget','BAC value matches the selected CA'] },
+    { f:'periodic', who:'ce', t:'Toggle cumulative ↔ periodic bars', b:'analyse spend rate as well as totals', pri:'med', rel:'r1',
+      ac:['Toggle switch flips the chart between modes','Periodic mode shows per-period bars','Cumulative mode shows the S-curve'] },
+    { f:'periodic', who:'ce', t:'See period bars aligned to the curve', b:'reconcile period spend with the cumulative trend', pri:'med', rel:'r1',
+      ac:['Bars share the same time axis as the lines','Bar dataset switches with the active CA'] },
+    { f:'series', who:'pm', t:'Toggle Budget / Earned / Actual / Incurred lines', b:'focus on the series I care about', pri:'high', rel:'mvp',
+      ac:['Each toggle shows/hides its line and its bottom-legend item','Toggle reflects pressed/!pressed state','Colour dot matches the line colour'] },
+    { f:'series-more', who:'ce', t:'Reveal Control / Finance / Cashflow via "More"', b:'access secondary series without clutter', pri:'med', rel:'r1',
+      ac:['"More" opens a dropdown of secondary series','An active-dot shows when any secondary line is on','Selecting one toggles that line on the chart'] },
+    { f:'series', who:'ce', t:'Show / hide the confidence band', b:'declutter or assess forecast uncertainty', pri:'med', rel:'r1',
+      ac:['Checkbox toggles the P10–P90 band','Band hidden state persists while toggled off'] },
+    { f:'datatype', who:'ce', t:'Switch the measure: Cost / Hours / Company', b:'analyse the same CA across measures', pri:'med', rel:'r1',
+      ac:['Select offers Cost, Hours and Company','Chart values & axis update to the chosen measure'] },
+    { f:'daterange', who:'ce', t:'Constrain the chart to a date range', b:'zoom into a specific reporting window', pri:'med', rel:'r2',
+      ac:['Dual-handle slider sets a start and end month','Chart re-renders to the selected window','Label shows the chosen period'] },
+    { f:'daterange', who:'pm', t:'Reset the date range to the full span', b:'return to the complete timeline quickly', pri:'low', rel:'r2',
+      ac:['Reset restores the full Dec 2024 – Nov 2026 span','Slider handles return to the extremes'] },
+    { f:'legend', who:'cd', t:'Read a legend mirroring the line toggles', b:'interpret every line & band on the chart', pri:'low', rel:'mvp',
+      ac:['Legend lists Budget, Earned, Actual, Incurred + secondary','Band and Today markers are explained'] },
+    { f:'legend', who:'cd', t:'See the solid-vs-dashed key', b:'understand the historical/forecast convention', pri:'low', rel:'mvp',
+      ac:['Key states solid = historical/planned, dashed = forecast'] },
 
-    // --- run-fc ---
-    { f:'run-fc', who:'pc', t:'Run AI forecast for the active CA', b:'generate a data-driven projection on demand', pri:'high', rel:'mvp' },
-    { f:'run-fc', who:'pc', t:'Let AI own forecast lines until reset', b:'compare AI projection against my baseline', pri:'high', rel:'mvp' },
-    { f:'run-fc', who:'pm', t:'See AI-generated EAC re-anchor the curve', b:'trust the forecast reflects latest actuals', pri:'high', rel:'mvp' },
-    // --- driver-banner ---
-    { f:'driver-banner', who:'pc', t:'See driver weight pills summing to 100%', b:'understand what drives the forecast', pri:'med', rel:'r1' },
-    { f:'driver-banner', who:'ex', t:'See a high-confidence score', b:'judge how much to rely on the forecast', pri:'med', rel:'r1' },
-    { f:'driver-banner', who:'pc', t:'Expand a detailed driver breakdown', b:'audit the contributing factors', pri:'low', rel:'r2' },
-    { f:'driver-banner', who:'pm', t:'See count of similar matched accounts', b:'know how much peer data backs the forecast', pri:'low', rel:'r2' },
-    // --- fc-settings ---
-    { f:'fc-settings', who:'pc', t:'Allocate points across forecast drivers', b:'tune which signals influence the model', pri:'med', rel:'r1' },
-    { f:'fc-settings', who:'da', t:'Enable SPI / CPI earned-value integration', b:'weight peers by performance similarity', pri:'med', rel:'r1' },
-    { f:'fc-settings', who:'pc', t:'Reset settings to restore the S-curve', b:'revert experiments back to the default state', pri:'med', rel:'r1' },
-    // --- methodology ---
-    { f:'methodology', who:'ex', t:'Read a plain-language methodology box', b:'explain the forecast basis to stakeholders', pri:'low', rel:'r1' },
-    { f:'methodology', who:'da', t:'See Gower distance & matched-neighbor detail', b:'validate the matching approach', pri:'low', rel:'r2' },
-    // --- confidence ---
-    { f:'confidence', who:'pc', t:'See P10–P90 confidence band', b:'visualise the range of likely outcomes', pri:'med', rel:'r1' },
-    { f:'confidence', who:'pc', t:'Watch the band re-anchor as I scrub time', b:'see uncertainty update with the simulation', pri:'low', rel:'r2' },
+    // ===== ai =====
+    { f:'run-fc', who:'ce', t:'Run the AI forecast for the active CA', b:'generate a data-driven projection on demand', pri:'high', rel:'mvp',
+      ac:['"Run forecast" triggers the analysis','Button is disabled while a run is in progress','Button is disabled for roles without runForecast'] },
+    { f:'run-fc', who:'pm', t:'Let the AI own forecast lines until reset', b:'compare the AI projection against my baseline', pri:'high', rel:'mvp',
+      ac:['After a run, the slider only moves the Today marker','AI forecast lines persist until settings are reset'] },
+    { f:'forecast-lines', who:'ce', t:'See three independently-matched forecast lines', b:'forecast Actual, Incurred and Earned separately', pri:'med', rel:'r1',
+      ac:['Actual/ETC, Incurred/ETC and Earned each forecast from their own history','Each line uses its own matched neighbours'] },
+    { f:'eac-anchor', who:'pm', t:'See the AI EAC re-anchor the curve', b:'trust the forecast reflects the latest actuals', pri:'high', rel:'mvp',
+      ac:['Forecast re-anchors to current actuals','Implied EAC is reflected in the curve & KPIs'] },
+    { f:'confidence', who:'ce', t:'See the P10–P90 confidence band', b:'visualise the range of likely outcomes', pri:'med', rel:'r1',
+      ac:['Band is drawn between P10 and P90 datasets','Band can be toggled from chart controls'] },
+    { f:'confidence', who:'ce', t:'Watch the band re-anchor as I scrub time', b:'see uncertainty update with the simulation', pri:'low', rel:'r2',
+      ac:['Band recomputes around the stored AI projection as Today moves'] },
+    { f:'driver-banner', who:'pm', t:'See driver-weight pills summing to 100%', b:'understand what drives the forecast', pri:'med', rel:'r1',
+      ac:['Banner shows a pill per driver group with %','Percentages always sum to 100%','Pills derive from points allocated in settings'] },
+    { f:'driver-banner', who:'cd', t:'See a high-confidence score & matched-CA count', b:'judge how much to rely on the forecast', pri:'med', rel:'r1',
+      ac:['Confidence % pill is shown','Count of similar/matched accounts is shown'] },
+    { f:'banner-detail', who:'ce', t:'Expand a detailed driver breakdown', b:'audit the contributing factors', pri:'low', rel:'r2',
+      ac:['"Show detailed view" expands a breakdown panel','Toggle reflects expanded/collapsed state'] },
+    { f:'methodology', who:'cd', t:'Read a plain-language methodology box', b:'explain the forecast basis to stakeholders', pri:'low', rel:'r1',
+      ac:['Box explains private-history basis & 3 lines','States Gower distance fields and SPI/CPI weighting','Shows neighbour count, similarity and EAC'] },
 
-    // --- scrubber ---
-    { f:'scrubber', who:'pc', t:'Scrub a time slider to simulate a date', b:'preview the forecast at a future point', pri:'high', rel:'mvp' },
-    { f:'scrubber', who:'pc', t:'See a "Simulated" badge when off today', b:'never mistake a simulation for reality', pri:'med', rel:'mvp' },
-    { f:'scrubber', who:'pm', t:'Reset to today in one click', b:'return to the real current date instantly', pri:'med', rel:'mvp' },
-    // --- drag ---
-    { f:'drag', who:'pc', t:'Drag a handle on the chart to scrub time', b:'simulate directly on the curve', pri:'med', rel:'r2' },
-    // --- whatif ---
-    { f:'whatif', who:'pm', t:'Run what-if SPI / CPI scenarios', b:'see how performance shifts the forecast', pri:'high', rel:'r1' },
-    { f:'whatif', who:'ex', t:'Compare scenario outcomes to baseline', b:'support decision-making with alternatives', pri:'med', rel:'r2' },
+    // ===== settings =====
+    { f:'open-settings', who:'ce', t:'Open the AI forecast settings modal', b:'tune how the forecast is produced', pri:'med', rel:'r1',
+      ac:['Cog button opens the settings modal','Esc and Cancel close it','Read-only roles see a lock notice'] },
+    { f:'point-alloc', who:'ce', t:'Allocate points across driver groups', b:'control which signals influence the model', pri:'high', rel:'r1',
+      ac:['Each group shows its share as a % of total points','Group percentages re-sum to 100% on change','Banner pills update to match'] },
+    { f:'cls-groups', who:'ad', t:'Enable / disable classification groups', b:'choose which categorical matchers apply', pri:'med', rel:'r1',
+      ac:['Each classification group can be toggled','Disabling a group removes it from matching','Only roles with configureGroups can toggle'] },
+    { f:'num-features', who:'ad', t:'Enable / disable numerical features', b:'choose which numeric matchers apply', pri:'med', rel:'r1',
+      ac:['Each numerical feature can be toggled','Disabled features are excluded from Gower distance'] },
+    { f:'shape-weights', who:'ce', t:'Weight curve-shape statistics', b:'emphasise shape signals in matching', pri:'med', rel:'r2',
+      ac:['Skewness, front-load, Gini, peak-period weights are adjustable','Sliders disabled without modifyWeights permission'] },
+    { f:'spicpi-weight', who:'ce', t:'Set the SPI / CPI integration weight', b:'weight peers by earned-value performance', pri:'med', rel:'r1',
+      ac:['Stepper / slider adjusts the SPI-CPI weight','Typed value and stepper stay in sync','Change reflects in the driver pills'] },
+    { f:'cost-breakdown', who:'ce', t:'Toggle the cost breakdown view', b:'see contributing cost elements', pri:'low', rel:'r2',
+      ac:['Toggle expands/collapses the cost breakdown'] },
+    { f:'inline-drivers', who:'ce', t:'Adjust driver weights from the inline Settings accordion', b:'tune weights without opening the modal', pri:'med', rel:'r2',
+      ac:['Settings accordion renders driver sliders inline','Inline sliders stay in sync with the modal'] },
+    { f:'reset-weights', who:'ce', t:'Reset weights to default', b:'revert experiments to the baseline state', pri:'med', rel:'r1',
+      ac:['Reset restores default weights & toggles','S-curve returns to its pre-AI state','Modal closes after reset'] },
+    { f:'settings-locks', who:'vw', t:'See settings locked when I lack permission', b:'understand why I cannot edit', pri:'med', rel:'r1',
+      ac:['Inputs are disabled for roles without modifyWeights','A lock badge / notice explains the restriction','Locked controls cannot change values'] },
 
-    // --- kpi-matrix ---
-    { f:'kpi-matrix', who:'pm', t:'See a matrix of cost & schedule KPIs', b:'assess project health at a glance', pri:'high', rel:'mvp' },
-    { f:'kpi-matrix', who:'ex', t:'See EAC, ETC and completion dates', b:'understand projected outcome & timing', pri:'high', rel:'mvp' },
-    { f:'kpi-matrix', who:'pc', t:'See KPIs refresh with the active CA', b:'metrics always match the selected account', pri:'med', rel:'mvp' },
-    // --- kpi-delta ---
-    { f:'kpi-delta', who:'pm', t:'See up/down variance chips per metric', b:'spot movement against the prior estimate', pri:'med', rel:'r1' },
-    { f:'kpi-delta', who:'ex', t:'See good/bad colour coding on deltas', b:'identify problem metrics immediately', pri:'med', rel:'r1' },
+    // ===== sim =====
+    { f:'scrubber', who:'ce', t:'Scrub a time slider to simulate a date', b:'preview the forecast at a future point', pri:'high', rel:'mvp',
+      ac:['Slider moves the simulated "today"','Month label updates as I drag','Chart & KPIs reflect the simulated point'] },
+    { f:'sim-badge', who:'pm', t:'See a "Simulated" badge when off the real today', b:'never mistake a simulation for reality', pri:'med', rel:'mvp',
+      ac:['Badge appears when the slider differs from real today','Badge hides when back on real today'] },
+    { f:'reset-today', who:'pm', t:'Reset to the real today in one click', b:'return to the current date instantly', pri:'med', rel:'mvp',
+      ac:['"Today" button restores the real today index','Simulated badge clears on reset'] },
+    { f:'drag', who:'ce', t:'Drag a handle on the chart to scrub time', b:'simulate directly on the curve', pri:'med', rel:'r2',
+      ac:['A draggable handle sits on the Today line','Dragging updates the simulated month','Handle position maps to the nearest period'] },
+    { f:'whatif', who:'pm', t:'Run what-if SPI / CPI scenarios', b:'see how performance shifts the forecast', pri:'high', rel:'r1',
+      ac:['Changing SPI/CPI reshapes the forecast lines','EAC/ETC KPIs update with the scenario'] },
+    { f:'whatif', who:'cd', t:'Compare a scenario outcome to baseline', b:'support decisions with alternatives', pri:'med', rel:'r2',
+      ac:['Scenario result is visible against the baseline curve'] },
 
-    // --- nl-panel ---
-    { f:'nl-panel', who:'pm', t:'Open an AI assistant panel', b:'control the S-curve in natural language', pri:'med', rel:'r2' },
-    { f:'nl-panel', who:'ex', t:'Ask questions about the forecast', b:'get answers without learning the UI', pri:'low', rel:'future' },
-    // --- nl-actions ---
-    { f:'nl-actions', who:'pc', t:'Tell the assistant to simulate or run forecast', b:'drive the chart hands-free', pri:'med', rel:'r2' },
-    { f:'nl-actions', who:'pc', t:'Switch CA & set driver weights by command', b:'reconfigure the view conversationally', pri:'low', rel:'future' },
-    { f:'nl-actions', who:'pm', t:'Reset everything via the assistant', b:'undo experiments with one instruction', pri:'low', rel:'future' },
+    // ===== kpi =====
+    { f:'kpi-matrix', who:'pm', t:'See a matrix of cost & schedule KPIs', b:'assess project health at a glance', pri:'high', rel:'mvp',
+      ac:['Tiles cover budget, actuals, committed, EAC, ETC','Planned & forecast completion dates are shown'] },
+    { f:'kpi-matrix', who:'cd', t:'See EAC, ETC and completion dates', b:'understand projected outcome & timing', pri:'high', rel:'mvp',
+      ac:['EAC and ETC tiles are present','Forecast completion date is shown'] },
+    { f:'kpi-delta', who:'pm', t:'See up/down variance chips per metric', b:'spot movement against the prior estimate', pri:'med', rel:'r1',
+      ac:['Each tile shows a delta amount and %','Arrow direction reflects increase/decrease'] },
+    { f:'kpi-delta', who:'cd', t:'See good/bad colour coding on deltas', b:'identify problem metrics immediately', pri:'med', rel:'r1',
+      ac:['Adverse deltas render in the "bad" colour','Favourable deltas render in the "good" colour'] },
+    { f:'kpi-live', who:'ce', t:'See KPIs refresh with CA and simulated time', b:'metrics always match what I am viewing', pri:'med', rel:'mvp',
+      ac:['KPIs recompute on CA switch','KPIs update as the time slider moves','Values are clamped non-negative'] },
 
-    // --- appendix ---
-    { f:'appendix', who:'da', t:'Open a forecast appendix section', b:'inspect supporting data behind the curve', pri:'low', rel:'r2' },
-    { f:'appendix', who:'ex', t:'Reference appendix in reports', b:'back up the forecast with detail', pri:'low', rel:'future' },
-    // --- warnings ---
-    { f:'warnings', who:'pc', t:'See a warnings section with a badge count', b:'be alerted to forecast risks & data gaps', pri:'high', rel:'r1' },
-    { f:'warnings', who:'pm', t:'Review flagged deviations from baseline', b:'act on early-warning signals', pri:'med', rel:'r1' },
+    // ===== assist =====
+    { f:'nl-panel', who:'pm', t:'Open the AI assistant panel', b:'control the S-curve in natural language', pri:'med', rel:'r2',
+      ac:['Panel opens with a chat input','User and assistant messages are shown'] },
+    { f:'nl-simulate', who:'ce', t:'Ask the assistant to simulate a date', b:'move the timeline hands-free', pri:'med', rel:'r2',
+      ac:['"Simulate <month>" moves the Today marker','Chart reflects the requested point'] },
+    { f:'nl-forecast', who:'ce', t:'Ask the assistant to run the forecast', b:'generate the projection by command', pri:'med', rel:'r2',
+      ac:['A run-forecast instruction triggers the analysis','Assistant confirms EAC & confidence'] },
+    { f:'nl-ca', who:'pm', t:'Ask the assistant to switch control account', b:'change CA conversationally', pri:'low', rel:'future',
+      ac:['"Switch to CA-####" changes the active account','Chart & KPIs rebuild for the CA'] },
+    { f:'nl-weights', who:'ce', t:'Ask the assistant to adjust weights or SPI/CPI', b:'reconfigure drivers by command', pri:'low', rel:'future',
+      ac:['Weight/SPI/CPI instructions update settings','Driver pills reflect the change'] },
+    { f:'nl-reset', who:'pm', t:'Ask the assistant to reset everything', b:'undo experiments with one instruction', pri:'low', rel:'future',
+      ac:['A reset instruction restores defaults & the S-curve'] },
 
-    // --- pdf ---
-    { f:'pdf', who:'ex', t:'Export the forecast view to PDF', b:'share the curve in governance reviews', pri:'high', rel:'r1' },
-    { f:'pdf', who:'pc', t:'Open an export modal from the kebab menu', b:'configure what gets exported', pri:'med', rel:'r1' },
+    // ===== insight =====
+    { f:'appendix', who:'ce', t:'Open the forecast appendix', b:'inspect the supporting data', pri:'low', rel:'r2',
+      ac:['Appendix section expands with summary cards','Content is built for the active CA'] },
+    { f:'neighbors', who:'ce', t:'Review the matched-neighbors table', b:'see which peer accounts drove the forecast', pri:'med', rel:'r2',
+      ac:['Top matched neighbours are listed with similarity','Average and minimum similarity are shown'] },
+    { f:'shape-stats', who:'ce', t:'See curve-shape statistics', b:'understand deviation from the baseline plan', pri:'low', rel:'r2',
+      ac:['Skewness, front-load ratio, Gini and peak period are shown','Values compared against the planned range'] },
+    { f:'warnings', who:'pm', t:'See a warnings section with a badge count', b:'be alerted to forecast risks & data gaps', pri:'high', rel:'r1',
+      ac:['Warnings tab shows a count badge','Each warning explains the risk','Count matches the number of active warnings'] },
+    { f:'schedule-warn', who:'pm', t:'Get a schedule (SPI) warning when slipping', b:'act on early schedule signals', pri:'med', rel:'r1',
+      ac:['A warning is raised when SPI indicates slippage','Warning references the SPI value'] },
 
-    // --- user-switch ---
-    { f:'user-switch', who:'ad', t:'Switch the active user from the menu', b:'demo or support different personas', pri:'med', rel:'r2' },
-    // --- role-context ---
-    { f:'role-context', who:'ad', t:'Default to an Admin context', b:'land in the right workspace on open', pri:'med', rel:'mvp' },
-    { f:'role-context', who:'ad', t:'Render nav by admin vs project context', b:'show each role only what it needs', pri:'med', rel:'r1' },
+    // ===== report =====
+    { f:'export-open', who:'cd', t:'Open the export flow from the kebab menu', b:'start sharing the forecast', pri:'high', rel:'r1',
+      ac:['Kebab → Export opens the export modal','Export is disabled for roles without exportData'] },
+    { f:'export-select', who:'cd', t:'Choose which sections to include', b:'tailor the report to the audience', pri:'med', rel:'r1',
+      ac:['Sections (chart, appendix, warnings) are selectable','"Select all" toggles every section','Selection drives the generated document'] },
+    { f:'export-preview', who:'cd', t:'Preview the report before exporting', b:'confirm it looks right first', pri:'med', rel:'r1',
+      ac:['Preview reflects the selected sections','Going back lets me change the selection'] },
+    { f:'pdf', who:'cd', t:'Export the forecast view to PDF', b:'share the curve in governance reviews', pri:'high', rel:'r1',
+      ac:['Final step produces a print/PDF document','Header includes project & CA context'] },
+    { f:'excel', who:'ce', t:'Export the forecast data to Excel', b:'analyse the numbers in a spreadsheet', pri:'med', rel:'r2',
+      ac:['Kebab offers an Excel export','Underlying series data is exported'] },
+
+    // ===== admin =====
+    { f:'user-switch', who:'ad', t:'Switch the active user', b:'demo or support different roles', pri:'med', rel:'r2',
+      ac:['Switch-user modal lists users with their roles','Each user card shows its permission matrix','Selecting a user applies that role'] },
+    { f:'permissions', who:'ad', t:'Enforce role-based permissions across the page', b:'each role only does what it should', pri:'high', rel:'r1',
+      ac:['Run/modify/configure/export/changeAccount gate by role','Disallowed controls are disabled or hidden','Cost Engineer can edit weights; PM cannot'] },
+    { f:'role-banner', who:'cd', t:'See a banner for the active role', b:'know which identity & rights are in effect', pri:'med', rel:'r1',
+      ac:['Role banner shows the active user & role','Banner updates on user switch'] },
+    { f:'role-context', who:'ad', t:'Land in the right context (admin vs project)', b:'open into the correct workspace & nav', pri:'med', rel:'mvp',
+      ac:['?context=admin renders the admin nav & hides breadcrumb','Default (project) context shows the cost nav','Admin user is the default identity'] },
+    { f:'admin-settings', who:'ad', t:'Configure forecast settings & permissions in an admin page', b:'govern defaults for everyone', pri:'med', rel:'r2',
+      ac:['Admin settings modal/page opens for admins','Changes can be saved or cancelled','Non-admins see read-only inline settings'] },
+    { f:'audit-log', who:'ad', t:'Review a configuration audit log', b:'see who changed what and when', pri:'med', rel:'r2',
+      ac:['Log lists user, role, action and timestamp','Entries are ordered by time','New configuration changes append an entry'] },
   ];
 
   /* =====================================================================
@@ -572,7 +704,175 @@
     return `<div class="sc-metric-row" style="display:flex;flex-wrap:wrap;gap:12px;max-width:680px">${which.map(k=>cards[k]).join('')}</div>`;
   }
 
+  // ---- Forecast settings modal mock (point allocation, group toggles, SPI/CPI, reset) ----
+  function settingsSnippet({locked=false}={}){
+    const dis = locked ? ' disabled' : '';
+    const slider = (lbl,pct,val)=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0">
+        <span style="flex:1;font-size:12.5px;color:#2b2b2b">${lbl}</span>
+        <input type="range" min="0" max="5" value="${val}"${dis} style="width:120px;accent-color:#326fd1"/>
+        <input type="text" value="${val}.0"${dis} style="width:42px;border:1px solid #d4d4d4;border-radius:5px;padding:3px 5px;font-size:12px;text-align:center"/>
+        <span style="width:42px;text-align:right;font-size:11px;font-weight:700;color:#326fd1">${pct}%</span>
+      </div>`;
+    return `
+    <div style="max-width:560px;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;font-family:Inter,sans-serif">
+      <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid #e5e5e5">
+        <i class="pi pi-cog" style="color:#326fd1"></i><b style="font-size:14px">AI forecast settings</b>
+        ${locked ? '<span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#dc2626"><i class="pi pi-lock"></i> Read-only</span>' : '<span style="margin-left:auto;font-size:11px;color:#737373">Total points always = 100%</span>'}
+      </div>
+      <div style="padding:14px 16px">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#737373;margin:2px 0 4px">Classification groups · 22%</div>
+        ${slider('PHASE_TYPE / DISCIPLINE / WORK_TYPE','22',1)}
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#737373;margin:12px 0 4px">Numerical features · 32%</div>
+        ${slider('PROJ_SIZE / duration / region','32',2)}
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#737373;margin:12px 0 4px">Curve-shape statistics · 37%</div>
+        ${slider('Skewness · Front-load · Gini · Peak period','37',3)}
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#737373;margin:12px 0 4px">SPI / CPI integration · 9%</div>
+        ${slider('Earned-value performance weight','9',1)}
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:8px;padding:12px 16px;border-top:1px solid #e5e5e5;background:#fafafa">
+        <button class="sc-ts-reset"${dis}><i class="pi pi-refresh"></i> Reset weights</button>
+        <span><button class="btn"${dis} style="margin-right:6px">Cancel</button><button class="btn btn-primary"${dis}>Apply</button></span>
+      </div>
+    </div>`;
+  }
+
+  // ---- Multi-step export flow mock ----
+  function exportSnippet(step){
+    if(step==='preview'){
+      return `
+      <div style="max-width:520px;font-family:Inter,sans-serif">
+        <div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn">‹ Back</button><span style="flex:1"></span><button class="btn btn-primary"><i class="pi pi-file-pdf"></i> Download PDF</button></div>
+        <div style="border:1px solid #d4d4d4;border-radius:8px;background:#fff;box-shadow:0 4px 14px rgba(16,35,67,.08);padding:18px">
+          <div style="font-size:10px;color:#737373;font-weight:700;letter-spacing:.06em">CISCO SYSTEMS · CA-1042 CIVIL FOUNDATIONS</div>
+          <div style="font-size:15px;font-weight:800;margin:3px 0 10px">AI-driven forecast — Cumulative spend</div>
+          ${curveSVG({band:true})}
+          <div style="font-size:11px;color:#737373;margin-top:8px">EAC $47.1M · Confidence 87% · Generated for governance review</div>
+        </div>
+      </div>`;
+    }
+    const row = (lbl,on)=>`<label style="display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid #e5e5e5;border-radius:8px;font-size:12.5px"><input type="checkbox" ${on?'checked':''} style="accent-color:#326fd1"/> ${lbl}</label>`;
+    return `
+    <div style="max-width:460px;font-family:Inter,sans-serif">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><i class="pi pi-upload" style="color:#326fd1"></i><b style="font-size:14px">Export report</b>
+        <label style="margin-left:auto;font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" checked style="accent-color:#326fd1"/> Select all</label></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${row('Cover page & KPI summary',true)}
+        ${row('Cumulative spend forecast chart',true)}
+        ${row('Forecast appendix (neighbours, shape stats)',true)}
+        ${row('Warnings & flags',false)}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-primary" style="flex:1"><i class="pi pi-file-pdf"></i> Export to PDF</button>
+        <button class="btn" style="flex:1"><i class="pi pi-file-excel"></i> Export to Excel</button>
+      </div>
+    </div>`;
+  }
+
+  // ---- Admin: permission matrix, user cards, audit log, context ----
+  const PERM_KEYS = ['Run forecast','Modify weights','Configure groups','Export data','Change account'];
+  const ADMIN_USERS = [
+    { n:'Michael Torres', r:'Cost engineer',  c:'#0891b2', p:[1,1,0,1,1] },
+    { n:'Sarah Chen',     r:'Project manager', c:'#6366f1', p:[1,0,0,1,1] },
+    { n:'David Park',     r:'Controls director',c:'#7c3aed', p:[0,0,0,1,0] },
+    { n:'Admin User',     r:'Super user',      c:'#dc2626', p:[1,1,1,1,1] },
+    { n:'Guest Viewer',   r:'Read-only',       c:'#737373', p:[0,0,0,0,0] },
+  ];
+  function adminSnippet(kind){
+    if(kind==='audit'){
+      const rows = [
+        ['AU','Admin User','#dc2626','Updated 4 feature weights in Curve shape statistics','28 May 2026 14:32'],
+        ['MT','Michael Torres','#0891b2','Adjusted SPI / CPI integration weight 2.5 → 3.0','19 May 2026 09:08'],
+        ['AU','Admin User','#dc2626','Enabled Enterprise classification group','12 May 2026 16:45'],
+        ['AU','Admin User','#dc2626','Initial configuration created','30 Apr 2026 11:20'],
+      ];
+      return `<div style="max-width:560px;font-family:Inter,sans-serif">
+        <b style="font-size:14px;display:block;margin-bottom:10px"><i class="pi pi-history" style="color:#326fd1;margin-right:6px"></i>Configuration audit log</b>
+        ${rows.map(([i,n,c,a,t])=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #eee">
+          <span style="width:28px;height:28px;border-radius:50%;background:${c};color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i}</span>
+          <div style="flex:1"><div style="font-size:12.5px"><b>${n}</b> — ${a}</div><div style="font-size:11px;color:#737373;margin-top:2px">${t}</div></div></div>`).join('')}
+      </div>`;
+    }
+    if(kind==='context'){
+      return `<div style="display:flex;gap:10px;font-family:Inter,sans-serif">
+        <div style="border:1px solid #326fd1;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#1e437d;background:#eef3fb"><b>Admin context</b><br/>?context=admin<br/>Change mgmt → S-curve forecasting</div>
+        <div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#737373"><b>Project context</b><br/>(default)<br/>Cost → AI forecasting</div>
+      </div>`;
+    }
+    if(kind==='banner'){
+      return `<div style="max-width:560px;font-family:Inter,sans-serif;display:flex;align-items:center;gap:10px;border:1px solid #c1d3f1;background:#eef3fb;border-radius:10px;padding:12px 14px">
+        <span style="width:34px;height:34px;border-radius:50%;background:#dc2626;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">AU</span>
+        <div><div style="font-size:13px;font-weight:700">Admin User</div><div style="font-size:11.5px;color:#737373">Super user · full access</div></div>
+        <span style="margin-left:auto;font-size:11px;font-weight:700;color:#16a34a"><i class="pi pi-check-circle"></i> All permissions</span>
+      </div>`;
+    }
+    // matrix / users (default)
+    return `<div style="max-width:620px;font-family:Inter,sans-serif;overflow:auto">
+      <table style="border-collapse:collapse;width:100%;font-size:11.5px">
+        <thead><tr><th style="text-align:left;padding:8px;border-bottom:2px solid #e5e5e5">User / role</th>
+          ${PERM_KEYS.map(k=>`<th style="padding:8px 6px;border-bottom:2px solid #e5e5e5;font-weight:700">${k}</th>`).join('')}</tr></thead>
+        <tbody>${ADMIN_USERS.map(u=>`<tr>
+          <td style="padding:8px;border-bottom:1px solid #f0f0f0;white-space:nowrap"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${u.c};margin-right:7px"></span><b>${u.n}</b> <span style="color:#737373">· ${u.r}</span></td>
+          ${u.p.map(v=>`<td style="text-align:center;padding:8px 6px;border-bottom:1px solid #f0f0f0"><i class="pi ${v?'pi-check-circle':'pi-times-circle'}" style="color:${v?'#16a34a':'#dc2626'}"></i></td>`).join('')}
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+  }
+
+  // ---- Appendix variants ----
+  function appendixSnippet(kind){
+    if(kind==='neighbors'){
+      const rows=[['CA-0871 · Civil P3','0.91'],['CA-1120 · Foundations','0.86'],['CA-0644 · Earthworks','0.81'],['CA-0992 · Civil P1','0.77'],['CA-1301 · Piling','0.69']];
+      return `<div style="max-width:480px;font-family:Inter,sans-serif">
+        <b style="font-size:13px;display:block;margin-bottom:8px">Top matched neighbours <span style="color:#737373;font-weight:500">· avg 0.78 · min 0.30</span></b>
+        <table style="border-collapse:collapse;width:100%;font-size:12px">
+          <thead><tr><th style="text-align:left;padding:7px;border-bottom:2px solid #e5e5e5">Control account</th><th style="text-align:right;padding:7px;border-bottom:2px solid #e5e5e5">Similarity</th></tr></thead>
+          <tbody>${rows.map(([n,s])=>`<tr><td style="padding:7px;border-bottom:1px solid #f0f0f0">${n}</td><td style="text-align:right;padding:7px;border-bottom:1px solid #f0f0f0;font-weight:700;color:#326fd1">${s}</td></tr>`).join('')}</tbody>
+        </table></div>`;
+    }
+    if(kind==='shape'){
+      const stat=(l,v,p)=>`<div style="border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;min-width:120px"><div style="font-size:10.5px;color:#737373;font-weight:700;text-transform:uppercase;letter-spacing:.04em">${l}</div><div style="font-size:18px;font-weight:800;margin-top:2px">${v}</div><div style="font-size:10.5px;color:#737373">plan ${p}</div></div>`;
+      return `<div style="display:flex;gap:10px;flex-wrap:wrap;max-width:560px;font-family:Inter,sans-serif">
+        ${stat('Skewness','0.42','0.18')}${stat('Front-load','0.61','0.50')}${stat('Gini','0.38','0.31')}${stat('Peak period','M14','M11')}</div>`;
+    }
+    return `<div class="sc-acc-section" style="max-width:560px;border:1px solid #e5e5e5;border-radius:8px">
+      <button class="sc-acc-header" aria-expanded="true"><i class="pi pi-chevron-down sc-acc-chevron"></i><span class="sc-acc-title">Forecast appendix</span></button>
+      <div class="sc-acc-body" style="padding:14px;font:13px Inter,sans-serif;color:#737373">Summary cards, matched-neighbour table, similarity scores, group codes and curve-shape statistics.</div>
+    </div>`;
+  }
+
+  function warningsSnippet(list){
+    return `<div style="font-family:Inter,sans-serif">
+      <div class="sc-tabs-bar" style="margin-bottom:14px"><button class="sc-tab-btn is-active">Warnings <span class="sc-tab-badge">${list.length}</span></button></div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:560px">
+        ${list.map(w=>`<div style="display:flex;gap:8px;align-items:center;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#991b1b"><i class="pi pi-exclamation-triangle"></i>${w}</div>`).join('')}
+      </div></div>`;
+  }
+
+  function nlChips(list){
+    return `<div style="display:flex;flex-direction:column;gap:8px;max-width:420px;font-family:Inter,sans-serif">
+      ${list.map(c=>`<div style="background:#eef3fb;border:1px solid #c1d3f1;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#1e437d"><i class="pi pi-microchip-ai" style="margin-right:6px"></i>${c}</div>`).join('')}</div>`;
+  }
+
+  const nlPanelSnippet = `
+    <div style="max-width:380px;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;font-family:Inter,sans-serif">
+      <div style="background:#326fd1;color:#fff;padding:10px 14px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px"><i class="pi pi-microchip-ai"></i> AI Assistant</div>
+      <div style="padding:14px;background:#fafafa">
+        <div style="background:#fff;border:1px solid #e5e5e5;border-radius:10px 10px 10px 2px;padding:9px 12px;font-size:12px;margin-bottom:10px">How is CA-1042 trending against budget?</div>
+        <div style="background:#eef3fb;border-radius:10px 10px 2px 10px;padding:9px 12px;font-size:12px;margin-left:40px">Running forecast — EAC is $47.1M, ~24% over the approved budget. Confidence 87%.</div>
+      </div>
+      <div style="padding:10px 14px;border-top:1px solid #e5e5e5;display:flex;gap:8px"><input placeholder="Ask or instruct…" style="flex:1;border:1px solid #d4d4d4;border-radius:8px;padding:7px 10px;font-size:12px"/><button class="btn btn-primary" style="padding:7px 12px"><i class="pi pi-send"></i></button></div>
+    </div>`;
+
+  const methodologyHtml = `
+    <div class="sc-forecast-exp-box" style="max-width:660px">
+      Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks.
+      Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned) are each matched using their own historical data series.
+      Matching uses Gower distance across CA group codes (PHASE_TYPE, DISCIPLINE, WORK_TYPE) and project groups (PROJ_SIZE, REGION).
+      SPI (0.88) and CPI (0.92) active as weighting factors. Top 9 matched neighbors (avg similarity 0.78) re-anchor to $23.6M actuals → $42.2M EAC.
+    </div>`;
+
   const FEATURE_DETAIL = {
+    // nav
     'acct-select':{ desc:'Toolbar dropdown to switch the active control account; selecting one rebuilds the chart, KPIs and banner.', html:acctSnippet },
     'acct-search':{ desc:'Type-ahead search inside the account dropdown with a no-results empty state.', html:acctSnippet },
     'section-view':{ desc:'A/B-tested layout — read the page as stacked accordions or as tabs.', html:`
@@ -586,6 +886,7 @@
         <button class="sc-kebab-item sc-kebab-item--radio" aria-checked="true"><i class="pi pi-list"></i> Accordion view <i class="pi pi-check sc-kebab-check"></i></button>
         <button class="sc-kebab-item sc-kebab-item--radio" aria-checked="false"><i class="pi pi-window-maximize"></i> Tab view <i class="pi pi-check sc-kebab-check"></i></button>
       </div>` },
+    // viz
     'scurve':{ desc:'Cumulative cost S-curve: solid = historical/planned, dashed = forecast, with a Today marker and BAC reference.', html:curveSVG() },
     'periodic':{ desc:'Toggle between a cumulative curve and periodic spend-rate bars.', html:`${curveSVG({bars:true})}
       <div class="sc-view-toggle" style="margin-top:14px;justify-content:flex-start">
@@ -593,12 +894,23 @@
         <label class="sc-toggle-switch"><input type="checkbox" checked/><span class="sc-toggle-track"></span></label>
         <span class="sc-view-label">Periodic</span>
       </div>` },
-    'series':{ desc:'Show/hide Budget, Earned, Actual, Incurred lines; a "More" menu reveals Control, Finance and Cashflow.', html:seriesSnippet },
-    'datatype':{ desc:'Switch the measure (Cost / Hours / Company) and constrain the chart to a date range.', html:`
-      <div class="sc-chart-controls-right" style="flex-wrap:wrap;gap:12px">
-        <div class="sc-metric-select"><span class="sc-view-label">Data type</span>
-          <select><option>Cost</option><option>Hours</option><option>Company</option></select></div>
-        <div class="sc-date-range"><button class="sc-date-btn sc-date-range-btn"><i class="pi pi-calendar"></i> <span>Dec 2024 – Nov 2026</span> <i class="pi pi-chevron-down sc-date-range-caret"></i></button></div>
+    'series':{ desc:'Show/hide the primary Budget, Earned, Actual and Incurred lines.', html:seriesSnippet },
+    'series-more':{ desc:'A "More" menu reveals the secondary Control, Finance and Cashflow series with an active-dot indicator.', html:`
+      <div class="sc-line-more-dropdown" style="position:static;display:block;max-width:220px">
+        <button class="sc-line-toggle sc-line-toggle--off"><span class="sc-line-dot sc-line-dot--control"></span> Control budget</button>
+        <button class="sc-line-toggle sc-line-toggle--off"><span class="sc-line-dot sc-line-dot--finance"></span> Finance budget</button>
+        <button class="sc-line-toggle sc-line-toggle--off"><span class="sc-line-dot sc-line-dot--cashflow"></span> Cashflow</button>
+      </div>` },
+    'datatype':{ desc:'Switch the measure the chart shows: Cost, Hours or Company.', html:`
+      <div class="sc-metric-select"><span class="sc-view-label">Data type</span>
+        <select><option>Cost</option><option>Hours</option><option>Company</option></select></div>` },
+    'daterange':{ desc:'Constrain the chart to a date window with a dual-handle range slider, with a reset.', html:`
+      <div class="sc-date-range-pop" style="position:static;display:block;max-width:320px">
+        <div class="sc-drp-title">Period</div>
+        <div class="sc-drp-boxes"><span class="sc-drp-box">Dec 2024</span><span class="sc-drp-box">Nov 2026</span></div>
+        <div class="sc-dual-slider"><div class="sc-dual-track"></div><div class="sc-dual-fill" style="left:0%;width:100%"></div>
+          <input type="range" min="0" max="23" value="0"/><input type="range" min="0" max="23" value="23"/></div>
+        <div class="sc-drp-actions"><button type="button" class="sc-drp-reset">Reset</button></div>
       </div>` },
     'legend':{ desc:'Legend mirroring the line toggles, plus the solid-vs-dashed key.', html:`
       <div class="sc-bottom-legend" style="max-width:680px">
@@ -610,32 +922,46 @@
         <span class="sc-bl-item sc-bl-today">| Today</span>
         <span class="sc-bl-key">Solid line = Historical / Planned ・ Dashed line = Forecast</span>
       </div>` },
-    'run-fc':{ desc:'Primary action that runs the AI analysis and lets it own the forecast lines until reset.', html:`
+    // ai
+    'run-fc':{ desc:'Primary action that runs the AI analysis and lets it own the forecast lines until reset (gated by runForecast permission).', html:`
       <div style="display:flex;gap:10px;align-items:center">
         <button class="btn btn-primary sc-run-btn"><i class="pi pi-play btn-icon-left"></i> Run forecast</button>
         <button class="sc-toolbar-icon-btn"><i class="pi pi-cog"></i></button>
       </div>` },
-    'driver-banner':{ desc:'Banner explaining what drives the forecast — driver weight pills (sum 100%), confidence score and matched-account count.', html:aiBannerSnippet },
-    'fc-settings':{ desc:'Allocate points across forecast drivers, enable SPI/CPI integration, and reset to restore the baseline S-curve.', html:`${aiBannerSnippet}
-      <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
-        <button class="sc-toolbar-icon-btn"><i class="pi pi-cog"></i></button>
-        <span style="font:600 12px Inter,sans-serif;color:#737373">Open AI forecast settings → allocate driver points</span>
-      </div>` },
-    'methodology':{ desc:'Plain-language explanation of the forecast basis (Gower distance, matched neighbors, SPI/CPI, curve-shape signals).', html:`
-      <div class="sc-forecast-exp-box" style="max-width:660px">
-        Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks.
-        Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned) are each matched using their own historical data series.
-        Matching uses Gower distance across CA group codes (PHASE_TYPE, DISCIPLINE, WORK_TYPE) and project groups (PROJ_SIZE, REGION).
-        SPI (0.88) and CPI (0.92) active as weighting factors. Top 9 matched neighbors (avg similarity 0.78) re-anchor to $23.6M actuals → $42.2M EAC.
-      </div>` },
+    'forecast-lines':{ desc:'Three independent forecast lines — Actual/ETC, Incurred/ETC and Earned — each matched from their own history.', html:curveSVG() },
+    'eac-anchor':{ desc:'The AI forecast re-anchors to current actuals to produce the implied EAC reflected in the curve & KPIs.', html:`${curveSVG()}${kpiCards(['eac','etc'])}` },
     'confidence':{ desc:'P10–P90 confidence band around the forecast, toggleable, that re-anchors as you scrub time.', html:`${curveSVG({band:true})}
       <label class="sc-line-toggle sc-line-toggle--checkbox" style="margin-top:14px"><input type="checkbox" checked/><span>Confidence band</span></label>` },
-    'scrubber':{ desc:'Time scrubber that simulates a different "today", with a Simulated badge and one-click reset.', html:`
+    'driver-banner':{ desc:'Banner explaining what drives the forecast — driver-weight pills (sum 100%), confidence score and matched-account count.', html:aiBannerSnippet },
+    'banner-detail':{ desc:'"Show detailed view" expands a breakdown of the contributing factors beneath the banner.', html:`${aiBannerSnippet}
+      <button type="button" class="sc-ai-detail-toggle" style="margin-top:12px" aria-expanded="true"><i class="pi pi-chevron-down"></i> Hide detailed view</button>` },
+    'methodology':{ desc:'Plain-language explanation of the forecast basis (Gower distance, matched neighbours, SPI/CPI, curve-shape signals).', html:methodologyHtml },
+    // settings
+    'open-settings':{ desc:'The cog opens the AI forecast settings modal; Esc/Cancel close it. Read-only roles see a lock notice.', html:settingsSnippet() },
+    'point-alloc':{ desc:'Allocate points across driver groups; group percentages always re-sum to 100% and update the banner pills.', html:settingsSnippet() },
+    'cls-groups':{ desc:'Enable/disable classification groups (categorical matchers). Requires the configureGroups permission.', html:settingsSnippet() },
+    'num-features':{ desc:'Enable/disable numerical features used in Gower-distance matching.', html:settingsSnippet() },
+    'shape-weights':{ desc:'Weight curve-shape statistics — skewness, front-load, Gini, peak period — in the matching.', html:settingsSnippet() },
+    'spicpi-weight':{ desc:'Set the SPI/CPI integration weight via stepper or typed value; both stay in sync and update the pills.', html:settingsSnippet() },
+    'cost-breakdown':{ desc:'Toggle a breakdown of the contributing cost elements.', html:settingsSnippet() },
+    'inline-drivers':{ desc:'Adjust the same driver weights inline from the Settings accordion, without opening the modal.', html:`
+      <div class="sc-acc-section" style="max-width:560px;border:1px solid #e5e5e5;border-radius:8px">
+        <button class="sc-acc-header" aria-expanded="true"><i class="pi pi-chevron-down sc-acc-chevron"></i><span class="sc-acc-title">Settings</span></button>
+        <div class="sc-acc-body" style="padding:0">${settingsSnippet()}</div>
+      </div>` },
+    'reset-weights':{ desc:'Reset weights to default — restores the pre-AI S-curve and closes the modal.', html:settingsSnippet() },
+    'settings-locks':{ desc:'For roles without modifyWeights, settings inputs are disabled and a read-only lock notice is shown.', html:settingsSnippet({locked:true}) },
+    // sim
+    'scrubber':{ desc:'Time scrubber that simulates a different "today"; chart & KPIs reflect the simulated point.', html:`
       <div class="sc-time-scrubber" style="max-width:660px">
         <div class="sc-ts-left"><i class="pi pi-history sc-ts-icon"></i><span class="sc-ts-sim-label">Simulate:</span><span class="sc-ts-month">Jun 2025</span><span class="sc-ts-sim-badge">Simulated</span></div>
         <input type="range" class="sc-ts-slider" min="2" max="22" value="10" style="--fill-pct:40%"/>
         <button class="sc-ts-reset"><i class="pi pi-refresh"></i> Today</button>
       </div>` },
+    'sim-badge':{ desc:'A "Simulated" badge appears whenever the slider differs from the real today, and clears when reset.', html:`
+      <div class="sc-ts-left" style="font-family:Inter,sans-serif"><i class="pi pi-history sc-ts-icon"></i><span class="sc-ts-sim-label">Simulate:</span><span class="sc-ts-month">Dec 2025</span><span class="sc-ts-sim-badge">Simulated</span></div>` },
+    'reset-today':{ desc:'One-click reset restores the real today index and clears the Simulated badge.', html:`
+      <button class="sc-ts-reset" style="font-family:Inter,sans-serif"><i class="pi pi-refresh"></i> Today</button>` },
     'drag':{ desc:'Draggable handle directly on the chart to scrub time without using the slider.', html:`
       <div style="position:relative">${curveSVG()}
         <div style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;font:600 12px Inter,sans-serif;color:#326fd1">
@@ -648,49 +974,42 @@
         <span class="sc-driver-pill">SPI 0.88 → <b>1.00</b></span>
         <span class="sc-driver-pill">CPI 0.92 → <b>1.05</b></span>
       </div>${curveSVG({band:true})}` },
-    'kpi-matrix':{ desc:'Matrix of cost & schedule KPIs (EAC, ETC, completion dates) that refresh with the active CA.', html:kpiCards(['budget','eac','etc','date']) },
+    // kpi
+    'kpi-matrix':{ desc:'Matrix of cost & schedule KPIs (budget, actuals, committed, EAC, ETC, completion dates).', html:kpiCards(['budget','eac','etc','date']) },
     'kpi-delta':{ desc:'Per-metric variance chips with up/down direction and good/bad colour coding.', html:kpiCards(['earned','committed','eac']) },
-    'nl-panel':{ desc:'AI assistant panel for controlling the S-curve in natural language.', html:`
-      <div style="max-width:380px;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;font-family:Inter,sans-serif">
-        <div style="background:#326fd1;color:#fff;padding:10px 14px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px"><i class="pi pi-microchip-ai"></i> AI Assistant</div>
-        <div style="padding:14px;background:#fafafa">
-          <div style="background:#fff;border:1px solid #e5e5e5;border-radius:10px 10px 10px 2px;padding:9px 12px;font-size:12px;margin-bottom:10px">How is CA-1042 trending against budget?</div>
-          <div style="background:#eef3fb;border-radius:10px 10px 2px 10px;padding:9px 12px;font-size:12px;margin-left:40px">Running forecast — EAC is $47.1M, ~24% over the approved budget. Confidence 87%.</div>
-        </div>
-        <div style="padding:10px 14px;border-top:1px solid #e5e5e5;display:flex;gap:8px"><input placeholder="Ask or instruct…" style="flex:1;border:1px solid #d4d4d4;border-radius:8px;padding:7px 10px;font-size:12px"/><button class="btn btn-primary" style="padding:7px 12px"><i class="pi pi-send"></i></button></div>
-      </div>` },
-    'nl-actions':{ desc:'Natural-language commands: simulate, run forecast, switch CA, set driver weights, reset.', html:`
-      <div style="display:flex;flex-direction:column;gap:8px;max-width:420px;font-family:Inter,sans-serif">
-        ${['“Simulate Dec 2025”','“Run the forecast”','“Switch to CA-1044”','“Weight curve shape higher”','“Reset everything”'].map(c=>`<div style="background:#eef3fb;border:1px solid #c1d3f1;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#1e437d"><i class="pi pi-microchip-ai" style="margin-right:6px"></i>${c}</div>`).join('')}
-      </div>` },
-    'appendix':{ desc:'Collapsible appendix with the supporting data and matched-neighbor detail behind the forecast.', html:`
-      <div class="sc-acc-section" style="max-width:560px;border:1px solid #e5e5e5;border-radius:8px">
-        <button class="sc-acc-header" aria-expanded="true"><i class="pi pi-chevron-down sc-acc-chevron"></i><span class="sc-acc-title">Forecast appendix</span></button>
-        <div class="sc-acc-body" style="padding:14px;font:13px Inter,sans-serif;color:#737373">Matched neighbors, similarity scores, group codes and per-series detail tables.</div>
-      </div>` },
-    'warnings':{ desc:'Warnings section with a badge count flagging forecast risks and deviations from baseline.', html:`
-      <div class="sc-tabs-bar" style="margin-bottom:14px"><button class="sc-tab-btn is-active">Warnings <span class="sc-tab-badge">3</span></button></div>
-      <div style="display:flex;flex-direction:column;gap:8px;max-width:560px;font-family:Inter,sans-serif">
-        ${['EAC exceeds approved budget by 24%','SPI 0.88 — schedule slipping','Only 9 matched neighbors (min similarity 0.30)'].map(w=>`<div style="display:flex;gap:8px;align-items:center;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#991b1b"><i class="pi pi-exclamation-triangle"></i>${w}</div>`).join('')}
-      </div>` },
-    'pdf':{ desc:'Export the forecast view to PDF from the kebab menu.', html:`
+    'kpi-live':{ desc:'KPIs recompute on CA switch and as the time slider moves; values are clamped non-negative.', html:kpiCards(['budget','earned','etc']) },
+    // assist
+    'nl-panel':{ desc:'AI assistant panel for controlling the S-curve in natural language.', html:nlPanelSnippet },
+    'nl-simulate':{ desc:'"Simulate <month>" moves the Today marker; the chart reflects the requested point.', html:nlChips(['“Simulate December 2025”','“Jump to month 14”','“Show me Q3 next year”']) },
+    'nl-forecast':{ desc:'A run-forecast instruction triggers the analysis; the assistant confirms EAC & confidence.', html:nlChips(['“Run the forecast”','“Forecast this control account”','“What’s the projected EAC?”']) },
+    'nl-ca':{ desc:'"Switch to CA-####" changes the active account; the chart & KPIs rebuild.', html:nlChips(['“Switch to CA-1044”','“Open MEP Systems”','“Show Structural Steel P1”']) },
+    'nl-weights':{ desc:'Weight / SPI / CPI instructions update the settings and driver pills.', html:nlChips(['“Weight curve shape higher”','“Set SPI to 1.0”','“Increase CPI to 1.05”']) },
+    'nl-reset':{ desc:'A reset instruction restores defaults and the baseline S-curve.', html:nlChips(['“Reset everything”','“Clear the forecast”','“Back to defaults”']) },
+    // insight
+    'appendix':{ desc:'Collapsible appendix with summary cards, matched-neighbour detail and shape statistics.', html:appendixSnippet('appendix') },
+    'neighbors':{ desc:'Top matched neighbours with similarity scores (avg 0.78, min 0.30) that drove the forecast.', html:appendixSnippet('neighbors') },
+    'shape-stats':{ desc:'Curve-shape statistics — skewness, front-load ratio, Gini, peak period — vs the planned range.', html:appendixSnippet('shape') },
+    'warnings':{ desc:'Warnings section with a badge count flagging forecast risks and deviations from baseline.', html:warningsSnippet(['EAC exceeds approved budget by 24%','SPI 0.88 — schedule slipping','Only 9 matched neighbours (min similarity 0.30)']) },
+    'schedule-warn':{ desc:'A schedule warning is raised when SPI indicates the project is slipping.', html:warningsSnippet(['SPI 0.88 — forecast completion slips to 5 May 2032 (plan 6 Sep 2033)']) },
+    // report
+    'export-open':{ desc:'Kebab → Export opens the export flow (disabled for roles without exportData).', html:`
       <div class="sc-kebab-dropdown" style="position:static;display:block;max-width:240px">
         <button class="sc-kebab-item"><i class="pi pi-file-pdf"></i> Export to PDF</button>
+        <button class="sc-kebab-item"><i class="pi pi-file-excel"></i> Export to Excel</button>
         <div class="sc-kebab-divider"></div>
         <button class="sc-kebab-item"><i class="pi pi-users"></i> Switch user</button>
       </div>` },
-    'user-switch':{ desc:'Switch the active user from the kebab menu to demo or support different personas.', html:`
-      <div class="sc-kebab-dropdown" style="position:static;display:block;max-width:240px">
-        <button class="sc-kebab-item"><i class="pi pi-users"></i> Switch user</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-        ${['Admin','Cost Controller','Project Manager','Executive'].map((u,i)=>`<span class="sc-driver-pill"${i===0?' style="background:#326fd1;color:#fff;border-color:#326fd1"':''}>${u}</span>`).join('')}
-      </div>` },
-    'role-context':{ desc:'Default to an Admin context and render the navigation by admin vs project role.', html:`
-      <div style="display:flex;gap:8px;font-family:Inter,sans-serif">
-        <div style="border:1px solid #326fd1;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#1e437d;background:#eef3fb"><b>Admin context</b><br/>Change mgmt → S-curve forecasting</div>
-        <div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#737373"><b>Project context</b><br/>Cost → AI forecasting</div>
-      </div>` },
+    'export-select':{ desc:'Choose which sections to include — chart, appendix, warnings — with a "Select all".', html:exportSnippet('select') },
+    'export-preview':{ desc:'Preview the report reflecting the selected sections before exporting; go back to change the selection.', html:exportSnippet('preview') },
+    'pdf':{ desc:'Final step produces a print/PDF document with the project & CA context in the header.', html:exportSnippet('preview') },
+    'excel':{ desc:'Export the underlying forecast series data to an Excel spreadsheet.', html:exportSnippet('select') },
+    // admin
+    'user-switch':{ desc:'Switch-user modal lists users with their roles and permission matrix; selecting one applies that role.', html:adminSnippet('users') },
+    'permissions':{ desc:'Role-based permissions (run / modify / configure / export / change-account) gate controls across the page.', html:adminSnippet('matrix') },
+    'role-banner':{ desc:'A banner shows the active user & role and updates on user switch.', html:adminSnippet('banner') },
+    'role-context':{ desc:'Admin lands in the admin context (admin nav, no breadcrumb); project context shows the cost nav.', html:adminSnippet('context') },
+    'admin-settings':{ desc:'Admins configure forecast defaults & permissions in an admin page; others see read-only inline settings.', html:settingsSnippet() },
+    'audit-log':{ desc:'A configuration audit log lists user, role, action and timestamp, newest first.', html:adminSnippet('audit') },
   };
 
   function viewFeature(featId){
@@ -723,7 +1042,6 @@
     epics: new Set(),      // empty => all
     personas: new Set(),
     pris: new Set(),
-    rels: new Set(),
     q: '',
   };
 
@@ -761,14 +1079,6 @@
       c.onclick = ()=>toggle(state.pris, pr.id, c);
       prc.appendChild(c);
     });
-    // Releases
-    const rc = document.getElementById('relChips');
-    RELEASES.forEach(r=>{
-      const c = chip(r.name, false, null);
-      c.onclick = ()=>toggle(state.rels, r.id, c);
-      rc.appendChild(c);
-    });
-
     document.getElementById('searchInput').addEventListener('input', e=>{
       state.q = e.target.value.trim().toLowerCase();
       render();
@@ -791,7 +1101,7 @@
   }
 
   function resetFilters(){
-    state.epics.clear(); state.personas.clear(); state.pris.clear(); state.rels.clear();
+    state.epics.clear(); state.personas.clear(); state.pris.clear();
     state.q = '';
     document.getElementById('searchInput').value = '';
     document.querySelectorAll('.usm-chip.is-active').forEach(c=>c.classList.remove('is-active'));
@@ -806,7 +1116,6 @@
     if(state.epics.size && !state.epics.has(feat.epic)) return false;
     if(state.personas.size && !state.personas.has(s.who)) return false;
     if(state.pris.size && !state.pris.has(s.pri)) return false;
-    if(state.rels.size && !state.rels.has(s.rel)) return false;
     if(state.q){
       const hay = (s.t + ' ' + s.b + ' ' + feat.title + ' ' + P[s.who].name).toLowerCase();
       if(!hay.includes(state.q)) return false;
@@ -837,10 +1146,18 @@
           const per = P[s.who];
           const pri = PRIORITIES.find(p=>p.id===s.pri);
           const rel = RELEASES.find(r=>r.id===s.rel);
+          const ac = Array.isArray(s.ac) ? s.ac : [];
+          const acBlock = ac.length ? `
+              <button class="usm-ac-toggle" onclick="toggleAc(this)"><i class="pi pi-chevron-right"></i> Acceptance criteria (${ac.length})</button>
+              <ul class="usm-ac-list">
+                <li class="usm-ac-given" style="list-style:none;padding-left:0">Given the S-curve forecast page</li>
+                ${ac.map(a=>`<li>${esc(a)}</li>`).join('')}
+              </ul>` : '';
           return `
             <div class="usm-card">
               <div class="usm-card-title">${esc(s.t)}</div>
               <div class="usm-card-story"><b>As a</b> ${esc(per.name)}, <b>so that</b> I can ${esc(s.b)}.</div>
+              ${acBlock}
               <div class="usm-card-meta">
                 <span class="usm-persona-tag" style="background:${per.color}"><i class="pi pi-user" style="font-size:9px"></i>${esc(per.short)}</span>
                 <span class="usm-pri" style="color:${pri.color}"><span class="pri-dot" style="background:${pri.color}"></span>${pri.name}</span>
@@ -888,11 +1205,25 @@
     return String(str).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   }
 
+  /* Toggle one card's acceptance criteria */
+  function toggleAc(btn){ btn.closest('.usm-card').classList.toggle('ac-open'); }
+
+  /* Expand / collapse acceptance criteria on every visible card */
+  let _allExpanded = false;
+  function toggleExpandAll(){
+    _allExpanded = !_allExpanded;
+    document.querySelectorAll('#board .usm-card').forEach(c=>c.classList.toggle('ac-open', _allExpanded));
+    document.getElementById('expandLbl').textContent = _allExpanded ? 'Collapse all detail' : 'Expand all detail';
+  }
+
   /* =====================================================================
      INIT
      ===================================================================== */
   buildFilters();
   render();
+  // keep expand-all state after re-render (filtering)
+  const _origRender = render;
+  render = function(){ _origRender(); if(_allExpanded) document.querySelectorAll('#board .usm-card').forEach(c=>c.classList.add('ac-open')); };
   </script>
 </body>
 </html>
