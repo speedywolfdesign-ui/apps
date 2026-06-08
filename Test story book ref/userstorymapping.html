@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Story Map — AI S-curve Forecasting · Contruent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <link rel="stylesheet" href="components/tokens.css" />
+  <style>
+    /* ============================================================
+       USER STORY MAP — self-contained styling on Contruent tokens
+       ============================================================ */
+    :root{
+      --usm-bg:        var(--surface-50,#fafafa);
+      --usm-surface:   var(--surface-0,#fff);
+      --usm-border:    var(--surface-200,#e5e5e5);
+      --usm-border-2:  var(--surface-300,#d4d4d4);
+      --usm-text:      var(--surface-900,#2b2b2b);
+      --usm-muted:     var(--surface-500,#737373);
+      --usm-primary:   var(--primary-500,#326fd1);
+      --usm-primary-d: var(--primary-700,#1e437d);
+      --usm-primary-50:var(--primary-50,#eef3fb);
+      --shadow-sm: 0 1px 2px rgba(16,35,67,.06);
+      --shadow-md: 0 4px 14px rgba(16,35,67,.10);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{
+      font-family:'Inter',system-ui,sans-serif;
+      background:var(--usm-bg);
+      color:var(--usm-text);
+      font-size:13px;
+      line-height:1.45;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* ---------- Page header ---------- */
+    .usm-header{
+      background:var(--usm-surface);
+      border-bottom:1px solid var(--usm-border);
+      padding:18px 28px 16px;
+      position:sticky; top:0; z-index:40;
+    }
+    .usm-eyebrow{
+      font-size:11px; font-weight:700; letter-spacing:.08em;
+      text-transform:uppercase; color:var(--usm-primary);
+      display:flex; align-items:center; gap:8px;
+    }
+    .usm-eyebrow .pi{font-size:13px}
+    .usm-title{font-size:22px; font-weight:800; margin-top:4px; letter-spacing:-.01em}
+    .usm-sub{font-size:13px; color:var(--usm-muted); margin-top:3px}
+
+    /* ---------- Filter bar ---------- */
+    .usm-filters{
+      background:var(--usm-surface);
+      border-bottom:1px solid var(--usm-border);
+      padding:14px 28px;
+      position:sticky; top:0; z-index:39;
+      display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end;
+    }
+    .usm-filter-group{display:flex; flex-direction:column; gap:6px}
+    .usm-filter-label{
+      font-size:10.5px; font-weight:700; letter-spacing:.06em;
+      text-transform:uppercase; color:var(--usm-muted);
+      display:flex; align-items:center; gap:5px;
+    }
+    .usm-chips{display:flex; flex-wrap:wrap; gap:6px}
+    .usm-chip{
+      border:1px solid var(--usm-border-2);
+      background:var(--usm-surface);
+      color:var(--usm-text);
+      border-radius:999px;
+      padding:5px 12px;
+      font-size:12px; font-weight:600;
+      cursor:pointer;
+      display:inline-flex; align-items:center; gap:6px;
+      transition:all .14s ease;
+      white-space:nowrap;
+    }
+    .usm-chip:hover{border-color:var(--usm-primary); color:var(--usm-primary)}
+    .usm-chip.is-active{
+      background:var(--usm-primary); border-color:var(--usm-primary); color:#fff;
+      box-shadow:var(--shadow-sm);
+    }
+    .usm-chip .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+    .usm-search-wrap{position:relative}
+    .usm-search{
+      border:1px solid var(--usm-border-2);
+      border-radius:6px; padding:7px 10px 7px 30px;
+      font-family:inherit; font-size:12.5px; width:230px;
+      color:var(--usm-text); background:var(--usm-surface);
+    }
+    .usm-search:focus{outline:none; border-color:var(--usm-primary); box-shadow:0 0 0 3px var(--usm-primary-50)}
+    .usm-search-icon{position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--usm-muted); font-size:13px}
+    .usm-reset{
+      border:none; background:transparent; color:var(--usm-primary);
+      font-weight:700; font-size:12px; cursor:pointer; padding:7px 4px;
+      display:inline-flex; align-items:center; gap:5px;
+    }
+    .usm-reset:hover{text-decoration:underline}
+    .usm-count{
+      margin-left:auto; font-size:12px; color:var(--usm-muted); font-weight:600;
+      align-self:center; white-space:nowrap;
+    }
+    .usm-count b{color:var(--usm-text)}
+
+    /* ---------- Legend ---------- */
+    .usm-legend{
+      padding:10px 28px; display:flex; gap:20px; flex-wrap:wrap;
+      font-size:11.5px; color:var(--usm-muted); align-items:center;
+      border-bottom:1px solid var(--usm-border); background:var(--usm-bg);
+    }
+    .usm-legend .li{display:flex; align-items:center; gap:6px}
+    .usm-legend .sw{width:22px;height:10px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.08)}
+    .pri-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+    /* ---------- Board ---------- */
+    .usm-board-scroll{overflow-x:auto; padding:20px 28px 60px}
+    .usm-board{display:flex; gap:18px; align-items:flex-start; min-width:min-content}
+
+    .usm-epic{
+      flex:0 0 auto;
+      width:300px;
+      background:var(--usm-surface);
+      border:1px solid var(--usm-border);
+      border-radius:12px;
+      box-shadow:var(--shadow-sm);
+      overflow:hidden;
+      display:flex; flex-direction:column;
+    }
+    .usm-epic-head{
+      padding:14px 16px;
+      color:#fff;
+      position:relative;
+    }
+    .usm-epic-kicker{font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; opacity:.85}
+    .usm-epic-title{font-size:15px; font-weight:800; margin-top:3px; line-height:1.25}
+    .usm-epic-meta{font-size:11px; opacity:.9; margin-top:6px; display:flex; gap:10px}
+    .usm-epic-body{padding:12px; display:flex; flex-direction:column; gap:14px}
+
+    .usm-feature{border:1px solid var(--usm-border); border-radius:9px; overflow:hidden; background:var(--surface-50,#fafafa)}
+    .usm-feature-head{
+      padding:9px 11px; background:var(--usm-primary-50);
+      border-bottom:1px solid var(--usm-border);
+      display:flex; align-items:center; gap:8px;
+    }
+    .usm-feature-head .pi{color:var(--usm-primary-d); font-size:13px}
+    .usm-feature-title{font-size:12.5px; font-weight:700; color:var(--usm-primary-d); flex:1}
+    .usm-feature-count{font-size:10.5px; font-weight:700; color:var(--usm-muted); background:#fff; border:1px solid var(--usm-border); border-radius:999px; padding:1px 7px}
+    .usm-feature-cards{padding:9px; display:flex; flex-direction:column; gap:8px}
+
+    .usm-card{
+      background:var(--usm-surface);
+      border:1px solid var(--usm-border-2);
+      border-radius:7px;
+      padding:9px 10px;
+      box-shadow:var(--shadow-sm);
+      transition:transform .12s ease, box-shadow .12s ease;
+      cursor:default;
+    }
+    .usm-card:hover{transform:translateY(-1px); box-shadow:var(--shadow-md)}
+    .usm-card-title{font-size:12px; font-weight:600; line-height:1.35}
+    .usm-card-story{font-size:11px; color:var(--usm-muted); margin-top:5px; line-height:1.4}
+    .usm-card-meta{display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap}
+    .usm-persona-tag{
+      font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px;
+      display:inline-flex; align-items:center; gap:4px; color:#fff;
+    }
+    .usm-tag{
+      font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px;
+      border:1px solid var(--usm-border-2); color:var(--usm-muted); background:#fff;
+    }
+    .usm-pri{font-size:10px; font-weight:700; display:inline-flex; align-items:center; gap:4px}
+
+    .usm-empty{
+      display:none; text-align:center; color:var(--usm-muted);
+      padding:70px 20px; font-size:14px;
+    }
+    .usm-empty .pi{font-size:30px; display:block; margin-bottom:10px; opacity:.5}
+
+    /* ---------- View button on feature head ---------- */
+    .usm-view-btn{
+      border:1px solid var(--usm-border-2);
+      background:#fff; color:var(--usm-primary-d);
+      font-family:inherit; font-size:10.5px; font-weight:700;
+      border-radius:5px; padding:2px 8px; cursor:pointer;
+      display:inline-flex; align-items:center; gap:4px;
+      transition:all .14s ease;
+    }
+    .usm-view-btn .pi{font-size:11px}
+    .usm-view-btn:hover{background:var(--usm-primary); border-color:var(--usm-primary); color:#fff}
+
+    /* ---------- Preview modal ---------- */
+    .usm-modal-overlay{
+      position:fixed; inset:0; z-index:200;
+      background:rgba(16,35,67,.45);
+      display:none; align-items:center; justify-content:center;
+      padding:32px; backdrop-filter:blur(2px);
+    }
+    .usm-modal-overlay.is-open{display:flex}
+    .usm-modal{
+      background:var(--usm-surface);
+      border-radius:14px;
+      box-shadow:0 24px 60px rgba(16,35,67,.32);
+      width:min(860px,100%); max-height:88vh;
+      display:flex; flex-direction:column; overflow:hidden;
+      animation:usmPop .16s ease;
+    }
+    @keyframes usmPop{from{opacity:0; transform:translateY(8px) scale(.99)}to{opacity:1; transform:none}}
+    .usm-modal-head{
+      display:flex; align-items:flex-start; gap:12px;
+      padding:16px 20px; border-bottom:1px solid var(--usm-border);
+    }
+    .usm-modal-head .ic{
+      width:34px; height:34px; border-radius:8px; flex-shrink:0;
+      background:var(--usm-primary-50); color:var(--usm-primary-d);
+      display:flex; align-items:center; justify-content:center; font-size:16px;
+    }
+    .usm-modal-titles{flex:1; min-width:0}
+    .usm-modal-kicker{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--usm-muted)}
+    .usm-modal-title{font-size:16px; font-weight:800; margin-top:2px}
+    .usm-modal-desc{font-size:12px; color:var(--usm-muted); margin-top:3px; line-height:1.5}
+    .usm-modal-close{
+      border:none; background:transparent; color:var(--usm-muted);
+      font-size:18px; cursor:pointer; padding:4px; border-radius:6px; line-height:1;
+    }
+    .usm-modal-close:hover{background:var(--usm-bg); color:var(--usm-text)}
+    .usm-preview-label{
+      font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+      color:var(--usm-muted); padding:12px 20px 0;
+      display:flex; align-items:center; gap:6px;
+    }
+    .usm-preview-frame{
+      border:0; width:100%; height:340px;
+      background:var(--usm-bg);
+    }
+    .usm-preview-wrap{margin:10px 20px 20px; border:1px solid var(--usm-border); border-radius:10px; overflow:hidden; background:var(--usm-bg)}
+
+    /* hidden state */
+    .is-hidden{display:none !important}
+    .epic-hidden{display:none !important}
+
+    /* scrollbar */
+    .usm-board-scroll::-webkit-scrollbar{height:12px}
+    .usm-board-scroll::-webkit-scrollbar-thumb{background:var(--usm-border-2); border-radius:999px; border:3px solid var(--usm-bg)}
+    .usm-board-scroll::-webkit-scrollbar-track{background:transparent}
+  </style>
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="usm-header">
+    <div class="usm-eyebrow"><i class="pi pi-sitemap"></i> Contruent · Cisco Systems</div>
+    <h1 class="usm-title">User Story Map — AI-driven S-curve Forecasting</h1>
+    <p class="usm-sub">Epic → Feature → Task breakdown across user types, derived from the S-curve forecasting prototype.</p>
+  </header>
+
+  <!-- ============ FILTERS ============ -->
+  <section class="usm-filters">
+    <div class="usm-filter-group">
+      <span class="usm-filter-label"><i class="pi pi-folder"></i> Epic</span>
+      <div class="usm-chips" id="epicChips"></div>
+    </div>
+    <div class="usm-filter-group">
+      <span class="usm-filter-label"><i class="pi pi-users"></i> User type</span>
+      <div class="usm-chips" id="personaChips"></div>
+    </div>
+    <div class="usm-filter-group">
+      <span class="usm-filter-label"><i class="pi pi-flag"></i> Priority</span>
+      <div class="usm-chips" id="priChips"></div>
+    </div>
+    <div class="usm-filter-group">
+      <span class="usm-filter-label"><i class="pi pi-bookmark"></i> Release</span>
+      <div class="usm-chips" id="relChips"></div>
+    </div>
+    <div class="usm-filter-group">
+      <span class="usm-filter-label"><i class="pi pi-search"></i> Search</span>
+      <div class="usm-search-wrap">
+        <i class="pi pi-search usm-search-icon"></i>
+        <input type="text" class="usm-search" id="searchInput" placeholder="Search stories &amp; features…" autocomplete="off" />
+      </div>
+    </div>
+    <button class="usm-reset" id="resetBtn"><i class="pi pi-refresh"></i> Reset filters</button>
+    <span class="usm-count" id="storyCount"></span>
+  </section>
+
+  <!-- ============ LEGEND ============ -->
+  <div class="usm-legend" id="legend"></div>
+
+  <!-- ============ BOARD ============ -->
+  <div class="usm-board-scroll">
+    <div class="usm-board" id="board"></div>
+    <div class="usm-empty" id="emptyState">
+      <i class="pi pi-inbox"></i>
+      No stories match the current filters.<br />Try clearing one of the filters above.
+    </div>
+  </div>
+
+  <!-- ============ PREVIEW MODAL ============ -->
+  <div class="usm-modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+    <div class="usm-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="usm-modal-head">
+        <div class="ic"><i class="pi pi-eye" id="modalIcon"></i></div>
+        <div class="usm-modal-titles">
+          <div class="usm-modal-kicker" id="modalKicker">Feature preview</div>
+          <div class="usm-modal-title" id="modalTitle">—</div>
+          <div class="usm-modal-desc" id="modalDesc"></div>
+        </div>
+        <button class="usm-modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+      </div>
+      <div class="usm-preview-label"><i class="pi pi-images"></i> Snippet — live component from the S-curve forecast page</div>
+      <div class="usm-preview-wrap">
+        <iframe class="usm-preview-frame" id="previewFrame" title="Feature preview"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /* =====================================================================
+     DATA MODEL — Personas, Epics, Features, Stories (tasks)
+     Derived from scurve-forecast.html / .js feature set.
+     ===================================================================== */
+
+  const PERSONAS = [
+    { id:'pc', name:'Cost Controller',  short:'Cost Controller',  color:'#326fd1', desc:'Project controls / cost engineer — owns the forecast' },
+    { id:'pm', name:'Project Manager',  short:'Project Manager',  color:'#0d9488', desc:'Accountable for delivery & schedule' },
+    { id:'ex', name:'Executive / PMO',  short:'Executive / PMO',  color:'#7c3aed', desc:'Portfolio oversight & reporting' },
+    { id:'da', name:'Data Analyst',     short:'Data Analyst',     color:'#d97706', desc:'Scheduler / EVM data steward' },
+    { id:'ad', name:'System Admin',     short:'System Admin',     color:'#dc2626', desc:'Configures access, users & defaults' },
+  ];
+  const P = Object.fromEntries(PERSONAS.map(p=>[p.id,p]));
+
+  const PRIORITIES = [
+    { id:'high', name:'High',   color:'#dc2626' },
+    { id:'med',  name:'Medium', color:'#d97706' },
+    { id:'low',  name:'Low',    color:'#16a34a' },
+  ];
+  const RELEASES = [
+    { id:'mvp', name:'MVP' },
+    { id:'r1',  name:'Release 1' },
+    { id:'r2',  name:'Release 2' },
+    { id:'future', name:'Future' },
+  ];
+
+  const EPICS = [
+    { id:'nav',     title:'Control Account Navigation',  kicker:'Epic 1', color:'#1e437d' },
+    { id:'viz',     title:'S-curve Visualization',       kicker:'Epic 2', color:'#2859a7' },
+    { id:'ai',      title:'AI Forecasting Engine',       kicker:'Epic 3', color:'#326fd1' },
+    { id:'sim',     title:'Time Simulation & What-if',   kicker:'Epic 4', color:'#0d9488' },
+    { id:'kpi',     title:'KPIs & Metrics',              kicker:'Epic 5', color:'#7c3aed' },
+    { id:'assist',  title:'AI Assistant (NL Control)',   kicker:'Epic 6', color:'#9333ea' },
+    { id:'insight', title:'Appendix & Warnings',         kicker:'Epic 7', color:'#d97706' },
+    { id:'report',  title:'Reporting & Export',          kicker:'Epic 8', color:'#0891b2' },
+    { id:'admin',   title:'Administration & Access',     kicker:'Epic 9', color:'#dc2626' },
+  ];
+
+  const FEATURES = [
+    // nav
+    { id:'acct-select', epic:'nav', title:'Control account selector', icon:'pi-list' },
+    { id:'acct-search', epic:'nav', title:'Account search', icon:'pi-search' },
+    { id:'section-view',epic:'nav', title:'Section views (A/B)', icon:'pi-window-maximize' },
+    // viz
+    { id:'scurve',      epic:'viz', title:'Cumulative S-curve chart', icon:'pi-chart-line' },
+    { id:'periodic',    epic:'viz', title:'Cumulative ↔ periodic', icon:'pi-chart-bar' },
+    { id:'series',      epic:'viz', title:'Line series controls', icon:'pi-sliders-h' },
+    { id:'datatype',    epic:'viz', title:'Data type & date range', icon:'pi-calendar' },
+    { id:'legend',      epic:'viz', title:'Chart legend & key', icon:'pi-tags' },
+    // ai
+    { id:'run-fc',      epic:'ai',  title:'Run AI forecast', icon:'pi-play' },
+    { id:'driver-banner',epic:'ai', title:'AI driver banner', icon:'pi-bolt' },
+    { id:'fc-settings', epic:'ai',  title:'Forecast settings & weights', icon:'pi-cog' },
+    { id:'methodology', epic:'ai',  title:'Forecast methodology', icon:'pi-info-circle' },
+    { id:'confidence',  epic:'ai',  title:'Confidence band', icon:'pi-chart-line' },
+    // sim
+    { id:'scrubber',    epic:'sim', title:'Time scrubber', icon:'pi-history' },
+    { id:'drag',        epic:'sim', title:'Drag-to-scrub on chart', icon:'pi-arrows-h' },
+    { id:'whatif',      epic:'sim', title:'What-if SPI / CPI', icon:'pi-sync' },
+    // kpi
+    { id:'kpi-matrix',  epic:'kpi', title:'KPI metric matrix', icon:'pi-th-large' },
+    { id:'kpi-delta',   epic:'kpi', title:'Variance / delta chips', icon:'pi-arrow-up-right' },
+    // assist
+    { id:'nl-panel',    epic:'assist', title:'AI panel (chat)', icon:'pi-comments' },
+    { id:'nl-actions',  epic:'assist', title:'NL forecast actions', icon:'pi-microchip-ai' },
+    // insight
+    { id:'appendix',    epic:'insight', title:'Forecast appendix', icon:'pi-book' },
+    { id:'warnings',    epic:'insight', title:'Warnings & flags', icon:'pi-exclamation-triangle' },
+    // report
+    { id:'pdf',         epic:'report', title:'PDF export', icon:'pi-file-pdf' },
+    // admin
+    { id:'user-switch', epic:'admin', title:'User switching', icon:'pi-users' },
+    { id:'role-context',epic:'admin', title:'Role-based context', icon:'pi-shield' },
+  ];
+
+  /* Each story: feature, who (persona id), title (task), benefit, priority, release */
+  const STORIES = [
+    // --- acct-select ---
+    { f:'acct-select', who:'pc', t:'Switch control account from dropdown', b:'view any CA forecast without leaving the page', pri:'high', rel:'mvp' },
+    { f:'acct-select', who:'pc', t:'See full chart + KPI rebuild on switch', b:'every panel stays consistent with the selected CA', pri:'high', rel:'mvp' },
+    { f:'acct-select', who:'pm', t:'See active CA name in page subtitle', b:'always know which account I am reviewing', pri:'med', rel:'mvp' },
+    // --- acct-search ---
+    { f:'acct-search', who:'pc', t:'Type-ahead search across accounts', b:'jump to a CA fast on large projects', pri:'med', rel:'r1' },
+    { f:'acct-search', who:'pc', t:'See a "no results" empty state', b:'know my search matched nothing', pri:'low', rel:'r1' },
+    // --- section-view ---
+    { f:'section-view', who:'pm', t:'Toggle accordion vs tab layout', b:'read the page the way that suits me', pri:'low', rel:'r2' },
+    { f:'section-view', who:'ex', t:'Persist my chosen view (A/B test)', b:'the layout I prefer sticks between visits', pri:'low', rel:'future' },
+
+    // --- scurve ---
+    { f:'scurve', who:'pc', t:'View cumulative cost S-curve', b:'see planned vs actual spend over time', pri:'high', rel:'mvp' },
+    { f:'scurve', who:'pc', t:'Distinguish historical (solid) vs forecast (dashed)', b:'instantly tell actuals from projection', pri:'high', rel:'mvp' },
+    { f:'scurve', who:'pm', t:'See BAC reference line', b:'gauge the curve against budget at completion', pri:'med', rel:'mvp' },
+    // --- periodic ---
+    { f:'periodic', who:'pc', t:'Toggle cumulative ↔ periodic bars', b:'analyse spend rate as well as totals', pri:'med', rel:'r1' },
+    { f:'periodic', who:'da', t:'See period bars aligned to the curve', b:'reconcile period spend with cumulative trend', pri:'med', rel:'r1' },
+    // --- series ---
+    { f:'series', who:'pc', t:'Toggle Budget / Earned / Actual / Incurred lines', b:'focus on the series I care about', pri:'high', rel:'mvp' },
+    { f:'series', who:'pc', t:'Reveal Control / Finance / Cashflow via "More"', b:'access secondary series without clutter', pri:'med', rel:'r1' },
+    { f:'series', who:'pc', t:'Show / hide the confidence band', b:'declutter or assess forecast uncertainty', pri:'med', rel:'r1' },
+    // --- datatype ---
+    { f:'datatype', who:'da', t:'Switch metric: Cost / Hours / Company', b:'analyse the same CA across measures', pri:'med', rel:'r1' },
+    { f:'datatype', who:'pc', t:'Filter chart by a date range slider', b:'zoom into a specific reporting window', pri:'med', rel:'r2' },
+    { f:'datatype', who:'pc', t:'Reset date range to full span', b:'return to the complete timeline quickly', pri:'low', rel:'r2' },
+    // --- legend ---
+    { f:'legend', who:'pm', t:'Read a chart legend mirroring toggles', b:'interpret every line & band on the chart', pri:'low', rel:'mvp' },
+    { f:'legend', who:'ex', t:'See the solid/dashed key', b:'understand the historical-vs-forecast convention', pri:'low', rel:'mvp' },
+
+    // --- run-fc ---
+    { f:'run-fc', who:'pc', t:'Run AI forecast for the active CA', b:'generate a data-driven projection on demand', pri:'high', rel:'mvp' },
+    { f:'run-fc', who:'pc', t:'Let AI own forecast lines until reset', b:'compare AI projection against my baseline', pri:'high', rel:'mvp' },
+    { f:'run-fc', who:'pm', t:'See AI-generated EAC re-anchor the curve', b:'trust the forecast reflects latest actuals', pri:'high', rel:'mvp' },
+    // --- driver-banner ---
+    { f:'driver-banner', who:'pc', t:'See driver weight pills summing to 100%', b:'understand what drives the forecast', pri:'med', rel:'r1' },
+    { f:'driver-banner', who:'ex', t:'See a high-confidence score', b:'judge how much to rely on the forecast', pri:'med', rel:'r1' },
+    { f:'driver-banner', who:'pc', t:'Expand a detailed driver breakdown', b:'audit the contributing factors', pri:'low', rel:'r2' },
+    { f:'driver-banner', who:'pm', t:'See count of similar matched accounts', b:'know how much peer data backs the forecast', pri:'low', rel:'r2' },
+    // --- fc-settings ---
+    { f:'fc-settings', who:'pc', t:'Allocate points across forecast drivers', b:'tune which signals influence the model', pri:'med', rel:'r1' },
+    { f:'fc-settings', who:'da', t:'Enable SPI / CPI earned-value integration', b:'weight peers by performance similarity', pri:'med', rel:'r1' },
+    { f:'fc-settings', who:'pc', t:'Reset settings to restore the S-curve', b:'revert experiments back to the default state', pri:'med', rel:'r1' },
+    // --- methodology ---
+    { f:'methodology', who:'ex', t:'Read a plain-language methodology box', b:'explain the forecast basis to stakeholders', pri:'low', rel:'r1' },
+    { f:'methodology', who:'da', t:'See Gower distance & matched-neighbor detail', b:'validate the matching approach', pri:'low', rel:'r2' },
+    // --- confidence ---
+    { f:'confidence', who:'pc', t:'See P10–P90 confidence band', b:'visualise the range of likely outcomes', pri:'med', rel:'r1' },
+    { f:'confidence', who:'pc', t:'Watch the band re-anchor as I scrub time', b:'see uncertainty update with the simulation', pri:'low', rel:'r2' },
+
+    // --- scrubber ---
+    { f:'scrubber', who:'pc', t:'Scrub a time slider to simulate a date', b:'preview the forecast at a future point', pri:'high', rel:'mvp' },
+    { f:'scrubber', who:'pc', t:'See a "Simulated" badge when off today', b:'never mistake a simulation for reality', pri:'med', rel:'mvp' },
+    { f:'scrubber', who:'pm', t:'Reset to today in one click', b:'return to the real current date instantly', pri:'med', rel:'mvp' },
+    // --- drag ---
+    { f:'drag', who:'pc', t:'Drag a handle on the chart to scrub time', b:'simulate directly on the curve', pri:'med', rel:'r2' },
+    // --- whatif ---
+    { f:'whatif', who:'pm', t:'Run what-if SPI / CPI scenarios', b:'see how performance shifts the forecast', pri:'high', rel:'r1' },
+    { f:'whatif', who:'ex', t:'Compare scenario outcomes to baseline', b:'support decision-making with alternatives', pri:'med', rel:'r2' },
+
+    // --- kpi-matrix ---
+    { f:'kpi-matrix', who:'pm', t:'See a matrix of cost & schedule KPIs', b:'assess project health at a glance', pri:'high', rel:'mvp' },
+    { f:'kpi-matrix', who:'ex', t:'See EAC, ETC and completion dates', b:'understand projected outcome & timing', pri:'high', rel:'mvp' },
+    { f:'kpi-matrix', who:'pc', t:'See KPIs refresh with the active CA', b:'metrics always match the selected account', pri:'med', rel:'mvp' },
+    // --- kpi-delta ---
+    { f:'kpi-delta', who:'pm', t:'See up/down variance chips per metric', b:'spot movement against the prior estimate', pri:'med', rel:'r1' },
+    { f:'kpi-delta', who:'ex', t:'See good/bad colour coding on deltas', b:'identify problem metrics immediately', pri:'med', rel:'r1' },
+
+    // --- nl-panel ---
+    { f:'nl-panel', who:'pm', t:'Open an AI assistant panel', b:'control the S-curve in natural language', pri:'med', rel:'r2' },
+    { f:'nl-panel', who:'ex', t:'Ask questions about the forecast', b:'get answers without learning the UI', pri:'low', rel:'future' },
+    // --- nl-actions ---
+    { f:'nl-actions', who:'pc', t:'Tell the assistant to simulate or run forecast', b:'drive the chart hands-free', pri:'med', rel:'r2' },
+    { f:'nl-actions', who:'pc', t:'Switch CA & set driver weights by command', b:'reconfigure the view conversationally', pri:'low', rel:'future' },
+    { f:'nl-actions', who:'pm', t:'Reset everything via the assistant', b:'undo experiments with one instruction', pri:'low', rel:'future' },
+
+    // --- appendix ---
+    { f:'appendix', who:'da', t:'Open a forecast appendix section', b:'inspect supporting data behind the curve', pri:'low', rel:'r2' },
+    { f:'appendix', who:'ex', t:'Reference appendix in reports', b:'back up the forecast with detail', pri:'low', rel:'future' },
+    // --- warnings ---
+    { f:'warnings', who:'pc', t:'See a warnings section with a badge count', b:'be alerted to forecast risks & data gaps', pri:'high', rel:'r1' },
+    { f:'warnings', who:'pm', t:'Review flagged deviations from baseline', b:'act on early-warning signals', pri:'med', rel:'r1' },
+
+    // --- pdf ---
+    { f:'pdf', who:'ex', t:'Export the forecast view to PDF', b:'share the curve in governance reviews', pri:'high', rel:'r1' },
+    { f:'pdf', who:'pc', t:'Open an export modal from the kebab menu', b:'configure what gets exported', pri:'med', rel:'r1' },
+
+    // --- user-switch ---
+    { f:'user-switch', who:'ad', t:'Switch the active user from the menu', b:'demo or support different personas', pri:'med', rel:'r2' },
+    // --- role-context ---
+    { f:'role-context', who:'ad', t:'Default to an Admin context', b:'land in the right workspace on open', pri:'med', rel:'mvp' },
+    { f:'role-context', who:'ad', t:'Render nav by admin vs project context', b:'show each role only what it needs', pri:'med', rel:'r1' },
+  ];
+
+  /* =====================================================================
+     FEATURE PREVIEW SNIPPETS
+     Each = a description + real markup from scurve-forecast.html, rendered
+     in an isolated iframe that loads the actual scurve-forecast.css styles.
+     Chart-based features use a clean inline SVG mock.
+     ===================================================================== */
+
+  // Reusable S-curve SVG mock. opts: bars, band, today
+  function curveSVG({bars=false, band=false}={}){
+    return `
+    <svg viewBox="0 0 560 250" width="100%" style="max-width:560px;font-family:Inter,sans-serif">
+      <!-- grid -->
+      ${[210,160,110,60].map(y=>`<line x1="48" y1="${y}" x2="540" y2="${y}" stroke="#eef0f3" stroke-width="1"/>`).join('')}
+      <line x1="48" y1="210" x2="540" y2="210" stroke="#d4d4d4" stroke-width="1"/>
+      <line x1="48" y1="20"  x2="48"  y2="210" stroke="#d4d4d4" stroke-width="1"/>
+      ${bars ? [70,120,170,220,270,320,370].map((x,i)=>{const h=[18,30,46,58,52,40,28][i];return `<rect x="${x}" y="${210-h}" width="22" height="${h}" rx="2" fill="#c1d3f1"/>`;}).join('') : ''}
+      ${band ? `<path d="M300,86 C350,70 400,56 520,40 L520,66 C400,82 350,96 300,108 Z" fill="#326fd1" fill-opacity="0.12"/>` : ''}
+      <!-- historical solid -->
+      <path d="M48,205 C130,200 165,160 220,128 C262,103 285,90 300,82" fill="none" stroke="#326fd1" stroke-width="2.5"/>
+      <!-- forecast dashed -->
+      <path d="M300,82 C350,66 400,52 520,38" fill="none" stroke="#326fd1" stroke-width="2.5" stroke-dasharray="6 5"/>
+      <!-- earned (green) -->
+      <path d="M48,206 C130,202 165,172 215,150 C260,130 285,120 300,114" fill="none" stroke="#16a34a" stroke-width="2"/>
+      <!-- today line -->
+      <line x1="300" y1="20" x2="300" y2="210" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="305" y="32" fill="#dc2626" font-size="11" font-weight="700">Today</text>
+      <text x="52" y="226" fill="#737373" font-size="10">Dec 24</text>
+      <text x="500" y="226" fill="#737373" font-size="10">Nov 26</text>
+    </svg>`;
+  }
+
+  const acctSnippet = `
+    <div class="sc-acct-selector-wrap" style="position:static">
+      <button class="sc-acct-selector" aria-expanded="true">CA-1042 · Civil Foundations — P2 <i class="pi pi-chevron-down sc-acct-chevron"></i></button>
+      <div class="sc-acct-dropdown" style="position:static;display:block;margin-top:8px;max-width:340px">
+        <div class="sc-acct-search-wrap"><i class="pi pi-search sc-acct-search-icon"></i><input class="sc-acct-search" type="text" placeholder="Search accounts…"/></div>
+        <div class="sc-acct-drop-item sc-acct-drop-item--active">CA-1042 · Civil Foundations — P2</div>
+        <div class="sc-acct-drop-item">CA-1043 · Structural Steel — P1</div>
+        <div class="sc-acct-drop-item">CA-1044 · MEP Systems</div>
+        <div class="sc-acct-drop-item">CA-1045 · Site Preparation</div>
+      </div>
+    </div>`;
+
+  const seriesSnippet = `
+    <div class="sc-chart-controls-left" style="flex-wrap:wrap;gap:8px">
+      <button class="sc-line-toggle" aria-pressed="true"><span class="sc-line-dot sc-line-dot--budget"></span> Budget</button>
+      <button class="sc-line-toggle" aria-pressed="true"><span class="sc-line-dot sc-line-dot--earned"></span> Earned</button>
+      <button class="sc-line-toggle" aria-pressed="true"><span class="sc-line-dot sc-line-dot--actual"></span> Actual / ETC</button>
+      <button class="sc-line-toggle" aria-pressed="true"><span class="sc-line-dot sc-line-dot--incurred"></span> Incurred / ETC</button>
+      <button class="sc-line-toggle sc-line-more-btn" aria-expanded="false">More <i class="pi pi-chevron-down"></i></button>
+      <label class="sc-line-toggle sc-line-toggle--checkbox"><input type="checkbox" checked/><span>Confidence band</span></label>
+    </div>`;
+
+  const aiBannerSnippet = `
+    <div class="sc-ai-banner" style="max-width:680px">
+      <div class="sc-ai-banner-row">
+        <span class="sc-ai-active-tag">AI forecast active</span>
+        <span class="sc-ai-driven-label">Driven by:</span>
+        <div class="sc-ai-driver-pills">
+          <span class="sc-driver-pill">Classification groups: 22%</span>
+          <span class="sc-driver-pill">Numerical features: 32%</span>
+          <span class="sc-driver-pill">SPI / CPI: 9%</span>
+          <span class="sc-driver-pill">Curve shape: 37%</span>
+        </div>
+        <div class="sc-ai-banner-right">
+          <span class="sc-high-confidence-pill">High confidence: 87%</span>
+          <span class="sc-similar-accts">Form 24 CA</span>
+        </div>
+      </div>
+    </div>`;
+
+  function kpiCards(which){
+    const cards = {
+      eac:`<div class="sc-metric-card"><div class="sc-metric-label">Estimate at completion</div><div class="sc-metric-value">$47.14</div><div class="sc-metric-delta sc-metric-delta--bad"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$33.42</span>&nbsp;<span class="sc-delta-pct">(243.70%)</span></div></div>`,
+      earned:`<div class="sc-metric-card"><div class="sc-metric-label">Earned to date</div><div class="sc-metric-value">$11.57</div><div class="sc-metric-delta sc-metric-delta--good"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$11.53</span>&nbsp;<span class="sc-delta-pct">(25.26k%)</span></div></div>`,
+      committed:`<div class="sc-metric-card"><div class="sc-metric-label">Total committed</div><div class="sc-metric-value">$7.56</div><div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-down"></i></span><span class="sc-delta-amt">$7.35</span>&nbsp;<span class="sc-delta-pct">(-49.31%)</span></div></div>`,
+      etc:`<div class="sc-metric-card"><div class="sc-metric-label">Estimate to complete</div><div class="sc-metric-value">$40.55</div><div class="sc-metric-delta sc-metric-delta--bad"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$33.20</span>&nbsp;<span class="sc-delta-pct">(451.63%)</span></div></div>`,
+      date:`<div class="sc-metric-card"><div class="sc-metric-label">Forecast completion date</div><div class="sc-metric-value">5 May 2032</div></div>`,
+      budget:`<div class="sc-metric-card"><div class="sc-metric-label">Approved budget</div><div class="sc-metric-value">$31.76</div><div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$9.11</span>&nbsp;<span class="sc-delta-pct">(40.20%)</span></div></div>`,
+    };
+    return `<div class="sc-metric-row" style="display:flex;flex-wrap:wrap;gap:12px;max-width:680px">${which.map(k=>cards[k]).join('')}</div>`;
+  }
+
+  const FEATURE_DETAIL = {
+    'acct-select':{ desc:'Toolbar dropdown to switch the active control account; selecting one rebuilds the chart, KPIs and banner.', html:acctSnippet },
+    'acct-search':{ desc:'Type-ahead search inside the account dropdown with a no-results empty state.', html:acctSnippet },
+    'section-view':{ desc:'A/B-tested layout — read the page as stacked accordions or as tabs.', html:`
+      <div class="sc-tabs-bar" role="tablist" style="margin-bottom:16px">
+        <button class="sc-tab-btn is-active">Cumulative spend forecast</button>
+        <button class="sc-tab-btn">Forecast appendix</button>
+        <button class="sc-tab-btn">Warnings <span class="sc-tab-badge">3</span></button>
+      </div>
+      <div class="sc-kebab-dropdown" style="position:static;display:block;max-width:240px">
+        <div class="sc-kebab-section-label">View (A/B test)</div>
+        <button class="sc-kebab-item sc-kebab-item--radio" aria-checked="true"><i class="pi pi-list"></i> Accordion view <i class="pi pi-check sc-kebab-check"></i></button>
+        <button class="sc-kebab-item sc-kebab-item--radio" aria-checked="false"><i class="pi pi-window-maximize"></i> Tab view <i class="pi pi-check sc-kebab-check"></i></button>
+      </div>` },
+    'scurve':{ desc:'Cumulative cost S-curve: solid = historical/planned, dashed = forecast, with a Today marker and BAC reference.', html:curveSVG() },
+    'periodic':{ desc:'Toggle between a cumulative curve and periodic spend-rate bars.', html:`${curveSVG({bars:true})}
+      <div class="sc-view-toggle" style="margin-top:14px;justify-content:flex-start">
+        <span class="sc-view-label">Cumulative</span>
+        <label class="sc-toggle-switch"><input type="checkbox" checked/><span class="sc-toggle-track"></span></label>
+        <span class="sc-view-label">Periodic</span>
+      </div>` },
+    'series':{ desc:'Show/hide Budget, Earned, Actual, Incurred lines; a "More" menu reveals Control, Finance and Cashflow.', html:seriesSnippet },
+    'datatype':{ desc:'Switch the measure (Cost / Hours / Company) and constrain the chart to a date range.', html:`
+      <div class="sc-chart-controls-right" style="flex-wrap:wrap;gap:12px">
+        <div class="sc-metric-select"><span class="sc-view-label">Data type</span>
+          <select><option>Cost</option><option>Hours</option><option>Company</option></select></div>
+        <div class="sc-date-range"><button class="sc-date-btn sc-date-range-btn"><i class="pi pi-calendar"></i> <span>Dec 2024 – Nov 2026</span> <i class="pi pi-chevron-down sc-date-range-caret"></i></button></div>
+      </div>` },
+    'legend':{ desc:'Legend mirroring the line toggles, plus the solid-vs-dashed key.', html:`
+      <div class="sc-bottom-legend" style="max-width:680px">
+        <span class="sc-bl-item sc-bl-combined sc-bl-budget">Budget</span>
+        <span class="sc-bl-item sc-bl-combined sc-bl-earned">Earned</span>
+        <span class="sc-bl-item sc-bl-combined sc-bl-actual">Actual / ETC</span>
+        <span class="sc-bl-item sc-bl-combined sc-bl-incurred">Incurred / ETC</span>
+        <span class="sc-bl-item sc-bl-band">P10–P90 band</span>
+        <span class="sc-bl-item sc-bl-today">| Today</span>
+        <span class="sc-bl-key">Solid line = Historical / Planned ・ Dashed line = Forecast</span>
+      </div>` },
+    'run-fc':{ desc:'Primary action that runs the AI analysis and lets it own the forecast lines until reset.', html:`
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-primary sc-run-btn"><i class="pi pi-play btn-icon-left"></i> Run forecast</button>
+        <button class="sc-toolbar-icon-btn"><i class="pi pi-cog"></i></button>
+      </div>` },
+    'driver-banner':{ desc:'Banner explaining what drives the forecast — driver weight pills (sum 100%), confidence score and matched-account count.', html:aiBannerSnippet },
+    'fc-settings':{ desc:'Allocate points across forecast drivers, enable SPI/CPI integration, and reset to restore the baseline S-curve.', html:`${aiBannerSnippet}
+      <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+        <button class="sc-toolbar-icon-btn"><i class="pi pi-cog"></i></button>
+        <span style="font:600 12px Inter,sans-serif;color:#737373">Open AI forecast settings → allocate driver points</span>
+      </div>` },
+    'methodology':{ desc:'Plain-language explanation of the forecast basis (Gower distance, matched neighbors, SPI/CPI, curve-shape signals).', html:`
+      <div class="sc-forecast-exp-box" style="max-width:660px">
+        Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks.
+        Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned) are each matched using their own historical data series.
+        Matching uses Gower distance across CA group codes (PHASE_TYPE, DISCIPLINE, WORK_TYPE) and project groups (PROJ_SIZE, REGION).
+        SPI (0.88) and CPI (0.92) active as weighting factors. Top 9 matched neighbors (avg similarity 0.78) re-anchor to $23.6M actuals → $42.2M EAC.
+      </div>` },
+    'confidence':{ desc:'P10–P90 confidence band around the forecast, toggleable, that re-anchors as you scrub time.', html:`${curveSVG({band:true})}
+      <label class="sc-line-toggle sc-line-toggle--checkbox" style="margin-top:14px"><input type="checkbox" checked/><span>Confidence band</span></label>` },
+    'scrubber':{ desc:'Time scrubber that simulates a different "today", with a Simulated badge and one-click reset.', html:`
+      <div class="sc-time-scrubber" style="max-width:660px">
+        <div class="sc-ts-left"><i class="pi pi-history sc-ts-icon"></i><span class="sc-ts-sim-label">Simulate:</span><span class="sc-ts-month">Jun 2025</span><span class="sc-ts-sim-badge">Simulated</span></div>
+        <input type="range" class="sc-ts-slider" min="2" max="22" value="10" style="--fill-pct:40%"/>
+        <button class="sc-ts-reset"><i class="pi pi-refresh"></i> Today</button>
+      </div>` },
+    'drag':{ desc:'Draggable handle directly on the chart to scrub time without using the slider.', html:`
+      <div style="position:relative">${curveSVG()}
+        <div style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;font:600 12px Inter,sans-serif;color:#326fd1">
+          <span style="display:inline-flex;width:26px;height:26px;border-radius:50%;background:#326fd1;color:#fff;align-items:center;justify-content:center"><i class="pi pi-arrows-h"></i></span>
+          Drag the handle along the Today line to simulate
+        </div>
+      </div>` },
+    'whatif':{ desc:'What-if scenarios that adjust SPI / CPI and reshape the forecast versus baseline.', html:`
+      <div style="display:flex;gap:10px;flex-wrap:wrap;max-width:560px">
+        <span class="sc-driver-pill">SPI 0.88 → <b>1.00</b></span>
+        <span class="sc-driver-pill">CPI 0.92 → <b>1.05</b></span>
+      </div>${curveSVG({band:true})}` },
+    'kpi-matrix':{ desc:'Matrix of cost & schedule KPIs (EAC, ETC, completion dates) that refresh with the active CA.', html:kpiCards(['budget','eac','etc','date']) },
+    'kpi-delta':{ desc:'Per-metric variance chips with up/down direction and good/bad colour coding.', html:kpiCards(['earned','committed','eac']) },
+    'nl-panel':{ desc:'AI assistant panel for controlling the S-curve in natural language.', html:`
+      <div style="max-width:380px;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;font-family:Inter,sans-serif">
+        <div style="background:#326fd1;color:#fff;padding:10px 14px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px"><i class="pi pi-microchip-ai"></i> AI Assistant</div>
+        <div style="padding:14px;background:#fafafa">
+          <div style="background:#fff;border:1px solid #e5e5e5;border-radius:10px 10px 10px 2px;padding:9px 12px;font-size:12px;margin-bottom:10px">How is CA-1042 trending against budget?</div>
+          <div style="background:#eef3fb;border-radius:10px 10px 2px 10px;padding:9px 12px;font-size:12px;margin-left:40px">Running forecast — EAC is $47.1M, ~24% over the approved budget. Confidence 87%.</div>
+        </div>
+        <div style="padding:10px 14px;border-top:1px solid #e5e5e5;display:flex;gap:8px"><input placeholder="Ask or instruct…" style="flex:1;border:1px solid #d4d4d4;border-radius:8px;padding:7px 10px;font-size:12px"/><button class="btn btn-primary" style="padding:7px 12px"><i class="pi pi-send"></i></button></div>
+      </div>` },
+    'nl-actions':{ desc:'Natural-language commands: simulate, run forecast, switch CA, set driver weights, reset.', html:`
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:420px;font-family:Inter,sans-serif">
+        ${['“Simulate Dec 2025”','“Run the forecast”','“Switch to CA-1044”','“Weight curve shape higher”','“Reset everything”'].map(c=>`<div style="background:#eef3fb;border:1px solid #c1d3f1;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#1e437d"><i class="pi pi-microchip-ai" style="margin-right:6px"></i>${c}</div>`).join('')}
+      </div>` },
+    'appendix':{ desc:'Collapsible appendix with the supporting data and matched-neighbor detail behind the forecast.', html:`
+      <div class="sc-acc-section" style="max-width:560px;border:1px solid #e5e5e5;border-radius:8px">
+        <button class="sc-acc-header" aria-expanded="true"><i class="pi pi-chevron-down sc-acc-chevron"></i><span class="sc-acc-title">Forecast appendix</span></button>
+        <div class="sc-acc-body" style="padding:14px;font:13px Inter,sans-serif;color:#737373">Matched neighbors, similarity scores, group codes and per-series detail tables.</div>
+      </div>` },
+    'warnings':{ desc:'Warnings section with a badge count flagging forecast risks and deviations from baseline.', html:`
+      <div class="sc-tabs-bar" style="margin-bottom:14px"><button class="sc-tab-btn is-active">Warnings <span class="sc-tab-badge">3</span></button></div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:560px;font-family:Inter,sans-serif">
+        ${['EAC exceeds approved budget by 24%','SPI 0.88 — schedule slipping','Only 9 matched neighbors (min similarity 0.30)'].map(w=>`<div style="display:flex;gap:8px;align-items:center;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#991b1b"><i class="pi pi-exclamation-triangle"></i>${w}</div>`).join('')}
+      </div>` },
+    'pdf':{ desc:'Export the forecast view to PDF from the kebab menu.', html:`
+      <div class="sc-kebab-dropdown" style="position:static;display:block;max-width:240px">
+        <button class="sc-kebab-item"><i class="pi pi-file-pdf"></i> Export to PDF</button>
+        <div class="sc-kebab-divider"></div>
+        <button class="sc-kebab-item"><i class="pi pi-users"></i> Switch user</button>
+      </div>` },
+    'user-switch':{ desc:'Switch the active user from the kebab menu to demo or support different personas.', html:`
+      <div class="sc-kebab-dropdown" style="position:static;display:block;max-width:240px">
+        <button class="sc-kebab-item"><i class="pi pi-users"></i> Switch user</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        ${['Admin','Cost Controller','Project Manager','Executive'].map((u,i)=>`<span class="sc-driver-pill"${i===0?' style="background:#326fd1;color:#fff;border-color:#326fd1"':''}>${u}</span>`).join('')}
+      </div>` },
+    'role-context':{ desc:'Default to an Admin context and render the navigation by admin vs project role.', html:`
+      <div style="display:flex;gap:8px;font-family:Inter,sans-serif">
+        <div style="border:1px solid #326fd1;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#1e437d;background:#eef3fb"><b>Admin context</b><br/>Change mgmt → S-curve forecasting</div>
+        <div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#737373"><b>Project context</b><br/>Cost → AI forecasting</div>
+      </div>` },
+  };
+
+  function viewFeature(featId){
+    const feat = FEATURES.find(f=>f.id===featId);
+    const epic = EPICS.find(e=>e.id===feat.epic);
+    const detail = FEATURE_DETAIL[featId] || { desc:'', html:'<p style="font-family:Inter">Preview unavailable.</p>' };
+    document.getElementById('modalIcon').className = 'pi ' + feat.icon;
+    document.getElementById('modalKicker').textContent = epic.kicker + ' · ' + epic.title;
+    document.getElementById('modalTitle').textContent = feat.title;
+    document.getElementById('modalDesc').textContent = detail.desc;
+
+    const doc = `<!DOCTYPE html><html><head>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css"/>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+      <link rel="stylesheet" href="components/tokens.css"/>
+      <link rel="stylesheet" href="components/styles.css"/>
+      <link rel="stylesheet" href="scurve-forecast.css"/>
+      <style>html,body{margin:0;background:#fff}body{padding:22px;font-family:Inter,sans-serif;overflow:auto}</style>
+      </head><body>${detail.html}</body></html>`;
+    document.getElementById('previewFrame').srcdoc = doc;
+    document.getElementById('modalOverlay').classList.add('is-open');
+  }
+  function closeModal(){ document.getElementById('modalOverlay').classList.remove('is-open'); }
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+  /* =====================================================================
+     STATE
+     ===================================================================== */
+  const state = {
+    epics: new Set(),      // empty => all
+    personas: new Set(),
+    pris: new Set(),
+    rels: new Set(),
+    q: '',
+  };
+
+  /* =====================================================================
+     FILTER UI
+     ===================================================================== */
+  function chip(label, active, color){
+    const el = document.createElement('button');
+    el.className = 'usm-chip' + (active ? ' is-active' : '');
+    if(color && !active){ /* keep neutral until active */ }
+    el.innerHTML = (color ? `<span class="dot" style="background:${color}"></span>` : '') + label;
+    return el;
+  }
+
+  function buildFilters(){
+    // Epics
+    const ec = document.getElementById('epicChips');
+    EPICS.forEach(e=>{
+      const c = chip(e.title, false, e.color);
+      c.onclick = ()=>toggle(state.epics, e.id, c);
+      ec.appendChild(c);
+    });
+    // Personas
+    const pc = document.getElementById('personaChips');
+    PERSONAS.forEach(p=>{
+      const c = chip(p.short, false, p.color);
+      c.title = p.desc;
+      c.onclick = ()=>toggle(state.personas, p.id, c);
+      pc.appendChild(c);
+    });
+    // Priorities
+    const prc = document.getElementById('priChips');
+    PRIORITIES.forEach(pr=>{
+      const c = chip(pr.name, false, pr.color);
+      c.onclick = ()=>toggle(state.pris, pr.id, c);
+      prc.appendChild(c);
+    });
+    // Releases
+    const rc = document.getElementById('relChips');
+    RELEASES.forEach(r=>{
+      const c = chip(r.name, false, null);
+      c.onclick = ()=>toggle(state.rels, r.id, c);
+      rc.appendChild(c);
+    });
+
+    document.getElementById('searchInput').addEventListener('input', e=>{
+      state.q = e.target.value.trim().toLowerCase();
+      render();
+    });
+    document.getElementById('resetBtn').onclick = resetFilters;
+
+    // Legend
+    const lg = document.getElementById('legend');
+    lg.innerHTML =
+      `<span class="li"><b style="color:var(--usm-text)">Priority:</b></span>` +
+      PRIORITIES.map(p=>`<span class="li"><span class="pri-dot" style="background:${p.color}"></span>${p.name}</span>`).join('') +
+      `<span class="li" style="margin-left:14px"><b style="color:var(--usm-text)">User types:</b></span>` +
+      PERSONAS.map(p=>`<span class="li"><span class="pri-dot" style="background:${p.color}"></span>${p.short}</span>`).join('');
+  }
+
+  function toggle(set, id, el){
+    if(set.has(id)){ set.delete(id); el.classList.remove('is-active'); }
+    else{ set.add(id); el.classList.add('is-active'); }
+    render();
+  }
+
+  function resetFilters(){
+    state.epics.clear(); state.personas.clear(); state.pris.clear(); state.rels.clear();
+    state.q = '';
+    document.getElementById('searchInput').value = '';
+    document.querySelectorAll('.usm-chip.is-active').forEach(c=>c.classList.remove('is-active'));
+    render();
+  }
+
+  /* =====================================================================
+     MATCHING
+     ===================================================================== */
+  function storyMatches(s){
+    const feat = FEATURES.find(f=>f.id===s.f);
+    if(state.epics.size && !state.epics.has(feat.epic)) return false;
+    if(state.personas.size && !state.personas.has(s.who)) return false;
+    if(state.pris.size && !state.pris.has(s.pri)) return false;
+    if(state.rels.size && !state.rels.has(s.rel)) return false;
+    if(state.q){
+      const hay = (s.t + ' ' + s.b + ' ' + feat.title + ' ' + P[s.who].name).toLowerCase();
+      if(!hay.includes(state.q)) return false;
+    }
+    return true;
+  }
+
+  /* =====================================================================
+     RENDER BOARD
+     ===================================================================== */
+  function render(){
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+    let visibleStories = 0;
+
+    EPICS.forEach(epic=>{
+      const epicFeatures = FEATURES.filter(f=>f.epic===epic.id);
+      const featureBlocks = [];
+      let epicStoryCount = 0;
+
+      epicFeatures.forEach(feat=>{
+        const matched = STORIES.filter(s=>s.f===feat.id && storyMatches(s));
+        if(!matched.length) return;
+        epicStoryCount += matched.length;
+        visibleStories += matched.length;
+
+        const cards = matched.map(s=>{
+          const per = P[s.who];
+          const pri = PRIORITIES.find(p=>p.id===s.pri);
+          const rel = RELEASES.find(r=>r.id===s.rel);
+          return `
+            <div class="usm-card">
+              <div class="usm-card-title">${esc(s.t)}</div>
+              <div class="usm-card-story"><b>As a</b> ${esc(per.name)}, <b>so that</b> I can ${esc(s.b)}.</div>
+              <div class="usm-card-meta">
+                <span class="usm-persona-tag" style="background:${per.color}"><i class="pi pi-user" style="font-size:9px"></i>${esc(per.short)}</span>
+                <span class="usm-pri" style="color:${pri.color}"><span class="pri-dot" style="background:${pri.color}"></span>${pri.name}</span>
+                <span class="usm-tag">${rel.name}</span>
+              </div>
+            </div>`;
+        }).join('');
+
+        featureBlocks.push(`
+          <div class="usm-feature">
+            <div class="usm-feature-head">
+              <i class="pi ${feat.icon}"></i>
+              <span class="usm-feature-title">${esc(feat.title)}</span>
+              <button class="usm-view-btn" onclick="viewFeature('${feat.id}')" title="Preview this feature"><i class="pi pi-eye"></i> View</button>
+              <span class="usm-feature-count">${matched.length}</span>
+            </div>
+            <div class="usm-feature-cards">${cards}</div>
+          </div>`);
+      });
+
+      if(!featureBlocks.length) return; // epic hidden entirely
+
+      const col = document.createElement('div');
+      col.className = 'usm-epic';
+      col.innerHTML = `
+        <div class="usm-epic-head" style="background:${epic.color}">
+          <div class="usm-epic-kicker">${epic.kicker}</div>
+          <div class="usm-epic-title">${esc(epic.title)}</div>
+          <div class="usm-epic-meta">
+            <span><i class="pi pi-clone" style="font-size:10px"></i> ${epicFeatures.length} features</span>
+            <span><i class="pi pi-check-square" style="font-size:10px"></i> ${epicStoryCount} stories</span>
+          </div>
+        </div>
+        <div class="usm-epic-body">${featureBlocks.join('')}</div>`;
+      board.appendChild(col);
+    });
+
+    document.getElementById('emptyState').style.display = visibleStories ? 'none' : 'block';
+    const total = STORIES.length;
+    document.getElementById('storyCount').innerHTML =
+      `<b>${visibleStories}</b> of ${total} stories${visibleStories<total?' (filtered)':''}`;
+  }
+
+  function esc(str){
+    return String(str).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  /* =====================================================================
+     INIT
+     ===================================================================== */
+  buildFilters();
+  render();
+  </script>
+</body>
+</html>
