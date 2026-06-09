@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Navigation — Contruent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <link rel="stylesheet" href="components/tokens.css" />
+  <link rel="stylesheet" href="components/styles.css" />
+  <style>
+    /* =========================================================
+       Page-top row with the design switcher
+       ========================================================= */
+    .nav-toprow{ display:flex; align-items:center; gap:16px; }
+    .navdesign-toggle{
+      display:inline-flex; margin-left:auto;
+      border:1px solid var(--surface-300,#d4d4d4); border-radius:8px; overflow:hidden;
+    }
+    .ndt-btn{
+      padding:7px 14px; background:#fff; border:none; cursor:pointer;
+      font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600;
+      color:var(--surface-600,#616161); display:inline-flex; align-items:center; gap:6px;
+    }
+    .ndt-btn + .ndt-btn{ border-left:1px solid var(--surface-300,#d4d4d4); }
+    .ndt-btn:hover{ background:var(--surface-100,#f5f5f5); }
+    .ndt-btn.is-active{ background:var(--primary-500,#326fd1); color:#fff; }
+
+    /* =========================================================
+       DESIGN A — nested sidebar (existing component). Content shows
+       the clicked item's name, centered + small + gray.
+       ========================================================= */
+    .nav-demo-stage{
+      display:flex; align-items:center; justify-content:center;
+      min-height:calc(100vh - 200px); padding:24px;
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
+      color:var(--surface-500,#737373);
+    }
+
+    /* =========================================================
+       DESIGN B — ribbon-tab navigation (self-contained)
+       Side nav lists categories; clicking one opens its items as
+       tabs inside the page.
+       ========================================================= */
+    .navb-aside{
+      position:fixed; top:56px; left:0; bottom:0;
+      width:var(--lnav-width-open,256px);
+      background:var(--surface-50,#fafafa);
+      border-right:1px solid var(--surface-200,#e5e5e5);
+      z-index:90; overflow-y:auto; display:none;
+    }
+    .navb-scroll{ padding:8px 0; }
+    .navb-section{
+      padding:14px 16px 6px; font-size:10.5px; font-weight:700;
+      letter-spacing:.06em; text-transform:uppercase; color:var(--surface-500,#737373);
+    }
+    .navb-link{
+      display:flex; align-items:center; gap:10px; width:100%;
+      padding:10px 16px; background:none; border:none; cursor:pointer;
+      font-family:'Inter',sans-serif; font-size:14px; font-weight:500;
+      color:var(--surface-700,#4f4f4f); text-align:left;
+    }
+    .navb-link > .pi:first-child{ font-size:15px; color:var(--surface-500,#737373); width:18px; text-align:center; }
+    .navb-link span{ flex:1; }
+    .navb-link:hover{ background:var(--surface-100,#f5f5f5); }
+    .navb-link.is-active{ background:var(--surface-200,#e5e5e5); color:var(--surface-900,#2b2b2b); font-weight:600; }
+    .navb-link.is-active > .pi:first-child{ color:var(--primary-600,#2859a7); }
+    .navb-cat-arrow{ margin-left:auto; font-size:11px; color:var(--surface-400,#bdbdbd); }
+
+    /* Ribbon + tabs in the page */
+    .navb-ribbon{
+      margin-bottom:18px; border-bottom:1px solid var(--surface-200,#e5e5e5);
+    }
+    .navb-tabs{ display:flex; gap:4px; padding:0; overflow-x:auto; }
+    .navb-tab{
+      display:flex; flex-direction:row; align-items:center; gap:8px;
+      padding:10px 14px; background:none; border:none;
+      border-bottom:3px solid transparent; border-radius:6px 6px 0 0; cursor:pointer;
+      font-family:'Inter',sans-serif; color:var(--surface-700,#4f4f4f); white-space:nowrap;
+    }
+    .navb-tab .pi{ font-size:17px; color:var(--primary-600,#2859a7); }
+    .navb-tab span{ font-size:12.5px; font-weight:600; line-height:1.2; }
+    .navb-tab:hover{ background:var(--surface-100,#f5f5f5); }
+    .navb-tab.is-active{ border-bottom-color:var(--primary-500,#326fd1); background:var(--primary-50,#eef3fb); }
+    .navb-tab.is-active span{ color:var(--primary-700,#1e437d); }
+    .navb-tabpage{ min-height:calc(100vh - 320px); }
+    .navb-pagename{
+      display:flex; align-items:center; justify-content:center;
+      min-height:calc(100vh - 340px);
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
+      color:var(--surface-500,#737373);
+    }
+
+    /* =========================================================
+       Design visibility, driven by body[data-design]
+       ========================================================= */
+    body[data-design="a"] #designB,
+    body[data-design="b"] #designA{ display:none; }
+    body[data-design="b"] #leftNav{ display:none; }
+    body[data-design="b"] .navb-aside{ display:block; }
+    body[data-design="b"] .proj-content{ margin-left:var(--lnav-width-open,256px) !important; }
+  </style>
+</head>
+<body data-design="a">
+
+  <!-- Top navigation (shared component) -->
+  <div id="top-nav-mount"></div>
+  <script src="components/top-nav.js"></script>
+  <script>renderTopNav({ activeItem: 'projects' });</script>
+
+  <!-- Design A side navigation (shared nested component) -->
+  <div id="left-nav-mount"></div>
+
+  <!-- Design B side navigation (ribbon-tab, self-contained) -->
+  <aside class="navb-aside" id="leftNavB" aria-label="Ribbon-tab navigation">
+    <div class="navb-scroll"><nav class="navb-nav" id="navbNav"></nav></div>
+  </aside>
+
+  <div class="proj-content">
+    <div class="page-top-row nav-toprow">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="home.html">Home</a><span class="bc-sep">/</span>
+        <span>Navigation</span>
+      </nav>
+      <div class="navdesign-toggle" role="group" aria-label="Navigation design">
+        <button class="ndt-btn is-active" data-design="a" onclick="switchDesign('a')"><i class="pi pi-list"></i> Nested sidebar</button>
+        <button class="ndt-btn" data-design="b" onclick="switchDesign('b')"><i class="pi pi-table"></i> Ribbon tabs</button>
+      </div>
+    </div>
+
+    <!-- DESIGN A content: clicked menu name -->
+    <div id="designA">
+      <div class="nav-demo-stage" id="navStage"></div>
+    </div>
+
+    <!-- DESIGN B content: category items as tabs -->
+    <div id="designB">
+      <div class="navb-ribbon" id="navbRibbon">
+        <div class="navb-tabs" id="navbTabs"></div>
+      </div>
+      <div class="navb-tabpage" id="navbTabPage">Select a category from the side navigation</div>
+    </div>
+  </div>
+
+  <script src="components/left-nav.js"></script>
+  <script src="components/script.js"></script>
+  <script>
+    /* =====================================================================
+       DESIGN A — nested sidebar (shared component)
+       ===================================================================== */
+    renderLeftNav({ activeLink: 'project-home' });
+
+    function showNavPage(name){
+      var stage = document.getElementById('navStage');
+      if(stage) stage.textContent = name + ' page';
+    }
+    // Intercept leaf/sub clicks → show "'<name>' page" (only while Design A active)
+    document.addEventListener('click', function(e){
+      if(document.body.dataset.design !== 'a') return;
+      var link = e.target.closest('a.lnav-link, a.lnav-sublink');
+      if(!link) return;
+      e.preventDefault();
+      var labelEl = link.querySelector('.lnav-label');
+      showNavPage((labelEl ? labelEl.textContent : link.textContent).trim());
+    });
+    showNavPage('Project Home');
+
+    /* =====================================================================
+       DESIGN B — ribbon-tab navigation. Clicking a category opens its
+       items as tabs inside the page. (Data Entry items from the ribbon.)
+       ===================================================================== */
+    var NAV_B = [
+      { type:'link', key:'home', icon:'pi-home', label:'Project Home' },
+      { type:'section', label:'Cost' },
+      { type:'cat', key:'data-entry', icon:'pi-pencil', label:'Data Entry', tabs:[
+        ['Control Accounts','pi-sitemap'], ['Staffing Plans','pi-users'], ['Employee Plans','pi-id-card'],
+        ['Budget Details','pi-file'], ['Commitments','pi-check-square'], ['Period Actuals','pi-calendar'],
+        ['Variance Analysis','pi-chart-bar'], ['Definitions','pi-th-large'], ['Settings','pi-cog'] ]},
+      { type:'cat', key:'calculations', icon:'pi-calculator', label:'Calculations', tabs:[
+        ['Calculate Totals','pi-calculator'], ['Spread Time Phased Data','pi-arrows-h'],
+        ['Close Period','pi-calendar-times'], ['Other Calculations','pi-percentage'] ]},
+      { type:'cat', key:'reports', icon:'pi-chart-bar', label:'Reports', tabs:[
+        ['Reports','pi-chart-bar'], ['Lists','pi-list'], ['Summary','pi-table'],
+        ['Excel Reports','pi-file-excel'], ['Report Writer','pi-pencil'] ]},
+      { type:'cat', key:'import-utilities', icon:'pi-sync', label:'Import / Export & Utilities', tabs:[
+        ['Import / Export','pi-upload'], ['Special Import / Export','pi-download'],
+        ['Copy Dates to Accounts','pi-copy'], ['Validate Data','pi-check-circle'], ['Other Utilities','pi-wrench'] ]},
+      { type:'link', key:'ai', icon:'pi-chart-line', label:'AI Forecasting' },
+    ];
+    var CAT_B = {};
+    NAV_B.forEach(function(n){ if(n.type === 'cat') CAT_B[n.key] = n; });
+
+    function renderNavB(){
+      var nav = document.getElementById('navbNav');
+      nav.innerHTML = NAV_B.map(function(n){
+        if(n.type === 'section') return '<div class="navb-section">' + n.label + '</div>';
+        if(n.type === 'link')
+          return '<button class="navb-link" data-kind="link" data-label="' + n.label + '">' +
+                 '<i class="pi ' + n.icon + '"></i><span>' + n.label + '</span></button>';
+        return '<button class="navb-link" data-kind="cat" data-key="' + n.key + '">' +
+               '<i class="pi ' + n.icon + '"></i><span>' + n.label + '</span>' +
+               '<i class="pi pi-angle-right navb-cat-arrow"></i></button>';
+      }).join('');
+    }
+
+    function setActiveNavB(btn){
+      document.querySelectorAll('#leftNavB .navb-link').forEach(function(b){ b.classList.remove('is-active'); });
+      if(btn) btn.classList.add('is-active');
+    }
+
+    function openCategory(key){
+      var cat = CAT_B[key];
+      if(!cat) return;
+      document.getElementById('navbRibbon').style.display = '';
+      document.getElementById('navbTabs').innerHTML = cat.tabs.map(function(t, i){
+        return '<button class="navb-tab' + (i === 0 ? ' is-active' : '') + '" data-label="' + t[0] + '">' +
+               '<i class="pi ' + t[1] + '"></i><span>' + t[0] + '</span></button>';
+      }).join('');
+      showTabPage(cat.tabs[0][0]);
+    }
+
+    // Control Accounts data (from the attached register)
+    function pageName(name){ return '<div class="navb-pagename">' + name + ' page</div>'; }
+
+    function showTabPage(name){
+      document.getElementById('navbTabPage').innerHTML = pageName(name);
+    }
+
+    function showLeafB(name){
+      document.getElementById('navbRibbon').style.display = 'none';
+      document.getElementById('navbTabPage').innerHTML = pageName(name);
+    }
+
+    renderNavB();
+
+    // Side-nav clicks (Design B)
+    document.getElementById('leftNavB').addEventListener('click', function(e){
+      var btn = e.target.closest('.navb-link');
+      if(!btn) return;
+      setActiveNavB(btn);
+      if(btn.dataset.kind === 'cat') openCategory(btn.dataset.key);
+      else showLeafB(btn.dataset.label);
+    });
+
+    // Tab clicks (Design B) — switch the tab inside the open page
+    document.getElementById('navbTabs').addEventListener('click', function(e){
+      var tab = e.target.closest('.navb-tab');
+      if(!tab) return;
+      this.querySelectorAll('.navb-tab').forEach(function(x){ x.classList.remove('is-active'); });
+      tab.classList.add('is-active');
+      showTabPage(tab.dataset.label);
+    });
+
+    /* =====================================================================
+       Design switcher
+       ===================================================================== */
+    function switchDesign(d){
+      document.body.dataset.design = d;
+      document.querySelectorAll('.ndt-btn').forEach(function(b){
+        b.classList.toggle('is-active', b.dataset.design === d);
+      });
+      if(d === 'b'){
+        document.body.classList.remove('lnav-collapsed');   // keep full-width sidebar slot
+        if(!document.querySelector('#leftNavB .navb-link.is-active')){
+          var de = document.querySelector('#leftNavB .navb-link[data-key="data-entry"]');
+          setActiveNavB(de);
+          openCategory('data-entry');                        // default: show Data Entry tabs
+        }
+      }
+    }
+  </script>
+</body>
+</html>
