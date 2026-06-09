@@ -3911,7 +3911,6 @@ body.ai-panel-open .proj-content {
     #leftNavB{ display:none; }
     body[data-design="b"] #leftNav{ display:none; }
     body[data-design="b"] #leftNavB{ display:block; }
-    body[data-design="b"] .proj-content{ margin-left:var(--lnav-width-open,256px) !important; }
   </style>
 </head>
 <body data-design="a">
@@ -4116,6 +4115,19 @@ body.ai-panel-open .proj-content {
   <!-- Design B side navigation (ribbon-tab, self-contained) -->
   <aside class="lnav" id="leftNavB" aria-label="Project navigation" data-context="project">
     <div class="lnav-scroll"><nav class="lnav-menu" id="navbNav"></nav></div>
+    <button class="lnav-toggle" id="lnavToggleB" onclick="toggleLeftNavB()" aria-label="Toggle navigation" title="Collapse sidebar">
+      <svg width="16" height="24" viewBox="0 0 16 24" fill="none" class="lnav-toggle-icon lnav-toggle-close">
+        <circle cx="5"  cy="8"  r="1.5" fill="#9e9e9e"/>
+        <circle cx="5"  cy="12" r="1.5" fill="#9e9e9e"/>
+        <circle cx="5"  cy="16" r="1.5" fill="#9e9e9e"/>
+        <circle cx="11" cy="8"  r="1.5" fill="#9e9e9e"/>
+        <circle cx="11" cy="12" r="1.5" fill="#9e9e9e"/>
+        <circle cx="11" cy="16" r="1.5" fill="#9e9e9e"/>
+      </svg>
+      <svg width="16" height="24" viewBox="0 0 16 24" fill="none" class="lnav-toggle-icon lnav-toggle-open" style="display:none">
+        <path d="M6 8 L10 12 L6 16" stroke="#9e9e9e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
   </aside>
 
   <div class="proj-content">
@@ -4162,6 +4174,8 @@ body.ai-panel-open .proj-content {
  */
 (function () {
   var COST_SVG = '<svg width="16" height="13" viewBox="0 0 16 13" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14.4004 0C14.8238 0.00250176 15.2289 0.17225 15.5283 0.47168C15.8278 0.771114 15.9975 1.17617 16 1.59961V10.7432C15.9975 11.1667 15.8278 11.5726 15.5283 11.8721C15.2289 12.1713 14.8237 12.3403 14.4004 12.3428H1.59961C1.17634 12.3403 0.771086 12.1713 0.47168 11.8721C0.172199 11.5726 0.00246534 11.1667 0 10.7432V1.59961C0.00251672 1.17617 0.172246 0.771114 0.47168 0.47168C0.771124 0.17225 1.17616 0.00250178 1.59961 0H14.4004ZM4.57129 1.37109C4.58068 1.49579 4.58067 1.6214 4.57129 1.74609C4.57471 2.11723 4.50329 2.4856 4.36035 2.82812C4.21734 3.17072 4.0056 3.48064 3.73926 3.73926C3.5937 3.88247 3.43431 4.01088 3.26367 4.12305L3.11816 4.20605C2.99045 4.2799 2.85543 4.34098 2.71582 4.38867L2.51465 4.45215C2.39524 4.49187 2.27249 4.5228 2.14844 4.54395H1.37109V7.82617H1.82812C1.92237 7.81676 2.01806 7.81676 2.1123 7.82617C2.27619 7.84649 2.43824 7.88017 2.59668 7.92676L2.7793 8C2.89173 8.04233 3.00164 8.0914 3.1084 8.14648L3.26367 8.24707C3.42666 8.34765 3.57732 8.46725 3.71191 8.60352C3.97821 8.86209 4.18902 9.17213 4.33203 9.51465C4.47504 9.85725 4.54737 10.2254 4.54395 10.5967C4.55334 10.7214 4.55334 10.8469 4.54395 10.9717L11.4834 10.9531C11.474 10.8284 11.474 10.7029 11.4834 10.5781C11.48 10.207 11.5523 9.83863 11.6953 9.49609C11.8383 9.15365 12.0492 8.84348 12.3154 8.58496C12.45 8.44874 12.6007 8.32908 12.7637 8.22852L12.9189 8.12793C13.0341 8.06564 13.1533 8.0111 13.2754 7.96387L13.458 7.89062C13.6164 7.84405 13.7786 7.81036 13.9424 7.79004C14.0366 7.78098 14.1323 7.78098 14.2266 7.79004H14.6836V4.53516H13.915C13.7884 4.51747 13.6635 4.48915 13.541 4.45215L13.3398 4.38867C13.2003 4.34101 13.0652 4.27986 12.9375 4.20605L12.791 4.12305C12.6183 4.01381 12.4586 3.88513 12.3154 3.73926C12.0491 3.48066 11.8383 3.17068 11.6953 2.82812C11.5523 2.48552 11.48 2.11733 11.4834 1.74609C11.474 1.6214 11.474 1.49579 11.4834 1.37109H4.57129ZM14.1074 9.22559H13.9883C13.8855 9.24761 13.7843 9.27764 13.6865 9.31641H13.5771C13.4466 9.37963 13.3286 9.46633 13.2295 9.57227C13.0939 9.70616 12.9859 9.86625 12.9121 10.042C12.8385 10.2176 12.8003 10.4062 12.7998 10.5967C12.8001 10.7236 12.8184 10.85 12.8545 10.9717H14.4004C14.4609 10.9716 14.5187 10.9471 14.5615 10.9043C14.6043 10.8615 14.6288 10.8037 14.6289 10.7432V9.22559H14.4365C14.3272 9.21191 14.2167 9.21191 14.1074 9.22559ZM1.56348 9.21582H1.37109V10.7432C1.37351 10.802 1.39896 10.8576 1.44141 10.8984C1.48392 10.9393 1.54068 10.9619 1.59961 10.9619H3.14551C3.18151 10.8405 3.19991 10.7145 3.2002 10.5879C3.19966 10.3973 3.16164 10.208 3.08789 10.0322C3.01416 9.85657 2.90606 9.69732 2.77051 9.56348C2.66905 9.46024 2.55151 9.37394 2.42285 9.30762H2.31348C2.21765 9.26349 2.11592 9.23234 2.01172 9.21582H1.89258C1.78332 9.20215 1.67273 9.20216 1.56348 9.21582ZM8 2.97168C8.84869 2.97168 9.66258 3.30906 10.2627 3.90918C10.8627 4.50928 11.2002 5.32328 11.2002 6.17188C11.2001 6.80454 11.0126 7.42315 10.6611 7.94922C10.3095 8.47546 9.80933 8.88573 9.22461 9.12793C8.63994 9.3701 7.99666 9.433 7.37598 9.30957C6.75533 9.18612 6.1848 8.88199 5.7373 8.43457C5.2898 7.98707 4.98482 7.41659 4.86133 6.7959C4.73787 6.17524 4.80182 5.53193 5.04395 4.94727C5.28615 4.36254 5.69642 3.86236 6.22266 3.51074C6.74882 3.15927 7.36724 2.97168 8 2.97168ZM8.7002 4.48242C8.36616 4.34406 7.99818 4.30745 7.64355 4.37793C7.28885 4.44849 6.96276 4.62318 6.70703 4.87891C6.4515 5.13452 6.27761 5.45998 6.20703 5.81445C6.13649 6.16911 6.17219 6.537 6.31055 6.87109C6.44894 7.20521 6.68368 7.49048 6.98438 7.69141C7.28508 7.89233 7.63835 8 8 8C8.48487 8 8.95007 7.80763 9.29297 7.46484C9.63579 7.12202 9.82801 6.65669 9.82812 6.17188C9.82812 5.81022 9.72143 5.45598 9.52051 5.15527C9.31968 4.85478 9.03406 4.62082 8.7002 4.48242ZM12.8545 1.38086C12.8184 1.50245 12.8 1.62903 12.7998 1.75586C12.8004 1.94631 12.8384 2.13493 12.9121 2.31055C12.9858 2.4862 13.094 2.64544 13.2295 2.7793C13.3285 2.88524 13.4466 2.97192 13.5771 3.03516H13.6865C13.7839 3.07518 13.8851 3.1062 13.9883 3.12695H14.1074C14.2167 3.14062 14.3273 3.14062 14.4365 3.12695H14.6289V1.59961C14.6264 1.54078 14.6011 1.48514 14.5586 1.44434C14.5161 1.40352 14.4593 1.38091 14.4004 1.38086H12.8545ZM1.59961 1.37109C1.53914 1.3712 1.48125 1.39572 1.43848 1.43848C1.39572 1.48124 1.37121 1.53915 1.37109 1.59961V3.11816H1.56348C1.67272 3.13182 1.78334 3.13183 1.89258 3.11816H2.02051C2.11885 3.10168 2.21426 3.07043 2.30371 3.02637H2.42285C2.55153 2.96004 2.66904 2.87376 2.77051 2.77051C2.90607 2.63668 3.01415 2.47739 3.08789 2.30176C3.16164 2.12601 3.19966 1.93669 3.2002 1.74609C3.19993 1.61924 3.18162 1.4927 3.14551 1.37109H1.59961Z" fill="currentColor"/></svg>';
+
+  window.COST_SVG = COST_SVG;   // expose so the ribbon view can reuse the same Cost icon
 
   var ITEMS = [
     { key: 'project-home', icon: 'pi-home',      label: 'Project Home',      href: 'project-home.html' },
@@ -4717,7 +4731,7 @@ function applyProjectContext() {
     // deep (its 4 categories). Clicking a category opens the ribbon tabs.
     var NAV_B = [
       { kind:'link',  icon:'pi-home',      label:'Project Home' },
-      { kind:'group', icon:'pi-wallet',    label:'Cost', expanded:true, children:[
+      { kind:'group', iconSvg:true,        label:'Cost', expanded:true, children:[
         { cat:'data-entry',       label:'Data Entry' },
         { cat:'calculations',     label:'Calculations' },
         { cat:'cost-reports',     label:'Reports' },
@@ -4748,9 +4762,12 @@ function applyProjectContext() {
     // Build the Design B sidebar with the shared .lnav component classes
     function renderNavB(){
       document.getElementById('navbNav').innerHTML = NAV_B.map(function(it){
+        var ic = it.iconSvg
+          ? '<span class="lnav-icon lnav-icon-svg" aria-hidden="true">' + (window.COST_SVG || '') + '</span>'
+          : '<i class="pi ' + it.icon + ' lnav-icon"></i>';
         if(it.kind === 'link'){
           return '<div class="lnav-item"><a class="lnav-link" href="#" data-leaf="' + it.label + '" onclick="return false">' +
-                 '<i class="pi ' + it.icon + ' lnav-icon"></i><span class="lnav-label">' + it.label + '</span></a></div>';
+                 ic + '<span class="lnav-label">' + it.label + '</span></a></div>';
         }
         var open = !!it.expanded;
         var subs = it.children.map(function(c){
@@ -4759,7 +4776,7 @@ function applyProjectContext() {
         }).join('');
         return '<div class="lnav-item lnav-has-children' + (open ? ' lnav-expanded' : '') + '">' +
           '<button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="' + (open ? 'true' : 'false') + '">' +
-            '<i class="pi ' + it.icon + ' lnav-icon"></i><span class="lnav-label">' + it.label + '</span>' +
+            ic + '<span class="lnav-label">' + it.label + '</span>' +
             '<i class="pi ' + (open ? 'pi-angle-up' : 'pi-angle-down') + ' lnav-chevron"></i></button>' +
           '<ul class="lnav-sub' + (open ? ' lnav-sub-open' : '') + '">' + subs + '</ul>' +
         '</div>';
@@ -4809,13 +4826,26 @@ function applyProjectContext() {
     /* =====================================================================
        Design switcher
        ===================================================================== */
+    // Collapse toggle for the ribbon sidebar (mirrors the component's toggleLeftNav)
+    function toggleLeftNavB(){
+      var collapsed = !document.body.classList.contains('lnav-collapsed');
+      syncLnavCollapsed(collapsed);
+    }
+    // Keep both sidebars + content margin in one collapse state
+    function syncLnavCollapsed(collapsed){
+      document.body.classList.toggle('lnav-collapsed', collapsed);
+      var a = document.getElementById('leftNav');  if(a) a.dataset.collapsed = collapsed ? 'true' : 'false';
+      var b = document.getElementById('leftNavB'); if(b) b.dataset.collapsed = collapsed ? 'true' : 'false';
+    }
+
     function switchDesign(d){
       document.body.dataset.design = d;
       document.querySelectorAll('.ndt-btn').forEach(function(b){
         b.classList.toggle('is-active', b.dataset.design === d);
       });
+      // keep the visible sidebar's collapse state in sync with the body
+      syncLnavCollapsed(document.body.classList.contains('lnav-collapsed'));
       if(d === 'b'){
-        document.body.classList.remove('lnav-collapsed');   // keep full-width sidebar slot
         if(!document.querySelector('#leftNavB .lnav-sublink.lnav-sublink-active')){
           var de = document.querySelector('#leftNavB .lnav-sublink[data-cat="data-entry"]');
           if(de){ setLnavActive(de); openCategory('data-entry'); }   // default: Data Entry tabs
