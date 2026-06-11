@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cisco Systems — AI-centric S-curve forecast — Contruent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <link rel="stylesheet" href="components/tokens.css" />
+  <link rel="stylesheet" href="components/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="scurve-forecast.css" />
+
+  <!-- ============================================================
+       AI-TRUST LAYER — styles for the trust-building panels added
+       on top of the base S-curve page. Built on Contruent tokens.
+       ============================================================ -->
+  <style>
+    :root{
+      --ait-primary:   var(--primary-500,#326fd1);
+      --ait-primary-d: var(--primary-700,#1e437d);
+      --ait-primary-50:var(--primary-50,#eef3fb);
+      --ait-good:#16a34a; --ait-good-bg:#ecfdf3;
+      --ait-warn:#d97706; --ait-bad:#dc2626;
+      --ait-border:var(--surface-200,#e5e5e5);
+      --ait-muted:var(--surface-500,#737373);
+      --ait-text:var(--surface-900,#2b2b2b);
+    }
+    .ait-strip,.ait-panel{font-family:'Inter',system-ui,sans-serif}
+
+    /* ---- Provenance strip (top of forecast body) ---- */
+    .ait-strip{
+      display:flex; align-items:stretch; gap:0;
+      border:1px solid var(--ait-border); border-radius:12px;
+      background:linear-gradient(180deg,#fff,#fbfdff);
+      overflow:hidden; margin-bottom:14px;
+    }
+    .ait-strip-lead{
+      flex:1.4; min-width:230px; padding:13px 16px;
+      background:linear-gradient(135deg,var(--ait-primary-d),var(--ait-primary));
+      color:#fff; display:flex; flex-direction:column; justify-content:center; gap:4px;
+    }
+    .ait-strip-lead .k{font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; opacity:.9; display:flex; align-items:center; gap:6px}
+    .ait-strip-lead .t{font-size:13.5px; font-weight:700; line-height:1.35}
+    .ait-strip-lead .s{font-size:11.5px; opacity:.92; line-height:1.4}
+    .ait-strip-stats{flex:3; display:flex; flex-wrap:wrap}
+    .ait-stat{flex:1; min-width:130px; padding:12px 16px; border-left:1px solid var(--ait-border)}
+    .ait-stat .v{font-size:20px; font-weight:800; color:var(--ait-text); letter-spacing:-.01em; display:flex; align-items:baseline; gap:5px}
+    .ait-stat .v small{font-size:11px; font-weight:700; color:var(--ait-primary)}
+    .ait-stat .l{font-size:10.5px; color:var(--ait-muted); font-weight:600; margin-top:3px; line-height:1.35}
+
+    /* ---- Trust panel (accordion-style section) ---- */
+    .ait-panel{border:1px solid var(--ait-border); border-radius:12px; background:#fff; margin:14px 0; overflow:hidden}
+    .ait-panel-head{
+      display:flex; align-items:center; gap:10px; width:100%;
+      padding:13px 16px; background:var(--ait-primary-50); border:none; cursor:pointer;
+      font-family:inherit; text-align:left;
+    }
+    .ait-panel-head .pi-chevron-down{transition:transform .18s ease; color:var(--ait-primary-d)}
+    .ait-panel.is-collapsed .ait-panel-head .pi-chevron-down{transform:rotate(-90deg)}
+    .ait-panel-head .ic{width:30px;height:30px;border-radius:8px;background:#fff;color:var(--ait-primary-d);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:1px solid var(--ait-border)}
+    .ait-panel-title{font-size:14px; font-weight:800; color:var(--ait-text); flex:1}
+    .ait-panel-title small{display:block; font-size:11px; font-weight:500; color:var(--ait-muted); margin-top:1px}
+    .ait-verified{font-size:10.5px; font-weight:700; color:var(--ait-good); background:var(--ait-good-bg); border:1px solid #bbf7d0; border-radius:999px; padding:3px 9px; display:inline-flex; align-items:center; gap:5px}
+    .ait-panel-body{padding:16px}
+    .ait-panel.is-collapsed .ait-panel-body{display:none}
+
+    .ait-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+    .ait-card{border:1px solid var(--ait-border); border-radius:10px; padding:13px 14px; background:#fff}
+    .ait-card .ch{font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ait-muted); display:flex; align-items:center; gap:6px; margin-bottom:8px}
+    .ait-bignum{font-size:26px; font-weight:800; letter-spacing:-.01em; color:var(--ait-text); line-height:1}
+    .ait-bignum.good{color:var(--ait-good)}
+    .ait-sub{font-size:11.5px; color:var(--ait-muted); margin-top:6px; line-height:1.45}
+
+    /* accuracy sparkbars */
+    .ait-spark{display:flex; align-items:flex-end; gap:6px; height:54px; margin-top:10px}
+    .ait-spark .b{flex:1; background:var(--ait-primary-50); border:1px solid #cfe0f6; border-bottom:none; border-radius:4px 4px 0 0; position:relative; display:flex; justify-content:center}
+    .ait-spark .b .cap{position:absolute; top:-15px; font-size:9.5px; font-weight:700; color:var(--ait-primary-d)}
+    .ait-spark .b.last{background:var(--ait-good-bg); border-color:#bbf7d0}
+    .ait-spark .b.last .cap{color:var(--ait-good)}
+    .ait-axis{display:flex; gap:6px; margin-top:5px}
+    .ait-axis span{flex:1; text-align:center; font-size:9.5px; color:var(--ait-muted)}
+
+    /* calibration bar */
+    .ait-cal{height:12px; border-radius:999px; background:#eef0f3; position:relative; overflow:hidden; margin-top:10px}
+    .ait-cal .fill{position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,var(--ait-primary),var(--ait-good)); border-radius:999px}
+    .ait-cal-target{position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ait-text)}
+
+    /* method comparison rows */
+    .ait-methods{display:flex; flex-direction:column; gap:8px}
+    .ait-method{display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid var(--ait-border); border-radius:8px}
+    .ait-method.is-ai{border-color:var(--ait-primary); background:var(--ait-primary-50)}
+    .ait-method .nm{font-size:12px; font-weight:600; flex:1}
+    .ait-method .nm small{display:block; color:var(--ait-muted); font-weight:500; font-size:10.5px}
+    .ait-method .val{font-size:13.5px; font-weight:800; color:var(--ait-text); white-space:nowrap}
+    .ait-method .tag{font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--ait-primary-d); background:#fff; border:1px solid var(--ait-primary); border-radius:999px; padding:2px 7px}
+
+    /* learnings list */
+    .ait-learn{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px}
+    .ait-learn li{display:flex; gap:9px; font-size:12px; line-height:1.45; color:var(--ait-text)}
+    .ait-learn li .pi{color:var(--ait-primary); font-size:13px; margin-top:1px}
+    .ait-learn li b{color:var(--ait-primary-d)}
+
+    .ait-foot{font-size:11px; color:var(--ait-muted); margin-top:14px; display:flex; align-items:center; gap:7px; border-top:1px dashed var(--ait-border); padding-top:11px}
+
+    /* ============================================================
+       AI SCAN — only the confidence donut is custom (the component
+       library has no pie/donut); everything else uses library
+       components: dialog, progress-bar, badge, status-indicator.
+       ============================================================ */
+    .aiscan-grid{display:flex; gap:22px; align-items:center; flex-wrap:wrap}
+    .aiscan-grid .col-scan{flex:1; min-width:240px}
+    .aiscan-donut{position:relative; width:170px; height:170px; flex-shrink:0; margin:0 auto}
+    .aiscan-donut svg{width:170px; height:170px; transform:rotate(-90deg)}
+    .aiscan-donut .track{fill:none; stroke:#eef0f3; stroke-width:13}
+    .aiscan-donut .arc{fill:none; stroke:url(#aitGrad); stroke-width:13; stroke-linecap:round; transition:stroke-dashoffset .25s ease}
+    .aiscan-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center}
+    .aiscan-pct{font-size:32px; font-weight:800; color:var(--ait-text); line-height:1; letter-spacing:-.02em}
+    .aiscan-pctlbl{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ait-muted); margin-top:4px}
+    .aiscan-counts{display:flex; gap:8px; align-items:center; margin-bottom:10px}
+    /* thin line progress bar (library .progress-bar, slimmed, no inner label) */
+    .aiscan-thin{height:5px; border-radius:999px; overflow:hidden}
+    .aiscan-thin .progress-bar-value{height:100%; border-radius:999px; transition:width .25s ease}
+    /* minimal control-account table */
+    .aiscan-list{height:132px; overflow:auto; margin-top:12px; border:1px solid var(--ait-border); border-radius:8px}
+    .aiscan-table{width:100%; border-collapse:collapse; font-size:12px}
+    .aiscan-table thead th{position:sticky; top:0; background:#fff; text-align:left; font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ait-muted); padding:6px 10px; border-bottom:1px solid var(--ait-border)}
+    .aiscan-table td{padding:5px 10px; border-bottom:1px solid #f1f3f6; color:var(--ait-text)}
+    .aiscan-table tbody tr:last-child td{border-bottom:none}
+    .aiscan-table td.code{font-weight:700; color:var(--ait-primary-d); white-space:nowrap}
+    .aiscan-table .r{text-align:right; font-weight:800; color:var(--ait-primary-d)}
+    .aiscan-table tbody tr{animation:aitSlide .28s ease}
+    @keyframes aitSlide{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+  </style>
+</head>
+<body>
+
+  <div id="top-nav-mount"></div>
+  <script src="components/top-nav.js"></script>
+  <script>
+    var _isAdminContext = new URLSearchParams(window.location.search).get('context') === 'admin';
+    renderTopNav({ activeItem: _isAdminContext ? 'admin' : 'projects' });
+  </script>
+  <div id="left-nav-mount"></div>
+
+  <div class="proj-content">
+
+    <!-- Breadcrumb -->
+    <div class="page-top-row">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="home.html">Home</a><span class="bc-sep">/</span>
+        <a href="projects.html">Projects</a><span class="bc-sep">/</span>
+        <span data-proj="name">Cisco Systems</span><span class="bc-sep">/</span>
+      </nav>
+    </div>
+
+    <!-- Page title block -->
+    <div class="sc-page-title-block">
+      <h1 class="page-title" style="margin-bottom:2px">AI-centric S-curve forecast</h1>
+      <div class="sc-page-subtitle"><span style="color:var(--primary-700,#1e437d);font-weight:600">Learned from 1,240 completed control accounts</span></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="sc-toolbar">
+      <div class="sc-toolbar-left">
+        <div class="sc-acct-selector-wrap" id="acctSelectorWrap">
+          <button class="sc-acct-selector" onclick="toggleAcctDropdown()" aria-expanded="false" id="acctSelectorBtn">
+            CA-1042 · Civil Foundations — P2 <i class="pi pi-chevron-down sc-acct-chevron"></i>
+          </button>
+          <div class="sc-acct-dropdown" id="acctDropdown" style="display:none">
+            <div class="sc-acct-search-wrap">
+              <i class="pi pi-search sc-acct-search-icon"></i>
+              <input class="sc-acct-search" id="acctSearch" type="text"
+                placeholder="Search accounts…"
+                oninput="filterAcctDropdown(this.value)"
+                autocomplete="off" />
+            </div>
+            <div class="sc-acct-drop-item sc-acct-drop-item--active" data-id="ca-1042" onclick="selectAccount('ca-1042')">CA-1042 · Civil Foundations — P2</div>
+            <div class="sc-acct-drop-item" data-id="ca-1043" onclick="selectAccount('ca-1043')">CA-1043 · Structural Steel — P1</div>
+            <div class="sc-acct-drop-item" data-id="ca-1044" onclick="selectAccount('ca-1044')">CA-1044 · MEP Systems</div>
+            <div class="sc-acct-drop-item" data-id="ca-1045" onclick="selectAccount('ca-1045')">CA-1045 · Site Preparation</div>
+            <div class="sc-acct-drop-no-results" id="acctDropNoResults" style="display:none">No accounts found</div>
+          </div>
+        </div>
+        <!-- <button class="sc-toolbar-icon-btn" title="Filter settings" aria-label="Filter settings">
+          <i class="pi pi-sliders-h"></i>
+        </button> -->
+      </div>
+      <div class="sc-toolbar-right">
+        <button class="btn btn-primary sc-run-btn" onclick="runAiForecast()">
+          <i class="pi pi-play btn-icon-left"></i> Run forecast
+        </button>
+        <button class="sc-toolbar-icon-btn sc-forecast-settings-btn" onclick="openSettingsModal()" title="AI forecast settings" aria-label="AI forecast settings">
+          <i class="pi pi-cog"></i>
+        </button>
+        <div class="sc-kebab-wrap" id="kebabWrap">
+          <button class="sc-toolbar-icon-btn" id="kebabBtn" onclick="toggleKebabMenu()" aria-expanded="false" title="More options" aria-label="More options">
+            <i class="pi pi-ellipsis-v"></i>
+          </button>
+          <div class="sc-kebab-dropdown" id="kebabDropdown" style="display:none">
+            <button class="sc-kebab-item" type="button" onclick="openExportModal()">
+              <i class="pi pi-file-pdf"></i> Export to PDF
+            </button>
+            <div class="sc-kebab-divider"></div>
+            <button class="sc-kebab-item" type="button" onclick="openSwitchUserModal()">
+              <i class="pi pi-users"></i> Switch user
+            </button>
+            <div class="sc-kebab-divider"></div>
+            <div class="sc-kebab-section-label">View (A/B test)</div>
+            <button class="sc-kebab-item sc-kebab-item--radio" type="button" data-view-choice="accordion" onclick="setSectionsView('accordion')" aria-checked="true">
+              <i class="pi pi-list"></i> Accordion view
+              <i class="pi pi-check sc-kebab-check"></i>
+            </button>
+            <button class="sc-kebab-item sc-kebab-item--radio" type="button" data-view-choice="tabs" onclick="setSectionsView('tabs')" aria-checked="false">
+              <i class="pi pi-window-maximize"></i> Tab view
+              <i class="pi pi-check sc-kebab-check"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sections wrapper — supports accordion view (default) and tab view -->
+    <div class="sc-sections" id="scSections" data-view="accordion">
+
+    <!-- Tab bar (only shown in tab view) -->
+    <div class="sc-tabs-bar" id="scTabsBar" role="tablist">
+      <button class="sc-tab-btn is-active" type="button" role="tab" data-tab="acc-forecast" onclick="setActiveTab('acc-forecast')">Cumulative spend forecast</button>
+      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-appendix" onclick="setActiveTab('acc-appendix')">Forecast appendix</button>
+      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-warnings" onclick="setActiveTab('acc-warnings')">Warnings <span class="sc-tab-badge" id="scWarningsBadge">3</span></button>
+    </div>
+
+    <!-- ACCORDION 1: Forecast curves (open) -->
+    <div class="sc-acc-section is-active-tab" id="acc-forecast" data-tab-id="acc-forecast">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-forecast')" aria-expanded="true">
+        <i class="pi pi-chevron-down sc-acc-chevron"></i>
+        <span class="sc-acc-title">Cumulative spend forecast</span>
+      </button>
+      <div class="sc-acc-body" id="acc-forecast-body">
+
+        <!-- AI Banner -->
+        <div class="sc-ai-banner" id="scAiBanner">
+          <div class="sc-ai-banner-row">
+            <span class="sc-ai-active-tag">AI forecast active</span>
+            <span class="sc-ai-driven-label">Driven by: <i class="pi pi-info-circle sc-ai-driven-info" title="Percentages derived from points allocated in AI forecast settings — always sums to 100%"></i></span>
+            <div class="sc-ai-driver-pills" id="scAiDriverPills">
+              <span class="sc-driver-pill">Classification groups: 22%</span>
+              <span class="sc-driver-pill">Numerical features: 32%</span>
+              <span class="sc-driver-pill">SPI / CPI integration (earned value): 9%</span>
+              <span class="sc-driver-pill">Curve shape statistics: 37%</span>
+            </div>
+            <button type="button" class="sc-ai-detail-toggle" id="scAiDetailToggle" onclick="toggleAiDriverDetail()" aria-expanded="false" aria-controls="scAiBannerDetail">
+              <i class="pi pi-chevron-down"></i> Show detailed view
+            </button>
+            <div class="sc-ai-banner-right">
+              <span class="sc-high-confidence-pill">High confidence: 87%</span>
+              <span class="sc-similar-accts">Form 24 CA</span> <i class="pi pi-info-circle sc-chart-info-icon" title="Cumulative cost S-curve with periodic bar chart"></i>
+            </div>
+          </div>
+          <div class="sc-ai-banner-detail" id="scAiBannerDetail" style="display:none"></div>
+        </div>
+
+        <!-- KPI matrix (2 rows × 5 metric tiles) -->
+        <div class="sc-metric-row">
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Approved budget</div>
+            <div class="sc-metric-value">$31.76</div>
+            <div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$9.11</span>&nbsp;<span class="sc-delta-pct">(40.20%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Actual to date</div>
+            <div class="sc-metric-value">$6.47</div>
+            <div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$230.45m</span>&nbsp;<span class="sc-delta-pct">(3.69%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Total committed</div>
+            <div class="sc-metric-value">$7.56</div>
+            <div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-down"></i></span><span class="sc-delta-amt">$7.35</span>&nbsp;<span class="sc-delta-pct">(-49.31%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Estimate at completion</div>
+            <div class="sc-metric-value">$47.14</div>
+            <div class="sc-metric-delta sc-metric-delta--bad"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$33.42</span>&nbsp;<span class="sc-delta-pct">(243.70%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Planned completion date</div>
+            <div class="sc-metric-value">6 Sept 2033</div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Budget to date</div>
+            <div class="sc-metric-value">$11.26</div>
+            <div class="sc-metric-delta"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$1.15</span>&nbsp;<span class="sc-delta-pct">(11.32%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Earned to date</div>
+            <div class="sc-metric-value">$11.57</div>
+            <div class="sc-metric-delta sc-metric-delta--good"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$11.53</span>&nbsp;<span class="sc-delta-pct">(25.26k%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label sc-metric-label--info">Estimate to complete <i class="pi pi-info-circle" title="Estimate to complete (ETC)"></i></div>
+            <div class="sc-metric-value">$40.55</div>
+            <div class="sc-metric-delta sc-metric-delta--bad"><span class="sc-delta-chip"><i class="pi pi-arrow-up"></i></span><span class="sc-delta-amt">$33.20</span>&nbsp;<span class="sc-delta-pct">(451.63%)</span></div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Previous estimate at completion</div>
+            <div class="sc-metric-value">$13.71</div>
+          </div>
+          <div class="sc-metric-card">
+            <div class="sc-metric-label">Forecast completion date</div>
+            <div class="sc-metric-value">5 May 2032</div>
+          </div>
+        </div>
+
+        <!-- Chart controls row -->
+        <div class="sc-chart-controls">
+          <div class="sc-chart-controls-left">
+            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('budget')" data-line="budget" aria-pressed="true">
+              <span class="sc-line-dot sc-line-dot--budget"></span> Budget
+            </button>
+            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('earned')" data-line="earned" aria-pressed="true">
+              <span class="sc-line-dot sc-line-dot--earned"></span> Earned
+            </button>
+            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('actual')" data-line="actual" aria-pressed="true">
+              <span class="sc-line-dot sc-line-dot--actual"></span> Actual / ETC
+            </button>
+            <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('incurred')" data-line="incurred" aria-pressed="true">
+              <span class="sc-line-dot sc-line-dot--incurred"></span> Incurred / ETC
+            </button>
+            <div class="sc-line-more-wrap" id="lineMoreWrap">
+              <button class="sc-line-toggle sc-line-more-btn" type="button" id="lineMoreBtn" onclick="toggleLineMoreMenu()" aria-expanded="false" aria-haspopup="true">
+                More <i class="pi pi-chevron-down"></i>
+                <span class="sc-line-more-active-dot" aria-hidden="true"></span>
+              </button>
+              <div class="sc-line-more-dropdown" id="lineMoreDropdown" style="display:none">
+                <button class="sc-line-toggle sc-line-toggle--off" type="button" onclick="toggleForecastLine('control')" data-line="control" aria-pressed="false">
+                  <span class="sc-line-dot sc-line-dot--control"></span> Control budget
+                </button>
+                <button class="sc-line-toggle sc-line-toggle--off" type="button" onclick="toggleForecastLine('finance')" data-line="finance" aria-pressed="false">
+                  <span class="sc-line-dot sc-line-dot--finance"></span> Finance budget
+                </button>
+                <button class="sc-line-toggle sc-line-toggle--off" type="button" onclick="toggleForecastLine('cashflow')" data-line="cashflow" aria-pressed="false">
+                  <span class="sc-line-dot sc-line-dot--cashflow"></span> Cashflow
+                </button>
+              </div>
+            </div>
+            <label class="sc-line-toggle sc-line-toggle--checkbox">
+              <input type="checkbox" id="cbConfidenceBand" checked onchange="toggleConfidenceBand(this.checked)" />
+              <span>Confidence band</span>
+            </label>
+          </div>
+          <div class="sc-chart-controls-right">
+            <div class="sc-metric-select">
+              <span class="sc-view-label">Data type</span>
+              <select id="scMetricSelect" onchange="setChartMetric(this.value)" aria-label="Chart metric">
+                <option value="cost">Cost</option>
+                <option value="hours">Hours</option>
+                <option value="company">Company</option>
+              </select>
+            </div>
+            <div class="sc-date-range" id="dateRangeWrap">
+              <button class="sc-date-btn sc-date-range-btn" id="dateRangeBtn" onclick="toggleDateRangePicker()" aria-expanded="false" aria-haspopup="true">
+                <i class="pi pi-calendar"></i>
+                <span id="dateRangeLabel">Dec 2024 – Nov 2026</span>
+                <i class="pi pi-chevron-down sc-date-range-caret"></i>
+              </button>
+              <div class="sc-date-range-pop" id="dateRangePop" style="display:none">
+                <div class="sc-drp-title">Period</div>
+                <div class="sc-drp-boxes">
+                  <span class="sc-drp-box" id="drpStartBox">Dec 2024</span>
+                  <span class="sc-drp-box" id="drpEndBox">Nov 2026</span>
+                </div>
+                <div class="sc-dual-slider">
+                  <div class="sc-dual-track"></div>
+                  <div class="sc-dual-fill" id="drpFill" style="left:0%;width:100%"></div>
+                  <input type="range" min="0" max="23" value="0"  id="drpStartR" oninput="dateRangeSliderInput('start')" aria-label="Range start month" />
+                  <input type="range" min="0" max="23" value="23" id="drpEndR"   oninput="dateRangeSliderInput('end')"   aria-label="Range end month" />
+                </div>
+                <div class="sc-drp-actions">
+                  <button type="button" class="sc-drp-reset" onclick="resetDateRange()">Reset</button>
+                </div>
+              </div>
+            </div>
+            <div class="sc-view-toggle">
+              <span class="sc-view-label">Cumulative</span>
+              <label class="sc-toggle-switch" aria-label="Toggle cumulative/periodic">
+                <input type="checkbox" id="togglePeriodic" onchange="toggleChartView(this.checked)" />
+                <span class="sc-toggle-track"></span>
+              </label>
+              <span class="sc-view-label">Periodic</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time scrubber -->
+        <div class="sc-time-scrubber">
+          <div class="sc-ts-left">
+            <i class="pi pi-history sc-ts-icon"></i>
+            <span class="sc-ts-sim-label">Simulate:</span>
+            <span class="sc-ts-month" id="scTsMonth">Jun 2025</span>
+            <span class="sc-ts-sim-badge" id="scTsSimBadge" style="display:none">Simulated</span>
+          </div>
+          <input type="range" class="sc-ts-slider" id="scTimeSlider"
+                 min="2" max="22" value="6"
+                 oninput="updateChartTime(+this.value); this.style.setProperty('--fill-pct', ((this.value-this.min)/(this.max-this.min)*100)+'%')"
+                 style="--fill-pct:20%" />
+          <button class="sc-ts-reset" onclick="resetToRealToday()" title="Reset to current date">
+            <i class="pi pi-refresh"></i> Today
+          </button>
+        </div>
+
+        <!-- Chart area -->
+        <div class="sc-chart-outer">
+          <div class="sc-chart-title-row">
+            <span class="sc-chart-title-label">S-curve <i class="pi pi-info-circle sc-chart-info-icon" title="Cumulative cost S-curve with periodic bar chart"></i></span>
+          </div>
+          <div class="sc-chart-wrap" style="height:320px">
+            <canvas id="scurve-chart"></canvas>
+            <div class="sc-chart-dragger" id="scChartDragger" style="display:none" aria-hidden="true">
+              <div class="sc-chart-dragger-line"></div>
+              <button type="button" class="sc-chart-dragger-handle" aria-label="Drag to simulate a different point in time" title="Drag to scrub time">
+                <i class="pi pi-arrows-h"></i>
+              </button>
+              <div class="sc-chart-dragger-label" id="scChartDraggerLabel">Jun 2025</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart legend (below chart) — mirrors the line toggles -->
+        <div class="sc-bottom-legend">
+          <span class="sc-bl-item sc-bl-combined sc-bl-budget">Budget</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-earned">Earned</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-actual">Actual / ETC</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-incurred">Incurred / ETC</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-control">Control budget</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-finance">Finance budget</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-cashflow">Cashflow</span>
+          <span class="sc-bl-item sc-bl-band">P10–P90 band</span>
+          <span class="sc-bl-item sc-bl-today">| Today</span>
+          <span class="sc-bl-key">Solid line = historical / planned ・ Dashed line = forecast</span>
+        </div>
+
+        <!-- Forecast explanation (light green box) -->
+        <div class="sc-forecast-exp-box">
+          Forecast built against Cisco Systems' internal project history only — private data, no external benchmarks.
+          Three independent forecast lines (Actual/ETC, Incurred/ETC, Earned) are each matched using their own historical data series.
+          Matching uses Gower distance across CA group codes (PHASE_TYPE, DISCIPLINE, WORK_TYPE) and project groups (PROJ_SIZE, REGION).
+          SPI (0.88) and CPI (0.92) active as weighting factors — accounts with similar performance profiles weighted higher.
+          Top 9 matched neighbors (avg similarity 0.78, min 0.30) re-anchor to $23.6M actuals → $42.2M EAC.
+          Curve shape signals (skewness, front-load ratio, Gini, peak period) indicate deviation from the baseline plan.
+        </div>
+
+      </div><!-- /.sc-acc-body -->
+    </div><!-- /.sc-acc-section #acc-forecast -->
+
+    <!-- ACCORDION 2: Driver settings (collapsed) -->
+    <div class="sc-acc-section sc-acc-section--collapsed" id="acc-drivers" data-tab-id="acc-drivers">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-drivers')" aria-expanded="false">
+        <i class="pi pi-chevron-right sc-acc-chevron"></i>
+        <span class="sc-acc-title">Settings</span>
+      </button>
+      <div class="sc-acc-body" id="acc-drivers-body" style="display:none">
+        <div id="driver-settings-container"></div>
+      </div>
+    </div>
+
+    <!-- ACCORDION 3: Forecast appendix (collapsed) -->
+    <div class="sc-acc-section sc-acc-section--collapsed" id="acc-appendix" data-tab-id="acc-appendix">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-appendix')" aria-expanded="false">
+        <i class="pi pi-chevron-right sc-acc-chevron"></i>
+        <span class="sc-acc-title">Forecast appendix</span>
+      </button>
+      <div class="sc-acc-body" id="acc-appendix-body" style="display:none">
+        <div id="appendix-container"></div>
+      </div>
+    </div>
+
+    <!-- ACCORDION 4: Warnings (collapsed) -->
+    <div class="sc-acc-section sc-acc-section--collapsed" id="acc-warnings" data-tab-id="acc-warnings">
+      <button class="sc-acc-header" type="button" onclick="toggleAcc('acc-warnings')" aria-expanded="false">
+        <i class="pi pi-chevron-right sc-acc-chevron"></i>
+        <span class="sc-acc-title">Warnings</span>
+      </button>
+      <div class="sc-acc-body" id="acc-warnings-body" style="display:none">
+        <div id="warnings-container"></div>
+      </div>
+    </div>
+
+    </div><!-- /.sc-sections -->
+
+  </div><!-- /.proj-content -->
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="components/left-nav.js"></script>
+  <script src="components/dialog.js"></script>
+  <script src="components/ai-panel.js"></script>
+  <script src="components/script.js"></script>
+  <script src="scurve-forecast.js"></script>
+  <script>
+    if (_isAdminContext) {
+      renderLeftNav({ context: 'admin', activeLink: 'scurve-forecasting', expandedGroup: 'change-mgmt' });
+      var _bc = document.querySelector('.page-top-row');
+      if (_bc) _bc.style.display = 'none';
+    } else {
+      renderLeftNav({ expandedGroup: 'cost', activeSub: 'ai-forecasting' });
+    }
+    applyProjectContext();
+  </script>
+
+  <!-- ============================================================
+       AI-TRUST LAYER — injects provenance + track-record evidence
+       to convey that the forecast is the product of learning from
+       a large body of past projects, and to earn user trust.
+       Staged demo data, internally consistent with the CA-1042 story.
+       ============================================================ -->
+  <script>
+  (function(){
+    function esc(s){return String(s);}
+
+    /* --- Provenance strip: "this forecast is built on a lot of past learning" --- */
+    function provenanceStrip(){
+      const stat = (v,small,l)=>`<div class="ait-stat"><div class="v">${v}${small?` <small>${small}</small>`:''}</div><div class="l">${l}</div></div>`;
+      return `
+      <div class="ait-strip" id="aitProvenance" role="group" aria-label="AI forecast provenance" style="margin-bottom:16px">
+        <div class="ait-strip-lead">
+          <span class="k"><i class="pi pi-microchip-ai"></i> AI-learned forecast</span>
+          <span class="t">Pattern-matched against Cisco Systems' own delivery history</span>
+          <span class="s">Private project data only — no external benchmarks.</span>
+        </div>
+        <div class="ait-strip-stats">
+          ${stat('1,240','accounts','Completed control accounts the model learned from')}
+          ${stat('18.6','M pts','Historical cost &amp; earned-value data points analysed')}
+          ${stat('9','peers','Closely-matched comparable accounts · avg similarity 0.78')}
+          ${stat('28 May','2026','Model last refreshed · retrained monthly')}
+        </div>
+      </div>`;
+    }
+
+    /* --- Method cross-check card (moved into the forecast appendix) --- */
+    function methodCompareCard(){
+      return `
+      <div class="ait-card" id="aitMethodCard" style="margin-top:14px">
+        <div class="ch"><i class="pi pi-sliders-h"></i> Cross-checked against the methods you already use</div>
+        <div class="ait-methods">
+          <div class="ait-method is-ai">
+            <span class="tag">AI</span>
+            <span class="nm">AI pattern-matched forecast <small>Most likely $42.2M · range from the P10–P90 band</small></span>
+            <span class="val">$40.5–44.0M</span>
+          </div>
+          <div class="ait-method">
+            <span class="nm">EVM CPI method <small>Textbook EAC = BAC ÷ CPI ($40.0M ÷ 0.92)</small></span>
+            <span class="val">$43.5M</span>
+          </div>
+          <div class="ait-method">
+            <span class="nm">Your last manual EAC <small>Entered 12 May 2026</small></span>
+            <span class="val">$41.0M</span>
+          </div>
+        </div>
+        <div class="ait-sub" style="margin-top:10px"><i class="pi pi-check-circle" style="color:var(--ait-good)"></i> All three agree within ~3% — the AI forecast sits between your estimate and the textbook CPI method.</div>
+      </div>`;
+    }
+
+    /* --- Trust panel: track record, calibration, learnings --- */
+    function trustPanel(){
+      const errs = [7.2,5.9,5.1,4.4,4.0,3.8];           // last 6 cycles, median |error| %
+      const months = ['Dec','Jan','Feb','Mar','Apr','May'];
+      const maxE = Math.max(...errs);
+      const bars = errs.map((e,i)=>{
+        const h = 24 + (e/maxE)*30;                       // taller = bigger error
+        const last = i===errs.length-1;
+        return `<div class="b${last?' last':''}" style="height:${h}px" title="${months[i]}: ±${e}%"><span class="cap">${e}%</span></div>`;
+      }).join('');
+      const axis = months.map(m=>`<span>${m}</span>`).join('');
+
+      return `
+      <div class="ait-panel" id="aitPanel">
+        <button class="ait-panel-head" type="button" onclick="this.closest('.ait-panel').classList.toggle('is-collapsed')">
+          <i class="pi pi-chevron-down"></i>
+          <span class="ic"><i class="pi pi-verified"></i></span>
+          <span class="ait-panel-title">Why you can trust this forecast
+            <small>Track record, calibration and cross-checks behind the AI projection</small></span>
+          <span class="ait-verified"><i class="pi pi-check-circle"></i> Back-tested on 132 accounts</span>
+        </button>
+        <div class="ait-panel-body">
+          <div class="ait-grid">
+
+            <!-- Track record -->
+            <div class="ait-card">
+              <div class="ch"><i class="pi pi-chart-line"></i> Forecast accuracy</div>
+              <div class="ait-bignum good">±3.8%</div>
+              <div class="ait-sub">Median error of past AI forecasts vs <b>final</b> actuals, across 132 comparable control accounts. Accuracy has improved each cycle as the model learns:</div>
+              <div class="ait-spark">${bars}</div>
+              <div class="ait-axis">${axis}</div>
+            </div>
+
+            <!-- Calibration -->
+            <div class="ait-card">
+              <div class="ch"><i class="pi pi-arrows-v"></i> Confidence calibration</div>
+              <div class="ait-bignum good">91%</div>
+              <div class="ait-sub">of the time, the final actual landed <b>inside</b> the P10–P90 band — versus a 90% target. The band means what it says.</div>
+              <div class="ait-cal"><div class="fill" style="width:91%"></div><div class="ait-cal-target" style="left:90%" title="90% target"></div></div>
+              <div class="ait-sub" style="margin-top:6px">132 back-tested periods · target marked at 90%.</div>
+            </div>
+
+            <!-- Hindcast proof -->
+            <div class="ait-card">
+              <div class="ch"><i class="pi pi-history"></i> Proven on this profile</div>
+              <div class="ait-bignum">+1.0%</div>
+              <div class="ait-sub">Rewound to <b>month 6</b>, the model projected <b>$41.8M</b> for this account profile. Comparable civil-foundations accounts closed at <b>$42.2M</b> — a 1.0% miss, well inside the stated band.</div>
+            </div>
+          </div>
+
+          <!-- What the model learned -->
+          <div class="ait-card" style="margin-top:12px">
+            <div class="ch"><i class="pi pi-lightbulb"></i> What the model learned from similar accounts</div>
+            <ul class="ait-learn">
+              <li><i class="pi pi-angle-right"></i><span>Front-loaded civil-foundations profiles like this one <b>historically overran 4–6%</b> during months 8–12.</span></li>
+              <li><i class="pi pi-angle-right"></i><span>When CPI stayed below 0.95 past the 25% mark, <b>fewer than 1 in 5</b> comparable accounts recovered.</span></li>
+              <li><i class="pi pi-angle-right"></i><span>This account's curve shape (front-load ratio 0.61) matches a cohort that finished at <b>1.05× the baseline</b> on cost.</span></li>
+              <li><i class="pi pi-angle-right"></i><span>Earned-value signals (SPI 0.88) point to a schedule slip the forecast <b>already prices in</b>.</span></li>
+            </ul>
+          </div>
+
+          <div class="ait-foot">
+            <i class="pi pi-info-circle"></i>
+            Forecast generated 8 Jun 2026 · model v4.2 · 9 matched neighbours (min similarity 0.30). Inspect the individual matched accounts in the <b>Forecast appendix</b> below.
+          </div>
+        </div>
+      </div>`;
+    }
+
+    /* --- "AI scanning control accounts" interstitial --- */
+    const TARGET_CONF = 87;              // settles on the page's 87% confidence
+    const TOTAL_ACCTS = 1240;            // size of the learned-from history
+    const SCAN_MS = 5200;                // a few seconds
+    const MATCHES = [                     // 9 strong matches revealed during the scan (avg ≈ 0.78)
+      ['CA-0871','Civil Foundations P3',0.93],
+      ['CA-1120','Foundations & Piling',0.89],
+      ['CA-0644','Earthworks Package',0.84],
+      ['CA-0992','Civil Works P1',0.81],
+      ['CA-0508','Site Civils',0.78],
+      ['CA-1301','Deep Piling',0.75],
+      ['CA-1184','Substructure RC',0.71],
+      ['CA-0733','Foundation RC',0.68],
+      ['CA-0419','Civil P2 (legacy)',0.63],
+    ];
+    const PHASES = [
+      [0.00,'Indexing 1,240 control accounts…'],
+      [0.16,'Computing Gower distance across group codes…'],
+      [0.36,'Weighting matches by SPI / CPI performance…'],
+      [0.56,'Re-anchoring forecast to $23.6M actuals…'],
+      [0.76,'Building the P10–P90 confidence band…'],
+      [0.92,'Finalizing forecast…'],
+    ];
+    let _scanning = false;
+
+    function buildScanOverlay(){
+      let ov = document.getElementById('aiscanDlg');
+      if(ov) return ov;
+      ov = document.createElement('div');
+      ov.className = 'dialog-overlay';          // library dialog component
+      ov.id = 'aiscanDlg';
+      ov.innerHTML = `
+        <div class="dialog-panel">
+          <div class="dialog-header">
+            <div class="dialog-header-text">
+              <div class="dialog-title">Running AI forecast</div>
+              <div class="dialog-subtitle">Scanning Cisco Systems' control-account history…</div>
+            </div>
+            <div class="dialog-header-actions">
+              <i class="pi pi-spin pi-spinner" id="aiscanSpin" style="font-size:18px;color:var(--ait-primary)"></i>
+            </div>
+          </div>
+          <div class="dialog-body">
+            <div class="aiscan-grid">
+              <div class="aiscan-donut">
+                <svg viewBox="0 0 120 120">
+                  <defs><linearGradient id="aitGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#326fd1"/><stop offset="1" stop-color="#16a34a"/></linearGradient></defs>
+                  <circle class="track" cx="60" cy="60" r="52"></circle>
+                  <circle class="arc" id="aiscanArc" cx="60" cy="60" r="52"></circle>
+                </svg>
+                <div class="aiscan-center">
+                  <div class="aiscan-pct" id="aiscanPct">0%</div>
+                  <div class="aiscan-pctlbl">Forecast confidence</div>
+                </div>
+              </div>
+              <div class="col-scan">
+                <div class="aiscan-counts">
+                  <span class="badge badge-info" id="aiscanScanned">0 scanned</span>
+                  <span class="badge badge-success" id="aiscanMatches">0 matches</span>
+                </div>
+                <div class="progress-bar aiscan-thin">
+                  <div class="progress-bar-value" id="aiscanProg" style="width:0%"></div>
+                </div>
+                <div class="aiscan-list">
+                  <table class="aiscan-table">
+                    <thead><tr><th>Account</th><th>Description</th><th class="r">Match</th></tr></thead>
+                    <tbody id="aiscanRows"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <div class="status-indicator status-neutral" id="aiscanStatus" style="width:100%">
+              <i class="pi pi-spin pi-spinner status-icon"></i>
+              <span class="status-value" id="aiscanStatusTxt">Starting…</span>
+            </div>
+          </div>
+        </div>`;
+      document.body.appendChild(ov);
+      return ov;
+    }
+
+    function runScan(onDone){
+      if(_scanning) return;
+      _scanning = true;
+      const ov = buildScanOverlay();
+      const arc = ov.querySelector('#aiscanArc');
+      const pctEl = ov.querySelector('#aiscanPct');
+      const scannedEl = ov.querySelector('#aiscanScanned');
+      const matchEl = ov.querySelector('#aiscanMatches');
+      const progEl = ov.querySelector('#aiscanProg');
+      const rowsEl = ov.querySelector('#aiscanRows');
+      const scroller = ov.querySelector('.aiscan-list');
+      const statusEl = ov.querySelector('#aiscanStatus');
+      const statusTxt = ov.querySelector('#aiscanStatusTxt');
+      const spin = ov.querySelector('#aiscanSpin');
+      const C = 2 * Math.PI * 52;
+      arc.style.strokeDasharray = C;
+      arc.style.strokeDashoffset = C;
+      rowsEl.innerHTML = '';
+      openDialog('aiscanDlg');               // library dialog open
+
+      const ease = t => 1 - Math.pow(1 - t, 3);
+      const start = performance.now();
+      let revealed = 0;
+
+      function frame(now){
+        const p = Math.min(1, (now - start) / SCAN_MS);
+        const e = ease(p);
+        // confidence climbs to target with a little early wobble
+        const wobble = p < 0.85 ? Math.sin(p * 22) * 4 * (1 - p) : 0;
+        const conf = Math.max(0, Math.min(TARGET_CONF, e * TARGET_CONF + wobble));
+        pctEl.textContent = Math.round(conf) + '%';
+        arc.style.strokeDashoffset = C * (1 - conf / 100);
+        // accounts-scanned progress bar + counter badge
+        const scanned = Math.round(e * TOTAL_ACCTS);
+        scannedEl.textContent = scanned.toLocaleString() + ' scanned';
+        progEl.style.width = (e * 100).toFixed(0) + '%';
+        // reveal matches as minimal table rows
+        const wantMatches = Math.floor(e * MATCHES.length + 0.0001);
+        while(revealed < wantMatches && revealed < MATCHES.length){
+          const [code,name,sim] = MATCHES[revealed];
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="code">${code}</td><td>${name}</td><td class="r">${sim.toFixed(2)}</td>`;
+          rowsEl.appendChild(tr);
+          scroller.scrollTop = scroller.scrollHeight;
+          revealed++;
+          matchEl.textContent = revealed + ' matches';
+        }
+        // status phase
+        let phase = PHASES[0][1];
+        for(const [thr,txt] of PHASES){ if(p >= thr) phase = txt; }
+        statusTxt.textContent = phase;
+
+        if(p < 1){ requestAnimationFrame(frame); }
+        else {
+          scannedEl.textContent = TOTAL_ACCTS.toLocaleString() + ' scanned';
+          matchEl.textContent = MATCHES.length + ' matches';
+          progEl.style.width = '100%';
+          pctEl.textContent = TARGET_CONF + '%';
+          // footer flips to a positive status-indicator
+          statusEl.classList.remove('status-neutral');
+          statusEl.classList.add('status-positive');
+          statusEl.querySelector('.status-icon').className = 'pi pi-check-circle status-icon';
+          statusTxt.textContent = `Forecast ready — ${TARGET_CONF}% confidence, ${MATCHES.length} matched accounts`;
+          if(spin) spin.style.visibility = 'hidden';
+          setTimeout(()=>{
+            closeDialog('aiscanDlg');         // library dialog close
+            _scanning = false;
+            if(typeof onDone === 'function') onDone();
+          }, 850);
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    /* Wrap the base runAiForecast so the scan plays first, then the real forecast renders */
+    function installRunInterstitial(){
+      const original = window.runAiForecast;
+      if(typeof original !== 'function' || original.__aiWrapped) return;
+      const wrapped = function(){
+        if(_scanning) return;
+        const btn = document.querySelector('.sc-run-btn');
+        if(btn) btn.disabled = true;
+        runScan(function(){
+          if(btn) btn.disabled = false;
+          try { original.apply(window, arguments); } catch(e){ console.error(e); }
+        });
+      };
+      wrapped.__aiWrapped = true;
+      window.runAiForecast = wrapped;
+    }
+
+    /* "AI-learned forecast" provenance strip + method cross-check now live in the appendix */
+    function injectAppendixTrust(){
+      const c = document.getElementById('appendix-container');
+      if(!c || !c.dataset.built) return;                 // built eagerly on load
+      if(!document.getElementById('aitProvenance')) c.insertAdjacentHTML('afterbegin', provenanceStrip());
+      if(!document.getElementById('aitMethodCard')) c.insertAdjacentHTML('beforeend', methodCompareCard());
+    }
+
+    function mount(){
+      installRunInterstitial();
+      const body = document.getElementById('acc-forecast-body');
+      // In-chart evidence panel (track record, calibration, learnings) — once
+      if(body && !document.getElementById('aitPanel')){
+        const anchor = body.querySelector('.sc-forecast-exp-box');
+        if(anchor) anchor.insertAdjacentHTML('afterend', trustPanel());
+        else body.insertAdjacentHTML('beforeend', trustPanel());
+      }
+      // Move "AI-learned forecast" + method cross-check into the forecast appendix
+      injectAppendixTrust();
+    }
+
+    if(document.readyState === 'loading') window.addEventListener('DOMContentLoaded', ()=>setTimeout(mount,0));
+    else setTimeout(mount,0);
+  })();
+  </script>
+</body>
+</html>
