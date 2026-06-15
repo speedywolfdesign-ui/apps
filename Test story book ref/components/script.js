@@ -257,7 +257,35 @@ function toggleLeftNav() {
   nav.dataset.collapsed = isCollapsed ? 'false' : 'true';
   document.body.classList.toggle('lnav-collapsed', !isCollapsed);
   localStorage.setItem(LNAV_KEY, String(isCollapsed));
+  const arrow = document.getElementById('lnavArrowToggle');
+  if (arrow) arrow.title = !isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
 }
+
+/* Single-arrow collapse toggle in the breadcrumb row — replaces the grip-dot edge
+   handle, matching navigation.html's nested sidebar. Grouped next to the breadcrumb. */
+(function injectLnavArrow() {
+  var row = document.querySelector('.page-top-row');
+  var hasNav = document.querySelector('#left-nav-mount, #leftNav');
+  if (!row || !hasNav || document.getElementById('lnavArrowToggle')) return;
+  var collapsed = localStorage.getItem(LNAV_KEY) === 'false';   // 'is-open' === false → collapsed
+  var btn = document.createElement('button');
+  btn.id = 'lnavArrowToggle';
+  btn.className = 'lnav-arrow-toggle';
+  btn.setAttribute('aria-label', 'Toggle navigation');
+  btn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+  btn.onclick = toggleLeftNav;
+  btn.innerHTML = '<i class="pi pi-angle-left"></i>';
+  var bc = row.querySelector('.breadcrumb');
+  if (bc) {
+    var wrap = document.createElement('div');
+    wrap.className = 'lnav-toprow-left';
+    row.insertBefore(wrap, bc);
+    wrap.appendChild(btn);
+    wrap.appendChild(bc);
+  } else {
+    row.insertBefore(btn, row.firstChild);
+  }
+})();
 
 function toggleLnavGroup(btn) {
   const item = btn.closest('.lnav-has-children');

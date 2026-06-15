@@ -3992,9 +3992,11 @@ body.ai-panel-open .proj-content {
     #leftNavC.is-railonly .lnavc-panel{ display:none; }
     body[data-design="c"] #leftNavC.is-railonly ~ .proj-content{ margin-left:88px; }
 
-    /* Collapse / expand toggle — single arrow floating left of the breadcrumb (all designs) */
+    /* Collapse / expand toggle — single arrow floating in the gap between the left
+       nav and the breadcrumb (absolute, all designs) */
     .lnavc-collapse{
-      display:inline-flex; align-items:center; justify-content:center;
+      position:absolute; left:-21px; top:15px; transform:translateY(-50%);
+      display:inline-flex; align-items:center; justify-content:flex-start;
       width:24px; height:24px; flex-shrink:0; padding:0; line-height:1;
       border:none; background:transparent; box-shadow:none; cursor:pointer;
       color:var(--surface-500,#737373); font-size:16px;
@@ -4004,9 +4006,8 @@ body.ai-panel-open .proj-content {
     #lnavToggle, #lnavToggleB{ display:none; }
     .lnavc-collapse .pi{ display:block; line-height:1; transition:transform .2s; }
     .lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
-    /* Vertically center the collapse arrow with the breadcrumb text */
-    .nav-toprow{ align-items:center; }
-    .nav-toprow .lnavc-collapse,
+    /* Anchor for the absolute arrow; push the breadcrumb clear of it */
+    .nav-toprow{ position:relative; align-items:center; padding-left:32px; }
     .nav-toprow .breadcrumb{ align-self:center; line-height:1; }
 
     /* Collapsed mode: rail only; the sub-menu panel becomes a hover flyout overlay */

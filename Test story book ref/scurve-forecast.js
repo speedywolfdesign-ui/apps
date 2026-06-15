@@ -421,8 +421,8 @@ const DRIVER_GROUPS = [
     id: 'spi', label: 'SPI / CPI integration (earned value)', icon: 'pi-chart-line', color: '#b45309', bg: '#fef3c7', textColor: '#78350f',
     keys: [],
     features: [
-      { key:'spi', label:'Sched. performance (SPI)', fixedWeight: 1.5 },
-      { key:'cpi', label:'Cost performance (CPI)',   fixedWeight: 1.5 },
+      // Single combined row — mirrors the one SPI/CPI weight controller in settings
+      { key:'spi_cpi', label:'SPI / CPI integration', fixedWeight: true },
     ]
   },
   {
@@ -502,7 +502,7 @@ function buildAiBannerDetail() {
   // Separate card per driver group; each card uses the Feature / Weight / Contribution / Relative design.
   // Weight mirrors the settings sliders exactly (unset features default to 1.0, same as the modal).
   const groupPcts = _groupPctsSum100();
-  const eff = (f) => f.fixedWeight != null ? SPI_CPI_WEIGHT / 2 : (ACTIVE_WEIGHTS[f.key] != null ? ACTIVE_WEIGHTS[f.key] : 1);
+  const eff = (f) => f.fixedWeight != null ? SPI_CPI_WEIGHT : (ACTIVE_WEIGHTS[f.key] != null ? ACTIVE_WEIGHTS[f.key] : 1);
   // Element breakdowns are metric-specific — only show the one matching the selected Data type
   const metricOk = (f) => !f.metric || f.metric === CHART_METRIC;
   const denom = DRIVER_GROUPS.flatMap(g => g.features).filter(f => !f.header && metricOk(f)).reduce((a, f) => a + eff(f), 0);
@@ -1382,6 +1382,39 @@ const CA_DATA = {
   }
 };
 
+// Project summary — a roll-up of every control account. Bars are the
+// element-wise sum of the individual CAs; BAC/EAC are their totals. Built
+// after the literal so it can read the sibling entries.
+CA_DATA['project-summary'] = (function () {
+  const ids = ['ca-1042', 'ca-1043', 'ca-1044', 'ca-1045'];
+  const cas = ids.map(id => CA_DATA[id]);
+  const LEN = 24;
+  const sumBars = key => {
+    const out = Array(LEN).fill(0);
+    cas.forEach(ca => { const a = ca.bars[key] || []; for (let i = 0; i < LEN; i++) out[i] += (a[i] || 0); });
+    return out.map(v => +v.toFixed(2));
+  };
+  const sum = key => +cas.reduce((s, ca) => s + ca[key], 0).toFixed(1);
+  return {
+    label:    'Project summary',
+    subtitle: 'Project summary — all control accounts (rolled up)',
+    realTodayIdx:    6,
+    scheduledEndIdx: 21,
+    chartBac:    sum('chartBac'),
+    eacActual:   sum('eacActual'),
+    eacIncurred: sum('eacIncurred'),
+    eacEarned:   sum('eacEarned'),
+    yMax: 140, yStep: 20,
+    bannerConf: 85, bannerSimilar: 115,
+    bars: {
+      baseline: sumBars('baseline'), approved: sumBars('approved'), control: sumBars('control'),
+      financial: sumBars('financial'), earned: sumBars('earned'), actuals: sumBars('actuals'),
+      incurred: sumBars('incurred'), commitment: sumBars('commitment'),
+    },
+    explanation: "Project-level roll-up across all control accounts (CA-1042 Civil Foundations, CA-1043 Structural Steel, CA-1044 MEP Systems, CA-1045 Site Preparation). Each line is the sum of its control accounts; the AI forecast aggregates the independent per-account matches into a single project S-curve. Total budget $115.0M → forecast EAC $120.9M (Actual/ETC). Cost pressure is concentrated in MEP Systems (CPI 0.88); civil and steel scopes are tracking on or under budget. Select an individual control account from the dropdown to drill into its own matched-history forecast."
+  };
+})();
+
 let ACTIVE_CA_ID = 'ca-1042';
 
 window.selectAccount = function(id) {
@@ -1677,7 +1710,7 @@ function initScurveChart() {
         // BAC reference — index 16
         { type: 'line', label: '_bac', data: Array(24).fill(40), borderColor: '#9ca3af', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false, order: 3 },
         // Budget comparison lines — indices 17 (Budget), 18 (Control budget), 19 (Finance budget), 20 (Cashflow)
-        { type: 'line', label: 'Budget',         data: lineBudget,   borderColor: '#7c3aed', borderWidth: 2,   pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Budget',         data: lineBudget,   borderColor: '#7c3aed', borderWidth: 2,   pointRadius: 0, fill: false, tension: 0.45, order: 1, segment: { borderDash: (c) => c.p0DataIndex >= TODAY_IDX ? [2, 3] : undefined } },
         { type: 'line', label: 'Control budget', data: lineControl,  borderColor: '#db2777', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
         { type: 'line', label: 'Finance budget', data: lineFinance,  borderColor: '#0d9488', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
         { type: 'line', label: 'Cashflow',       data: lineCashflow, borderColor: '#0891b2', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
@@ -2521,8 +2554,10 @@ function _applySettingsPermissions(user) {
     container.insertBefore(notice, container.firstChild);
   }
 
-  // Classification Groups section — lock based on configureGroups
-  const catSection = container.querySelectorAll('.sc-settings-section')[0];
+  // Classification Groups section — lock based on configureGroups.
+  // Sections are looked up by data-sec (not position) so reordering the
+  // settings layout doesn't reshuffle which section gets which permission.
+  const catSection = container.querySelector('.sc-settings-section[data-sec="classification"]');
   if (catSection) {
     const canEdit = p.configureGroups;
     catSection.querySelectorAll('.sc-weight-slider, .sc-settings-weight-val').forEach(s => { s.disabled = !canEdit; });
@@ -2546,9 +2581,9 @@ function _applySettingsPermissions(user) {
   if (costToggle) costToggle.disabled = !p.configureGroups;
 
   // All other sliders (Numerical, SPI/CPI, Shape) — controlled by modifyWeights
-  const numSection   = container.querySelectorAll('.sc-settings-section')[1];
-  const evm          = container.querySelectorAll('.sc-settings-section')[2];
-  const shapeSection = container.querySelectorAll('.sc-settings-section')[3];
+  const numSection   = container.querySelector('.sc-settings-section[data-sec="numerical"]');
+  const evm          = container.querySelector('.sc-settings-section[data-sec="spi"]');
+  const shapeSection = container.querySelector('.sc-settings-section[data-sec="shape"]');
   [numSection, evm, shapeSection].forEach(sec => {
     if (!sec) return;
     sec.querySelectorAll('.sc-weight-slider, .sc-settings-weight-val').forEach(s => { s.disabled = !p.modifyWeights; });
@@ -3030,9 +3065,34 @@ function _buildAndMountSettings(container) {
       <button class="sc-settings-reset-btn" onclick="resetSettingsWeights()"><i class="pi pi-refresh"></i> Reset to defaults</button>
     </div>`;
 
+  // Project learning pool — which historical projects feed the matcher.
+  // Collapsible accordion pinned to the top; section lookups use data-sec so
+  // order doesn't affect _applySettingsPermissions.
+  const canPool = ACTIVE_USER.perms.configureGroups;
+  const poolActive = LEARNING_PROJECTS.filter(p => p.included).length;
+  html += `<div class="sc-settings-section sc-pool-section is-collapsed" data-sec="pool" id="learningPoolSection">
+    <div class="sc-settings-section-header sc-pool-header" onclick="toggleLearningPoolSection()" role="button" tabindex="0" aria-expanded="false" aria-controls="learningPoolBody" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLearningPoolSection();}">
+      <i class="pi pi-chevron-down sc-pool-chevron"></i>
+      <i class="pi pi-database"></i> Project learning pool
+      <span class="sc-settings-section-pct" id="poolCountBadge">${poolActive} / ${LEARNING_PROJECTS.length}</span>
+      <span class="sc-settings-section-desc">Historical projects the AI scans to find comparable control accounts. Unselect a project to exclude all of its accounts from matching and forecasting.</span>
+    </div>
+    <div class="sc-pool-body" id="learningPoolBody">
+      <div class="sc-pool-toolbar">
+        <span class="sc-pool-search"><i class="pi pi-search"></i><input type="text" placeholder="Search projects…" oninput="filterLearningProjects(this.value)" aria-label="Search learning pool projects" /></span>
+        <label class="sc-pool-selectall"><input type="checkbox" id="poolSelectAll" ${poolActive === LEARNING_PROJECTS.length ? 'checked' : ''} ${canPool ? '' : 'disabled'} onchange="toggleAllLearningProjects(this.checked)" /> Select all</label>
+      </div>
+      <div class="sc-pool-list" id="learningPoolList">
+        ${LEARNING_PROJECTS.map(p => _poolRowHtml(p, canPool)).join('')}
+      </div>
+      <div class="sc-pool-note"><i class="pi pi-info-circle" style="flex-shrink:0;margin-top:1px"></i> Excluded projects are skipped during the scan — their control accounts won't influence any of the three forecast lines.</div>
+    </div>
+  </div>`;
+
   // Section 1: Classification Groups
-  html += `<div class="sc-settings-section">
-    <div class="sc-settings-section-header">
+  html += `<div class="sc-settings-section" data-sec="classification">
+    <div class="sc-settings-section-header is-toggle" onclick="toggleSettingsSection(this)" role="button" tabindex="0" aria-expanded="true" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSettingsSection(this);}">
+      <i class="pi pi-chevron-down sc-sec-chevron"></i>
       <i class="pi pi-tags"></i> Classification groups
       <span class="sc-settings-section-pct">${secPcts[0]}%</span>
       <span class="sc-settings-section-desc">Enterprise/standard group codes from control account ID and top 3 project groups. Driven by the key groupings associated with a Contruent project ID and control account ID — configurable per client during setup.</span>
@@ -3075,8 +3135,9 @@ function _buildAndMountSettings(container) {
   </div>`;
 
   // Section 2: Numerical Features
-  html += `<div class="sc-settings-section">
-    <div class="sc-settings-section-header">
+  html += `<div class="sc-settings-section" data-sec="numerical">
+    <div class="sc-settings-section-header is-toggle" onclick="toggleSettingsSection(this)" role="button" tabindex="0" aria-expanded="true" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSettingsSection(this);}">
+      <i class="pi pi-chevron-down sc-sec-chevron"></i>
       <i class="pi pi-calculator"></i> Numerical features
       <span class="sc-settings-section-pct">${secPcts[1]}%</span>
       <span class="sc-settings-section-desc">Quantitative account attributes.</span>
@@ -3118,8 +3179,9 @@ function _buildAndMountSettings(container) {
   </div>`;
 
   // Section 3: SPI / CPI
-  html += `<div class="sc-settings-section">
-    <div class="sc-settings-section-header">
+  html += `<div class="sc-settings-section" data-sec="spi">
+    <div class="sc-settings-section-header is-toggle" onclick="toggleSettingsSection(this)" role="button" tabindex="0" aria-expanded="true" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSettingsSection(this);}">
+      <i class="pi pi-chevron-down sc-sec-chevron"></i>
       <i class="pi pi-chart-line"></i> SPI / CPI integration (earned value)
       <span class="sc-settings-section-pct">${secPcts[2]}%</span>
       <span class="sc-settings-section-desc">Applies to clients where earned value reporting is active. SPI and CPI influence curve shape matching independently for all three forecast lines.</span>
@@ -3150,7 +3212,10 @@ function _buildAndMountSettings(container) {
 
   // Section 4: Curve Shape Statistics — shares values + non-negative clamping with the
   // "Driven by" detail card via _shapeDisplayVals() so both views always match.
-  html += `<div class="sc-settings-section">
+  // Hidden in the settings UI (display:none) but kept in the DOM so it still
+  // contributes to the forecast and so _applySettingsPermissions' section-index
+  // lookups ([0]–[3]) stay valid.
+  html += `<div class="sc-settings-section" data-sec="shape" style="display:none">
     <div class="sc-settings-section-header">
       <i class="pi pi-chart-bar"></i> Curve shape statistics
       <span class="sc-settings-section-pct">${secPcts[3]}%</span>
@@ -3276,6 +3341,103 @@ function _updateSettingsModalLockNotice() {
   body.insertBefore(notice, body.firstChild);
 }
 
+/* Project learning pool — the historical projects the matcher scans for
+   comparable control accounts. `included` controls whether a project's
+   accounts feed the forecast; account counts sum to the 1,240-account history. */
+const LEARNING_PROJECTS = [
+  { id: 'lp-sabine',   name: 'Sabine Pass LNG',          region: 'NA', accounts: 214, matched: 9, budget: '$4.2B', included: true  },
+  { id: 'lp-portarth', name: 'Port Arthur Expansion',    region: 'NA', accounts: 188, matched: 7, budget: '$3.1B', included: true  },
+  { id: 'lp-freeport', name: 'Freeport Complex',         region: 'NA', accounts: 167, matched: 6, budget: '$2.8B', included: true  },
+  { id: 'lp-golden',   name: 'Golden Pass LNG',          region: 'NA', accounts: 152, matched: 5, budget: '$2.4B', included: true  },
+  { id: 'lp-cameron',  name: 'Cameron LNG',              region: 'NA', accounts: 141, matched: 4, budget: '$2.0B', included: true  },
+  { id: 'lp-calcasieu',name: 'Calcasieu Pass',           region: 'NA', accounts: 128, matched: 3, budget: '$1.7B', included: true  },
+  { id: 'lp-corpus',   name: 'Corpus Christi Stage 3',   region: 'NA', accounts:  96, matched: 2, budget: '$1.3B', included: true  },
+  { id: 'lp-riogrande',name: 'Rio Grande LNG',           region: 'NA', accounts:  64, matched: 1, budget: '$0.9B', included: true  },
+  { id: 'lp-driftwood',name: 'Driftwood LNG (legacy)',   region: 'NA', accounts:  48, matched: 0, budget: '$0.6B', included: false },
+  { id: 'lp-magnolia', name: 'Magnolia LNG (EU pilot)',  region: 'EU', accounts:  42, matched: 0, budget: '$0.5B', included: false },
+];
+
+function _poolRowHtml(p, canPool) {
+  return `<label class="sc-pool-row${p.included ? '' : ' is-excluded'}" data-pool-id="${p.id}" data-name="${p.name.toLowerCase()}">
+    <input type="checkbox" ${p.included ? 'checked' : ''} ${canPool ? '' : 'disabled'}
+      onchange="toggleLearningProject('${p.id}', this.checked)" aria-label="Include ${p.name} in AI learning" />
+    <span class="sc-pool-info">
+      <span class="sc-pool-name">${p.name}</span>
+      <span class="sc-pool-meta">${p.accounts} control accounts · ${p.matched} matched here · ${p.budget}</span>
+    </span>
+    <span class="sc-pool-region">${p.region}</span>
+  </label>`;
+}
+
+function _refreshLearningPool() {
+  const active = LEARNING_PROJECTS.filter(p => p.included).length;
+  const badge = document.getElementById('poolCountBadge');
+  if (badge) badge.textContent = `${active} / ${LEARNING_PROJECTS.length}`;
+  const all = document.getElementById('poolSelectAll');
+  if (all) all.checked = active === LEARNING_PROJECTS.length;
+}
+
+window.toggleLearningProject = function(id, on) {
+  const proj = LEARNING_PROJECTS.find(p => p.id === id);
+  if (proj) proj.included = on;
+  const row = document.querySelector(`.sc-pool-row[data-pool-id="${id}"]`);
+  if (row) row.classList.toggle('is-excluded', !on);
+  _refreshLearningPool();
+};
+
+window.toggleAllLearningProjects = function(on) {
+  const list = document.getElementById('learningPoolList');
+  if (!list) return;
+  // Only affects rows currently visible (i.e. matching the active search filter)
+  list.querySelectorAll('.sc-pool-row').forEach(row => {
+    if (row.style.display === 'none') return;
+    const proj = LEARNING_PROJECTS.find(p => p.id === row.dataset.poolId);
+    if (proj) proj.included = on;
+    const cb = row.querySelector('input[type="checkbox"]');
+    if (cb) cb.checked = on;
+    row.classList.toggle('is-excluded', !on);
+  });
+  _refreshLearningPool();
+};
+
+window.toggleSettingsSection = function(headerEl) {
+  const sec = headerEl.closest('.sc-settings-section');
+  if (!sec) return;
+  const collapsed = sec.classList.toggle('is-collapsed');
+  headerEl.setAttribute('aria-expanded', String(!collapsed));
+};
+
+window.toggleLearningPoolSection = function() {
+  const sec = document.getElementById('learningPoolSection');
+  if (!sec) return;
+  const collapsed = sec.classList.toggle('is-collapsed');
+  const header = sec.querySelector('.sc-pool-header');
+  if (header) header.setAttribute('aria-expanded', String(!collapsed));
+};
+
+window.filterLearningProjects = function(q) {
+  const term = (q || '').trim().toLowerCase();
+  const list = document.getElementById('learningPoolList');
+  if (!list) return;
+  let visible = 0;
+  list.querySelectorAll('.sc-pool-row').forEach(row => {
+    const match = !term || row.dataset.name.includes(term);
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  let empty = list.querySelector('.sc-pool-empty');
+  if (!visible) {
+    if (!empty) {
+      empty = document.createElement('div');
+      empty.className = 'sc-pool-empty';
+      empty.textContent = 'No projects match your search.';
+      list.appendChild(empty);
+    }
+  } else if (empty) {
+    empty.remove();
+  }
+};
+
 const SIM_ACCOUNT_PROJECTS = [
   { id: 'CA-0812 · Civil fnds.',  project: 'Port Arthur Exp.', region: 'NA',   budget: 14.2, match: 96, varPct:  4.1 },
   { id: 'CA-0634 · Civil P3',     project: 'Sabine Pass LNG',  region: 'NA',   budget: 16.1, match: 91, varPct:  8.3 },
@@ -3286,6 +3448,35 @@ const SIM_ACCOUNT_PROJECTS = [
   { id: 'CA-0907 · Foundations',  project: 'Driftwood LNG',    region: 'NA',   budget:  9.5, match: 71, varPct: -1.4 },
   { id: 'CA-0288 · Civil P2',     project: 'Plaquemines LNG',  region: 'NA',   budget: 14.9, match: 68, varPct:  5.9 },
 ];
+
+/* Expand the curated seed into the full set of `n` similar accounts for a CA
+   (n = ca.bannerSimilar). Deterministic so the list is stable across renders. */
+function _simAccountRows(n) {
+  const pool = SIM_ACCOUNT_PROJECTS.slice();
+  const projects = ['Corpus Christi','Calcasieu Pass','Rio Grande LNG','Magnolia LNG','Lake Charles',
+                    'Gulf Coast GTL','Delfin LNG','Brownsville LNG','Commonwealth LNG','Port Arthur Exp.',
+                    'Sabine Pass LNG','Freeport Complex','Golden Pass','Texas LNG'];
+  const types    = ['Civil fnds.','Civil P1','Civil P2','Civil P3','Grading','Grading P2','Foundations',
+                    'Earthworks','Substructure','Piling','Site civils','Deep fnds.'];
+  const regions  = ['NA','NA','NA','EU','APAC'];
+  let seed = 20420 + n;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  let acct = 1000;
+  while (pool.length < n) {
+    const i = pool.length;
+    acct += 1 + Math.floor(rnd() * 40);
+    const match = Math.max(61, 96 - Math.floor(i * (34 / Math.max(1, n))) - Math.floor(rnd() * 2));
+    pool.push({
+      id: `CA-${String(acct).padStart(4, '0')} · ${types[Math.floor(rnd() * types.length)]}`,
+      project: projects[Math.floor(rnd() * projects.length)],
+      region: regions[Math.floor(rnd() * regions.length)],
+      budget: +(9 + rnd() * 12).toFixed(1),
+      match,
+      varPct: +((rnd() * 15) - 3).toFixed(1),
+    });
+  }
+  return pool.slice(0, n).sort((a, b) => b.match - a.match);
+}
 
 function _buildAppendixSummaryCards() {
   const ca = CA_DATA[ACTIVE_CA_ID] || CA_DATA['ca-1042'];
@@ -3371,27 +3562,13 @@ function _buildAppendixSummaryCards() {
         </div>
       </div>
 
-      <!-- Card 3: Basis of forecast -->
-      <div class="sc-appx-card">
-        <div class="sc-appx-card-header">
-          <i class="pi pi-list"></i>
-          <h3>Basis of forecast</h3>
-        </div>
-        <ul class="sc-appx-bullets">
-          <li><strong>Pattern matching:</strong> ${ca.bannerSimilar} completed accounts with ≥80% similarity across Phase type, Discipline, Work type, Region, and Project size.</li>
-          <li><strong>CPI adjustment:</strong> CPI of 0.92 applied — late-growth correction shapes cost escalation pattern in remaining curve.</li>
-          <li><strong>SPI adjustment:</strong> Duration extended ~3 months based on SPI of 0.88.</li>
-          <li><strong>Earned value ceiling:</strong> Earned bounded by approved budget ($${bac.toFixed(1)}M). Cannot earn over budget.</li>
-          <li><strong>Incurred/actual gap:</strong> 4.2% accrual spread reflected as divergence between Actual and Incurred lines.</li>
-        </ul>
-      </div>
-
-      <!-- Card 4: Top similar historical accounts -->
+      <!-- Card 3: Similar accounts (all matched) -->
       <div class="sc-appx-card">
         <div class="sc-appx-card-header">
           <i class="pi pi-link"></i>
-          <h3>Top similar historical accounts</h3>
+          <h3>Similar accounts</h3>
         </div>
+        <p class="sc-appx-card-sub">All ${ca.bannerSimilar} completed accounts matched to this control account, ranked by similarity.</p>
         <div class="sc-appx-sim-table-wrap">
           <table class="sc-appx-sim-table">
             <thead>
@@ -3403,7 +3580,7 @@ function _buildAppendixSummaryCards() {
               </tr>
             </thead>
             <tbody>
-              ${SIM_ACCOUNT_PROJECTS.map(row => {
+              ${_simAccountRows(ca.bannerSimilar).map(row => {
                 const cls    = row.match >= 90 ? 'high' : row.match >= 80 ? 'med' : 'low';
                 const varCls = row.varPct >= 0 ? 'var-pos' : 'var-neg';
                 const sign   = row.varPct >= 0 ? '+' : '';
@@ -3417,6 +3594,21 @@ function _buildAppendixSummaryCards() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <!-- Card 4: Basis of forecast -->
+      <div class="sc-appx-card">
+        <div class="sc-appx-card-header">
+          <i class="pi pi-list"></i>
+          <h3>Basis of forecast</h3>
+        </div>
+        <ul class="sc-appx-bullets">
+          <li><strong>Pattern matching:</strong> ${ca.bannerSimilar} completed accounts with ≥80% similarity across Phase type, Discipline, Work type, Region, and Project size.</li>
+          <li><strong>CPI adjustment:</strong> CPI of 0.92 applied — late-growth correction shapes cost escalation pattern in remaining curve.</li>
+          <li><strong>SPI adjustment:</strong> Duration extended ~3 months based on SPI of 0.88.</li>
+          <li><strong>Earned value ceiling:</strong> Earned bounded by approved budget ($${bac.toFixed(1)}M). Cannot earn over budget.</li>
+          <li><strong>Incurred/actual gap:</strong> 4.2% accrual spread reflected as divergence between Actual and Incurred lines.</li>
+        </ul>
       </div>
     </div>
   `;
@@ -3465,9 +3657,9 @@ function initWarningsContent() {
       <table class="sc-warn-table">
         <thead>
           <tr>
-            <th>Control Account ID</th>
-            <th>Control Account Description</th>
-            <th>Issue Type</th>
+            <th>Control account ID</th>
+            <th>Control account description</th>
+            <th>Issue type</th>
             <th>Remarks</th>
           </tr>
         </thead>
@@ -3716,7 +3908,7 @@ function initAdminSettingsPage() {
 
   // Retitle the page for the admin context
   const title = document.querySelector('.page-title');
-  if (title) title.textContent = 'S-curve forecasting settings';
+  if (title) title.textContent = 'AI driven forecast settings';
   const subtitle = document.querySelector('.sc-page-subtitle');
   if (subtitle) subtitle.textContent = 'Configure the classification groups and feature weights used by the AI forecast matching algorithm';
 

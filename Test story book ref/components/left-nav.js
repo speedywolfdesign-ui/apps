@@ -168,19 +168,6 @@
       ${items}
     </nav>
   </div>
-  <button class="lnav-toggle" id="lnavToggle" onclick="toggleLeftNav()" aria-label="Toggle navigation" title="Collapse sidebar">
-    <svg width="16" height="24" viewBox="0 0 16 24" fill="none" class="lnav-toggle-icon lnav-toggle-close">
-      <circle cx="5"  cy="8"  r="1.5" fill="#9e9e9e"/>
-      <circle cx="5"  cy="12" r="1.5" fill="#9e9e9e"/>
-      <circle cx="5"  cy="16" r="1.5" fill="#9e9e9e"/>
-      <circle cx="11" cy="8"  r="1.5" fill="#9e9e9e"/>
-      <circle cx="11" cy="12" r="1.5" fill="#9e9e9e"/>
-      <circle cx="11" cy="16" r="1.5" fill="#9e9e9e"/>
-    </svg>
-    <svg width="16" height="24" viewBox="0 0 16 24" fill="none" class="lnav-toggle-icon lnav-toggle-open" style="display:none">
-      <path d="M6 8 L10 12 L6 16" stroke="#9e9e9e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
 </aside>`;
 
     var mount = document.getElementById('left-nav-mount');
