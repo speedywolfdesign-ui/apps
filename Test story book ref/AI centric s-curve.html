@@ -106,33 +106,51 @@
     .ait-foot{font-size:11px; color:var(--ait-muted); margin-top:14px; display:flex; align-items:center; gap:7px; border-top:1px dashed var(--ait-border); padding-top:11px}
 
     /* ============================================================
-       AI SCAN — only the confidence donut is custom (the component
-       library has no pie/donut); everything else uses library
-       components: dialog, progress-bar, badge, status-indicator.
+       AI SCAN — single-column scan layout inside the library dialog:
+       centered confidence donut (custom — the library has no pie/donut),
+       a scanned/matches counts row, a status line, and the match table.
        ============================================================ */
-    .aiscan-grid{display:flex; gap:22px; align-items:center; flex-wrap:wrap}
-    .aiscan-grid .col-scan{flex:1; min-width:240px}
-    .aiscan-donut{position:relative; width:170px; height:170px; flex-shrink:0; margin:0 auto}
-    .aiscan-donut svg{width:170px; height:170px; transform:rotate(-90deg)}
-    .aiscan-donut .track{fill:none; stroke:#eef0f3; stroke-width:13}
-    .aiscan-donut .arc{fill:none; stroke:url(#aitGrad); stroke-width:13; stroke-linecap:round; transition:stroke-dashoffset .25s ease}
+    /* single-column, vertically-stacked scan layout */
+    .aiscan-donut{position:relative; width:200px; height:200px; margin:6px auto 22px}
+    .aiscan-donut svg{width:200px; height:200px; transform:rotate(-90deg)}
+    .aiscan-donut .track{fill:none; stroke:#eef0f3; stroke-width:11}
+    .aiscan-donut .arc{fill:none; stroke:url(#aitGrad); stroke-width:11; stroke-linecap:round; transition:stroke-dashoffset .25s ease}
     .aiscan-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center}
-    .aiscan-pct{font-size:32px; font-weight:800; color:var(--ait-text); line-height:1; letter-spacing:-.02em}
-    .aiscan-pctlbl{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ait-muted); margin-top:4px}
-    .aiscan-counts{display:flex; gap:8px; align-items:center; margin-bottom:10px}
-    /* thin line progress bar (library .progress-bar, slimmed, no inner label) */
-    .aiscan-thin{height:5px; border-radius:999px; overflow:hidden}
-    .aiscan-thin .progress-bar-value{height:100%; border-radius:999px; transition:width .25s ease}
-    /* minimal control-account table */
-    .aiscan-list{height:132px; overflow:auto; margin-top:12px; border:1px solid var(--ait-border); border-radius:8px}
-    .aiscan-table{width:100%; border-collapse:collapse; font-size:12px}
-    .aiscan-table thead th{position:sticky; top:0; background:#fff; text-align:left; font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ait-muted); padding:6px 10px; border-bottom:1px solid var(--ait-border)}
-    .aiscan-table td{padding:5px 10px; border-bottom:1px solid #f1f3f6; color:var(--ait-text)}
+    .aiscan-pct{font-size:40px; font-weight:800; color:var(--ait-text); line-height:1; letter-spacing:-.02em}
+    .aiscan-pctlbl{font-size:15px; font-weight:400; color:var(--ait-muted); margin-top:6px; max-width:96px; line-height:1.3}
+    .aiscan-counts{display:flex; align-items:center; justify-content:space-between; font-size:15px; font-weight:700; color:var(--ait-text); margin-bottom:8px}
+    .aiscan-statusline{font-size:13px; color:var(--ait-muted); margin:0 0 14px}
+    .aiscan-statusline.is-done{color:#16a34a; font-weight:600; display:flex; align-items:center; gap:6px}
+    /* control-account match table */
+    .aiscan-list{max-height:230px; overflow:auto; border:1px solid var(--ait-border); border-radius:8px}
+    .aiscan-table{width:100%; border-collapse:collapse; font-size:14px}
+    .aiscan-table thead th{position:sticky; top:0; background:var(--ait-surface-2,#f8fafc); text-align:left; font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--ait-muted); padding:11px 16px; border-bottom:1px solid var(--ait-border)}
+    .aiscan-table td{padding:13px 16px; border-bottom:1px solid #f1f3f6; color:var(--ait-text)}
     .aiscan-table tbody tr:last-child td{border-bottom:none}
     .aiscan-table td.code{font-weight:700; color:var(--ait-primary-d); white-space:nowrap}
     .aiscan-table .r{text-align:right; font-weight:800; color:var(--ait-primary-d)}
     .aiscan-table tbody tr{animation:aitSlide .28s ease}
     @keyframes aitSlide{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+
+    /* ============================================================
+       AI COMPARE — side-by-side AI vs human-input S-curve panels
+       ============================================================ */
+    .sc-compare-row{display:flex; gap:12px; align-items:stretch; flex-wrap:wrap}
+    .sc-compare-row > .sc-chart-outer{flex:1 1 380px; min-width:0; margin-bottom:10px}
+    .ait-compare-btn{display:inline-flex; align-items:center; gap:6px; font-family:inherit;
+      font-size:12.5px; font-weight:600; color:var(--ait-primary-d);
+      background:var(--ait-primary-50); border:1px solid var(--ait-primary); border-radius:8px;
+      padding:6px 12px; cursor:pointer; transition:background .15s, color .15s}
+    .ait-compare-btn:hover{background:#e2ecfb}
+    .ait-compare-btn.is-active{background:linear-gradient(135deg,var(--ait-primary-d),var(--ait-primary)); color:#fff; border-color:var(--ait-primary-d)}
+    .ait-compare-btn .pi{font-size:13px}
+    .ait-aicurve-panel{border-color:var(--ait-primary) !important; box-shadow:0 0 0 1px var(--ait-primary-50)}
+    .ait-aicurve-sub{font-size:11.5px; color:var(--ait-muted); font-weight:500}
+    .ait-aicurve-foot{margin-top:10px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; font-size:12px}
+    .ait-aicurve-foot .lg{display:inline-flex; align-items:center; gap:6px; color:var(--ait-text); font-weight:600}
+    .ait-aicurve-foot .sw{width:16px; border-top:3px solid; border-radius:2px; flex-shrink:0}
+    .ait-aicurve-foot .delta{margin-left:auto; font-size:11.5px; color:var(--ait-muted); font-weight:500}
+    .ait-aicurve-foot .delta b{color:var(--ait-primary-d)}
   </style>
 </head>
 <body>
@@ -159,7 +177,7 @@
     <!-- Page title block -->
     <div class="sc-page-title-block">
       <h1 class="page-title" style="margin-bottom:2px">AI-centric S-curve forecast</h1>
-      <div class="sc-page-subtitle"><span style="color:var(--primary-700,#1e437d);font-weight:600">Learned from 1,240 completed control accounts</span></div>
+      <!-- <div class="sc-page-subtitle"><span style="color:var(--primary-700,#1e437d);font-weight:600">Learned from 1,240 completed control accounts</span></div> -->
     </div>
 
     <!-- Toolbar -->
@@ -167,7 +185,7 @@
       <div class="sc-toolbar-left">
         <div class="sc-acct-selector-wrap" id="acctSelectorWrap">
           <button class="sc-acct-selector" onclick="toggleAcctDropdown()" aria-expanded="false" id="acctSelectorBtn">
-            CA-1042 · Civil Foundations — P2 <i class="pi pi-chevron-down sc-acct-chevron"></i>
+            Project summary <i class="pi pi-chevron-down sc-acct-chevron"></i>
           </button>
           <div class="sc-acct-dropdown" id="acctDropdown" style="display:none">
             <div class="sc-acct-search-wrap">
@@ -177,7 +195,9 @@
                 oninput="filterAcctDropdown(this.value)"
                 autocomplete="off" />
             </div>
-            <div class="sc-acct-drop-item sc-acct-drop-item--active" data-id="ca-1042" onclick="selectAccount('ca-1042')">CA-1042 · Civil Foundations — P2</div>
+            <div class="sc-acct-drop-item sc-acct-drop-item--active" data-id="project-summary" onclick="selectAccount('project-summary')">Project summary</div>
+            <div class="sc-acct-drop-divider" aria-hidden="true"></div>
+            <div class="sc-acct-drop-item" data-id="ca-1042" onclick="selectAccount('ca-1042')">CA-1042 · Civil Foundations — P2</div>
             <div class="sc-acct-drop-item" data-id="ca-1043" onclick="selectAccount('ca-1043')">CA-1043 · Structural Steel — P1</div>
             <div class="sc-acct-drop-item" data-id="ca-1044" onclick="selectAccount('ca-1044')">CA-1044 · MEP Systems</div>
             <div class="sc-acct-drop-item" data-id="ca-1045" onclick="selectAccount('ca-1045')">CA-1045 · Site Preparation</div>
@@ -190,7 +210,7 @@
       </div>
       <div class="sc-toolbar-right">
         <button class="btn btn-primary sc-run-btn" onclick="runAiForecast()">
-          <i class="pi pi-play btn-icon-left"></i> Run forecast
+          <i class="pi pi-play btn-icon-left"></i> Run Project Forecast
         </button>
         <button class="sc-toolbar-icon-btn sc-forecast-settings-btn" onclick="openSettingsModal()" title="AI forecast settings" aria-label="AI forecast settings">
           <i class="pi pi-cog"></i>
@@ -227,8 +247,8 @@
 
     <!-- Tab bar (only shown in tab view) -->
     <div class="sc-tabs-bar" id="scTabsBar" role="tablist">
-      <button class="sc-tab-btn is-active" type="button" role="tab" data-tab="acc-forecast" onclick="setActiveTab('acc-forecast')">Cumulative spend forecast</button>
-      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-appendix" onclick="setActiveTab('acc-appendix')">Forecast appendix</button>
+      <button class="sc-tab-btn is-active" type="button" role="tab" data-tab="acc-forecast" onclick="setActiveTab('acc-forecast')">Summary</button>
+      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-appendix" onclick="setActiveTab('acc-appendix')">Forecast Explanation</button>
       <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-warnings" onclick="setActiveTab('acc-warnings')">Warnings <span class="sc-tab-badge" id="scWarningsBadge">3</span></button>
     </div>
 
@@ -383,12 +403,10 @@
               </div>
             </div>
             <div class="sc-view-toggle">
-              <span class="sc-view-label">Cumulative</span>
-              <label class="sc-toggle-switch" aria-label="Toggle cumulative/periodic">
-                <input type="checkbox" id="togglePeriodic" onchange="toggleChartView(this.checked)" />
-                <span class="sc-toggle-track"></span>
+              <label class="sc-view-check">
+                <input type="checkbox" id="togglePeriodic" onchange="toggleChartView(this.checked)" aria-label="Show periodic view" />
+                <span class="sc-view-label">Periodic</span>
               </label>
-              <span class="sc-view-label">Periodic</span>
             </div>
           </div>
         </div>
@@ -411,9 +429,13 @@
         </div>
 
         <!-- Chart area -->
+        <div class="sc-compare-row" id="scCompareRow">
         <div class="sc-chart-outer">
           <div class="sc-chart-title-row">
             <span class="sc-chart-title-label">S-curve <i class="pi pi-info-circle sc-chart-info-icon" title="Cumulative cost S-curve with periodic bar chart"></i></span>
+            <button type="button" class="ait-compare-btn" id="aiCompareBtn" onclick="toggleAiCompare()" aria-pressed="false" title="Compare the AI forecast against the human-entered forecast">
+              <i class="pi pi-sparkles"></i> <span id="aiCompareBtnTxt">AI Compare</span>
+            </button>
           </div>
           <div class="sc-chart-wrap" style="height:320px">
             <canvas id="scurve-chart"></canvas>
@@ -426,6 +448,25 @@
             </div>
           </div>
         </div>
+        <!-- AI comparison panel (revealed by the AI Compare button) -->
+        <div class="sc-chart-outer ait-aicurve-panel" id="aiCurvePanel" style="display:none">
+          <div class="sc-chart-title-row">
+            <span class="sc-chart-title-label"><i class="pi pi-sparkles" style="color:var(--ait-primary)"></i> AI S-curve</span>
+            <span class="ait-aicurve-sub">User Adopted Forecast Vs. AI Generated Forecast</span>
+          </div>
+          <div class="sc-chart-wrap" style="height:320px">
+            <canvas id="ai-scurve-chart"></canvas>
+            <div class="sc-chart-dragger" id="aiChartDragger" style="display:none" aria-hidden="true">
+              <div class="sc-chart-dragger-line"></div>
+              <button type="button" class="sc-chart-dragger-handle" aria-label="Drag to simulate a different point in time" title="Drag to scrub time">
+                <i class="pi pi-arrows-h"></i>
+              </button>
+              <div class="sc-chart-dragger-label" id="aiChartDraggerLabel">Jun 2025</div>
+            </div>
+          </div>
+          <div class="ait-aicurve-foot" id="aiCurveFoot"></div>
+        </div>
+        </div><!-- /.sc-compare-row -->
 
         <!-- Chart legend (below chart) — mirrors the line toggles -->
         <div class="sc-bottom-legend">
@@ -664,50 +705,40 @@
       ov.id = 'aiscanDlg';
       ov.innerHTML = `
         <div class="dialog-panel">
-          <div class="dialog-header">
+          <div class="dialog-header dialog-header-lg">
             <div class="dialog-header-text">
               <div class="dialog-title">Running AI forecast</div>
               <div class="dialog-subtitle">Scanning Cisco Systems' control-account history…</div>
             </div>
             <div class="dialog-header-actions">
-              <i class="pi pi-spin pi-spinner" id="aiscanSpin" style="font-size:18px;color:var(--ait-primary)"></i>
+              <button type="button" class="dialog-action-btn dialog-close" id="aiscanClose" aria-label="Close">
+                <i class="pi pi-times"></i>
+              </button>
             </div>
           </div>
           <div class="dialog-body">
-            <div class="aiscan-grid">
-              <div class="aiscan-donut">
-                <svg viewBox="0 0 120 120">
-                  <defs><linearGradient id="aitGrad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stop-color="#326fd1"/><stop offset="1" stop-color="#16a34a"/></linearGradient></defs>
-                  <circle class="track" cx="60" cy="60" r="52"></circle>
-                  <circle class="arc" id="aiscanArc" cx="60" cy="60" r="52"></circle>
-                </svg>
-                <div class="aiscan-center">
-                  <div class="aiscan-pct" id="aiscanPct">0%</div>
-                  <div class="aiscan-pctlbl">Forecast confidence</div>
-                </div>
-              </div>
-              <div class="col-scan">
-                <div class="aiscan-counts">
-                  <span class="badge badge-info" id="aiscanScanned">0 scanned</span>
-                  <span class="badge badge-success" id="aiscanMatches">0 matches</span>
-                </div>
-                <div class="progress-bar aiscan-thin">
-                  <div class="progress-bar-value" id="aiscanProg" style="width:0%"></div>
-                </div>
-                <div class="aiscan-list">
-                  <table class="aiscan-table">
-                    <thead><tr><th>Account</th><th>Description</th><th class="r">Match</th></tr></thead>
-                    <tbody id="aiscanRows"></tbody>
-                  </table>
-                </div>
+            <div class="aiscan-donut">
+              <svg viewBox="0 0 120 120">
+                <defs><linearGradient id="aitGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#326fd1"/><stop offset="1" stop-color="#16a34a"/></linearGradient></defs>
+                <circle class="track" cx="60" cy="60" r="52"></circle>
+                <circle class="arc" id="aiscanArc" cx="60" cy="60" r="52"></circle>
+              </svg>
+              <div class="aiscan-center">
+                <div class="aiscan-pct" id="aiscanPct">0%</div>
+                <div class="aiscan-pctlbl">Forecast confidence</div>
               </div>
             </div>
-          </div>
-          <div class="dialog-footer">
-            <div class="status-indicator status-neutral" id="aiscanStatus" style="width:100%">
-              <i class="pi pi-spin pi-spinner status-icon"></i>
-              <span class="status-value" id="aiscanStatusTxt">Starting…</span>
+            <div class="aiscan-counts">
+              <span id="aiscanScanned">0 scanned</span>
+              <span id="aiscanMatches">0 matches</span>
+            </div>
+            <div class="aiscan-statusline" id="aiscanStatusLine">Starting…</div>
+            <div class="aiscan-list">
+              <table class="aiscan-table">
+                <thead><tr><th>Account</th><th>Description</th><th class="r">Match</th></tr></thead>
+                <tbody id="aiscanRows"></tbody>
+              </table>
             </div>
           </div>
         </div>`;
@@ -723,16 +754,23 @@
       const pctEl = ov.querySelector('#aiscanPct');
       const scannedEl = ov.querySelector('#aiscanScanned');
       const matchEl = ov.querySelector('#aiscanMatches');
-      const progEl = ov.querySelector('#aiscanProg');
       const rowsEl = ov.querySelector('#aiscanRows');
       const scroller = ov.querySelector('.aiscan-list');
-      const statusEl = ov.querySelector('#aiscanStatus');
-      const statusTxt = ov.querySelector('#aiscanStatusTxt');
-      const spin = ov.querySelector('#aiscanSpin');
+      const statusLine = ov.querySelector('#aiscanStatusLine');
+      const closeBtn = ov.querySelector('#aiscanClose');
       const C = 2 * Math.PI * 52;
       arc.style.strokeDasharray = C;
       arc.style.strokeDashoffset = C;
       rowsEl.innerHTML = '';
+      statusLine.classList.remove('is-done');
+      let cancelled = false;
+      if(closeBtn){
+        closeBtn.onclick = () => {
+          cancelled = true;
+          _scanning = false;
+          closeDialog('aiscanDlg');
+        };
+      }
       openDialog('aiscanDlg');               // library dialog open
 
       const ease = t => 1 - Math.pow(1 - t, 3);
@@ -740,6 +778,7 @@
       let revealed = 0;
 
       function frame(now){
+        if(cancelled) return;
         const p = Math.min(1, (now - start) / SCAN_MS);
         const e = ease(p);
         // confidence climbs to target with a little early wobble
@@ -747,10 +786,9 @@
         const conf = Math.max(0, Math.min(TARGET_CONF, e * TARGET_CONF + wobble));
         pctEl.textContent = Math.round(conf) + '%';
         arc.style.strokeDashoffset = C * (1 - conf / 100);
-        // accounts-scanned progress bar + counter badge
+        // accounts-scanned counter
         const scanned = Math.round(e * TOTAL_ACCTS);
         scannedEl.textContent = scanned.toLocaleString() + ' scanned';
-        progEl.style.width = (e * 100).toFixed(0) + '%';
         // reveal matches as minimal table rows
         const wantMatches = Math.floor(e * MATCHES.length + 0.0001);
         while(revealed < wantMatches && revealed < MATCHES.length){
@@ -765,21 +803,18 @@
         // status phase
         let phase = PHASES[0][1];
         for(const [thr,txt] of PHASES){ if(p >= thr) phase = txt; }
-        statusTxt.textContent = phase;
+        statusLine.textContent = phase;
 
         if(p < 1){ requestAnimationFrame(frame); }
         else {
           scannedEl.textContent = TOTAL_ACCTS.toLocaleString() + ' scanned';
           matchEl.textContent = MATCHES.length + ' matches';
-          progEl.style.width = '100%';
           pctEl.textContent = TARGET_CONF + '%';
-          // footer flips to a positive status-indicator
-          statusEl.classList.remove('status-neutral');
-          statusEl.classList.add('status-positive');
-          statusEl.querySelector('.status-icon').className = 'pi pi-check-circle status-icon';
-          statusTxt.textContent = `Forecast ready — ${TARGET_CONF}% confidence, ${MATCHES.length} matched accounts`;
-          if(spin) spin.style.visibility = 'hidden';
+          // status line flips to a positive "ready" state
+          statusLine.classList.add('is-done');
+          statusLine.innerHTML = `<i class="pi pi-check-circle"></i>Forecast ready — ${TARGET_CONF}% confidence, ${MATCHES.length} matched accounts`;
           setTimeout(()=>{
+            if(cancelled) return;
             closeDialog('aiscanDlg');         // library dialog close
             _scanning = false;
             if(typeof onDone === 'function') onDone();
@@ -806,29 +841,284 @@
       window.runAiForecast = wrapped;
     }
 
-    /* "AI-learned forecast" provenance strip + method cross-check now live in the appendix */
+    /* Forecast Explanation tab content: "AI-learned forecast" provenance strip,
+       the "Why you can trust this forecast" panel, and the method cross-check. */
     function injectAppendixTrust(){
       const c = document.getElementById('appendix-container');
       if(!c || !c.dataset.built) return;                 // built eagerly on load
       if(!document.getElementById('aitProvenance')) c.insertAdjacentHTML('afterbegin', provenanceStrip());
+      // "Why you can trust this forecast" lives under the Forecast Explanation tab,
+      // right after the provenance strip.
+      if(!document.getElementById('aitPanel')){
+        const prov = document.getElementById('aitProvenance');
+        if(prov) prov.insertAdjacentHTML('afterend', trustPanel());
+        else c.insertAdjacentHTML('afterbegin', trustPanel());
+      }
       if(!document.getElementById('aitMethodCard')) c.insertAdjacentHTML('beforeend', methodCompareCard());
     }
 
     function mount(){
       installRunInterstitial();
-      const body = document.getElementById('acc-forecast-body');
-      // In-chart evidence panel (track record, calibration, learnings) — once
-      if(body && !document.getElementById('aitPanel')){
-        const anchor = body.querySelector('.sc-forecast-exp-box');
-        if(anchor) anchor.insertAdjacentHTML('afterend', trustPanel());
-        else body.insertAdjacentHTML('beforeend', trustPanel());
-      }
-      // Move "AI-learned forecast" + method cross-check into the forecast appendix
+      // Provenance strip, "Why you can trust this forecast", and method cross-check
+      // all live under the Forecast Explanation tab (appendix).
       injectAppendixTrust();
     }
 
     if(document.readyState === 'loading') window.addEventListener('DOMContentLoaded', ()=>setTimeout(mount,0));
     else setTimeout(mount,0);
+  })();
+  </script>
+
+  <!-- ============================================================
+       AI COMPARE — reveals a second "AI S-curve" chart beside the
+       main one, contrasting the AI-generated forecast (AI output)
+       with the human-entered forecast (human input).
+       ============================================================ -->
+  <script>
+  (function(){
+    let aiChart = null;
+    let syncing = false;            // reentrancy guard for the main→AI sync
+
+    // AI lift applied to the forecast region only: history (≤ today) is untouched,
+    // then the AI forecast diverges progressively above the human forecast,
+    // reaching ~+13% by the end of the window. Returns a new data array.
+    const AI_LIFT_MAX = 0.13;
+    function liftForecast(arr, todayIdx){
+      if(!Array.isArray(arr)) return arr;
+      const lastIdx = arr.length - 1;
+      const span = Math.max(1, lastIdx - todayIdx);
+      return arr.map((v, i) => {
+        if(v == null || i <= todayIdx) return v;          // identical history
+        const t = (i - todayIdx) / span;                  // 0 → 1 across the forecast
+        return +(v * (1 + AI_LIFT_MAX * t)).toFixed(2);
+      });
+    }
+
+    function lastNonNull(arr){ for(let i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return arr[i]; } return null; }
+
+    function panelVisible(){
+      const p = document.getElementById('aiCurvePanel');
+      return p && p.style.display !== 'none';
+    }
+
+    // Derive the AI panel's datasets from the main chart's CURRENT data:
+    // clone every series, then lift the forecast region so the AI diverges
+    // above the human forecast. Mirrors whatever lines / view are showing.
+    function deriveAiDatasets(){
+      const src = scurveChart.data;
+      const todayIdx = (typeof TODAY_IDX !== 'undefined') ? TODAY_IDX : 6;
+      const datasets = src.datasets.map(ds => {
+        const c = Object.assign({}, ds);
+        c.data = Array.isArray(ds.data) ? ds.data.slice() : ds.data;
+        return c;
+      });
+      // 8/9 = confidence band (around Actual/ETC), 13/14/15 = dashed forecast lines.
+      // The AI forecast is stored in its own dedicated fields, distinct from the
+      // user-adopted forecast on the main chart.
+      const AI_FIELD = { 13: 'Actual/ETC (AI)', 14: 'Incurred/ETC (AI)', 15: 'Earned (AI)' };
+      [13, 14, 15].forEach(i => {
+        if(!datasets[i]) return;
+        datasets[i].data = liftForecast(datasets[i].data, todayIdx);
+        datasets[i].label = AI_FIELD[i];
+      });
+      if(datasets[8] && datasets[13]) datasets[8].data = datasets[13].data.map(v => v==null?null:+(v*1.06).toFixed(2));
+      if(datasets[9] && datasets[13]) datasets[9].data = datasets[13].data.map(v => v==null?null:+(v*0.94).toFixed(2));
+      return datasets;
+    }
+
+    function metric(){
+      return (typeof CHART_METRICS !== 'undefined' && typeof CHART_METRIC !== 'undefined') ? CHART_METRICS[CHART_METRIC] : null;
+    }
+
+    function updateAiFooter(aiDatasets){
+      const foot = document.getElementById('aiCurveFoot');
+      if(!foot) return;
+      const m = metric();
+      const human = lastNonNull(scurveChart.data.datasets[13] ? scurveChart.data.datasets[13].data : []);
+      const aiEnd = lastNonNull(aiDatasets[13] ? aiDatasets[13].data : []);
+      const fmt = v => m ? m.valFmt(v) : '$'+(+v).toFixed(1)+'M';
+      // Legend for the three dedicated AI forecast fields (colors from the lines).
+      const fields = [13, 14, 15].map(i => {
+        const ds = aiDatasets[i];
+        return ds ? `<span class="lg"><span class="sw" style="border-top-color:${ds.borderColor || '#326fd1'}"></span>${ds.label}</span>` : '';
+      }).join('');
+      let delta = '';
+      if(human != null && aiEnd != null){
+        const pct = (aiEnd - human) / human * 100;
+        delta = `<span class="delta">Actual/ETC (AI) <b>${fmt(aiEnd)}</b> vs adopted <b>${fmt(human)}</b> — <b>+${pct.toFixed(1)}%</b></span>`;
+      }
+      foot.innerHTML =
+        '<span class="lg"><i class="pi pi-sparkles" style="color:var(--ait-primary)"></i> AI forecast fields:</span>'+
+        fields + delta;
+    }
+
+    // Position the AI panel's draggable "Today" head at the current TODAY_IDX.
+    function positionAiDragger(chart){
+      const dragger = document.getElementById('aiChartDragger');
+      if(!dragger || !chart) return;
+      const xs = chart.scales.x; if(!xs) return;
+      const todayIdx = (typeof TODAY_IDX !== 'undefined') ? TODAY_IDX : 6;
+      dragger.style.left = xs.getPixelForValue(todayIdx) + 'px';
+      dragger.style.display = '';
+      if(typeof REAL_TODAY_IDX !== 'undefined') dragger.classList.toggle('is-simulated', todayIdx !== REAL_TODAY_IDX);
+      const label = document.getElementById('aiChartDraggerLabel');
+      if(label && typeof MONTH_CALENDAR !== 'undefined') label.textContent = MONTH_CALENDAR[todayIdx] || '';
+    }
+
+    function buildAiChart(){
+      const ctx = document.getElementById('ai-scurve-chart');
+      if(!ctx || typeof Chart === 'undefined' || typeof scurveChart === 'undefined' || !scurveChart) return;
+      const src = scurveChart.data;
+      const m = metric();
+      const datasets = deriveAiDatasets();
+
+      // Keep the AI panel's Today head pinned to TODAY_IDX as the chart redraws.
+      const aiDraggerPlugin = { id:'aiDragger', afterDatasetsDraw(chart){ positionAiDragger(chart); } };
+
+      aiChart = new Chart(ctx, {
+        type: 'bar',                                  // match main (bar datasets + line overlays)
+        data: { labels: src.labels.slice(), datasets },
+        plugins: [aiDraggerPlugin],
+        options:{
+          responsive:true, maintainAspectRatio:false, layout:{padding:{top:22}},
+          interaction:{mode:'index', intersect:false},
+          plugins:{
+            legend:{display:false},
+            tooltip:{ filter:(it)=> !it.dataset.label.startsWith('_') && it.raw != null,
+              callbacks:{ label:(c)=> c.raw==null ? null : ` ${c.dataset.label}: ${m ? m.valFmt(c.raw) : '$'+(+c.raw).toFixed(1)+'M'}` } }
+          },
+          scales:{
+            x:{ grid:{color:'#f3f4f6'}, ticks:{font:{size:11}, color:'#6b7280'},
+                min: scurveChart.options.scales.x.min, max: scurveChart.options.scales.x.max },
+            y:{ position:'left', min:0, max: scurveChart.options.scales.y.max, grid:{color:'#f3f4f6'},
+                title:{display:true, text:(m ? m.title : 'Cumulative cost ($M)'), font:{size:11}, color:'#9ca3af'},
+                ticks:{font:{size:11}, color:'#6b7280', callback:v=> m ? m.axisFmt(v) : '$'+v+'M', stepSize: scurveChart.options.scales.y.ticks.stepSize} }
+          }
+        }
+      });
+      setupAiDragger();
+      updateAiFooter(datasets);
+    }
+
+    // Re-sync the AI chart from the main chart (data, date-range window, footer, head).
+    function syncAiChartFromMain(){
+      if(!aiChart || !panelVisible() || typeof scurveChart === 'undefined' || !scurveChart) return;
+      const datasets = deriveAiDatasets();
+      aiChart.data.labels = scurveChart.data.labels.slice();
+      aiChart.data.datasets = datasets;
+      aiChart.options.scales.x.min = scurveChart.options.scales.x.min;   // follow date-range picker
+      aiChart.options.scales.x.max = scurveChart.options.scales.x.max;
+      aiChart.options.scales.y.max = scurveChart.options.scales.y.max;   // follow account/project scale
+      aiChart.options.scales.y.ticks.stepSize = scurveChart.options.scales.y.ticks.stepSize;
+      aiChart.update('none');
+      updateAiFooter(datasets);
+    }
+
+    // Draggable Today head on the AI panel — drives the SAME simulation as the
+    // main dragger, so moving either head moves both charts.
+    function setupAiDragger(){
+      const dragger = document.getElementById('aiChartDragger');
+      if(!dragger || dragger.dataset.bound) return;
+      dragger.dataset.bound = '1';
+      const handle = dragger.querySelector('.sc-chart-dragger-handle');
+      if(!handle) return;
+      let dragging = false;
+
+      function pointerToIdx(clientX){
+        if(!aiChart) return (typeof TODAY_IDX !== 'undefined') ? TODAY_IDX : 6;
+        const rect = aiChart.canvas.getBoundingClientRect();
+        const idx = Math.round(aiChart.scales.x.getValueForPixel(clientX - rect.left));
+        return Math.max(2, Math.min(22, idx));
+      }
+      function syncSlider(idx){
+        const slider = document.getElementById('scTimeSlider');
+        if(!slider) return;
+        slider.value = idx;
+        const pct = ((idx - +slider.min) / (+slider.max - +slider.min)) * 100;
+        slider.style.setProperty('--fill-pct', pct + '%');
+      }
+      function onMove(e){
+        if(!dragging) return;
+        const idx = pointerToIdx(e.clientX);
+        if(typeof TODAY_IDX !== 'undefined' && idx !== TODAY_IDX && typeof window.updateChartTime === 'function'){
+          window.updateChartTime(idx);   // updates main → afterUpdate hook re-syncs AI
+          syncSlider(idx);
+        }
+      }
+      function onUp(e){
+        if(!dragging) return;
+        dragging = false;
+        handle.releasePointerCapture && handle.releasePointerCapture(e.pointerId);
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+      }
+      handle.addEventListener('pointerdown', e => {
+        dragging = true;
+        handle.setPointerCapture && handle.setPointerCapture(e.pointerId);
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
+        e.preventDefault();
+      });
+    }
+
+    // Whenever the MAIN chart updates (slider, dragger, date-range, periodic,
+    // line toggles, AI run…), mirror it into the AI panel. Deferred + guarded
+    // so we never update a chart inside its own update cycle.
+    if(typeof Chart !== 'undefined'){
+      Chart.register({
+        id: 'aiCompareSync',
+        afterUpdate(chart){
+          if(syncing) return;
+          if(typeof scurveChart === 'undefined' || chart !== scurveChart) return;
+          if(!aiChart || !panelVisible()) return;
+          syncing = true;
+          requestAnimationFrame(()=>{ try{ syncAiChartFromMain(); } finally { syncing = false; } });
+        }
+      });
+    }
+
+    window.toggleAiCompare = function(){
+      const panel = document.getElementById('aiCurvePanel');
+      const btn   = document.getElementById('aiCompareBtn');
+      const row   = document.getElementById('scCompareRow');
+      if(!panel || !btn) return;
+      const show = panel.style.display === 'none';
+      panel.style.display = show ? '' : 'none';
+      btn.classList.toggle('is-active', show);
+      btn.setAttribute('aria-pressed', String(show));
+      const txt = document.getElementById('aiCompareBtnTxt');
+      if(txt) txt.textContent = show ? 'Hide AI compare' : 'AI Compare';
+      if(row) row.classList.toggle('is-comparing', show);
+      if(show){
+        if(!aiChart) buildAiChart(); else { syncAiChartFromMain(); aiChart.resize(); }
+      }
+      // the main chart column changed width — let Chart.js re-fit it
+      if(typeof scurveChart !== 'undefined' && scurveChart && scurveChart.resize){
+        setTimeout(()=>scurveChart.resize(), 0);
+      }
+    };
+  })();
+  </script>
+
+  <!-- ============================================================
+       DEFAULT SELECTION — open on the rolled-up "Project summary"
+       view; the user can then drill into an individual control account.
+       ============================================================ -->
+  <script>
+  (function(){
+    function setDefault(){
+      if(typeof window.selectAccount === 'function' && typeof scurveChart !== 'undefined' && scurveChart){
+        if(typeof ACTIVE_CA_ID === 'undefined' || ACTIVE_CA_ID !== 'project-summary'){
+          window.selectAccount('project-summary');
+        }
+      } else {
+        setTimeout(setDefault, 30);   // chart not built yet — retry shortly
+      }
+    }
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(setDefault, 0));
+    else setTimeout(setDefault, 0);
   })();
   </script>
 </body>

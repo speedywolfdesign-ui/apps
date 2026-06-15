@@ -18,11 +18,47 @@
   var ITEMS = [
     { key: 'project-home', icon: 'pi-home',      label: 'Project Home',      href: 'project-home.html' },
     { key: 'cost',         iconSvg: COST_SVG,    label: 'Cost',              children: [
-      { key: 'control-accounts', label: 'Control Accounts', href: '#' },
-      { key: 'progress',         label: 'Progress',         href: '#' },
-      { key: 'cost-summary',     label: 'Summary',          href: '#' },
-      { key: 'cost-reports',     label: 'Reports',          href: '#' },
-      { key: 'ai-forecasting',   label: 'AI Forecasting',   href: 'scurve-forecast.html' },
+      { key: 'data-entry', label: 'Data Entry', children: [
+        { key: 'control-accounts',  label: 'Control Accounts',  href: '#' },
+        { key: 'staffing-plans',    label: 'Staffing Plans',    href: '#' },
+        { key: 'employee-plans',    label: 'Employee Plans',    href: '#' },
+        { key: 'budget-details',    label: 'Budget Details',    href: '#' },
+        { key: 'commitments',       label: 'Commitments',       href: '#' },
+        { key: 'period-actuals',    label: 'Period Actuals',    href: '#' },
+        { key: 'variance-analysis', label: 'Variance Analysis', href: '#' },
+        { key: 'definitions', label: 'Definitions', children: [
+          { key: 'default-cost-reporting', label: 'Default / Cost Reporting Periods',  href: '#' },
+          { key: 'funding-sources',        label: 'Funding Sources',                   href: '#' },
+          { key: 'project-staff',          label: 'Project Staff',                     href: '#' },
+          { key: 'ledger-ca-mapping',      label: 'Ledger / Control Account Mapping',  href: '#' },
+          { key: 'ledger-ce-mapping',      label: 'Ledger / Control Element Mapping',  href: '#' },
+          { key: 'escalations',            label: 'Escalations',                       href: '#' },
+          { key: 'multipliers',            label: 'Multipliers',                       href: '#' },
+          { key: 'indirect-costs',         label: 'Indirect Costs',                    href: '#' },
+        ]},
+        { key: 'cost-settings',     label: 'Settings',          href: '#' },
+      ]},
+      { key: 'calculations', label: 'Calculations', children: [
+        { key: 'calculate-totals',   label: 'Calculate Totals',        href: '#' },
+        { key: 'spread-time-phased', label: 'Spread Time Phased Data', href: '#' },
+        { key: 'close-period',       label: 'Close Period',            href: '#' },
+        { key: 'other-calculations', label: 'Other Calculations',      href: '#' },
+      ]},
+      { key: 'cost-reports-grp', label: 'Reports', children: [
+        { key: 'cost-reports',  label: 'Reports',       href: '#' },
+        { key: 'lists',         label: 'Lists',         href: '#' },
+        { key: 'cost-summary',  label: 'Summary',       href: '#' },
+        { key: 'excel-reports', label: 'Excel Reports', href: '#' },
+        { key: 'report-writer', label: 'Report Writer', href: '#' },
+      ]},
+      { key: 'import-utilities', label: 'Import / Export & Utilities', children: [
+        { key: 'import-export',         label: 'Import / Export',         href: '#' },
+        { key: 'special-import-export', label: 'Special Import / Export', href: '#' },
+        { key: 'copy-dates',            label: 'Copy Dates to Accounts',  href: '#' },
+        { key: 'validate-data',         label: 'Validate Data',           href: '#' },
+        { key: 'other-utilities',       label: 'Other Utilities',         href: '#' },
+      ]},
+      { key: 'ai-forecasting', label: 'AI Forecasting', href: 'scurve-forecast.html' },
     ]},
     { key: 'field',        icon: 'pi-map',       label: 'Field Management',  href: '#' },
     { key: 'procurement',  icon: 'pi-box',       label: 'Procurement',       children: [
@@ -93,10 +129,24 @@
       var ariaExpanded = isOpen ? 'true' : 'false';
       var ariaHidden   = isOpen ? 'false' : 'true';
 
-      var children = item.children.map(function (child) {
+      // Recursive: a child with its own children becomes an expandable sub-group
+      // (supports any depth — e.g. Cost → Data Entry → Definitions → …)
+      function renderSubLi(child) {
+        if (child.children) {
+          var inner = child.children.map(renderSubLi).join('');
+          return `
+            <li class="lnav-subgroup" data-key="${child.key}">
+              <button class="lnav-sublink lnav-subgroup-btn" onclick="toggleLnavSubGroup(this)" aria-expanded="false">
+                <span class="lnav-sublabel">${child.label}</span>
+                <i class="pi pi-angle-down lnav-subchevron" aria-hidden="true"></i>
+              </button>
+              <ul class="lnav-subsub" aria-hidden="true">${inner}</ul>
+            </li>`;
+        }
         var isActiveSub = child.key === activeSub;
         return `<li><a class="lnav-sublink${isActiveSub ? ' lnav-sublink-active' : ''}" href="${child.href}" onclick="setLnavActive(this)">${child.label}</a></li>`;
-      }).join('');
+      }
+      var children = item.children.map(renderSubLi).join('');
 
       return `
           <div class="lnav-item lnav-has-children${expandedCls}" data-key="${item.key}">

@@ -270,6 +270,15 @@ function toggleLnavGroup(btn) {
   item.classList.toggle('lnav-expanded', !isOpen);
 }
 
+function toggleLnavSubGroup(btn) {
+  const grp = btn.closest('.lnav-subgroup');
+  if (!grp) return;
+  const sub = grp.querySelector('.lnav-subsub');
+  const isOpen = grp.classList.toggle('lnav-subgroup-open');
+  if (sub) sub.setAttribute('aria-hidden', String(!isOpen));
+  btn.setAttribute('aria-expanded', String(isOpen));
+}
+
 function setLnavActive(link) {
   document.querySelectorAll('.lnav-link, .lnav-sublink').forEach(l => {
     l.classList.remove('lnav-link-active', 'lnav-sublink-active');

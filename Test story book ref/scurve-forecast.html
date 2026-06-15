@@ -37,7 +37,7 @@
     <!-- Page title block -->
     <div class="sc-page-title-block">
       <h1 class="page-title" style="margin-bottom:2px">AI driven forecast curves</h1>
-      <!-- <div class="sc-page-subtitle">Control account: CA-1042 · Civil Foundations — Phase 2</div> -->
+      <div class="sc-page-subtitle">Control account: CA-1042 · Civil Foundations — Phase 2</div>
     </div>
 
     <!-- Toolbar -->
@@ -261,12 +261,10 @@
               </div>
             </div>
             <div class="sc-view-toggle">
-              <span class="sc-view-label">Cumulative</span>
-              <label class="sc-toggle-switch" aria-label="Toggle cumulative/periodic">
-                <input type="checkbox" id="togglePeriodic" onchange="toggleChartView(this.checked)" />
-                <span class="sc-toggle-track"></span>
+              <label class="sc-view-check">
+                <input type="checkbox" id="togglePeriodic" onchange="toggleChartView(this.checked)" aria-label="Show periodic view" />
+                <span class="sc-view-label">Periodic</span>
               </label>
-              <span class="sc-view-label">Periodic</span>
             </div>
           </div>
         </div>

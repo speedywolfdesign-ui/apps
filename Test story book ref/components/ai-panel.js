@@ -461,7 +461,7 @@
     var isAi    = window.AI_FORECAST_ACTIVE;
     var caBtn   = document.getElementById('acctSelectorBtn');
     var ca      = caBtn ? caBtn.textContent.trim().replace(/\s+/g,' ') : '—';
-    return '<strong>Current Forecast Status</strong>'
+    return '<strong>Current forecast status</strong>'
       + '<div style="margin-top:8px;font-size:13px;line-height:1.9">'
       + '<div>📋 <strong>Account:</strong> ' + ca + '</div>'
       + '<div>📅 <strong>Simulated to:</strong> ' + month + (window.AI_FORECAST_ACTIVE ? ' <em>(AI forecast active)</em>' : '') + '</div>'
@@ -469,7 +469,7 @@
       + '<div>✅ <strong>% Complete:</strong> ' + pct + '</div>'
       + '<div>📊 <strong>CPI / SPI:</strong> ' + cpispi + '</div>'
       + '<div>🏁 <strong>Forecast completion:</strong> ' + comp + '</div>'
-      + (isAi ? '<div style="margin-top:6px;padding:5px 8px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1d4ed8">⚡ AI Forecast is active — curves reflect matched account analysis</div>' : '')
+      + (isAi ? '<div style="margin-top:6px;padding:5px 8px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1d4ed8">⚡ AI forecast is active — curves reflect matched account analysis</div>' : '')
       + '</div>';
   }
 
@@ -556,7 +556,7 @@
       + '<div>📅 <strong>Forecast completion:</strong> ' + compLabel + ' <em>(' + slipText + ' vs ' + schedLabel + ' plan)</em></div>'
       + '<div>💰 <strong>EAC (cost unchanged):</strong> $' + eac + 'M</div>'
       + '<div style="margin-top:6px;padding:6px 10px;background:#fefce8;border:1px solid #fde68a;border-radius:6px;font-size:12px;color:#92400e">'
-      + '⚠ This is a schedule-only simulation. To see the effect on the chart, open Driver Settings, adjust SPI weight, and run AI Forecast.'
+      + '⚠ This is a schedule-only simulation. To see the effect on the chart, open driver settings, adjust SPI weight, and run AI forecast.'
       + '</div></div>';
   }
 
@@ -570,7 +570,7 @@
       + '<div>💰 <strong>Implied EAC:</strong> $' + eac + 'M (' + sign + varPct + '% vs $' + bac.toFixed(1) + 'M budget)</div>'
       + '<div>📈 <strong>Cost efficiency:</strong> $' + (1 / cpi).toFixed(2) + ' spent per $1.00 of earned value</div>'
       + '<div style="margin-top:6px;padding:6px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;font-size:12px;color:#1e40af">'
-      + '💡 Adjust the SPI/CPI weight in Driver Settings and run AI Forecast to reflect this scenario on the chart.'
+      + '💡 Adjust the SPI/CPI weight in driver settings and run AI forecast to reflect this scenario on the chart.'
       + '</div></div>';
   }
 
@@ -590,7 +590,7 @@
         + '<span style="width:36px;text-align:right;font-size:12px;color:#6b7280">' + pct + '%</span>'
         + '</div>';
     }).join('');
-    return '<strong>Active Driver Weights</strong>'
+    return '<strong>Active driver weights</strong>'
       + '<div style="margin-top:10px">' + rows + '</div>'
       + '<div style="margin-top:8px;font-size:12px;color:#6b7280">Open <em>Driver settings</em> to adjust. Run AI forecast to apply.</div>';
   }
@@ -607,11 +607,11 @@
     var eacStr  = '$' + pd.eac + 'M';
     var budgStr = '$' + pd.approvedBudget + 'M';
     var overStr = '+$' + pd.costOverrun + 'M (+' + Math.round(pd.costOverrun / pd.approvedBudget * 100) + '%)';
-    return '<strong>Forecast Analysis — Cisco Systems</strong>'
+    return '<strong>Forecast analysis — Cisco Systems</strong>'
       + '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;font-size:13px">'
       + '<div>📊 <strong>EAC (Estimate at Completion):</strong> ' + eacStr + '</div>'
       + '<div style="padding-left:20px;color:#64748b">Budget ' + budgStr + ' → Overrun <strong style="color:#e31b0c">' + overStr + '</strong></div>'
-      + '<div style="margin-top:2px">📅 <strong>Forecast Completion:</strong> ' + pd.forecastCompletion + '</div>'
+      + '<div style="margin-top:2px">📅 <strong>Forecast completion:</strong> ' + pd.forecastCompletion + '</div>'
       + '<div style="padding-left:20px;color:#64748b">Planned ' + pd.plannedCompletion + ' → Variance <strong>' + Math.abs(pd.scheduleVarianceDays) + ' days ' + (pd.scheduleVarianceDays < 0 ? 'late' : 'early') + '</strong></div>'
       + '<div style="margin-top:2px">⚡ <strong>Key drivers:</strong></div>'
       + '<div style="padding-left:20px;color:#64748b">'
@@ -688,7 +688,7 @@
       // S-curve page fallback
       return {
         type: 'simple',
-        reply: 'On this page I can: <strong>simulate time</strong> ("Simulate to Jan 2026"), <strong>run AI Forecast</strong>, <strong>switch accounts</strong> ("Switch to MEP Systems"), answer <strong>what-if questions</strong> ("What if SPI is 0.95?"), or show <strong>driver weights</strong>. What would you like to do?'
+        reply: 'On this page I can: <strong>simulate time</strong> ("Simulate to Jan 2026"), <strong>run AI forecast</strong>, <strong>switch accounts</strong> ("Switch to MEP Systems"), answer <strong>what-if questions</strong> ("What if SPI is 0.95?"), or show <strong>driver weights</strong>. What would you like to do?'
       };
     }
 
@@ -714,7 +714,7 @@
       var spend = (1 / pd.cpi).toFixed(2);
       return {
         type: 'simple',
-        reply: '<strong>Cost Performance (CPI: <span style="color:#e31b0c">' + pd.cpi + '</span>)</strong>'
+        reply: '<strong>Cost performance (CPI: <span style="color:#e31b0c">' + pd.cpi + '</span>)</strong>'
           + '<div style="margin-top:8px;font-size:13px;line-height:1.7">'
           + 'A CPI of <strong>' + pd.cpi + '</strong> means the project spends <strong>$' + spend + '</strong> for every $1.00 budgeted.<br><br>'
           + 'This produces an Estimate at Completion of <strong>$' + pd.eac + 'M</strong> — '
@@ -728,7 +728,7 @@
     if (pd && /spi|schedule.*perform|s.?curve|on.*track|behind.*schedule/i.test(t)) {
       return {
         type: 'simple',
-        reply: '<strong>Schedule Performance (SPI: <span style="color:#16a34a">' + pd.spi + '</span>)</strong>'
+        reply: '<strong>Schedule performance (SPI: <span style="color:#16a34a">' + pd.spi + '</span>)</strong>'
           + '<div style="margin-top:8px;font-size:13px;line-height:1.7">'
           + 'SPI above 1.0 means the project is <strong>ahead of schedule</strong> — earning value 23% faster than planned.<br><br>'
           + 'Forecast completion: <strong>' + pd.forecastCompletion + '</strong> vs planned <strong>' + pd.plannedCompletion + '</strong>.<br>'
@@ -742,7 +742,7 @@
     if (pd && /\brisk|at.risk|what.*wrong|danger|concern/i.test(t)) {
       return {
         type: 'simple',
-        reply: '<strong>Risk Assessment — Cisco Systems</strong>'
+        reply: '<strong>Risk assessment — Cisco Systems</strong>'
           + '<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:13px">'
           + '<div>🔴 <strong>Cost — HIGH RISK</strong><br>'
           + '<span style="color:#64748b;padding-left:20px;display:block">CPI ' + pd.cpi + ' → $' + pd.costOverrun + 'M projected overrun. Immediate action needed.</span></div>'
@@ -758,7 +758,7 @@
     if (pd && /summarize|summary|overview|status|project.*perform/i.test(t)) {
       return {
         type: 'simple',
-        reply: '<strong>Project Summary — Cisco Systems</strong>'
+        reply: '<strong>Project summary — Cisco Systems</strong>'
           + '<div style="margin-top:8px;font-size:13px;line-height:1.8">'
           + 'Budget: <strong>$' + pd.approvedBudget + 'M</strong> approved<br>'
           + 'EAC: <strong>$' + pd.eac + 'M</strong> forecast (+$' + pd.costOverrun + 'M overrun)<br>'

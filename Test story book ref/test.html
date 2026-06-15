@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cost Management — Control Accounts — Contruent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <link rel="stylesheet" href="components/tokens.css" />
+  <style>
+    /* ============================================================
+       Control Accounts — Cost Management
+       Faithful recreation of the legacy desktop screen, re-laid-out
+       on a strict alignment grid with Contruent design tokens.
+       Prefix: ca-  (control accounts)
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --ca-chrome:        #142c54;   /* brand deep navy — app chrome */
+      --ca-chrome-2:      #1d3a6e;   /* lighter navy — module bar / panel heads */
+      --ca-ribbon-bg:     #ffffff;
+      --ca-toolbar-bg:    #f4f6f9;
+      --ca-row-alt:       #fafbfc;
+      --ca-row-sel:       #e8f0fc;   /* selected grid row — brand tint */
+      --ca-grid-line:     #e5e7eb;
+      --ca-field-h:       28px;      /* dense field height */
+      --ca-label-w:       128px;     /* shared label column width (alignment grid) */
+      --ca-fs:            12px;
+    }
+
+    html, body {
+      margin: 0; height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: var(--ca-fs);
+      color: var(--default-text);
+      background: var(--default-surface-secondary);
+    }
+    body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* ── App title bar ─────────────────────────────────────────── */
+    .ca-titlebar {
+      flex-shrink: 0;
+      height: 30px; display: flex; align-items: center; justify-content: center;
+      position: relative;
+      background: var(--ca-chrome); color: #fff;
+      font-size: 13px; font-weight: 600; letter-spacing: .01em;
+    }
+    .ca-titlebar .ca-win-btns {
+      position: absolute; right: 8px; top: 0; height: 100%;
+      display: flex; align-items: center; gap: 2px;
+    }
+    .ca-titlebar .ca-win-btns button {
+      width: 30px; height: 22px; border: none; background: transparent;
+      color: rgba(255,255,255,.8); cursor: pointer; border-radius: var(--border-rounded);
+      font-size: 11px;
+    }
+    .ca-titlebar .ca-win-btns button:hover { background: rgba(255,255,255,.12); }
+
+    /* ── Module tab bar ────────────────────────────────────────── */
+    .ca-modules {
+      flex-shrink: 0;
+      display: flex; align-items: stretch; gap: 0;
+      background: var(--ca-chrome-2); padding: 0 8px;
+      position: relative;
+    }
+    .ca-mod-launcher {
+      display: flex; align-items: center; gap: 4px;
+      padding: 0 10px; margin: 4px 6px 0 0;
+      background: var(--brand-fill); color: #fff;
+      border-radius: var(--border-rounded) var(--border-rounded) 0 0;
+      font-weight: 600; cursor: pointer;
+    }
+    .ca-mod {
+      display: flex; align-items: center;
+      padding: 8px 14px 7px; margin-top: 4px;
+      color: rgba(255,255,255,.78); cursor: pointer; white-space: nowrap;
+      border-radius: var(--border-rounded) var(--border-rounded) 0 0;
+      font-weight: 500;
+    }
+    .ca-mod:hover { background: rgba(255,255,255,.08); color: #fff; }
+    .ca-mod.is-active {
+      background: var(--ca-ribbon-bg); color: var(--ca-chrome); font-weight: 600;
+    }
+    .ca-mod-tools { margin-left: auto; display: flex; align-items: center; gap: 6px; padding-right: 4px; }
+    .ca-mod-tools .ca-badge {
+      background: var(--button-danger-background, #e31b0c); color: #fff;
+      font-size: 10px; font-weight: 700; border-radius: var(--border-rounded);
+      padding: 1px 5px;
+    }
+    .ca-mod-tools i { color: rgba(255,255,255,.8); font-size: 13px; cursor: pointer; }
+
+    /* ── Ribbon ────────────────────────────────────────────────── */
+    .ca-ribbon {
+      flex-shrink: 0;
+      display: flex; align-items: stretch;
+      background: var(--ca-ribbon-bg);
+      border-bottom: 1px solid var(--ca-grid-line);
+      padding: 6px 4px 0;
+      overflow-x: auto;
+    }
+    .ca-ribbon-group {
+      display: flex; flex-direction: column;
+      padding: 0 6px 2px;
+      border-right: 1px solid var(--ca-grid-line);
+    }
+    .ca-ribbon-items { display: flex; gap: 2px; flex: 1; align-items: flex-start; padding: 2px 0; }
+    .ca-ribbon-label {
+      text-align: center; color: var(--default-text-secondary);
+      font-size: 11px; padding-top: 3px; border-top: 1px solid var(--ca-grid-line); margin-top: 2px;
+    }
+    .ca-rb {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      width: 60px; padding: 4px 2px; border: 1px solid transparent;
+      background: none; cursor: pointer; border-radius: var(--border-rounded);
+      color: var(--default-text); font-family: inherit; font-size: 11px; line-height: 1.15;
+      text-align: center;
+    }
+    .ca-rb:hover { background: var(--ca-row-sel); border-color: #cdddf6; }
+    .ca-rb i { font-size: 19px; color: var(--brand-fill); }
+    .ca-rb.is-active { background: var(--ca-row-sel); border-color: #aacaf3; }
+    .ca-rb span { display: block; word-break: break-word; }
+
+    /* ── Document tab + action toolbar ─────────────────────────── */
+    .ca-doctab-row {
+      flex-shrink: 0; display: flex; align-items: flex-end;
+      background: var(--ca-toolbar-bg); padding: 4px 8px 0; gap: 4px;
+      border-bottom: 1px solid var(--ca-grid-line);
+    }
+    .ca-doctab {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px; background: #fff;
+      border: 1px solid var(--ca-grid-line); border-bottom: none;
+      border-radius: var(--border-rounded) var(--border-rounded) 0 0;
+      font-weight: 600; color: var(--ca-chrome);
+    }
+    .ca-doctab i { color: var(--brand-fill); }
+    .ca-doctab .ca-x { color: var(--default-text-secondary); cursor: pointer; font-size: 11px; }
+    .ca-doctab .ca-x:hover { color: var(--button-danger-background, #e31b0c); }
+
+    .ca-toolbar {
+      flex-shrink: 0; display: flex; align-items: center; gap: 4px;
+      background: var(--ca-toolbar-bg); padding: 5px 8px;
+      border-bottom: 1px solid var(--ca-grid-line); flex-wrap: wrap;
+    }
+    .ca-tb-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      height: 26px; padding: 0 8px; background: #fff;
+      border: 1px solid var(--default-surface-border); border-radius: var(--border-rounded);
+      color: var(--default-text); font-family: inherit; font-size: var(--ca-fs); cursor: pointer;
+      white-space: nowrap;
+    }
+    .ca-tb-btn:hover { background: var(--ca-row-sel); border-color: #aacaf3; }
+    .ca-tb-btn i { font-size: 12px; color: var(--brand-fill); }
+    .ca-tb-btn.ca-icon { padding: 0 6px; }
+    .ca-tb-btn.ca-danger i { color: var(--button-danger-background, #e31b0c); }
+    .ca-tb-sep { width: 1px; align-self: stretch; background: var(--ca-grid-line); margin: 2px 4px; }
+    .ca-pager {
+      display: inline-flex; align-items: center; gap: 2px;
+      background: #fff; border: 1px solid var(--default-surface-border);
+      border-radius: var(--border-rounded); height: 26px; padding: 0 4px;
+    }
+    .ca-pager .ca-count { padding: 0 8px; color: var(--default-text-secondary); }
+    .ca-pager button { border: none; background: none; cursor: pointer; color: var(--brand-fill); padding: 4px; font-size: 11px; }
+    .ca-pager button:hover { color: var(--brand-fill-hover); }
+    .ca-toolbar .ca-search {
+      margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+      height: 26px; padding: 0 8px; background: #fff;
+      border: 1px solid var(--default-surface-border); border-radius: var(--border-rounded);
+      min-width: 240px;
+    }
+    .ca-toolbar .ca-search input { border: none; outline: none; flex: 1; font: inherit; background: none; }
+    .ca-toolbar .ca-search i { color: var(--default-text-secondary); font-size: 12px; }
+
+    /* ── Workspace: split body ─────────────────────────────────── */
+    .ca-workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 8px; gap: 8px; }
+    .ca-split-top { flex: 1; display: flex; gap: 8px; min-height: 0; }
+
+    .ca-panel {
+      display: flex; flex-direction: column; min-height: 0;
+      background: #fff; border: 1px solid var(--ca-grid-line);
+      border-radius: var(--border-rounded); overflow: hidden;
+    }
+    .ca-panel-head {
+      flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+      height: 28px; padding: 0 10px;
+      background: linear-gradient(var(--ca-chrome-2), var(--ca-chrome));
+      color: #fff; font-weight: 600;
+    }
+    .ca-panel-head .ca-head-tools { margin-left: auto; display: flex; gap: 8px; }
+    .ca-panel-head i { color: rgba(255,255,255,.85); font-size: 12px; cursor: pointer; }
+    .ca-panel-body { flex: 1; overflow: auto; min-height: 0; }
+
+    /* Left navigation grid */
+    .ca-nav { width: 460px; flex-shrink: 0; }
+    table.ca-grid { width: 100%; border-collapse: collapse; }
+    table.ca-grid th {
+      position: sticky; top: 0; z-index: 1;
+      text-align: left; font-weight: 600; color: var(--default-text);
+      background: var(--default-surface-secondary);
+      border-bottom: 1px solid var(--default-surface-border);
+      border-right: 1px solid var(--ca-grid-line);
+      padding: 6px 10px; white-space: nowrap;
+    }
+    table.ca-grid td {
+      padding: 5px 10px; border-bottom: 1px solid var(--ca-grid-line);
+      border-right: 1px solid var(--ca-grid-line); white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    table.ca-grid tr:nth-child(even) td { background: var(--ca-row-alt); }
+    table.ca-grid tr:hover td { background: var(--ca-row-sel); }
+    table.ca-grid tr.is-selected td { background: var(--ca-row-sel); box-shadow: inset 2px 0 0 var(--brand-fill); }
+    .ca-mono { font-variant-numeric: tabular-nums; color: var(--ca-chrome); }
+    .ca-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* ── Data form ─────────────────────────────────────────────── */
+    .ca-data { flex: 1; min-width: 0; }
+    .ca-form { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* Alignment grid: every field is [label | control]; columns line up across rows */
+    .ca-field-grid {
+      display: grid;
+      grid-template-columns: var(--ca-label-w) minmax(180px, 1fr) var(--ca-label-w) minmax(160px, 320px);
+      column-gap: 16px; row-gap: 10px; align-items: center;
+    }
+    .ca-field-grid .ca-span-control { grid-column: 2 / 5; }   /* description spans all field cols */
+    .ca-field-grid .ca-span-row     { grid-column: 1 / 5; }
+    .ca-label { font-weight: 600; color: var(--default-text); text-align: right; }
+    .ca-label.ca-label-left { text-align: left; }
+
+    .ca-input, .ca-select {
+      height: var(--ca-field-h); width: 100%;
+      padding: 0 8px; font: inherit; color: var(--default-text);
+      background: #fff; border: 1px solid var(--input-border);
+      border-radius: var(--border-rounded); outline: none;
+    }
+    .ca-select { padding-right: 4px; cursor: pointer; appearance: auto; }
+    .ca-input:focus, .ca-select:focus { border-color: var(--brand-fill); box-shadow: 0 0 0 2px rgba(50,111,209,.18); }
+    .ca-input.ca-highlight { background: #cfe0fa; }   /* matches the selected/edited field in legacy UI */
+    .ca-checkbox { display: inline-flex; align-items: center; gap: 6px; }
+    .ca-checkbox input { width: 14px; height: 14px; accent-color: var(--brand-fill); }
+
+    /* Inline subgroup row (Master Account / Vendor / Prime / Labor Rate) */
+    .ca-inline-row {
+      grid-column: 1 / 5; display: grid;
+      grid-template-columns: var(--ca-label-w) minmax(180px,1fr) 96px minmax(150px,260px) auto 120px minmax(120px,200px);
+      column-gap: 12px; align-items: center;
+    }
+
+    /* Fieldset card */
+    .ca-card { border: 1px solid var(--ca-grid-line); border-radius: var(--border-rounded); }
+    .ca-card-head {
+      padding: 5px 10px; font-weight: 600; color: var(--ca-chrome);
+      background: var(--default-surface-secondary); border-bottom: 1px solid var(--ca-grid-line);
+    }
+    .ca-card-body { padding: 10px; }
+
+    /* Totals matrix — label col + 9 numeric cols, all on one grid */
+    .ca-totals {
+      display: grid;
+      grid-template-columns: 56px repeat(9, minmax(76px, 1fr));
+      gap: 0;
+    }
+    .ca-totals .ca-th {
+      font-weight: 600; color: var(--default-text-secondary);
+      font-size: 11px; line-height: 1.25; text-align: right;
+      padding: 4px 8px 6px; align-self: end;
+    }
+    .ca-totals .ca-rowlabel {
+      font-weight: 600; color: var(--default-text);
+      display: flex; align-items: center; padding: 4px 6px;
+    }
+    .ca-totals .ca-cell { padding: 3px 4px; }
+    .ca-totals .ca-cell input {
+      width: 100%; height: 26px; text-align: right; font: inherit;
+      font-variant-numeric: tabular-nums;
+      padding: 0 8px; border: 1px solid var(--input-border);
+      border-radius: var(--border-rounded); background: #fff; outline: none; color: var(--default-text);
+    }
+    .ca-totals .ca-cell input:focus { border-color: var(--brand-fill); box-shadow: 0 0 0 2px rgba(50,111,209,.18); }
+    .ca-totals .ca-cell input:read-only { background: var(--default-surface-secondary); color: var(--default-text); }
+
+    /* Bottom trio: Percent Complete | Schedule Dates | Time Phased Curves */
+    .ca-trio { display: grid; grid-template-columns: 240px 1fr 360px; gap: 12px; align-items: start; }
+    .ca-mini-grid { display: grid; align-items: center; column-gap: 10px; row-gap: 8px; }
+    .ca-pct-grid   { grid-template-columns: 84px 1fr; }
+    .ca-sched-grid { grid-template-columns: 84px repeat(4, 1fr); }
+    .ca-curve-grid { grid-template-columns: 130px 1fr; }
+    .ca-col-head { font-weight: 600; color: var(--default-text-secondary); font-size: 11px; text-align: center; }
+    .ca-mini-grid .ca-label { text-align: left; font-weight: 600; }
+
+    /* ── Bottom panel: Groups / Breakdown Structures ───────────── */
+    .ca-split-bottom { height: 240px; flex-shrink: 0; display: flex; flex-direction: column; }
+    .ca-bottom-grid th:nth-child(1), .ca-bottom-grid td:nth-child(1) { width: 280px; }
+    .ca-bottom-grid th:nth-child(2), .ca-bottom-grid td:nth-child(2) { width: 200px; }
+    .ca-bottom-grid th:nth-child(3), .ca-bottom-grid td:nth-child(3) { width: 160px; }
+    .ca-link { color: var(--brand-fill); }
+
+    /* Bottom tab strip */
+    .ca-tabstrip {
+      flex-shrink: 0; display: flex; align-items: stretch; gap: 0;
+      background: var(--ca-toolbar-bg); border-top: 1px solid var(--ca-grid-line);
+      overflow-x: auto;
+    }
+    .ca-tab {
+      padding: 7px 14px; white-space: nowrap; cursor: pointer;
+      color: var(--default-text-secondary); border-right: 1px solid var(--ca-grid-line);
+      font-weight: 500;
+    }
+    .ca-tab:hover { background: #fff; color: var(--default-text); }
+    .ca-tab.is-active { background: var(--ca-chrome); color: #fff; font-weight: 600; }
+
+    /* thin scrollbars to keep the dense look tidy */
+    .ca-panel-body::-webkit-scrollbar, .ca-ribbon::-webkit-scrollbar,
+    .ca-tabstrip::-webkit-scrollbar { height: 9px; width: 9px; }
+    .ca-panel-body::-webkit-scrollbar-thumb, .ca-ribbon::-webkit-scrollbar-thumb,
+    .ca-tabstrip::-webkit-scrollbar-thumb { background: #c7cdd6; border-radius: 6px; }
+
+    /* The totals matrix never compresses below its readable width — it
+       scrolls horizontally inside its card when the viewport is narrow. */
+    .ca-card-body--scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* momentum scrolling on the touch-scrollable regions */
+    .ca-ribbon, .ca-tabstrip, .ca-panel-body, .ca-toolbar { -webkit-overflow-scrolling: touch; }
+
+    /* ============================================================
+       RESPONSIVE — iPad
+       · landscape (≤1200px): slim the nav, let dense grids scroll
+       · portrait  (≤834px):  stack the split, one field per row
+       · coarse pointer:      larger touch targets
+       ============================================================ */
+
+    /* ── iPad landscape and down ───────────────────────────────── */
+    @media (max-width: 1200px) {
+      .ca-nav { width: 300px; }
+      .ca-totals { min-width: 720px; }           /* keep columns readable; card scrolls */
+      .ca-trio { grid-template-columns: 1fr 1fr; }
+      .ca-trio > :nth-child(3) { grid-column: 1 / -1; }   /* curves card spans full width */
+      .ca-field-grid {
+        grid-template-columns: var(--ca-label-w) minmax(150px, 1fr) var(--ca-label-w) minmax(140px, 1fr);
+      }
+    }
+
+    /* ── iPad portrait and down ────────────────────────────────── */
+    @media (max-width: 834px) {
+      /* Switch from a locked viewport with inner-scrolling panels to
+         natural document scrolling — far more comfortable on touch. */
+      body { height: auto; min-height: 100vh; overflow: auto; }
+      .ca-workspace { flex: initial; }
+      .ca-split-top { flex-direction: column; flex: initial; }
+
+      /* Nav grid stacks on top, capped so the form is reachable */
+      .ca-nav { width: 100%; }
+      .ca-nav .ca-panel-body { max-height: 260px; }
+
+      .ca-data .ca-panel-body { overflow: visible; }   /* form flows in document */
+
+      /* One field per row — label above-grid stays aligned at 2 columns */
+      .ca-field-grid { grid-template-columns: var(--ca-label-w) 1fr; }
+      .ca-field-grid .ca-span-control { grid-column: 2 / 3; }
+
+      /* Inline subgroup row: stack into label | control pairs.
+         Clamp the span to the 2 real columns — its base `1 / 5` would
+         spawn implicit columns that the identity fields flow into,
+         leaving Account ID + Currency stuck on one row. */
+      .ca-inline-row {
+        grid-column: 1 / -1;
+        grid-template-columns: var(--ca-label-w) 1fr;
+        row-gap: 10px;
+      }
+      .ca-inline-row .ca-checkbox { grid-column: 1 / -1; }   /* Prime Contract on its own row */
+      .ca-label.ca-label-left { text-align: right; }         /* match the column rhythm */
+
+      /* Trio of cards stacks; each gets full width */
+      .ca-trio { grid-template-columns: 1fr; }
+      .ca-trio > :nth-child(3) { grid-column: auto; }
+
+      /* Bottom panel grows with content instead of a fixed slice */
+      .ca-split-bottom { height: auto; }
+      .ca-split-bottom .ca-panel-body { max-height: 320px; }
+    }
+
+    /* Tighter still — small iPad portrait / large phones */
+    @media (max-width: 600px) {
+      :root { --ca-label-w: 104px; }
+      .ca-field-grid, .ca-inline-row { grid-template-columns: var(--ca-label-w) 1fr; }
+      .ca-sched-grid { min-width: 520px; }       /* dates row scrolls within its card */
+      .ca-trio .ca-card-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+
+    /* ── Touch targets (any coarse-pointer device, incl. iPad) ──── */
+    @media (pointer: coarse) {
+      :root { --ca-field-h: 36px; }
+      .ca-tb-btn, .ca-pager { height: 34px; }
+      .ca-pager button { padding: 8px; }
+      .ca-tab { padding: 11px 16px; }
+      .ca-rb { padding: 7px 4px; }
+      table.ca-grid td { padding: 9px 10px; }       /* roomier rows for tapping */
+      .ca-totals .ca-cell input { height: 32px; }
+      .ca-mod { padding: 11px 14px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── App title bar ─────────────────────────────────────────── -->
+  <div class="ca-titlebar">
+    Contruent — Z · Project Z — All Modules
+    <div class="ca-win-btns">
+      <button aria-label="Minimize"><i class="pi pi-minus"></i></button>
+      <button aria-label="Maximize"><i class="pi pi-stop"></i></button>
+      <button aria-label="Close"><i class="pi pi-times"></i></button>
+    </div>
+  </div>
+
+  <!-- ── Module tabs ───────────────────────────────────────────── -->
+  <nav class="ca-modules">
+    <div class="ca-mod-launcher"><i class="pi pi-th-large"></i> <i class="pi pi-chevron-down" style="font-size:10px"></i></div>
+    <div class="ca-mod">Admin</div>
+    <div class="ca-mod">Enterprise</div>
+    <div class="ca-mod">Project</div>
+    <div class="ca-mod is-active">Cost Management <span style="color:var(--default-text-secondary);font-weight:500;margin-left:4px">(Jun '18)</span></div>
+    <div class="ca-mod">Engineering <span style="opacity:.7;margin-left:3px">(5/15/2018)</span></div>
+    <div class="ca-mod">Field <span style="opacity:.7;margin-left:3px">(8/17/2018)</span></div>
+    <div class="ca-mod">Equip/Matl</div>
+    <div class="ca-mod">Procurement</div>
+    <div class="ca-mod">Contracts</div>
+    <div class="ca-mod">Prime</div>
+    <div class="ca-mod">Invoices</div>
+    <div class="ca-mod">Schedule</div>
+    <div class="ca-mod">Change</div>
+    <div class="ca-mod-tools">
+      <span class="ca-badge">2</span>
+      <i class="pi pi-comments" title="Messages"></i>
+      <i class="pi pi-question-circle" title="Help"></i>
+      <i class="pi pi-info-circle" title="About"></i>
+    </div>
+  </nav>
+
+  <!-- ── Ribbon ────────────────────────────────────────────────── -->
+  <div class="ca-ribbon">
+    <div class="ca-ribbon-group">
+      <div class="ca-ribbon-items">
+        <button class="ca-rb is-active"><i class="pi pi-id-card"></i><span>Control Accounts</span></button>
+        <button class="ca-rb"><i class="pi pi-users"></i><span>Staffing Plans</span></button>
+        <button class="ca-rb"><i class="pi pi-user"></i><span>Employee Plans</span></button>
+        <button class="ca-rb"><i class="pi pi-wallet"></i><span>Budget Details</span></button>
+        <button class="ca-rb"><i class="pi pi-check-square"></i><span>Commitments</span></button>
+        <button class="ca-rb"><i class="pi pi-calendar"></i><span>Period Actuals</span></button>
+        <button class="ca-rb"><i class="pi pi-chart-line"></i><span>Variance Analysis</span></button>
+        <button class="ca-rb"><i class="pi pi-sitemap"></i><span>Definitions <i class="pi pi-chevron-down" style="font-size:8px"></i></span></button>
+        <button class="ca-rb"><i class="pi pi-cog"></i><span>Settings</span></button>
+      </div>
+      <div class="ca-ribbon-label">Data Entry</div>
+    </div>
+    <div class="ca-ribbon-group">
+      <div class="ca-ribbon-items">
+        <button class="ca-rb"><i class="pi pi-plus-circle"></i><span>Calculate Totals</span></button>
+        <button class="ca-rb"><i class="pi pi-table"></i><span>Spread Time Phased Data</span></button>
+        <button class="ca-rb"><i class="pi pi-calendar-times"></i><span>Close Period</span></button>
+        <button class="ca-rb"><i class="pi pi-sliders-h"></i><span>Other Calculations <i class="pi pi-chevron-down" style="font-size:8px"></i></span></button>
+      </div>
+      <div class="ca-ribbon-label">Calculations</div>
+    </div>
+    <div class="ca-ribbon-group">
+      <div class="ca-ribbon-items">
+        <button class="ca-rb"><i class="pi pi-chart-bar"></i><span>Reports</span></button>
+        <button class="ca-rb"><i class="pi pi-list"></i><span>Lists</span></button>
+        <button class="ca-rb"><i class="pi pi-globe"></i><span>Summary</span></button>
+        <button class="ca-rb"><i class="pi pi-file-excel"></i><span>Excel Reports</span></button>
+        <button class="ca-rb"><i class="pi pi-file-edit"></i><span>Report Writer</span></button>
+      </div>
+      <div class="ca-ribbon-label">Reports</div>
+    </div>
+    <div class="ca-ribbon-group">
+      <div class="ca-ribbon-items">
+        <button class="ca-rb"><i class="pi pi-sync"></i><span>Import/Export</span></button>
+        <button class="ca-rb"><i class="pi pi-cloud-upload"></i><span>Special Import/Export <i class="pi pi-chevron-down" style="font-size:8px"></i></span></button>
+      </div>
+      <div class="ca-ribbon-label">Import/Export</div>
+    </div>
+    <div class="ca-ribbon-group">
+      <div class="ca-ribbon-items">
+        <button class="ca-rb"><i class="pi pi-copy"></i><span>Copy Dates To Accounts</span></button>
+        <button class="ca-rb"><i class="pi pi-verified"></i><span>Validate Data</span></button>
+        <button class="ca-rb"><i class="pi pi-wrench"></i><span>Other Utilities <i class="pi pi-chevron-down" style="font-size:8px"></i></span></button>
+      </div>
+      <div class="ca-ribbon-label">Utilities</div>
+    </div>
+  </div>
+
+  <!-- ── Document tab ──────────────────────────────────────────── -->
+  <div class="ca-doctab-row">
+    <div class="ca-doctab"><i class="pi pi-id-card"></i> Control Accounts <i class="pi pi-times ca-x"></i></div>
+  </div>
+
+  <!-- ── Action toolbar ────────────────────────────────────────── -->
+  <div class="ca-toolbar">
+    <button class="ca-tb-btn"><i class="pi pi-table"></i> Grid Mode</button>
+    <span class="ca-tb-sep"></span>
+    <div class="ca-pager">
+      <button title="First"><i class="pi pi-angle-double-left"></i></button>
+      <button title="Previous"><i class="pi pi-angle-left"></i></button>
+      <span class="ca-count">1 of 41</span>
+      <button title="Next"><i class="pi pi-angle-right"></i></button>
+      <button title="Last"><i class="pi pi-angle-double-right"></i></button>
+    </div>
+    <span class="ca-tb-sep"></span>
+    <button class="ca-tb-btn"><i class="pi pi-plus" style="color:#3f9242"></i> Add</button>
+    <button class="ca-tb-btn ca-danger"><i class="pi pi-times"></i> Delete</button>
+    <button class="ca-tb-btn ca-icon" title="Save"><i class="pi pi-save"></i></button>
+    <button class="ca-tb-btn ca-icon" title="Undo"><i class="pi pi-undo"></i></button>
+    <button class="ca-tb-btn ca-icon" title="Refresh"><i class="pi pi-refresh"></i></button>
+    <span class="ca-tb-sep"></span>
+    <button class="ca-tb-btn"><i class="pi pi-filter"></i> Filter</button>
+    <button class="ca-tb-btn"><i class="pi pi-wrench"></i> Tools <i class="pi pi-chevron-down" style="font-size:9px"></i></button>
+    <span class="ca-tb-sep"></span>
+    <button class="ca-tb-btn"><i class="pi pi-calculator"></i> Calculate Account Totals</button>
+    <button class="ca-tb-btn"><i class="pi pi-arrows-h"></i> Spread Budgets</button>
+    <button class="ca-tb-btn"><i class="pi pi-arrows-h"></i> Spread ETC/Earned</button>
+    <div class="ca-search">
+      <input type="text" placeholder="Search…" aria-label="Search" />
+      <i class="pi pi-times-circle"></i>
+    </div>
+  </div>
+
+  <!-- ── Workspace ─────────────────────────────────────────────── -->
+  <div class="ca-workspace">
+
+    <div class="ca-split-top">
+
+      <!-- Navigation grid -->
+      <section class="ca-panel ca-nav">
+        <div class="ca-panel-head">
+          Control Accounts — Navigation
+          <div class="ca-head-tools"><i class="pi pi-thumbtack"></i></div>
+        </div>
+        <div class="ca-panel-body">
+          <table class="ca-grid">
+            <thead>
+              <tr><th style="width:150px">Control Account ID</th><th>Description</th></tr>
+            </thead>
+            <tbody id="navBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Data form -->
+      <section class="ca-panel ca-data">
+        <div class="ca-panel-head">
+          Control Accounts — Data
+          <div class="ca-head-tools"><i class="pi pi-thumbtack"></i></div>
+        </div>
+        <div class="ca-panel-body">
+          <div class="ca-form">
+
+            <!-- Identity fields -->
+            <div class="ca-field-grid">
+              <span class="ca-label">Account ID</span>
+              <input class="ca-input ca-highlight" value="100.2500.P005" aria-label="Account ID" />
+              <span class="ca-label">Currency ID</span>
+              <select class="ca-select" aria-label="Currency ID"><option>USD</option><option>EUR</option><option>GBP</option></select>
+
+              <span class="ca-label">Description</span>
+              <input class="ca-input ca-span-control" value="Electrical Materials Purchase - General" aria-label="Description" />
+
+              <!-- Inline row: Master Account / Vendor / Prime / Labor Rate -->
+              <div class="ca-inline-row">
+                <span class="ca-label">Master Account ID</span>
+                <select class="ca-select" aria-label="Master Account ID"><option value=""></option><option>100.2500.M001</option></select>
+                <span class="ca-label ca-label-left">Vendor ID</span>
+                <select class="ca-select" aria-label="Vendor ID"><option>CONT0001</option><option>CONT0002</option></select>
+                <label class="ca-checkbox"><input type="checkbox" /> Prime Contract</label>
+                <span class="ca-label ca-label-left">Labor Rate Type</span>
+                <select class="ca-select" aria-label="Labor Rate Type"><option value=""></option><option>Standard</option><option>Burdened</option></select>
+              </div>
+            </div>
+
+            <!-- Control Account Totals -->
+            <div class="ca-card">
+              <div class="ca-card-head">Control Account Totals</div>
+              <div class="ca-card-body ca-card-body--scroll">
+                <div class="ca-totals">
+                  <div class="ca-th" style="text-align:left">&nbsp;</div>
+                  <div class="ca-th">Baseline Budget</div>
+                  <div class="ca-th">Approved Changes</div>
+                  <div class="ca-th">Approved Budget</div>
+                  <div class="ca-th">Period Incurred</div>
+                  <div class="ca-th">Incurred To Date</div>
+                  <div class="ca-th">Open Commitment</div>
+                  <div class="ca-th">Total Commitment</div>
+                  <div class="ca-th">Estimate To Complete</div>
+                  <div class="ca-th">Estimate At Completion</div>
+
+                  <div class="ca-rowlabel">Hours</div>
+                  <div class="ca-cell"><input value="" aria-label="Hours — Baseline Budget" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Hours — Approved Changes" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Hours — Approved Budget" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Hours — Period Incurred" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Hours — Incurred To Date" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Hours — Open Commitment" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Hours — Total Commitment" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Hours — Estimate To Complete" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Hours — Estimate At Completion" /></div>
+
+                  <div class="ca-rowlabel">Cost</div>
+                  <div class="ca-cell"><input value="47,376" aria-label="Cost — Baseline Budget" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Cost — Approved Changes" /></div>
+                  <div class="ca-cell"><input value="47,376" aria-label="Cost — Approved Budget" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Cost — Period Incurred" /></div>
+                  <div class="ca-cell"><input value="100" aria-label="Cost — Incurred To Date" /></div>
+                  <div class="ca-cell"><input value="" aria-label="Cost — Open Commitment" /></div>
+                  <div class="ca-cell"><input value="100" aria-label="Cost — Total Commitment" /></div>
+                  <div class="ca-cell"><input value="10,047,275" aria-label="Cost — Estimate To Complete" /></div>
+                  <div class="ca-cell"><input value="10,047,375" aria-label="Cost — Estimate At Completion" /></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Percent Complete / Schedule Dates / Curves -->
+            <div class="ca-trio">
+
+              <div class="ca-card">
+                <div class="ca-card-head">Percent Complete</div>
+                <div class="ca-card-body">
+                  <div class="ca-mini-grid ca-pct-grid">
+                    <span class="ca-label"></span><span class="ca-col-head" style="text-align:left">Percent</span>
+                    <span class="ca-label">Current</span><input class="ca-input ca-num" value="" aria-label="Current percent complete" />
+                    <span class="ca-label">Previous</span><input class="ca-input ca-num" value="" aria-label="Previous percent complete" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="ca-card">
+                <div class="ca-card-head">Schedule Dates</div>
+                <div class="ca-card-body">
+                  <div class="ca-mini-grid ca-sched-grid">
+                    <span></span>
+                    <span class="ca-col-head">Early Start</span>
+                    <span class="ca-col-head">Early Finish</span>
+                    <span class="ca-col-head">Late Start</span>
+                    <span class="ca-col-head">Late Finish</span>
+
+                    <span class="ca-label">Baseline</span>
+                    <select class="ca-select" aria-label="Baseline early start"><option>10/8/2018</option></select>
+                    <select class="ca-select" aria-label="Baseline early finish"><option>12/7/2018</option></select>
+                    <select class="ca-select" aria-label="Baseline late start"><option>11/5/2018</option></select>
+                    <select class="ca-select" aria-label="Baseline late finish"><option>1/4/2019</option></select>
+
+                    <span class="ca-label">Approved</span>
+                    <select class="ca-select" aria-label="Approved early start"><option>10/8/2018</option></select>
+                    <select class="ca-select" aria-label="Approved early finish"><option>12/7/2018</option></select>
+                    <select class="ca-select" aria-label="Approved late start"><option>11/5/2018</option></select>
+                    <select class="ca-select" aria-label="Approved late finish"><option>1/4/2019</option></select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ca-card">
+                <div class="ca-card-head">Time Phased Data Curves</div>
+                <div class="ca-card-body">
+                  <div class="ca-mini-grid ca-curve-grid">
+                    <span class="ca-label"></span><span class="ca-col-head" style="text-align:left">Curve ID</span>
+                    <span class="ca-label">Baseline Budget</span>
+                    <select class="ca-select" aria-label="Baseline budget curve"><option>MIDDLE</option><option>FRONT</option><option>BACK</option></select>
+                    <span class="ca-label">Approved Budget</span>
+                    <select class="ca-select" aria-label="Approved budget curve"><option>MIDDLE</option><option>FRONT</option><option>BACK</option></select>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Bottom panel: Groups / Breakdown Structures -->
+    <section class="ca-panel ca-split-bottom">
+      <div class="ca-panel-head">
+        Control Accounts — Groups / Breakdown Structures
+        <div class="ca-head-tools"><i class="pi pi-thumbtack"></i><i class="pi pi-times"></i></div>
+      </div>
+      <div class="ca-panel-body">
+        <table class="ca-grid ca-bottom-grid">
+          <thead>
+            <tr><th>Title</th><th>Type</th><th>ID</th><th>Description</th></tr>
+          </thead>
+          <tbody id="groupsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ── Bottom tab strip ──────────────────────────────────────── -->
+  <div class="ca-tabstrip">
+    <div class="ca-tab is-active">Groups / Breakdown Structures</div>
+    <div class="ca-tab">Quantity</div>
+    <div class="ca-tab">Hours</div>
+    <div class="ca-tab">Cost</div>
+    <div class="ca-tab">Proposed</div>
+    <div class="ca-tab">TP Quantity</div>
+    <div class="ca-tab">TP Hours</div>
+    <div class="ca-tab">TP Cost</div>
+    <div class="ca-tab">Set Details</div>
+    <div class="ca-tab">Budget Sources</div>
+    <div class="ca-tab">Risk Items</div>
+    <div class="ca-tab">Funding</div>
+    <div class="ca-tab">Amounts</div>
+    <div class="ca-tab">Progress Tasks</div>
+    <div class="ca-tab">Linked Accounts</div>
+    <div class="ca-tab">Engineering</div>
+  </div>
+
+  <script>
+    /* ── Navigation grid data ──────────────────────────────────── */
+    const NAV_ROWS = [
+      ['100.2500.P005', 'Electrical Materials Purchase - General'],
+      ['100.4019.P003', 'Pipe and Fittings Purchase - General'],
+      ['100.4026.P004', 'Valves Purchase - General'],
+      ['100.9012.C001', 'Project Management, Home Office Labour - General'],
+      ['100.9013.C001', 'Engineering Design drawing, Home Office Labour - General'],
+      ['100.9014.C001', 'Contracts Admin \\ Home Office Labour - General'],
+      ['100.9016.C001', 'Procurement, Home Office Labour - General'],
+      ['100.9091.C001', 'Owner Commisioning - General'],
+      ['152.0171.C002', 'Surveying - Potable Water Area'],
+      ['152.0223.C003', 'Facility Excavation and Fill - Potable Water Area'],
+      ['152.0300.C003', 'Concrete - Potable Water Area'],
+      ['152.2500.C005', 'Electrical Installation - Potable Water Area'],
+      ['152.4019.C004', 'Pipe and Fittings Installation - Potable Water Area'],
+    ];
+
+    const navBody = document.getElementById('navBody');
+    navBody.innerHTML = NAV_ROWS.map((r, i) => `
+      <tr class="${i === 0 ? 'is-selected' : ''}" onclick="selectNavRow(this)">
+        <td class="ca-mono">${r[0]}</td><td>${r[1]}</td>
+      </tr>`).join('');
+
+    window.selectNavRow = function(tr) {
+      navBody.querySelectorAll('tr').forEach(t => t.classList.remove('is-selected'));
+      tr.classList.add('is-selected');
+    };
+
+    /* ── Groups / Breakdown Structures data ────────────────────── */
+    const GROUP_ROWS = [
+      ['Organization Breakdown Structure', 'OBS', '', ''],
+      ['Cost Breakdown Structure', 'CBS', '2500', 'Electrical Services'],
+      ['Work Breakdown Structure', 'WBS', '100', '100 - North East Plant General Area'],
+      ['Test<>', 'Enterprise', '25', ''],
+      ['Test#', 'Enterprise', '2500', ''],
+      ["Test'", 'Enterprise', '250120', ''],
+      ['Test`', 'Enterprise', '2', ''],
+      ['Status', 'Enterprise', 'D', ''],
+      ['Current Stage', 'Enterprise', '1', ''],
+      ['Category', 'Enterprise', '', ''],
+      ['Program', 'Enterprise', '', ''],
+      ['Actual Accounting Treatment', 'Enterprise', '', ''],
+      ['Cost Analyst', 'Standard', '', ''],
+      ['Planner', 'Standard', '', ''],
+      ['Project Lead', 'Standard', '', ''],
+      ['Team Leader', 'Standard', '', ''],
+    ];
+
+    document.getElementById('groupsBody').innerHTML = GROUP_ROWS.map(r => `
+      <tr>
+        <td>${r[0]}</td>
+        <td>${r[1]}</td>
+        <td class="ca-mono">${r[2] ? `<span class="ca-link">${r[2]}</span> <i class="pi pi-chevron-down" style="font-size:9px;color:#999;float:right;margin-top:3px"></i>` : '<i class="pi pi-chevron-down" style="font-size:9px;color:#bbb;float:right;margin-top:3px"></i>'}</td>
+        <td>${r[3]}</td>
+      </tr>`).join('');
+  </script>
+</body>
+</html>

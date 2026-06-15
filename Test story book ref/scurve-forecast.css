@@ -73,6 +73,7 @@
 }
 .sc-acct-drop-item:hover { background: #f1f5f9; }
 .sc-acct-drop-item--active { font-weight: 600; color: var(--primary); background: #eef3fb; }
+.sc-acct-drop-divider { height: 1px; margin: 4px 0; background: var(--border, #e5e5e5); }
 .sc-acct-drop-no-results {
   padding: 12px 14px; font-size: 13px; color: var(--text-muted); text-align: center;
 }
@@ -476,6 +477,8 @@
 
 .sc-view-toggle { display: flex; align-items: center; gap: 7px; }
 .sc-view-label { font-size: 12px; font-weight: 500; color: var(--text); }
+.sc-view-check { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+.sc-view-check input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; margin: 0; }
 
 .sc-metric-select { display: flex; align-items: center; gap: 6px; }
 .sc-metric-select select {
@@ -620,6 +623,64 @@
   font-size: 11px; font-weight: 400; color: #64748b;
   flex-basis: 100%; padding-left: 21px; margin-top: 2px;
 }
+
+/* ── Collapsible settings sections (accordion) ──────────────────── */
+.sc-settings-section-header.is-toggle { cursor: pointer; user-select: none; }
+.sc-sec-chevron { font-size: 11px; color: var(--primary); transition: transform .15s; }
+.sc-settings-section.is-collapsed .sc-sec-chevron,
+.sc-pool-section.is-collapsed .sc-pool-chevron { transform: rotate(-90deg); }
+/* the section body is the header's next sibling — hide it when collapsed */
+.sc-settings-section.is-collapsed > .sc-settings-section-header + div { display: none; }
+
+/* ── Project learning pool (settings modal) ─────────────────────── */
+.sc-pool-header { cursor: pointer; user-select: none; }
+.sc-pool-chevron { font-size: 11px; color: var(--primary); transition: transform .15s; }
+.sc-pool-section.is-collapsed .sc-pool-body { display: none; }
+.sc-pool-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid #f1f5f9; background: #fafbfc;
+}
+.sc-pool-search { position: relative; flex: 1; display: flex; align-items: center; }
+.sc-pool-search > i { position: absolute; left: 10px; color: #94a3b8; font-size: 12px; pointer-events: none; }
+.sc-pool-search input {
+  width: 100%; padding: 7px 10px 7px 30px;
+  border: 1px solid var(--border); border-radius: 6px;
+  font-size: 12.5px; color: var(--text); background: #fff;
+}
+.sc-pool-search input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+.sc-pool-selectall {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: #64748b;
+  white-space: nowrap; cursor: pointer; user-select: none;
+}
+.sc-pool-selectall input { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; }
+.sc-pool-list { max-height: 280px; overflow: auto; background: #fff; }
+.sc-pool-row {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 14px; border-bottom: 1px solid #f8f9fb;
+  cursor: pointer; transition: background .12s, opacity .12s;
+}
+.sc-pool-row:last-child { border-bottom: none; }
+.sc-pool-row:hover { background: #f8fafc; }
+.sc-pool-row > input[type="checkbox"] {
+  width: 16px; height: 16px; flex-shrink: 0;
+  accent-color: var(--primary); cursor: pointer;
+}
+.sc-pool-info { flex: 1; min-width: 0; }
+.sc-pool-name { display: block; font-size: 13px; font-weight: 600; color: var(--text); }
+.sc-pool-meta { display: block; font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.sc-pool-region {
+  font-size: 10px; font-weight: 700; letter-spacing: .03em; color: #64748b;
+  background: #eef2f7; border-radius: 5px; padding: 2px 6px; flex-shrink: 0;
+}
+.sc-pool-row.is-excluded { opacity: .5; }
+.sc-pool-row.is-excluded .sc-pool-name { text-decoration: line-through; text-decoration-color: #cbd5e1; }
+.sc-pool-empty { padding: 18px 14px; text-align: center; font-size: 12.5px; color: #94a3b8; }
+.sc-pool-note {
+  padding: 10px 14px; background: #eff6ff; border-top: 1px solid #dbeafe;
+  font-size: 11.5px; color: #1e40af; display: flex; align-items: flex-start; gap: 6px;
+}
+
 .sc-settings-features { background: #fff; }
 .sc-settings-feature-row {
   display: flex; align-items: center; justify-content: space-between;
@@ -1177,10 +1238,11 @@
 .sc-appx-bullets li strong { color: var(--text); font-weight: 700; }
 
 /* Top similar accounts table */
-.sc-appx-sim-table-wrap { overflow-x: auto; }
+.sc-appx-sim-table-wrap { overflow: auto; max-height: 340px; }
 .sc-appx-sim-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .sc-appx-sim-table th {
-  text-align: left; padding: 8px 10px; background: transparent;
+  text-align: left; padding: 8px 10px; background: var(--card-bg, #fff);
+  position: sticky; top: 0; z-index: 1;
   border-bottom: 1px solid var(--border); font-size: 11px;
   font-weight: 600; color: var(--text-muted); text-transform: none;
   letter-spacing: 0; white-space: nowrap;
