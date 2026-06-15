@@ -3904,13 +3904,90 @@ body.ai-panel-open .proj-content {
     }
 
     /* =========================================================
+       DESIGN C — icon rail + expanded accordion flyout panel
+       A narrow vertical rail of stacked icon+label items; the
+       active section's sub-menu shows as an accordion in a panel.
+       ========================================================= */
+    .lnavc{
+      width:344px; flex-direction:row; padding:0;
+      background:#fff; overflow:visible;
+    }
+    /* Rail */
+    .lnavc-rail{
+      width:88px; flex-shrink:0;
+      background:var(--default-surface-secondary,#fafafa);
+      border-right:1px solid var(--default-surface-border,#e5e5e5);
+      padding:12px 6px; overflow-y:auto;
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .lnavc-rail::-webkit-scrollbar{ width:4px; }
+    .lnavc-rail::-webkit-scrollbar-thumb{ background:var(--surface-300,#d4d4d4); border-radius:2px; }
+    .lnavc-railitem{
+      display:flex; flex-direction:column; align-items:center; gap:6px;
+      width:100%; padding:10px 4px; border:none; background:transparent; cursor:pointer;
+      border-radius:8px; text-align:center; text-decoration:none;
+      font-family:'Inter',sans-serif; font-size:12px; font-weight:500; line-height:1.2;
+      color:var(--surface-800,#404040);
+      transition:background var(--transition-fast,.15s), color var(--transition-fast,.15s);
+    }
+    .lnavc-railitem:hover{ background:var(--default-surface-secondary-hover,#e5e5e5); }
+    .lnavc-railicon{
+      display:flex; align-items:center; justify-content:center;
+      width:46px; height:34px; border-radius:8px;
+      font-size:20px; color:var(--surface-700,#525252);
+      transition:background var(--transition-fast,.15s), color var(--transition-fast,.15s);
+    }
+    .lnavc-railicon svg{ width:22px; height:auto; display:block; }
+    .lnavc-railitem.is-active{ color:var(--primary-500,#326fd1); font-weight:600; }
+    .lnavc-railitem.is-active .lnavc-railicon{
+      background:var(--blue-50,#eef3fb); color:var(--primary-500,#326fd1);
+    }
+    /* Panel */
+    .lnavc-panel{ flex:1; min-width:0; overflow-y:auto; padding:6px 0; background:#fff; }
+    .lnavc-panel::-webkit-scrollbar{ width:4px; }
+    .lnavc-panel::-webkit-scrollbar-thumb{ background:var(--surface-300,#d4d4d4); border-radius:2px; }
+    .lnavc-grouphead{
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      width:100%; padding:10px 20px; border:none; background:transparent; cursor:pointer;
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:400;
+      color:var(--surface-900,#262626); text-align:left; text-decoration:none;
+      transition:background var(--transition-fast,.15s);
+    }
+    .lnavc-grouphead:hover{ background:var(--default-surface-secondary,#fafafa); }
+    .lnavc-chev{ font-size:12px; color:var(--surface-500,#737373); transition:transform .2s; flex-shrink:0; }
+    .lnavc-group.is-open > .lnavc-grouphead .lnavc-chev{ transform:rotate(180deg); }
+    .lnavc-leaf.is-active{ color:var(--primary-500,#326fd1); }
+    .lnavc-items{ display:none; margin:0 0 6px 28px; border-left:1px solid var(--surface-300,#d4d4d4); }
+    .lnavc-group.is-open > .lnavc-items{ display:block; }
+    .lnavc-link{
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      width:100%; padding:9px 20px; border:none; background:transparent; cursor:pointer;
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:400;
+      color:var(--surface-700,#525252); text-align:left; text-decoration:none;
+      transition:background var(--transition-fast,.15s), color var(--transition-fast,.15s);
+    }
+    .lnavc-link:hover{ background:var(--default-surface-secondary,#fafafa); color:var(--surface-900,#262626); }
+    .lnavc-link.is-active{ color:var(--primary-500,#326fd1); font-weight:400; }
+    .lnavc-subchev{ font-size:11px; color:var(--surface-400,#a3a3a3); transition:transform .2s; flex-shrink:0; }
+    .lnavc-group.is-open > .lnavc-link .lnavc-subchev{ transform:rotate(180deg); }
+
+    /* =========================================================
        Design visibility, driven by body[data-design]
        ========================================================= */
-    body[data-design="a"] #designB,
-    body[data-design="b"] #designA{ display:none; }
-    #leftNavB{ display:none; }
+    #leftNavB, #leftNavC, #designC{ display:none; }
+    body[data-design="a"] #designB, body[data-design="a"] #designC,
+    body[data-design="b"] #designA, body[data-design="b"] #designC,
+    body[data-design="c"] #designA, body[data-design="c"] #designB{ display:none; }
     body[data-design="b"] #leftNav{ display:none; }
-    body[data-design="b"] #leftNavB{ display:block; }
+    body[data-design="b"] #leftNavB{ display:flex; }
+    body[data-design="c"] #leftNav, body[data-design="c"] #leftNavB{ display:none; }
+    body[data-design="c"] #leftNavC{ display:flex; }
+    body[data-design="c"] #designC{ display:block; }
+    body[data-design="c"] .proj-content{ margin-left:344px; }
+    /* Leaf section selected (Home / Field / Drive): no sub-menu → rail only */
+    #leftNavC.is-railonly{ width:88px; }
+    #leftNavC.is-railonly .lnavc-panel{ display:none; }
+    body[data-design="c"] #leftNavC.is-railonly ~ .proj-content{ margin-left:88px; }
   </style>
 </head>
 <body data-design="a">
@@ -4130,15 +4207,22 @@ body.ai-panel-open .proj-content {
     </button>
   </aside>
 
+  <!-- Design C side navigation: icon rail + accordion flyout panel (self-contained) -->
+  <aside class="lnav lnavc" id="leftNavC" aria-label="Project navigation">
+    <div class="lnavc-rail" id="lnavcRail" role="tablist" aria-label="Sections"></div>
+    <div class="lnavc-panel" id="lnavcPanel"></div>
+  </aside>
+
   <div class="proj-content">
     <div class="page-top-row nav-toprow">
-      <nav class="breadcrumb" aria-label="Breadcrumb">
+      <nav class="breadcrumb" id="navBreadcrumb" aria-label="Breadcrumb">
         <a href="home.html">Home</a><span class="bc-sep">/</span>
         <span>Navigation</span>
       </nav>
       <div class="navdesign-toggle" role="group" aria-label="Navigation design">
         <button class="ndt-btn is-active" data-design="a" onclick="switchDesign('a')"><i class="pi pi-list"></i> Nested sidebar</button>
         <button class="ndt-btn" data-design="b" onclick="switchDesign('b')"><i class="pi pi-table"></i> Ribbon tabs</button>
+        <button class="ndt-btn" data-design="c" onclick="switchDesign('c')"><i class="pi pi-th-large"></i> Icon rail + panel</button>
       </div>
     </div>
 
@@ -4153,6 +4237,11 @@ body.ai-panel-open .proj-content {
         <div class="navb-tabs" id="navbTabs"></div>
       </div>
       <div class="navb-tabpage" id="navbTabPage">Select a category from the side navigation</div>
+    </div>
+
+    <!-- DESIGN C content: clicked menu name -->
+    <div id="designC">
+      <div class="nav-demo-stage" id="navStageC"></div>
     </div>
   </div>
 
@@ -4246,6 +4335,8 @@ body.ai-panel-open .proj-content {
     ]},
     { key: 'drive',        icon: 'pi-folder',    label: 'Drive',             href: '#' },
   ];
+
+  window.LNAV_ITEMS = ITEMS;   // expose so Design C (icon-rail + flyout) can reuse the same data
 
   var ADMIN_ITEMS = [
     { key: 'data-warehouse',     icon: 'pi-database',    label: 'Data Warehouse',         href: '#' },
@@ -4712,16 +4803,51 @@ function applyProjectContext() {
       var stage = document.getElementById('navStage');
       if(stage) stage.textContent = name + ' page';
     }
-    // Intercept leaf/sub clicks → show "'<name>' page" (only while Design A active)
+
+    /* Breadcrumb — reflects the selected menu path. Pass the trail after "Home". */
+    function setBreadcrumb(parts){
+      var bc = document.getElementById('navBreadcrumb');
+      if(!bc) return;
+      var html = '<a href="home.html">Home</a>';
+      (parts || []).forEach(function(p){
+        html += '<span class="bc-sep">/</span><span>' + p + '</span>';
+      });
+      bc.innerHTML = html;
+    }
+
+    // Collect the labels of every collapsible group/subgroup that wraps a clicked
+    // link, outermost → innermost (shared by Design A and Design B markup).
+    function lnavTrail(link){
+      var trail = [];
+      var top = link.closest('.lnav-has-children');
+      var el = link.parentElement;
+      while(el && el !== top){
+        if(el.classList && el.classList.contains('lnav-subgroup')){
+          var span = el.firstElementChild && el.firstElementChild.querySelector('.lnav-sublabel');
+          if(span) trail.unshift(span.textContent.trim());
+        }
+        el = el.parentElement;
+      }
+      if(top){
+        var t = top.querySelector('.lnav-parent-btn .lnav-label');
+        if(t) trail.unshift(t.textContent.trim());
+      }
+      return trail;
+    }
+
+    // Intercept leaf/sub clicks → show "'<name>' page" + update breadcrumb (Design A only)
     document.addEventListener('click', function(e){
       if(document.body.dataset.design !== 'a') return;
       var link = e.target.closest('a.lnav-link, a.lnav-sublink');
       if(!link) return;
       e.preventDefault();
       var labelEl = link.querySelector('.lnav-label');
-      showNavPage((labelEl ? labelEl.textContent : link.textContent).trim());
+      var name = (labelEl ? labelEl.textContent : link.textContent).trim();
+      showNavPage(name);
+      setBreadcrumb(lnavTrail(link).concat([name]));
     });
     showNavPage('Project Home');
+    setBreadcrumb(['Project Home']);
 
     /* =====================================================================
        DESIGN B — ribbon-tab navigation. Clicking a category opens its
@@ -4783,6 +4909,13 @@ function applyProjectContext() {
       }).join('');
     }
 
+    var bcTrailB = [];   // breadcrumb trail for the currently open Cost category
+    function catLabelB(key){
+      var cost = NAV_B.filter(function(it){ return it.label === 'Cost'; })[0];
+      var c = cost && cost.children.filter(function(x){ return x.cat === key; })[0];
+      return c ? c.label : key;
+    }
+
     function openCategory(key){
       var cat = CAT_B[key];
       if(!cat) return;
@@ -4792,6 +4925,8 @@ function applyProjectContext() {
                '<i class="pi ' + t[1] + '"></i><span>' + t[0] + '</span></button>';
       }).join('');
       showTabPage(cat.tabs[0][0]);
+      bcTrailB = ['Cost', catLabelB(key)];
+      setBreadcrumb(bcTrailB.concat([cat.tabs[0][0]]));   // include the default-active tab
     }
 
     function pageName(name){ return '<div class="navb-pagename">' + name + ' page</div>'; }
@@ -4810,8 +4945,13 @@ function applyProjectContext() {
       if(!link) return;
       e.preventDefault();
       setLnavActive(link);
-      if(link.dataset.cat) openCategory(link.dataset.cat);
-      else if(link.dataset.leaf) showLeafB(link.dataset.leaf);
+      if(link.dataset.cat){
+        openCategory(link.dataset.cat);   // sets the breadcrumb itself
+      } else if(link.dataset.leaf){
+        showLeafB(link.dataset.leaf);
+        var label = (link.querySelector('.lnav-label') || link).textContent.trim();
+        setBreadcrumb(lnavTrail(link).concat([label]));
+      }
     });
 
     // Tab clicks (Design B) — switch the tab inside the open page
@@ -4821,6 +4961,129 @@ function applyProjectContext() {
       this.querySelectorAll('.navb-tab').forEach(function(x){ x.classList.remove('is-active'); });
       tab.classList.add('is-active');
       showTabPage(tab.dataset.label);
+      setBreadcrumb(bcTrailB.concat([tab.dataset.label]));
+    });
+
+    /* =====================================================================
+       DESIGN C — icon rail + accordion flyout panel. The rail lists the
+       top-level sections; clicking one with children opens its sub-menu as
+       an accordion in the panel. Leaf sections show their page directly.
+       ===================================================================== */
+    var RAIL_LABELS = {
+      'project-home':'Home', 'cost':'Cost', 'field':'Field', 'procurement':'Procurement',
+      'contracts':'Contracts', 'invoices':'Invoices', 'change-mgmt':'Change',
+      'reports':'Reports', 'drive':'Drive'
+    };
+
+    function railIconC(item){
+      if(item.iconSvg) return '<span class="lnavc-railicon" aria-hidden="true">' + item.iconSvg + '</span>';
+      return '<span class="lnavc-railicon" aria-hidden="true"><i class="pi ' + item.icon + '"></i></span>';
+    }
+
+    function renderRailC(){
+      var items = window.LNAV_ITEMS || [];
+      document.getElementById('lnavcRail').innerHTML = items.map(function(item){
+        var label = RAIL_LABELS[item.key] || item.label;
+        return '<button class="lnavc-railitem" role="tab" data-key="' + item.key + '">' +
+                 railIconC(item) + '<span class="lnavc-raillabel">' + label + '</span></button>';
+      }).join('');
+    }
+
+    // Build the accordion panel for a section (recursive: nested groups indent further)
+    function panelNodeC(node, depth){
+      if(node.children){
+        var inner = node.children.map(function(c){ return panelNodeC(c, depth + 1); }).join('');
+        if(depth === 0){
+          return '<div class="lnavc-group" data-key="' + node.key + '">' +
+                   '<button class="lnavc-grouphead" data-toggle="1"><span>' + node.label + '</span>' +
+                   '<i class="pi pi-angle-down lnavc-chev"></i></button>' +
+                   '<div class="lnavc-items">' + inner + '</div></div>';
+        }
+        return '<div class="lnavc-group lnavc-subgroup" data-key="' + node.key + '">' +
+                 '<button class="lnavc-link" data-toggle="1"><span>' + node.label + '</span>' +
+                 '<i class="pi pi-angle-down lnavc-subchev"></i></button>' +
+                 '<div class="lnavc-items">' + inner + '</div></div>';
+      }
+      var cls = depth === 0 ? 'lnavc-grouphead lnavc-leaf' : 'lnavc-link';
+      return '<a class="' + cls + '" href="' + (node.href || '#') + '" data-leaf="' + node.label + '">' +
+               '<span>' + node.label + '</span></a>';
+    }
+
+    function showCPage(name){
+      var stage = document.getElementById('navStageC');
+      if(stage) stage.textContent = name + ' page';
+    }
+
+    function sectionLabelC(key){
+      var items = window.LNAV_ITEMS || [];
+      var it = items.filter(function(i){ return i.key === key; })[0];
+      return it ? it.label : '';
+    }
+
+    // Labels of the accordion groups wrapping a panel leaf, outermost → innermost
+    function lnavcTrail(leaf){
+      var trail = [];
+      var el = leaf.parentElement;
+      while(el && el.id !== 'lnavcPanel'){
+        if(el.classList && el.classList.contains('lnavc-group')){
+          var span = el.firstElementChild && el.firstElementChild.querySelector('span');
+          if(span) trail.unshift(span.textContent.trim());
+        }
+        el = el.parentElement;
+      }
+      return trail;
+    }
+
+    // Open a rail section: render its accordion (all collapsed) or show its page if it's a leaf
+    function openSectionC(key){
+      var items = window.LNAV_ITEMS || [];
+      var item = items.filter(function(i){ return i.key === key; })[0];
+      var panel = document.getElementById('lnavcPanel');
+      var navc  = document.getElementById('leftNavC');
+      document.querySelectorAll('#lnavcRail .lnavc-railitem').forEach(function(b){
+        b.classList.toggle('is-active', b.dataset.key === key);
+      });
+      if(!item) return;
+      // Leaf sections (Home, Field, Drive) have no sub-menu → hide the panel, show rail only
+      if(!item.children){
+        panel.innerHTML = '';
+        navc.classList.add('is-railonly');
+        showCPage(RAIL_LABELS[item.key] || item.label);
+        setBreadcrumb([item.label]);
+        return;
+      }
+      navc.classList.remove('is-railonly');
+      panel.innerHTML = item.children.map(function(c){ return panelNodeC(c, 0); }).join('');
+      setBreadcrumb([item.label]);   // all categories start collapsed
+    }
+
+    renderRailC();
+
+    // Rail clicks → open that section
+    document.getElementById('lnavcRail').addEventListener('click', function(e){
+      var btn = e.target.closest('.lnavc-railitem');
+      if(!btn) return;
+      openSectionC(btn.dataset.key);
+    });
+
+    // Panel clicks → toggle accordion groups, or activate a leaf
+    document.getElementById('lnavcPanel').addEventListener('click', function(e){
+      var toggle = e.target.closest('[data-toggle="1"]');
+      if(toggle){
+        toggle.closest('.lnavc-group').classList.toggle('is-open');
+        return;
+      }
+      var leaf = e.target.closest('a[data-leaf]');
+      if(!leaf) return;
+      var href = leaf.getAttribute('href');
+      if(href && href !== '#') return;   // real link → navigate
+      e.preventDefault();
+      this.querySelectorAll('.is-active').forEach(function(x){ x.classList.remove('is-active'); });
+      leaf.classList.add('is-active');
+      showCPage(leaf.dataset.leaf);
+      var activeRail = document.querySelector('#lnavcRail .lnavc-railitem.is-active');
+      var section = activeRail ? sectionLabelC(activeRail.dataset.key) : '';
+      setBreadcrumb([section].concat(lnavcTrail(leaf), [leaf.dataset.leaf]));
     });
 
     /* =====================================================================
@@ -4849,6 +5112,11 @@ function applyProjectContext() {
         if(!document.querySelector('#leftNavB .lnav-sublink.lnav-sublink-active')){
           var de = document.querySelector('#leftNavB .lnav-sublink[data-cat="data-entry"]');
           if(de){ setLnavActive(de); openCategory('data-entry'); }   // default: Data Entry tabs
+        }
+      }
+      if(d === 'c'){
+        if(!document.querySelector('#lnavcRail .lnavc-railitem.is-active')){
+          openSectionC('cost');   // default: Cost section, Data Entry expanded
         }
       }
     }
