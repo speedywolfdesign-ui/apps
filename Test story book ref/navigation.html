@@ -3919,15 +3919,15 @@ body.ai-panel-open .proj-content {
       background:var(--default-surface-secondary,#fafafa);
       border-right:1px solid var(--default-surface-border,#e5e5e5);
       padding:12px 6px; overflow-y:auto;
-      display:flex; flex-direction:column; gap:2px;
+      display:flex; flex-direction:column; gap:0;
     }
     .lnavc-rail::-webkit-scrollbar{ width:4px; }
     .lnavc-rail::-webkit-scrollbar-thumb{ background:var(--surface-300,#d4d4d4); border-radius:2px; }
     .lnavc-railitem{
-      display:flex; flex-direction:column; align-items:center; gap:6px;
-      width:100%; padding:10px 4px; border:none; background:transparent; cursor:pointer;
+      display:flex; flex-direction:column; align-items:center; gap:0;
+      width:100%; padding:7px 4px; border:none; background:transparent; cursor:pointer;
       border-radius:8px; text-align:center; text-decoration:none;
-      font-family:'Inter',sans-serif; font-size:12px; font-weight:500; line-height:1.2;
+      font-family:'Inter',sans-serif; font-size:10px; font-weight:500; line-height:1.2;
       color:var(--surface-800,#404040);
       transition:background var(--transition-fast,.15s), color var(--transition-fast,.15s);
     }
@@ -3935,10 +3935,11 @@ body.ai-panel-open .proj-content {
     .lnavc-railicon{
       display:flex; align-items:center; justify-content:center;
       width:46px; height:34px; border-radius:8px;
-      font-size:20px; color:var(--surface-700,#525252);
+      font-size:16px; color:var(--surface-700,#525252);
       transition:background var(--transition-fast,.15s), color var(--transition-fast,.15s);
     }
-    .lnavc-railicon svg{ width:22px; height:auto; display:block; }
+    .lnavc-railicon svg{ width:16px; height:auto; display:block; }
+    .lnavc-raillabel{ max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .lnavc-railitem.is-active{ color:var(--primary-500,#326fd1); font-weight:600; }
     .lnavc-railitem.is-active .lnavc-railicon{
       background:var(--blue-50,#eef3fb); color:var(--primary-500,#326fd1);
@@ -3950,7 +3951,7 @@ body.ai-panel-open .proj-content {
     .lnavc-grouphead{
       display:flex; align-items:center; justify-content:space-between; gap:8px;
       width:100%; padding:10px 20px; border:none; background:transparent; cursor:pointer;
-      font-family:'Inter',sans-serif; font-size:13px; font-weight:400;
+      font-family:'Inter',sans-serif; font-size:12px; font-weight:400;
       color:var(--surface-900,#262626); text-align:left; text-decoration:none;
       transition:background var(--transition-fast,.15s);
     }
@@ -3963,7 +3964,7 @@ body.ai-panel-open .proj-content {
     .lnavc-link{
       display:flex; align-items:center; justify-content:space-between; gap:8px;
       width:100%; padding:9px 20px; border:none; background:transparent; cursor:pointer;
-      font-family:'Inter',sans-serif; font-size:13px; font-weight:400;
+      font-family:'Inter',sans-serif; font-size:12px; font-weight:400;
       color:var(--surface-700,#525252); text-align:left; text-decoration:none;
       transition:background var(--transition-fast,.15s), color var(--transition-fast,.15s);
     }
@@ -4007,7 +4008,7 @@ body.ai-panel-open .proj-content {
     .lnavc-collapse .pi{ display:block; line-height:1; transition:transform .2s; }
     .lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
     /* Anchor for the absolute arrow; push the breadcrumb clear of it */
-    .nav-toprow{ position:relative; align-items:center;}
+    .nav-toprow{ position:relative; align-items:center; padding-left:32px; }
     .nav-toprow .breadcrumb{ align-self:center; line-height:1; }
 
     /* Collapsed mode: rail only; the sub-menu panel becomes a hover flyout overlay */
@@ -5026,7 +5027,7 @@ function applyProjectContext() {
       var items = window.LNAV_ITEMS || [];
       var html = items.map(function(item){
         var label = RAIL_LABELS[item.key] || item.label;
-        return '<button class="lnavc-railitem" role="tab" data-key="' + item.key + '">' +
+        return '<button class="lnavc-railitem" role="tab" data-key="' + item.key + '" title="' + label + '">' +
                  railIconC(item) + '<span class="lnavc-raillabel">' + label + '</span></button>';
       }).join('');
       document.getElementById('lnavcRail').innerHTML = html;
@@ -5097,7 +5098,14 @@ function applyProjectContext() {
       }
       navc.classList.remove('is-railonly');
       panel.innerHTML = item.children.map(function(c){ return panelNodeC(c, 0); }).join('');
-      setBreadcrumb([item.label]);   // all categories start collapsed
+      openDefaultGroupC(panel);
+      setBreadcrumb([item.label]);
+    }
+
+    // Open the "Data Entry" accordion group by default (fallback: first group)
+    function openDefaultGroupC(panel){
+      var grp = panel.querySelector('.lnavc-group[data-key="data-entry"]') || panel.querySelector('.lnavc-group');
+      if(grp) grp.classList.add('is-open');
     }
 
     function isCollapsedC(){ return document.getElementById('leftNavC').dataset.cmode === 'collapsed'; }
@@ -5108,7 +5116,9 @@ function applyProjectContext() {
       var item = findItemC(key);
       if(!item || !item.children){ closeFlyoutC(); return; }
       navc.classList.remove('is-railonly');
-      document.getElementById('lnavcPanel').innerHTML = item.children.map(function(c){ return panelNodeC(c, 0); }).join('');
+      var fpanel = document.getElementById('lnavcPanel');
+      fpanel.innerHTML = item.children.map(function(c){ return panelNodeC(c, 0); }).join('');
+      openDefaultGroupC(fpanel);
       navc.dataset.flyoutKey = key;
       navc.classList.add('flyout-open');
     }
