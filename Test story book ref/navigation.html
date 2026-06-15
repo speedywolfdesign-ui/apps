@@ -3985,20 +3985,23 @@ body.ai-panel-open .proj-content {
     body[data-design="c"] #leftNavC{ display:flex; }
     body[data-design="c"] #designC{ display:block; }
     body[data-design="c"] .proj-content{ margin-left:344px; }
+    /* Align the top-nav logo column with the 88px icon rail (Design C only) */
+    body[data-design="c"] .tnav-logo{ width:88px; }
     /* Leaf section selected (Home / Field / Drive): no sub-menu → rail only */
     #leftNavC.is-railonly{ width:88px; }
     #leftNavC.is-railonly .lnavc-panel{ display:none; }
     body[data-design="c"] #leftNavC.is-railonly ~ .proj-content{ margin-left:88px; }
 
-    /* Collapse / expand toggle — single arrow floating left of the breadcrumb (Design C only) */
+    /* Collapse / expand toggle — single arrow floating left of the breadcrumb (all designs) */
     .lnavc-collapse{
-      display:none; align-items:center; justify-content:center;
+      display:inline-flex; align-items:center; justify-content:center;
       width:24px; height:24px; flex-shrink:0; padding:0; line-height:1;
       border:none; background:transparent; box-shadow:none; cursor:pointer;
       color:var(--surface-500,#737373); font-size:16px;
     }
-    body[data-design="c"] .lnavc-collapse{ display:inline-flex; }
     .lnavc-collapse:hover{ color:var(--surface-900,#262626); }
+    /* The old grip-dot edge toggles are replaced by the breadcrumb arrow */
+    #lnavToggle, #lnavToggleB{ display:none; }
     .lnavc-collapse .pi{ display:block; line-height:1; transition:transform .2s; }
     .lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
     /* Vertically center the collapse arrow with the breadcrumb text */
@@ -4247,7 +4250,7 @@ body.ai-panel-open .proj-content {
 
   <div class="proj-content">
     <div class="page-top-row nav-toprow">
-      <button class="lnavc-collapse" id="lnavcCollapse" onclick="toggleCMode()" title="Collapse menu" aria-label="Collapse menu"><i class="pi pi-angle-left"></i></button>
+      <button class="lnavc-collapse" id="lnavcCollapse" onclick="toggleNavCollapse()" title="Collapse menu" aria-label="Collapse menu"><i class="pi pi-angle-left"></i></button>
       <nav class="breadcrumb" id="navBreadcrumb" aria-label="Breadcrumb">
         <a href="home.html">Home</a><span class="bc-sep">/</span>
         <span>Navigation</span>
@@ -5203,6 +5206,30 @@ function applyProjectContext() {
       var b = document.getElementById('leftNavB'); if(b) b.dataset.collapsed = collapsed ? 'true' : 'false';
     }
 
+    // Unified collapse control behind the breadcrumb arrow — works for every design.
+    function toggleNavCollapse(){
+      if(document.body.dataset.design === 'c'){
+        toggleCMode();                       // Design C: collapse rail / hover flyout
+      } else {
+        var collapsed = !document.body.classList.contains('lnav-collapsed');
+        syncLnavCollapsed(collapsed);        // Design A & B: collapse the sidebar
+        try { localStorage.setItem('left-navigation-is-open', String(!collapsed)); } catch(e){}
+      }
+      syncCollapseArrow();
+    }
+
+    // Point the single arrow according to the active design's collapsed state.
+    function syncCollapseArrow(){
+      var btn = document.getElementById('lnavcCollapse');
+      if(!btn) return;
+      var collapsed = document.body.dataset.design === 'c'
+        ? document.getElementById('leftNavC').dataset.cmode === 'collapsed'
+        : document.body.classList.contains('lnav-collapsed');
+      btn.classList.toggle('is-collapsed', collapsed);
+      btn.title = collapsed ? 'Expand menu' : 'Collapse menu';
+      btn.setAttribute('aria-label', collapsed ? 'Expand menu' : 'Collapse menu');
+    }
+
     function switchDesign(d){
       document.body.dataset.design = d;
       document.querySelectorAll('.ndt-btn').forEach(function(b){
@@ -5221,7 +5248,9 @@ function applyProjectContext() {
           openSectionC('cost');   // default: Cost section, Data Entry expanded
         }
       }
+      syncCollapseArrow();
     }
+    syncCollapseArrow();   // initial state (Design A on load)
   </script>
 </body>
 </html>
