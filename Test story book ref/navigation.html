@@ -2838,7 +2838,7 @@ body { background: var(--default-surface-secondary); }
   margin-top: 56px;
   flex: 1;
   min-width: 0;
-  padding: 20px 32px 60px;
+  padding: 24px 24px;
   transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1),
               margin-right 0.3s cubic-bezier(0.4,0,0.2,1);
 }
@@ -2858,9 +2858,10 @@ body.lnav-collapsed .proj-content {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--default-text-secondary);
   flex-wrap: wrap;
+  margin-bottom: 0px;
 }
 .breadcrumb a {
   color: var(--default-text-secondary);
@@ -3988,6 +3989,37 @@ body.ai-panel-open .proj-content {
     #leftNavC.is-railonly{ width:88px; }
     #leftNavC.is-railonly .lnavc-panel{ display:none; }
     body[data-design="c"] #leftNavC.is-railonly ~ .proj-content{ margin-left:88px; }
+
+    /* Collapse / expand toggle — single arrow floating left of the breadcrumb (Design C only) */
+    .lnavc-collapse{
+      display:none; align-items:center; justify-content:center;
+      width:24px; height:24px; flex-shrink:0; padding:0; line-height:1;
+      border:none; background:transparent; box-shadow:none; cursor:pointer;
+      color:var(--surface-500,#737373); font-size:16px;
+    }
+    body[data-design="c"] .lnavc-collapse{ display:inline-flex; }
+    .lnavc-collapse:hover{ color:var(--surface-900,#262626); }
+    .lnavc-collapse .pi{ display:block; line-height:1; transition:transform .2s; }
+    .lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
+    /* Vertically center the collapse arrow with the breadcrumb text */
+    .nav-toprow{ align-items:center; }
+    .nav-toprow .lnavc-collapse,
+    .nav-toprow .breadcrumb{ align-self:center; line-height:1; }
+
+    /* Collapsed mode: rail only; the sub-menu panel becomes a hover flyout overlay */
+    #leftNavC[data-cmode="collapsed"]{ width:88px; }
+    body[data-design="c"] #leftNavC[data-cmode="collapsed"] ~ .proj-content{ margin-left:88px; }
+    #leftNavC[data-cmode="collapsed"] .lnavc-panel{
+      display:block; position:absolute; left:88px; top:0; bottom:0; width:256px;
+      background:#fff; border-right:1px solid var(--default-surface-border,#e5e5e5);
+      box-shadow:4px 0 18px rgba(0,0,0,.10);
+      z-index:120; overflow-y:auto;
+      transform:translateX(-10px); opacity:0; pointer-events:none;
+      transition:transform .18s ease, opacity .18s ease;
+    }
+    #leftNavC[data-cmode="collapsed"].flyout-open .lnavc-panel{
+      transform:translateX(0); opacity:1; pointer-events:auto;
+    }
   </style>
 </head>
 <body data-design="a">
@@ -4207,14 +4239,15 @@ body.ai-panel-open .proj-content {
     </button>
   </aside>
 
-  <!-- Design C side navigation: icon rail + accordion flyout panel (self-contained) -->
-  <aside class="lnav lnavc" id="leftNavC" aria-label="Project navigation">
+  <!-- Design C side navigation: icon rail + accordion panel (push when expanded, flyout when collapsed) -->
+  <aside class="lnav lnavc" id="leftNavC" data-cmode="expanded" aria-label="Project navigation">
     <div class="lnavc-rail" id="lnavcRail" role="tablist" aria-label="Sections"></div>
     <div class="lnavc-panel" id="lnavcPanel"></div>
   </aside>
 
   <div class="proj-content">
     <div class="page-top-row nav-toprow">
+      <button class="lnavc-collapse" id="lnavcCollapse" onclick="toggleCMode()" title="Collapse menu" aria-label="Collapse menu"><i class="pi pi-angle-left"></i></button>
       <nav class="breadcrumb" id="navBreadcrumb" aria-label="Breadcrumb">
         <a href="home.html">Home</a><span class="bc-sep">/</span>
         <span>Navigation</span>
@@ -4980,13 +5013,19 @@ function applyProjectContext() {
       return '<span class="lnavc-railicon" aria-hidden="true"><i class="pi ' + item.icon + '"></i></span>';
     }
 
+    function findItemC(key){
+      var items = window.LNAV_ITEMS || [];
+      return items.filter(function(i){ return i.key === key; })[0];
+    }
+
     function renderRailC(){
       var items = window.LNAV_ITEMS || [];
-      document.getElementById('lnavcRail').innerHTML = items.map(function(item){
+      var html = items.map(function(item){
         var label = RAIL_LABELS[item.key] || item.label;
         return '<button class="lnavc-railitem" role="tab" data-key="' + item.key + '">' +
                  railIconC(item) + '<span class="lnavc-raillabel">' + label + '</span></button>';
       }).join('');
+      document.getElementById('lnavcRail').innerHTML = html;
     }
 
     // Build the accordion panel for a section (recursive: nested groups indent further)
@@ -5057,13 +5096,65 @@ function applyProjectContext() {
       setBreadcrumb([item.label]);   // all categories start collapsed
     }
 
+    function isCollapsedC(){ return document.getElementById('leftNavC').dataset.cmode === 'collapsed'; }
+
+    // Render a section's accordion into the panel as a hover flyout (collapsed mode)
+    function openFlyoutC(key){
+      var navc = document.getElementById('leftNavC');
+      var item = findItemC(key);
+      if(!item || !item.children){ closeFlyoutC(); return; }
+      navc.classList.remove('is-railonly');
+      document.getElementById('lnavcPanel').innerHTML = item.children.map(function(c){ return panelNodeC(c, 0); }).join('');
+      navc.dataset.flyoutKey = key;
+      navc.classList.add('flyout-open');
+    }
+    function closeFlyoutC(){ document.getElementById('leftNavC').classList.remove('flyout-open'); }
+
+    // Toggle the rail between pinned (push content) and collapsed (hover flyout)
+    function toggleCMode(){
+      var navc = document.getElementById('leftNavC');
+      var btn  = document.getElementById('lnavcCollapse');
+      navc.classList.remove('flyout-open');
+      if(navc.dataset.cmode === 'collapsed'){
+        navc.dataset.cmode = 'expanded';
+        var active = document.querySelector('#lnavcRail .lnavc-railitem.is-active');
+        openSectionC(active ? active.dataset.key : 'cost');   // re-pin the active section
+        if(btn){ btn.classList.remove('is-collapsed'); btn.title = 'Collapse menu'; btn.setAttribute('aria-label', 'Collapse menu'); }
+      } else {
+        navc.dataset.cmode = 'collapsed';
+        document.getElementById('leftNavC').classList.remove('is-railonly');
+        if(btn){ btn.classList.add('is-collapsed'); btn.title = 'Expand menu'; btn.setAttribute('aria-label', 'Expand menu'); }
+      }
+    }
+
     renderRailC();
 
-    // Rail clicks → open that section
-    document.getElementById('lnavcRail').addEventListener('click', function(e){
+    var lnavcRailEl = document.getElementById('lnavcRail');
+    var leftNavCEl  = document.getElementById('leftNavC');
+
+    // Rail clicks
+    lnavcRailEl.addEventListener('click', function(e){
       var btn = e.target.closest('.lnavc-railitem');
       if(!btn) return;
-      openSectionC(btn.dataset.key);
+      if(isCollapsedC()){
+        var item = findItemC(btn.dataset.key);
+        if(item && item.children) openFlyoutC(btn.dataset.key);   // open/keep the flyout
+        else { closeFlyoutC(); openSectionC(btn.dataset.key); }   // leaf → select directly
+      } else {
+        openSectionC(btn.dataset.key);   // pinned: render inline, push content
+      }
+    });
+
+    // Rail hover (collapsed mode) → preview/open the flyout for the hovered section
+    lnavcRailEl.addEventListener('mouseover', function(e){
+      if(!isCollapsedC()) return;
+      var btn = e.target.closest('.lnavc-railitem');
+      if(btn) openFlyoutC(btn.dataset.key);
+    });
+
+    // Leaving the whole sidebar (rail + flyout) auto-collapses the flyout
+    leftNavCEl.addEventListener('mouseleave', function(){
+      if(isCollapsedC()) closeFlyoutC();
     });
 
     // Panel clicks → toggle accordion groups, or activate a leaf
@@ -5081,8 +5172,19 @@ function applyProjectContext() {
       this.querySelectorAll('.is-active').forEach(function(x){ x.classList.remove('is-active'); });
       leaf.classList.add('is-active');
       showCPage(leaf.dataset.leaf);
-      var activeRail = document.querySelector('#lnavcRail .lnavc-railitem.is-active');
-      var section = activeRail ? sectionLabelC(activeRail.dataset.key) : '';
+      // In collapsed mode the flyout belongs to flyoutKey; mark that rail section active + close
+      var sectionKey;
+      if(isCollapsedC()){
+        sectionKey = leftNavCEl.dataset.flyoutKey;
+        document.querySelectorAll('#lnavcRail .lnavc-railitem').forEach(function(b){
+          b.classList.toggle('is-active', b.dataset.key === sectionKey);
+        });
+        closeFlyoutC();
+      } else {
+        var activeRail = document.querySelector('#lnavcRail .lnavc-railitem.is-active');
+        sectionKey = activeRail && activeRail.dataset.key;
+      }
+      var section = sectionKey ? sectionLabelC(sectionKey) : '';
       setBreadcrumb([section].concat(lnavcTrail(leaf), [leaf.dataset.leaf]));
     });
 
