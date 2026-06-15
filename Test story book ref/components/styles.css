@@ -522,6 +522,21 @@ ul { list-style: none; }
 .lnav-toggle-icon path { transition: fill 0.15s; }
 .lnav-toggle:hover .lnav-toggle-icon path { fill: var(--surface-400); }
 
+/* Collapse/expand control — single arrow floating in the gap between the left nav
+   and the breadcrumb (absolute, replaces the grip-dot edge handle) */
+.lnav-toggle { display: none; }
+.lnav-toprow-left { display: flex; align-items: center;}
+.lnav-arrow-toggle {
+  position: absolute; left: -21px ; top: 15px; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: flex-start;
+  width: 24px; height: 24px; flex-shrink: 0; padding: 0; line-height: 1;
+  border: none; background: transparent; box-shadow: none; cursor: pointer;
+  color: var(--surface-500, #737373); font-size: 16px;
+}
+.lnav-arrow-toggle:hover { color: var(--surface-900, #262626); }
+.lnav-arrow-toggle .pi { display: block; line-height: 1; transition: transform 0.2s; }
+body.lnav-collapsed .lnav-arrow-toggle .pi { transform: rotate(180deg); }
+
 /* ===== MAIN CONTENT ===== */
 .main-content {
   margin-left: var(--lnav-width-open);
@@ -2037,7 +2052,7 @@ body { background: var(--default-surface-secondary); }
   margin-top: 56px;
   flex: 1;
   min-width: 0;
-  padding: 20px 32px 60px;
+  padding: 20px 24px 60px;
   transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1),
               margin-right 0.3s cubic-bezier(0.4,0,0.2,1);
 }
@@ -2052,6 +2067,7 @@ body.lnav-collapsed .proj-content {
   justify-content: space-between;
   margin-bottom: 8px;
   background: transparent;
+  position: relative;   /* anchor for the absolutely-placed collapse arrow */
 }
 .breadcrumb {
   display: flex;
