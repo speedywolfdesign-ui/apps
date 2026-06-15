@@ -527,7 +527,7 @@ ul { list-style: none; }
 .lnav-toggle { display: none; }
 .lnav-toprow-left { display: flex; align-items: center;}
 .lnav-arrow-toggle {
-  position: absolute; left: -21px ; top: 10px; transform: translateY(-50%);
+  position: absolute; left: -21px ; top: 15px; transform: translateY(-50%);
   display: inline-flex; align-items: center; justify-content: flex-start;
   width: 24px; height: 24px; flex-shrink: 0; padding: 0; line-height: 1;
   border: none; background: transparent; box-shadow: none; cursor: pointer;
