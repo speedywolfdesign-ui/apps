@@ -1185,14 +1185,9 @@
         const ds = aiDatasets[i];
         return ds ? `<span class="lg"><span class="sw" style="border-top-color:${ds.borderColor || '#326fd1'}"></span>${ds.label}</span>` : '';
       }).join('');
-      let delta = '';
-      if(human != null && aiEnd != null){
-        const pct = (aiEnd - human) / human * 100;
-        delta = `<span class="delta">Predictive <b>${fmt(aiEnd)}</b> vs committed <b>${fmt(human)}</b> — <b>+${pct.toFixed(1)}%</b></span>`;
-      }
       foot.innerHTML =
         '<span class="lg">Committed forecast fields:</span>'+
-        fields + delta;
+        fields;
     }
 
     // Position the AI panel's draggable "Today" head at the current TODAY_IDX.
