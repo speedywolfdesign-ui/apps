@@ -482,9 +482,13 @@ function _buildDriverPill(group, pct) {
 function _groupPctsSum100() {
   // Element breakdowns are metric-specific — only the selected Data type's rows count
   const metricOk = (f) => !f.metric || f.metric === CHART_METRIC;
-  const pts = DRIVER_GROUPS.map(g => g.id === 'spi'
-    ? SPI_CPI_WEIGHT
-    : g.features.filter(f => !f.header && metricOk(f)).reduce((a, f) => a + (ACTIVE_WEIGHTS[f.key] || 0), 0));
+  // Curve shape is no longer a configurable driver — excluded from the mix so the
+  // remaining groups always recalculate to sum to 100%.
+  const pts = DRIVER_GROUPS.map(g => g.id === 'shape'
+    ? 0
+    : g.id === 'spi'
+      ? SPI_CPI_WEIGHT
+      : g.features.filter(f => !f.header && metricOk(f)).reduce((a, f) => a + (ACTIVE_WEIGHTS[f.key] || 0), 0));
   const total = pts.reduce((a, b) => a + b, 0);
   if (total <= 0) return pts.map(() => 0);
   const raw    = pts.map(p => p / total * 100);
@@ -505,10 +509,11 @@ function buildAiBannerDetail() {
   const eff = (f) => f.fixedWeight != null ? SPI_CPI_WEIGHT : (ACTIVE_WEIGHTS[f.key] != null ? ACTIVE_WEIGHTS[f.key] : 1);
   // Element breakdowns are metric-specific — only show the one matching the selected Data type
   const metricOk = (f) => !f.metric || f.metric === CHART_METRIC;
-  const denom = DRIVER_GROUPS.flatMap(g => g.features).filter(f => !f.header && metricOk(f)).reduce((a, f) => a + eff(f), 0);
+  const denom = DRIVER_GROUPS.filter(g => g.id !== 'shape').flatMap(g => g.features).filter(f => !f.header && metricOk(f)).reduce((a, f) => a + eff(f), 0);
   const contribOf = (w) => denom > 0 ? (w / denom * 100).toFixed(1) + '%' : '0.0%';
 
   const cards = DRIVER_GROUPS.map((group, gi) => {
+    if (group.id === 'shape') return '';   // Curve shape hidden from the "Driven by" detail
     const pct = groupPcts[gi];
     const rows = group.features.filter(metricOk).map(f => {
       if (f.header) return `<div class="sc-ai-df-subhead">${f.header}</div>`;
@@ -2106,9 +2111,11 @@ window.runAiForecast = function() {
   if (!ACTIVE_USER.perms.runForecast) return;
   const btn = document.querySelector('.sc-run-btn');
   if (!btn || btn.disabled) return;
-  const orig = btn.innerHTML;
-  btn.innerHTML = '<i class="pi pi-spin pi-spinner btn-icon-left"></i> Running…';
   btn.disabled = true;
+  // Swap the play icon for a spinner while running — label stays unchanged
+  const runIcon = btn.querySelector('.pi');
+  const origIconCls = runIcon ? runIcon.className : '';
+  if (runIcon) runIcon.className = 'pi pi-spin pi-spinner btn-icon-left';
 
   const chartWrap = document.querySelector('.sc-chart-wrap');
   if (chartWrap) chartWrap.classList.add('sc-chart-loading');
@@ -2128,8 +2135,8 @@ window.runAiForecast = function() {
     }
 
     if (chartWrap) chartWrap.classList.remove('sc-chart-loading');
-    btn.innerHTML = orig;
     btn.disabled = !ACTIVE_USER.perms.runForecast;
+    if (runIcon) runIcon.className = origIconCls || 'pi pi-play btn-icon-left';
 
     // If the detailed view is currently open, rebuild it with fresh weights
     const detailPanel = document.getElementById('scAiBannerDetail');
@@ -3059,10 +3066,21 @@ function _buildAndMountSettings(container) {
   // Section contribution % — same source as the "Driven by" pills (DRIVER_GROUPS order: classification, numerical, spi, shape)
   const secPcts = _groupPctsSum100();
 
+  // How many comparable accounts the AI analysed to derive these weights
+  const _simCount = ((typeof CA_DATA !== 'undefined' && CA_DATA[ACTIVE_CA_ID]) || (typeof CA_DATA !== 'undefined' && CA_DATA['ca-1042']) || {}).bannerSimilar || 9;
+
   let html = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <p style="font-size:13px;color:#64748b;margin:0">Adjust classification groups and feature weights used by the Gower distance matching algorithm. Changes apply immediately to all three forecast lines.</p>
       <button class="sc-settings-reset-btn" onclick="resetSettingsWeights()"><i class="pi pi-refresh"></i> Reset to defaults</button>
+    </div>
+    <div class="sc-ai-weights-note" role="note" style="display:flex;gap:11px;align-items:flex-start;background:linear-gradient(135deg,#eef3fb 0%,#f6faff 100%);border:1px solid #d6e4f7;border-radius:10px;padding:12px 14px;margin-bottom:16px">
+      <i class="ph-fill ph-sparkle" style="color:#326fd1;font-size:19px;line-height:1;margin-top:1px;flex-shrink:0"></i>
+      <div style="font-size:12.5px;line-height:1.55;color:#334155">
+        <strong style="color:#1e3a5f">These weights were auto-tuned by AI.</strong>
+        The distribution below was derived from the AI's analysis of <b>${_simCount} closely-matched comparable accounts</b> in your project history — emphasising the drivers and methods that most accurately predicted <b>final cost</b> on similar work. Back-tested across 132 completed accounts (median error ±3.8%).
+        <span style="display:block;margin-top:5px;color:#64748b">This is the AI's recommended starting point for the best result. You can fine-tune any weight to override it.</span>
+      </div>
     </div>`;
 
   // Project learning pool — which historical projects feed the matcher.
@@ -3288,13 +3306,13 @@ window.openSettingsModal = function() {
         <div id="settings-modal-container"></div>
       </div>
       <div class="sc-settings-modal-footer">
-        <button class="sc-settings-modal-reset" onclick="resetSettingsWeights();closeSettingsModal()" ${canModify ? '' : 'disabled'} style="${canModify ? '' : 'opacity:0.45'}">
+        <button class="sc-settings-modal-reset" onclick="resetSettingsWeights()" ${canModify ? '' : 'disabled'} style="${canModify ? '' : 'opacity:0.45'}">
           <i class="pi pi-refresh"></i> Reset to defaults
         </button>
         <div style="display:flex;gap:8px">
           <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
           <button class="btn btn-primary sc-settings-modal-run" onclick="closeSettingsModal();runAiForecast()" ${canRun ? '' : 'disabled'} style="${canRun ? '' : 'opacity:0.5'}" title="${canRun ? '' : 'Your role cannot run AI forecasts'}">
-            <i class="pi pi-play btn-icon-left"></i> Run analysis
+            Run analysis
           </button>
         </div>
       </div>

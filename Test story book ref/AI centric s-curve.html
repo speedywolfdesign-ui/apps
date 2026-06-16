@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+  <!-- Phosphor Icons (for AI sparkle markers — same set as icon.html) -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
   <link rel="stylesheet" href="components/tokens.css" />
   <link rel="stylesheet" href="components/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -176,7 +178,7 @@
 
     <!-- Page title block -->
     <div class="sc-page-title-block">
-      <h1 class="page-title" style="margin-bottom:2px">AI-centric S-curve forecast</h1>
+      <h1 class="page-title" style="margin-bottom:2px"><i class="ph-fill ph-sparkle" style="color:var(--ait-primary)"></i> AI-centric S-curve forecast</h1>
       <!-- <div class="sc-page-subtitle"><span style="color:var(--primary-700,#1e437d);font-weight:600">Learned from 1,240 completed control accounts</span></div> -->
     </div>
 
@@ -210,7 +212,7 @@
       </div>
       <div class="sc-toolbar-right">
         <button class="btn btn-primary sc-run-btn" onclick="runAiForecast()">
-          <i class="pi pi-play btn-icon-left"></i> Run Project Forecast
+          <i class="pi pi-play btn-icon-left"></i> Run project forecast
         </button>
         <button class="sc-toolbar-icon-btn sc-forecast-settings-btn" onclick="openSettingsModal()" title="AI forecast settings" aria-label="AI forecast settings">
           <i class="pi pi-cog"></i>
@@ -236,6 +238,10 @@
             <button class="sc-kebab-item sc-kebab-item--radio" type="button" data-view-choice="tabs" onclick="setSectionsView('tabs')" aria-checked="false">
               <i class="pi pi-window-maximize"></i> Tab view
               <i class="pi pi-check sc-kebab-check"></i>
+            </button>
+            <div class="sc-kebab-divider"></div>
+            <button class="sc-kebab-item" type="button" onclick="toggleKebabMenu();startAiTour()">
+              <i class="pi pi-question-circle"></i> Help &amp; tour
             </button>
           </div>
         </div>
@@ -434,7 +440,7 @@
           <div class="sc-chart-title-row">
             <span class="sc-chart-title-label">S-curve <i class="pi pi-info-circle sc-chart-info-icon" title="Cumulative cost S-curve with periodic bar chart"></i></span>
             <button type="button" class="ait-compare-btn" id="aiCompareBtn" onclick="toggleAiCompare()" aria-pressed="false" title="Compare the AI forecast against the human-entered forecast">
-              <i class="pi pi-sparkles"></i> <span id="aiCompareBtnTxt">AI Compare</span>
+              <i class="ph-fill ph-sparkle"></i> <span id="aiCompareBtnTxt">AI compare</span>
             </button>
           </div>
           <div class="sc-chart-wrap" style="height:320px">
@@ -451,7 +457,7 @@
         <!-- AI comparison panel (revealed by the AI Compare button) -->
         <div class="sc-chart-outer ait-aicurve-panel" id="aiCurvePanel" style="display:none">
           <div class="sc-chart-title-row">
-            <span class="sc-chart-title-label"><i class="pi pi-sparkles" style="color:var(--ait-primary)"></i> AI S-curve</span>
+            <span class="sc-chart-title-label"><i class="ph-fill ph-sparkle" style="color:var(--ait-primary)"></i> AI S-curve</span>
             <span class="ait-aicurve-sub">User Adopted Forecast Vs. AI Generated Forecast</span>
           </div>
           <div class="sc-chart-wrap" style="height:320px">
@@ -566,7 +572,7 @@
       return `
       <div class="ait-strip" id="aitProvenance" role="group" aria-label="AI forecast provenance" style="margin-bottom:16px">
         <div class="ait-strip-lead">
-          <span class="k"><i class="pi pi-microchip-ai"></i> AI-learned forecast</span>
+          <span class="k"><i class="ph-fill ph-sparkle"></i> AI-learned forecast</span>
           <span class="t">Pattern-matched against Cisco Systems' own delivery history</span>
           <span class="s">Private project data only — no external benchmarks.</span>
         </div>
@@ -824,22 +830,9 @@
       requestAnimationFrame(frame);
     }
 
-    /* Wrap the base runAiForecast so the scan plays first, then the real forecast renders */
-    function installRunInterstitial(){
-      const original = window.runAiForecast;
-      if(typeof original !== 'function' || original.__aiWrapped) return;
-      const wrapped = function(){
-        if(_scanning) return;
-        const btn = document.querySelector('.sc-run-btn');
-        if(btn) btn.disabled = true;
-        runScan(function(){
-          if(btn) btn.disabled = false;
-          try { original.apply(window, arguments); } catch(e){ console.error(e); }
-        });
-      };
-      wrapped.__aiWrapped = true;
-      window.runAiForecast = wrapped;
-    }
+    /* Scan interstitial disabled — Run Project Forecast now runs the forecast
+       directly, without showing the "Running AI forecast" modal. */
+    function installRunInterstitial(){ /* no-op: scan modal hidden */ }
 
     /* Forecast Explanation tab content: "AI-learned forecast" provenance strip,
        the "Why you can trust this forecast" panel, and the method cross-check. */
@@ -948,7 +941,7 @@
         delta = `<span class="delta">Actual/ETC (AI) <b>${fmt(aiEnd)}</b> vs adopted <b>${fmt(human)}</b> — <b>+${pct.toFixed(1)}%</b></span>`;
       }
       foot.innerHTML =
-        '<span class="lg"><i class="pi pi-sparkles" style="color:var(--ait-primary)"></i> AI forecast fields:</span>'+
+        '<span class="lg"><i class="ph-fill ph-sparkle" style="color:var(--ait-primary)"></i> AI forecast fields:</span>'+
         fields + delta;
     }
 
@@ -1089,7 +1082,7 @@
       btn.classList.toggle('is-active', show);
       btn.setAttribute('aria-pressed', String(show));
       const txt = document.getElementById('aiCompareBtnTxt');
-      if(txt) txt.textContent = show ? 'Hide AI compare' : 'AI Compare';
+      if(txt) txt.textContent = show ? 'Hide AI compare' : 'AI compare';
       if(row) row.classList.toggle('is-comparing', show);
       if(show){
         if(!aiChart) buildAiChart(); else { syncAiChartFromMain(); aiChart.resize(); }
@@ -1119,6 +1112,351 @@
     }
     if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(setDefault, 0));
     else setTimeout(setDefault, 0);
+  })();
+  </script>
+
+  <!-- ============================================================
+       FIRST-RUN GUIDED TOUR
+       Welcome popup → settings → run forecast → appendix → warnings.
+       Self-contained; remembers completion in localStorage.
+       ============================================================ -->
+  <style id="aiTourStyles">
+    .tour-panel{ position:fixed; background:rgba(2,6,23,.55); z-index:100000; transition:all .18s ease; }
+    .tour-ring{
+      position:fixed; z-index:100001; border-radius:10px; border:2px solid rgba(255,255,255,.95);
+      box-shadow:0 0 0 2px rgba(50,111,209,.75), 0 0 0 6px rgba(50,111,209,.25);
+      pointer-events:none; transition:all .18s ease;
+    }
+    .tour-tip{
+      position:fixed; z-index:100003; width:308px; max-width:calc(100vw - 32px);
+      background:#fff; border-radius:12px; box-shadow:0 18px 48px rgba(0,0,0,.28);
+      padding:16px 18px; font-family:'Inter',sans-serif; color:#1f2937;
+      opacity:0; transform:translateY(4px); transition:opacity .18s, transform .18s;
+    }
+    .tour-tip.show{ opacity:1; transform:none; }
+    .tour-tip-title{ font-size:14.5px; font-weight:700; margin:0 0 6px; display:flex; align-items:center; gap:8px; color:#0f172a; }
+    .tour-tip-title .pi{ color:var(--primary-500,#326fd1); }
+    .tour-tip-text{ font-size:13px; line-height:1.55; color:#475569; margin:0; }
+    .tour-tip-foot{ display:flex; align-items:center; gap:10px; margin-top:14px; }
+    .tour-step{ font-size:12px; color:#94a3b8; font-weight:600; }
+    .tour-skip{ background:none; border:none; color:#94a3b8; font-size:12px; cursor:pointer; font-family:inherit; text-decoration:underline; padding:0; }
+    .tour-skip:hover{ color:#64748b; }
+    .tour-next{ margin-left:auto; background:var(--primary-500,#326fd1); color:#fff; border:none; border-radius:8px;
+      padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
+    .tour-next:hover{ background:var(--primary-600,#2859a7); }
+    .tour-hint{ margin-left:auto; font-size:12px; font-weight:700; color:var(--primary-600,#2859a7); display:inline-flex; align-items:center; gap:6px; }
+    .tour-hint .pi{ animation:tourpulse 1s infinite; }
+    @keyframes tourpulse{ 0%,100%{ transform:translateX(0); } 50%{ transform:translateX(3px); } }
+
+    /* Tour start + completion popups use the app's modal component (.sc-modal-overlay / .sc-modal) */
+    .sc-modal-overlay--tour{ z-index:100006; display:none; padding:20px; }
+    .sc-modal-overlay--tour.is-open{ display:flex; }
+    .sc-tour-modal{ position:relative; width:min(440px,94vw); font-family:'Inter',sans-serif; }
+    .tour-card-close{
+      position:absolute; top:12px; right:12px; z-index:2;
+      width:30px; height:30px; border:none; border-radius:50%; cursor:pointer;
+      background:rgba(255,255,255,.8); color:#475569; font-size:15px;
+      display:inline-flex; align-items:center; justify-content:center;
+    }
+    .tour-card-close:hover{ background:#fff; color:#0f172a; }
+    .tour-welcome-img{ height:172px; background:linear-gradient(135deg,#eef3fb 0%, #dbe7fb 55%, #cfe0fb 100%);
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:#326fd1; position:relative; }
+    .tour-welcome-img .pi{ font-size:50px; }
+    .tour-welcome-img .tour-img-cap{ font-size:12px; font-weight:600; color:#5b7bb0; }
+    .tour-welcome-img .tour-img-tag{ position:absolute; bottom:10px; right:12px; font-size:10.5px; color:#64748b;
+      background:rgba(255,255,255,.75); padding:2px 8px; border-radius:20px; }
+    .tour-welcome-body{ padding:22px 24px 24px; }
+    .tour-welcome-body h2{ font-size:19px; margin:0 0 8px; color:#0f172a; }
+    .tour-welcome-body p{ font-size:13.5px; line-height:1.55; color:#475569; margin:0 0 20px; }
+    .tour-welcome-actions{ display:flex; gap:10px; }
+    .tour-start{ flex:1; background:var(--primary-500,#326fd1); color:#fff; border:none; border-radius:10px;
+      padding:11px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+    .tour-start:hover{ background:var(--primary-600,#2859a7); }
+    .tour-later{ background:#f1f5f9; color:#475569; border:none; border-radius:10px; padding:11px 16px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
+    .tour-later:hover{ background:#e2e8f0; }
+  </style>
+  <script>
+  (function(){
+    if (window.__aiTourInit) return; window.__aiTourInit = true;
+    var SEEN_KEY = 'scurve-ai-tour-seen-v1';
+
+    // Step model: kind 'welcome' or 'spot'. Spots advance on 'click' (the highlighted
+    // element) or on 'next' (a button in the tooltip).
+    // Appendix/Warnings live as accordion sections (default) or tabs — target whichever is showing.
+    function viewIsTabs(){ var s = document.getElementById('scSections'); return !!(s && s.dataset.view === 'tabs'); }
+    function appendixTarget(){ return viewIsTabs() ? document.querySelector('.sc-tab-btn[data-tab="acc-appendix"]') : document.querySelector('#acc-appendix .sc-acc-header'); }
+    function warningsTarget(){ return viewIsTabs() ? document.querySelector('.sc-tab-btn[data-tab="acc-warnings"]') : document.querySelector('#acc-warnings .sc-acc-header'); }
+    // Nth card inside the Forecast Explanation (appendix) section.
+    function appxCard(n){ return function(){ return document.querySelectorAll('#appendix-container .sc-appx-card')[n] || null; }; }
+    function ensureAppendixOpen(){ openAcc('acc-appendix'); }
+    function ensureWarningsOpen(){ openAcc('acc-warnings'); }
+    function warnTableTarget(){ return document.querySelector('#warnings-container .sc-warn-table-wrap') || document.getElementById('warnings-container'); }
+
+    var steps = [
+      { kind:'welcome' },
+      { kind:'spot', target:'.sc-forecast-settings-btn', icon:'pi-cog',
+        title:'Settings', advance:'click', afterDelay:240,
+        text:'Start by reviewing your settings. Configure forecasting options and preferences before running your analysis.' },
+      { kind:'spot', target:'#settingsModal', icon:'pi-sliders-h', mask:false, tipAt:'bottom',
+        title:'Settings', advance:'next',
+        onNext:function(){ if (typeof closeSettingsModal === 'function') closeSettingsModal(); },
+        text:'Here you can manage forecasting parameters, configure assumptions, and customize options that influence your results.' },
+      { kind:'spot', target:'.sc-run-btn', icon:'pi-play',
+        title:'Run Forecast', advance:'click', afterDelay:1300,
+        text:'You’re all set. Click <b>Run Forecast</b> to generate your forecast results.' },
+      { kind:'spot', target:appendixTarget, icon:'pi-list',
+        title:'Appendix', advance:'click', afterDelay:500,
+        text:'The Appendix contains the supporting detail behind the forecast. Let’s walk through each card.' },
+      { kind:'spot', target:appxCard(0), title:'Forecast confidence', advance:'next', before:ensureAppendixOpen,
+        text:'How confident the AI is in this forecast — based on how many similar historical accounts matched, and how closely they fit.' },
+      { kind:'spot', target:appxCard(1), title:'EAC forecast range', advance:'next', before:ensureAppendixOpen,
+        text:'The probabilistic estimate-at-completion range — optimistic (P10), base (P50) and downside (P90) — derived from model uncertainty and historical variance.' },
+      { kind:'spot', target:appxCard(2), title:'Similar accounts', advance:'next', before:ensureAppendixOpen,
+        text:'The completed accounts the AI matched to this one, ranked by similarity — the evidence base the projection is built on.' },
+      { kind:'spot', target:appxCard(3), title:'Basis of forecast', advance:'next', before:ensureAppendixOpen,
+        text:'The key assumptions and adjustments — pattern matching, CPI/SPI corrections and the earned-value ceiling — that shaped the curve.' },
+      { kind:'spot', target:warningsTarget, icon:'pi-exclamation-triangle',
+        title:'Warnings', advance:'click', afterDelay:400,
+        text:'Review warnings to identify data quality issues, assumptions, exceptions, or areas that may require your attention before finalizing the results.' },
+      { kind:'spot', target:warnTableTarget, title:'Account warnings', advance:'next', btn:'Done', before:ensureWarningsOpen,
+        text:'A per-account breakdown: each control account with an issue, its severity, the issue type, and remarks with the recommended action. High-severity items — like a blocked forecast pending updated schedule dates — should be resolved before you finalize the results.' },
+      { kind:'complete' }
+    ];
+
+    var TOTAL = 0;
+    steps.forEach(function(s){ if (s.kind === 'spot'){ TOTAL++; s._num = TOTAL; } });
+
+    var els = {}, idx = -1, targetEl = null, clickHandler = null, reposition = null;
+    var cardCb = { primary:null, secondary:null, close:null };   // welcome / completion card button handlers
+
+    /* ---------- DOM ---------- */
+    function build(){
+      if (els.root) return;
+      var root = document.createElement('div'); root.id = 'aiTourRoot';
+      els.panels = {};
+      ['top','right','bottom','left'].forEach(function(k){
+        var d = document.createElement('div'); d.className = 'tour-panel'; d.style.display = 'none';
+        root.appendChild(d); els.panels[k] = d;
+      });
+      els.ring = document.createElement('div'); els.ring.className = 'tour-ring'; els.ring.style.display = 'none'; root.appendChild(els.ring);
+      els.tip  = document.createElement('div'); els.tip.className  = 'tour-tip';  els.tip.style.display  = 'none'; root.appendChild(els.tip);
+      document.body.appendChild(root); els.root = root;
+
+      // Welcome + completion popups — built on the app's modal component (.sc-modal-overlay / .sc-modal)
+      var w = document.createElement('div');
+      w.className = 'sc-modal-overlay sc-modal-overlay--tour';
+      w.innerHTML =
+        '<div class="sc-modal sc-tour-modal" role="dialog" aria-modal="true" aria-label="Guided tour">' +
+          '<button class="tour-card-close" id="tourCardClose" aria-label="Close"><i class="pi pi-times"></i></button>' +
+          '<div class="tour-welcome-img">' +
+            '<i class="pi pi-compass" id="tourCardIcon"></i>' +
+            '<span class="tour-img-cap" id="tourCardCap"></span>' +
+            '<span class="tour-img-tag">preview</span>' +
+          '</div>' +
+          '<div class="tour-welcome-body">' +
+            '<h2 id="tourCardTitle"></h2>' +
+            '<p id="tourCardText"></p>' +
+            '<div class="tour-welcome-actions">' +
+              '<button class="tour-start" id="tourCardPrimary"></button>' +
+              '<button class="tour-later" id="tourCardSecondary"></button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(w); els.card = w;
+      els.cardIcon = w.querySelector('#tourCardIcon');
+      els.cardCap = w.querySelector('#tourCardCap');
+      els.cardTitle = w.querySelector('#tourCardTitle');
+      els.cardText = w.querySelector('#tourCardText');
+      els.cardPrimary = w.querySelector('#tourCardPrimary');
+      els.cardSecondary = w.querySelector('#tourCardSecondary');
+      els.cardClose = w.querySelector('#tourCardClose');
+
+      els.tip.addEventListener('click', function(e){
+        if (e.target.closest('.tour-next')){
+          var s = steps[idx];
+          if (s && s.onNext) s.onNext();
+          if (s && s.last) end(false); else setTimeout(next, 60);
+        } else if (e.target.closest('.tour-skip')){ end(true); }
+      });
+      w.addEventListener('click', function(e){
+        if (e.target.closest('#tourCardClose')){ if (cardCb.close) cardCb.close(); }
+        else if (e.target.closest('#tourCardPrimary')){ if (cardCb.primary) cardCb.primary(); }
+        else if (e.target.closest('#tourCardSecondary')){ if (cardCb.secondary) cardCb.secondary(); }
+      });
+    }
+
+    /* ---------- positioning ---------- */
+    function place(rect, useMask){
+      var vw = window.innerWidth, vh = window.innerHeight, p = 8;
+      var x = Math.max(0, rect.left - p), y = Math.max(0, rect.top - p);
+      var wdt = Math.min(vw - x, rect.width + 2*p), hgt = Math.min(vh - y, rect.height + 2*p);
+
+      if (useMask === false){
+        Object.keys(els.panels).forEach(function(k){ els.panels[k].style.display = 'none'; });
+      } else {
+        var P = els.panels;
+        css(P.top,    { left:'0', top:'0', width:'100%', height: y + 'px' });
+        css(P.bottom, { left:'0', top:(y+hgt) + 'px', width:'100%', height: Math.max(0, vh-(y+hgt)) + 'px' });
+        css(P.left,   { left:'0', top: y + 'px', width: x + 'px', height: hgt + 'px' });
+        css(P.right,  { left:(x+wdt) + 'px', top: y + 'px', width: Math.max(0, vw-(x+wdt)) + 'px', height: hgt + 'px' });
+        Object.keys(P).forEach(function(k){ P[k].style.display = 'block'; });
+      }
+      css(els.ring, { left:x+'px', top:y+'px', width:wdt+'px', height:hgt+'px' });
+      els.ring.style.display = 'block';
+    }
+
+    function placeTip(rect, s){
+      var vw = window.innerWidth, vh = window.innerHeight, gap = 12;
+      var tw = els.tip.offsetWidth, th = els.tip.offsetHeight, top, left;
+      if (s && s.tipAt === 'bottom'){
+        left = (vw - tw) / 2; top = vh - th - 24;
+      } else if (rect.bottom + gap + th <= vh){ top = rect.bottom + gap; left = rect.left; }
+      else if (rect.top - gap - th >= 0){ top = rect.top - gap - th; left = rect.left; }
+      else if (rect.right + gap + tw <= vw){ left = rect.right + gap; top = rect.top; }
+      else if (rect.left - gap - tw >= 0){ left = rect.left - gap - tw; top = rect.top; }
+      else { top = (vh - th) / 2; left = (vw - tw) / 2; }
+      left = Math.max(8, Math.min(left, vw - tw - 8));
+      top  = Math.max(8, Math.min(top,  vh - th - 8));
+      els.tip.style.left = left + 'px'; els.tip.style.top = top + 'px';
+    }
+
+    function css(el, o){ Object.keys(o).forEach(function(k){ el.style[k] = o[k]; }); }
+
+    /* ---------- step flow ---------- */
+    function setTipContent(s){
+      var stepInfo = s._num ? '<span class="tour-step">Step ' + s._num + ' of ' + TOTAL + '</span>' : '';
+      var right = s.advance === 'next'
+        ? '<button class="tour-next">' + (s.btn || 'Next') + '</button>'
+        : '<span class="tour-hint">Click to continue</span>';
+      els.tip.innerHTML =
+        '<div class="tour-tip-title">' + s.title + '</div>' +
+        '<p class="tour-tip-text">' + s.text + '</p>' +
+        '<div class="tour-tip-foot">' + stepInfo + right + '</div>';
+    }
+
+    function clearStep(){
+      if (clickHandler && targetEl){ targetEl.removeEventListener('click', clickHandler); }
+      clickHandler = null; targetEl = null;
+      if (reposition){ window.removeEventListener('scroll', reposition, true); window.removeEventListener('resize', reposition); reposition = null; }
+    }
+
+    function resolve(t){ return typeof t === 'function' ? t() : document.querySelector(t); }
+
+    // Expand an accordion section if it's currently collapsed.
+    function openAcc(id){
+      var h = document.querySelector('#' + id + ' .sc-acc-header');
+      if (h && h.getAttribute('aria-expanded') === 'false' && typeof toggleAcc === 'function') toggleAcc(id);
+    }
+
+    function showStep(i){
+      clearStep();
+      idx = i;
+      var s = steps[i];
+      if (!s){ end(false); return; }
+      if (s.kind === 'welcome'){ showWelcome(); return; }
+      if (s.kind === 'complete'){ showComplete(); return; }
+      hideCard();
+      if (s.before){ try { s.before(); } catch(e) {} }
+
+      var el = resolve(s.target), tries = 0;
+      if (!el){
+        var poll = setInterval(function(){
+          el = resolve(s.target);
+          if (el){ clearInterval(poll); renderSpot(s, el); }
+          else if (++tries > 24){ clearInterval(poll); next(); }   // give up → skip step
+        }, 60);
+        return;
+      }
+      renderSpot(s, el);
+    }
+
+    function renderSpot(s, el){
+      try { el.scrollIntoView({ block:'center', inline:'nearest' }); } catch(e) {}
+      setTimeout(function(){
+        var r = el.getBoundingClientRect();
+        place(r, s.mask);
+        setTipContent(s);
+        els.tip.style.display = 'block';
+        requestAnimationFrame(function(){ els.tip.classList.add('show'); placeTip(r, s); });
+
+        if (s.advance === 'click'){
+          clickHandler = function(){ setTimeout(next, s.afterDelay || 150); };
+          targetEl = el;
+          el.addEventListener('click', clickHandler, { once:true });
+        }
+        reposition = function(){ var rr = el.getBoundingClientRect(); place(rr, s.mask); placeTip(rr, s); };
+        window.addEventListener('scroll', reposition, true);
+        window.addEventListener('resize', reposition);
+      }, 90);
+    }
+
+    function next(){ els.tip.classList.remove('show'); showStep(idx + 1); }
+
+    /* ---------- card overlays (welcome + completion) ---------- */
+    function hideSpot(){
+      if (!els.root) return;
+      els.tip.classList.remove('show');
+      Object.keys(els.panels).forEach(function(k){ els.panels[k].style.display = 'none'; });
+      els.ring.style.display = 'none'; els.tip.style.display = 'none';
+    }
+    function showCard(cfg){
+      build();
+      hideSpot();
+      els.cardIcon.className = 'pi ' + (cfg.icon || 'pi-compass');
+      els.cardCap.textContent = cfg.cap || '';
+      els.cardTitle.textContent = cfg.title;
+      els.cardText.textContent = cfg.text;
+      els.cardPrimary.textContent = cfg.primaryLabel;
+      if (cfg.secondaryLabel){ els.cardSecondary.textContent = cfg.secondaryLabel; els.cardSecondary.style.display = ''; }
+      else { els.cardSecondary.style.display = 'none'; }
+      if (cfg.closable === false){ els.cardClose.style.display = 'none'; }
+      else { els.cardClose.style.display = ''; }
+      cardCb.primary = cfg.primary; cardCb.secondary = cfg.secondary || null; cardCb.close = cfg.close || function(){ end(true); };
+      els.card.classList.add('is-open');
+    }
+    function hideCard(){ if (els.card) els.card.classList.remove('is-open'); }
+
+    function showWelcome(){
+      showCard({
+        icon:'pi-compass', cap:'AI Forecasting — guided tour',
+        title:'Welcome to AI Forecasting',
+        text:'Take a quick tour to learn the key features and complete your first forecast with confidence.',
+        primaryLabel:'Start tour',
+        primary:function(){ hideCard(); showStep(1); }
+      });
+    }
+    function showComplete(){
+      showCard({
+        icon:'pi-check-circle', cap:'All done',
+        title:'Tour Complete',
+        text:'You’re ready to explore the application on your own. You can revisit this tour anytime from the Help menu.',
+        primaryLabel:'Get started', secondaryLabel:'Replay tour', closable:false,
+        primary:function(){ end(false); },
+        secondary:function(){ hideCard(); idx = -1; showStep(1); }
+      });
+    }
+
+    function end(skipped){
+      try { localStorage.setItem(SEEN_KEY, '1'); } catch(e) {}
+      clearStep();
+      hideCard();
+      hideSpot();
+    }
+
+    /* ---------- public + autostart ---------- */
+    window.startAiTour = function(){ build(); idx = -1; showStep(0); };
+
+    function maybeAutoStart(){
+      var seen; try { seen = localStorage.getItem(SEEN_KEY); } catch(e) { seen = '1'; }
+      if (seen) return;
+      // wait until the toolbar is present (page built) before launching
+      var tries = 0, t = setInterval(function(){
+        if (document.querySelector('.sc-forecast-settings-btn')){ clearInterval(t); window.startAiTour(); }
+        else if (++tries > 40) clearInterval(t);
+      }, 150);
+    }
+    if (document.readyState === 'complete') setTimeout(maybeAutoStart, 600);
+    else window.addEventListener('load', function(){ setTimeout(maybeAutoStart, 600); });
   })();
   </script>
 </body>

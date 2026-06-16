@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Icons — Phosphor browser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Phosphor Icons (all weights + fonts) -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+  <style>
+    :root{
+      --bg:#ffffff; --surface:#fafafa; --surface-2:#f5f5f5;
+      --border:#e5e5e5; --border-2:#d4d4d4;
+      --text:#262626; --text-2:#525252; --text-3:#737373;
+      --primary:#326fd1; --primary-50:#eef3fb; --primary-600:#2859a7;
+      --radius:8px;
+      --icon-size:32px; --icon-color:#262626;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{
+      font-family:'Inter',system-ui,sans-serif; color:var(--text);
+      background:var(--bg); line-height:1.45;
+    }
+
+    /* ---- Header ---- */
+    .ic-header{
+      position:sticky; top:0; z-index:20; background:var(--bg);
+      border-bottom:1px solid var(--border);
+      padding:18px 24px 0;
+    }
+    .ic-title-row{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+    .ic-title{ font-size:20px; font-weight:700; letter-spacing:-.01em; }
+    .ic-sub{ font-size:13px; color:var(--text-3); }
+    .ic-count{ margin-left:auto; font-size:13px; color:var(--text-3); }
+
+    /* ---- Toolbar ---- */
+    .ic-toolbar{
+      display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+      padding:16px 0 16px;
+    }
+    .ic-search{
+      position:relative; flex:1; min-width:220px; max-width:420px;
+    }
+    .ic-search i{
+      position:absolute; left:12px; top:50%; transform:translateY(-50%);
+      color:var(--text-3); font-size:18px; pointer-events:none;
+    }
+    .ic-search input{
+      width:100%; height:40px; padding:0 14px 0 38px;
+      border:1px solid var(--border-2); border-radius:var(--radius);
+      font-family:inherit; font-size:14px; color:var(--text);
+      background:var(--bg); outline:none;
+      transition:border-color .15s, box-shadow .15s;
+    }
+    .ic-search input:focus{ border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-50); }
+
+    .ic-field{ display:flex; align-items:center; gap:8px; }
+    .ic-field-label{ font-size:12px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.04em; }
+
+    /* Weight segmented control */
+    .ic-weights{ display:inline-flex; border:1px solid var(--border-2); border-radius:var(--radius); overflow:hidden; }
+    .ic-weight-btn{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 12px; background:var(--bg); border:none; cursor:pointer;
+      font-family:inherit; font-size:12.5px; font-weight:600; color:var(--text-2);
+      border-left:1px solid var(--border-2);
+    }
+    .ic-weight-btn:first-child{ border-left:none; }
+    .ic-weight-btn i{ font-size:16px; }
+    .ic-weight-btn:hover{ background:var(--surface-2); }
+    .ic-weight-btn.is-active{ background:var(--primary); color:#fff; }
+
+    /* Size slider */
+    .ic-size input[type=range]{ width:120px; accent-color:var(--primary); cursor:pointer; }
+    .ic-size .ic-size-val{ font-size:12.5px; font-weight:600; color:var(--text-2); min-width:42px; }
+
+    /* Color */
+    .ic-color input[type=color]{
+      width:34px; height:34px; padding:0; border:1px solid var(--border-2);
+      border-radius:8px; background:var(--bg); cursor:pointer;
+    }
+
+    .ic-reset{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 12px; border:1px solid var(--border-2); border-radius:var(--radius);
+      background:var(--bg); cursor:pointer; font-family:inherit; font-size:12.5px;
+      font-weight:600; color:var(--text-2);
+    }
+    .ic-reset:hover{ background:var(--surface-2); }
+
+    /* ---- Grid ---- */
+    .ic-main{ padding:24px; }
+    .ic-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(96px, 1fr));
+      gap:10px;
+    }
+    .ic-tile{
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+      aspect-ratio:1/1; padding:10px 6px;
+      border:1px solid var(--border); border-radius:10px;
+      background:var(--bg); cursor:pointer; text-align:center;
+      transition:border-color .12s, background .12s, transform .05s;
+    }
+    .ic-tile:hover{ border-color:var(--primary); background:var(--primary-50); }
+    .ic-tile:active{ transform:scale(.97); }
+    .ic-tile i{ font-size:var(--icon-size); color:var(--icon-color); line-height:1; }
+    .ic-tile .ic-name{
+      font-size:11px; color:var(--text-3); max-width:100%;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+
+    .ic-empty{ padding:60px 24px; text-align:center; color:var(--text-3); font-size:14px; }
+    .ic-loading{ padding:60px 24px; text-align:center; color:var(--text-3); font-size:14px; }
+
+    /* ---- Dev bar (detail panel, docked to the bottom) ---- */
+    body.ic-devbar-open{ padding-bottom:212px; }
+    .ic-devbar{
+      position:fixed; left:0; right:0; bottom:0; z-index:40;
+      background:var(--bg); border-top:1px solid var(--border);
+      box-shadow:0 -10px 30px rgba(0,0,0,.07);
+      transform:translateY(115%); transition:transform .25s cubic-bezier(.4,0,.2,1);
+    }
+    .ic-devbar.show{ transform:translateY(0); }
+    .ic-devbar-inner{
+      position:relative; display:flex; align-items:stretch;
+      max-width:1300px; margin:0 auto; padding:18px 24px; min-height:172px;
+    }
+    .ic-db-close{
+      position:absolute; top:10px; right:14px; width:30px; height:30px;
+      border:none; background:var(--surface-2); color:var(--text-3); border-radius:50%;
+      cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:15px;
+    }
+    .ic-db-close:hover{ background:var(--border); color:var(--text); }
+
+    /* Left info column */
+    .ic-db-info{ width:300px; flex-shrink:0; padding-right:22px; border-right:1px solid var(--border); }
+    .ic-db-top{ display:flex; gap:16px; align-items:center; }
+    .ic-db-preview{
+      width:64px; height:64px; flex-shrink:0; border:1px solid var(--border); border-radius:12px;
+      background:var(--surface); display:flex; align-items:center; justify-content:center;
+    }
+    .ic-db-preview i{ font-size:38px; color:var(--icon-color); line-height:1; }
+    .ic-db-meta{ min-width:0; }
+    .ic-db-name{ font-size:18px; font-weight:700; word-break:break-word; }
+    .ic-db-uni, .ic-db-ver{ font-size:12px; color:var(--text-3); }
+    .ic-db-actions{ display:grid; grid-template-columns:1fr 1fr; gap:4px 18px; margin-top:16px; }
+    .ic-db-act{
+      display:inline-flex; align-items:center; gap:8px; padding:5px 0;
+      background:none; border:none; cursor:pointer; font-family:inherit; font-size:13px;
+      font-weight:500; color:var(--text-2); text-align:left;
+    }
+    .ic-db-act:hover{ color:var(--primary); }
+    .ic-db-act i{ font-size:18px; }
+
+    /* Right tabbed area */
+    .ic-db-right{ flex:1; min-width:0; padding-left:22px; display:flex; flex-direction:column; }
+    .ic-db-tabs{ display:flex; gap:4px; overflow-x:auto; }
+    .ic-db-tab{
+      padding:8px 14px; background:none; border:none; cursor:pointer; white-space:nowrap;
+      font-family:inherit; font-size:13px; font-weight:600; color:var(--text-3);
+      border-bottom:2px solid transparent;
+    }
+    .ic-db-tab:hover{ color:var(--text); }
+    .ic-db-tab.is-active{ color:var(--text); border-bottom-color:var(--primary); }
+    .ic-db-content{
+      flex:1; margin-top:12px; background:var(--surface); border:1px solid var(--border);
+      border-radius:10px; padding:14px 16px; overflow:auto; min-height:84px;
+    }
+    .ic-db-tags{ display:flex; flex-wrap:wrap; gap:8px; }
+    .ic-db-tag{
+      padding:5px 10px; background:var(--bg); border:1px solid var(--border-2); border-radius:6px;
+      font-family:ui-monospace,Menlo,monospace; font-size:12.5px; color:var(--text-2);
+    }
+    .ic-db-codewrap{ position:relative; }
+    .ic-db-codecopy{
+      position:absolute; top:-2px; right:-2px; display:inline-flex; align-items:center; gap:5px;
+      padding:4px 9px; border:1px solid var(--border-2); border-radius:6px; background:var(--bg);
+      cursor:pointer; font-family:inherit; font-size:11px; font-weight:600; color:var(--text-2);
+    }
+    .ic-db-codecopy:hover{ background:var(--surface-2); color:var(--text); }
+    .ic-db-codecopy i{ font-size:14px; }
+    .ic-db-code{
+      margin:0; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px;
+      line-height:1.65; white-space:pre-wrap; word-break:break-word; color:var(--text); padding-right:64px;
+    }
+
+    @media (max-width:720px){
+      .ic-devbar-inner{ flex-direction:column; gap:16px; }
+      .ic-db-info{ width:auto; border-right:none; border-bottom:1px solid var(--border); padding:0 0 16px; }
+      .ic-db-right{ padding-left:0; }
+      body.ic-devbar-open{ padding-bottom:24px; }
+    }
+
+    /* ---- Toast ---- */
+    .ic-toast{
+      position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+      background:var(--text); color:#fff; padding:10px 16px; border-radius:8px;
+      font-size:13px; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,.18);
+      opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:50;
+      display:flex; align-items:center; gap:8px; max-width:90vw;
+    }
+    .ic-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+    .ic-toast code{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; opacity:.85; }
+  </style>
+</head>
+<body>
+  <header class="ic-header">
+    <div class="ic-title-row">
+      <span class="ic-title">Icons</span>
+      <span class="ic-sub">Phosphor Icons — browse, restyle &amp; copy</span>
+      <span class="ic-count" id="icCount"></span>
+    </div>
+
+    <div class="ic-toolbar">
+      <label class="ic-search">
+        <i class="ph ph-magnifying-glass"></i>
+        <input type="search" id="icSearch" placeholder="Search icons…" autocomplete="off" spellcheck="false" />
+      </label>
+
+      <div class="ic-field ic-weight-field">
+        <span class="ic-field-label">Weight</span>
+        <div class="ic-weights" id="icWeights" role="group" aria-label="Icon weight">
+          <button class="ic-weight-btn" data-weight="ph-thin"     title="Thin"><i class="ph-thin ph-circle"></i></button>
+          <button class="ic-weight-btn" data-weight="ph-light"    title="Light"><i class="ph-light ph-circle"></i></button>
+          <button class="ic-weight-btn is-active" data-weight="ph" title="Regular"><i class="ph ph-circle"></i></button>
+          <button class="ic-weight-btn" data-weight="ph-bold"     title="Bold"><i class="ph-bold ph-circle"></i></button>
+          <button class="ic-weight-btn" data-weight="ph-fill"     title="Fill"><i class="ph-fill ph-circle"></i></button>
+          <button class="ic-weight-btn" data-weight="ph-duotone"  title="Duotone"><i class="ph-duotone ph-circle"></i></button>
+        </div>
+      </div>
+
+      <div class="ic-field ic-size">
+        <span class="ic-field-label">Size</span>
+        <input type="range" id="icSize" min="16" max="96" step="4" value="32" />
+        <span class="ic-size-val" id="icSizeVal">32px</span>
+      </div>
+
+      <div class="ic-field ic-color">
+        <span class="ic-field-label">Color</span>
+        <input type="color" id="icColor" value="#262626" />
+      </div>
+
+      <button class="ic-reset" id="icReset"><i class="ph ph-arrow-counter-clockwise"></i> Reset</button>
+    </div>
+  </header>
+
+  <main class="ic-main">
+    <div class="ic-loading" id="icLoading">Loading icons…</div>
+    <div class="ic-grid" id="icGrid" hidden></div>
+    <div class="ic-empty" id="icEmpty" hidden>No icons match your search.</div>
+  </main>
+
+  <!-- Dev bar: selected-icon detail + copyable framework code -->
+  <aside class="ic-devbar" id="icDevbar" aria-hidden="true" aria-label="Icon details">
+    <div class="ic-devbar-inner">
+      <button class="ic-db-close" id="icDbClose" aria-label="Close"><i class="ph ph-x"></i></button>
+
+      <div class="ic-db-info">
+        <div class="ic-db-top">
+          <div class="ic-db-preview"><i id="icDbIcon" class="ph ph-circle"></i></div>
+          <div class="ic-db-meta">
+            <div class="ic-db-name" id="icDbName">—</div>
+            <div class="ic-db-uni" id="icDbUni"></div>
+            <div class="ic-db-ver" id="icDbVer"></div>
+          </div>
+        </div>
+        <div class="ic-db-actions">
+          <button class="ic-db-act" data-act="dl-svg"><i class="ph ph-download-simple"></i> SVG</button>
+          <button class="ic-db-act" data-act="dl-png"><i class="ph ph-download-simple"></i> PNG</button>
+          <button class="ic-db-act" data-act="copy-svg"><i class="ph ph-copy"></i> Copy SVG</button>
+          <button class="ic-db-act" data-act="copy-code"><i class="ph ph-copy"></i> Copy code</button>
+        </div>
+      </div>
+
+      <div class="ic-db-right">
+        <div class="ic-db-tabs" id="icDbTabs" role="tablist">
+          <button class="ic-db-tab is-active" data-tab="tags">Tags</button>
+          <button class="ic-db-tab" data-tab="web">Web</button>
+          <button class="ic-db-tab" data-tab="react">React</button>
+          <button class="ic-db-tab" data-tab="vue">Vue</button>
+          <button class="ic-db-tab" data-tab="flutter">Flutter</button>
+          <button class="ic-db-tab" data-tab="elm">Elm</button>
+          <button class="ic-db-tab" data-tab="swift">Swift</button>
+        </div>
+        <div class="ic-db-content" id="icDbContent"></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="ic-toast" id="icToast"></div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // Fallback set used if the full list can't be fetched (offline / CORS).
+    var FALLBACK = ('house gear gear-six user users bell bell-ringing magnifying-glass plus minus x check ' +
+      'caret-up caret-down caret-left caret-right arrow-up arrow-down arrow-left arrow-right arrow-up-right ' +
+      'arrow-counter-clockwise arrows-clockwise pencil-simple trash copy clipboard download upload folder ' +
+      'folder-open file file-text files calendar clock chart-line chart-bar chart-pie-slice currency-dollar ' +
+      'shopping-cart tag bookmark heart star envelope-simple chat-circle phone map-pin globe link lock ' +
+      'lock-open shield warning info question lightbulb sparkle eye eye-slash sliders funnel list dots-three ' +
+      'dots-three-vertical squares-four sidebar grid-four sun moon palette image camera play pause stop ' +
+      'sign-out sign-in power database cube package wrench bug code terminal cloud cloud-arrow-up rocket ' +
+      'thumbs-up thumbs-down smiley note notepad bookmark-simple flag bookmarks').trim().split(/\s+/);
+
+    var CSS_URL = 'https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css';
+
+    var els = {
+      grid:    document.getElementById('icGrid'),
+      loading: document.getElementById('icLoading'),
+      empty:   document.getElementById('icEmpty'),
+      count:   document.getElementById('icCount'),
+      search:  document.getElementById('icSearch'),
+      weights: document.getElementById('icWeights'),
+      size:    document.getElementById('icSize'),
+      sizeVal: document.getElementById('icSizeVal'),
+      color:   document.getElementById('icColor'),
+      reset:   document.getElementById('icReset'),
+      toast:   document.getElementById('icToast'),
+      devbar:    document.getElementById('icDevbar'),
+      dbClose:   document.getElementById('icDbClose'),
+      dbIcon:    document.getElementById('icDbIcon'),
+      dbName:    document.getElementById('icDbName'),
+      dbUni:     document.getElementById('icDbUni'),
+      dbVer:     document.getElementById('icDbVer'),
+      dbTabs:    document.getElementById('icDbTabs'),
+      dbContent: document.getElementById('icDbContent')
+    };
+
+    var WEIGHT_LABEL = { 'ph-thin':'Thin','ph-light':'Light','ph':'Regular','ph-bold':'Bold','ph-fill':'Fill','ph-duotone':'Duotone' };
+    var WEIGHT_WORD  = { 'ph-thin':'thin','ph-light':'light','ph':'regular','ph-bold':'bold','ph-fill':'fill','ph-duotone':'duotone' };
+    var CORE = 'https://unpkg.com/@phosphor-icons/core@2.1.1';
+
+    var codes = {};        // icon name -> unicode hex (e.g. "e004")
+    var svgCache = {};     // "weight/name" -> svg markup promise
+    var state = { all: [], filtered: [], weight: 'ph', query: '', selected: null, tab: 'tags' };
+
+    /* ---------- Load icon names ---------- */
+    function parseNames(cssText) {
+      // captures: .ph.ph-airplay:before{content:"\e004"}
+      var re = /\.ph\.ph-([a-z0-9-]+):before\s*\{\s*content:\s*"\\?([0-9a-fA-F]+)"/g, m, set = {};
+      while ((m = re.exec(cssText)) !== null) { set[m[1]] = true; codes[m[1]] = m[2].toLowerCase(); }
+      var names = Object.keys(set);
+      if (!names.length) {  // fallback regex (names only) if the content form changes
+        var re2 = /\.ph\.ph-([a-z0-9-]+):before/g;
+        while ((m = re2.exec(cssText)) !== null) set[m[1]] = true;
+        names = Object.keys(set);
+      }
+      return names.sort();
+    }
+
+    function loadIcons() {
+      fetch(CSS_URL)
+        .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
+        .then(function (text) {
+          var names = parseNames(text);
+          start(names.length ? names : FALLBACK.slice());
+        })
+        .catch(function () {
+          start(FALLBACK.slice().sort());   // offline / blocked → curated set
+        });
+    }
+
+    function start(names) {
+      state.all = names;
+      els.loading.hidden = true;
+      els.grid.hidden = false;
+      applyFilter();
+    }
+
+    /* ---------- Rendering ---------- */
+    function applyFilter() {
+      var q = state.query.trim().toLowerCase();
+      state.filtered = q ? state.all.filter(function (n) { return n.indexOf(q) !== -1; }) : state.all;
+      render();
+    }
+
+    function render() {
+      var w = state.weight, list = state.filtered, html = '';
+      for (var i = 0; i < list.length; i++) {
+        var n = list[i];
+        html += '<button class="ic-tile" data-name="' + n + '" title="' + n + '">' +
+                  '<i class="' + w + ' ph-' + n + '"></i>' +
+                  '<span class="ic-name">' + n + '</span>' +
+                '</button>';
+      }
+      els.grid.innerHTML = html;
+      els.empty.hidden = list.length !== 0;
+      els.grid.hidden = list.length === 0;
+      els.count.textContent = list.length + (list.length === 1 ? ' icon' : ' icons') +
+        (state.query ? ' found' : '');
+    }
+
+    /* ---------- Dev bar ---------- */
+    function esc(s){ return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function escAttr(s){ return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+    function pascal(name){
+      return name.split('-').map(function (p) { return p.charAt(0).toUpperCase() + p.slice(1); }).join('');
+    }
+
+    // Best-effort tags: the icon's own name words (real metadata isn't shipped with the font).
+    function tagsFor(name){
+      var seen = {}, out = [];
+      name.split('-').forEach(function (w) { if (w && !seen[w]) { seen[w] = 1; out.push(w); } });
+      if (out.indexOf(name) === -1) out.push(name);
+      return out;
+    }
+
+    // Framework usage snippets, derived from the icon name + current weight.
+    function snippetFor(tab, name){
+      var w = state.weight, word = WEIGHT_WORD[w] || 'regular', Pc = pascal(name);
+      var wAttr = word === 'regular' ? '' : ' weight="' + word + '"';
+      switch (tab) {
+        case 'web':
+          return '<i class="' + w + ' ph-' + name + '"></i>';
+        case 'react':
+          return 'import { ' + Pc + ' } from "@phosphor-icons/react";\n\n<' + Pc + ' size={' + els.size.value + '}' + wAttr + ' />';
+        case 'vue':
+          return 'import { Ph' + Pc + ' } from "@phosphor-icons/vue";\n\n<Ph' + Pc + ' :size="' + els.size.value + '"' + wAttr + ' />';
+        case 'flutter':
+          return word === 'regular'
+            ? 'PhosphorIcon(PhosphorIcons.' + camel(name) + '())'
+            : 'PhosphorIcon(PhosphorIcons.' + camel(name) + '(PhosphorIconsStyle.' + word + '))';
+        case 'elm':
+          return 'Phosphor.' + camel(name) + ' Phosphor.' + (WEIGHT_LABEL[w] || 'Regular') + '\n    |> Phosphor.toHtml []';
+        case 'swift':
+          return 'Ph.' + camel(name) + '.' + word;
+        default:
+          return '';
+      }
+    }
+    function camel(name){ var p = pascal(name); return p.charAt(0).toLowerCase() + p.slice(1); }
+
+    function renderTab(){
+      var name = state.selected; if (!name) return;
+      var tab = state.tab, html;
+      if (tab === 'tags') {
+        html = '<div class="ic-db-tags">' +
+          tagsFor(name).map(function (t) { return '<span class="ic-db-tag">' + esc(t) + '</span>'; }).join('') +
+          '</div>';
+      } else {
+        var raw = snippetFor(tab, name);
+        html = '<div class="ic-db-codewrap">' +
+            '<button class="ic-db-codecopy" data-copy="' + escAttr(raw) + '"><i class="ph ph-copy"></i> Copy</button>' +
+            '<pre class="ic-db-code">' + esc(raw) + '</pre>' +
+          '</div>';
+      }
+      els.dbContent.innerHTML = html;
+    }
+
+    function renderDevbar(){
+      var name = state.selected; if (!name) return;
+      els.dbIcon.className = state.weight + ' ph-' + name;
+      els.dbName.textContent = name;
+      els.dbUni.textContent = codes[name] ? 'U+' + codes[name].toUpperCase() : '';
+      els.dbVer.textContent = (WEIGHT_LABEL[state.weight] || 'Regular') + ' · Phosphor';
+      renderTab();
+    }
+
+    function openDevbar(name){
+      state.selected = name;
+      renderDevbar();
+      els.devbar.classList.add('show');
+      els.devbar.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('ic-devbar-open');
+    }
+    function closeDevbar(){
+      els.devbar.classList.remove('show');
+      els.devbar.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('ic-devbar-open');
+      state.selected = null;
+    }
+    function refreshDevbar(){ if (state.selected) renderDevbar(); }
+
+    /* ---------- SVG fetch (for download / copy / PNG) ---------- */
+    function svgUrl(name){
+      var word = WEIGHT_WORD[state.weight] || 'regular';
+      return word === 'regular'
+        ? CORE + '/assets/regular/' + name + '.svg'
+        : CORE + '/assets/' + word + '/' + name + '-' + word + '.svg';
+    }
+    function fetchSvg(name){
+      var key = state.weight + '/' + name;
+      if (!svgCache[key]) {
+        svgCache[key] = fetch(svgUrl(name)).then(function (r) {
+          if (!r.ok) throw new Error('http ' + r.status); return r.text();
+        });
+      }
+      return svgCache[key];
+    }
+    function coloredSvg(svg){
+      var color = els.color.value;
+      return /\bfill=/.test(svg.slice(0, 60)) ? svg.replace(/fill="[^"]*"/, 'fill="' + color + '"')
+                                              : svg.replace('<svg', '<svg fill="' + color + '"');
+    }
+    function downloadBlob(blob, filename){
+      var url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      document.body.removeChild(a); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    /* ---------- Controls ---------- */
+    var debounce;
+    els.search.addEventListener('input', function (e) {
+      clearTimeout(debounce);
+      var v = e.target.value;
+      debounce = setTimeout(function () { state.query = v; applyFilter(); }, 110);
+    });
+
+    els.weights.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ic-weight-btn');
+      if (!btn) return;
+      state.weight = btn.dataset.weight;
+      els.weights.querySelectorAll('.ic-weight-btn').forEach(function (b) {
+        b.classList.toggle('is-active', b === btn);
+      });
+      render();
+      refreshDevbar();
+    });
+
+    els.size.addEventListener('input', function (e) {
+      var px = e.target.value + 'px';
+      document.documentElement.style.setProperty('--icon-size', px);
+      els.sizeVal.textContent = px;
+      refreshDevbar();
+    });
+
+    els.color.addEventListener('input', function (e) {
+      document.documentElement.style.setProperty('--icon-color', e.target.value);
+      refreshDevbar();
+    });
+
+    els.reset.addEventListener('click', function () {
+      state.weight = 'ph'; state.query = '';
+      els.search.value = '';
+      els.weights.querySelectorAll('.ic-weight-btn').forEach(function (b) {
+        b.classList.toggle('is-active', b.dataset.weight === 'ph');
+      });
+      els.size.value = 32; els.sizeVal.textContent = '32px';
+      els.color.value = '#262626';
+      document.documentElement.style.setProperty('--icon-size', '32px');
+      document.documentElement.style.setProperty('--icon-color', '#262626');
+      applyFilter();
+      refreshDevbar();
+    });
+
+    /* ---------- Open dev bar on icon click ---------- */
+    els.grid.addEventListener('click', function (e) {
+      var tile = e.target.closest('.ic-tile');
+      if (!tile) return;
+      openDevbar(tile.dataset.name);
+    });
+
+    /* ---------- Dev bar: tabs, copy, actions, close ---------- */
+    els.dbTabs.addEventListener('click', function (e) {
+      var tab = e.target.closest('.ic-db-tab');
+      if (!tab) return;
+      state.tab = tab.dataset.tab;
+      els.dbTabs.querySelectorAll('.ic-db-tab').forEach(function (t) {
+        t.classList.toggle('is-active', t === tab);
+      });
+      renderTab();
+    });
+
+    // copy button inside a code tab
+    els.dbContent.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ic-db-codecopy');
+      if (!btn) return;
+      var raw = btn.getAttribute('data-copy');
+      copy(raw).then(function () { toast('Copied', raw); });
+    });
+
+    // left-column actions: download/copy SVG, download PNG, copy code
+    els.devbar.querySelector('.ic-db-actions').addEventListener('click', function (e) {
+      var btn = e.target.closest('.ic-db-act');
+      if (!btn || !state.selected) return;
+      var name = state.selected, act = btn.dataset.act;
+
+      if (act === 'copy-code') {
+        var code = '<i class="' + state.weight + ' ph-' + name + '"></i>';
+        copy(code).then(function () { toast('Copied', code); });
+        return;
+      }
+      var label = WEIGHT_WORD[state.weight] === 'regular' ? name : name + '-' + WEIGHT_WORD[state.weight];
+
+      fetchSvg(name).then(function (svg) {
+        if (act === 'dl-svg') {
+          downloadBlob(new Blob([svg], { type: 'image/svg+xml' }), label + '.svg');
+          toast('Downloaded', label + '.svg');
+        } else if (act === 'copy-svg') {
+          copy(svg).then(function () { toast('Copied SVG'); });
+        } else if (act === 'dl-png') {
+          svgToPng(coloredSvg(svg), label);
+        }
+      }).catch(function () { toast('Could not fetch SVG'); });
+    });
+
+    function svgToPng(svg, label){
+      var size = Math.max(128, parseInt(els.size.value, 10) * 8);
+      var blobUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement('canvas');
+        c.width = size; c.height = size;
+        c.getContext('2d').drawImage(img, 0, 0, size, size);
+        URL.revokeObjectURL(blobUrl);
+        c.toBlob(function (blob) {
+          if (!blob) { toast('PNG export failed'); return; }
+          downloadBlob(blob, label + '.png');
+          toast('Downloaded', label + '.png');
+        }, 'image/png');
+      };
+      img.onerror = function () { URL.revokeObjectURL(blobUrl); toast('PNG export failed'); };
+      img.src = blobUrl;
+    }
+
+    els.dbClose.addEventListener('click', closeDevbar);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeDevbar();
+    });
+
+    function copy(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).catch(function () { return legacyCopy(text); });
+      }
+      return legacyCopy(text);
+    }
+    function legacyCopy(text) {
+      return new Promise(function (resolve) {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta); resolve();
+      });
+    }
+
+    var toastTimer;
+    function toast(label, code) {
+      els.toast.innerHTML = '<i class="ph-fill ph-check-circle"></i>' + label +
+        (code ? ' <code>' + code.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>' : '');
+      els.toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { els.toast.classList.remove('show'); }, 1900);
+    }
+
+    loadIcons();
+  })();
+  </script>
+</body>
+</html>
