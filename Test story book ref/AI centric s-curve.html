@@ -157,8 +157,47 @@
     .ait-aicurve-loader-text{ font-size:12.5px; font-weight:600; color:var(--ait-primary-d,#1e3a5f); }
     @keyframes aiCurveSpin{ to{ transform:rotate(360deg); } }
     .ait-aicurve-sub{font-size:11.5px; color:var(--ait-muted); font-weight:500}
-    .ait-aicurve-foot{margin-top:10px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; font-size:12px}
-    .ait-aicurve-foot .lg{display:inline-flex; align-items:center; gap:6px; color:var(--ait-text); font-weight:600}
+    /* Combined side-by-side tooltip (AI vs User adoption) */
+    .sc-combined-tip{ position:fixed; z-index:120; pointer-events:none;
+      background:rgba(17,24,39,.94); color:#fff; border-radius:9px; padding:11px 13px;
+      font-family:'Inter',sans-serif; font-size:12px; box-shadow:0 10px 28px rgba(0,0,0,.32); }
+    .sc-combined-tip .ct-head{ font-weight:700; font-size:12.5px; margin-bottom:8px; color:#e5e7eb; }
+    .sc-combined-tip .ct-cols{ display:flex; gap:22px; }
+    .sc-combined-tip .ct-col-title{ font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;
+      color:#cbd5e1; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+    .sc-combined-tip .ct-row{ display:flex; align-items:center; gap:7px; margin-bottom:3px; white-space:nowrap; }
+    .sc-combined-tip .ct-sw{ width:14px; height:3px; border-radius:2px; flex-shrink:0; }
+    .sc-combined-tip .ct-lbl{ color:#cbd5e1; }
+    .sc-combined-tip .ct-val{ margin-left:auto; padding-left:14px; font-weight:600; color:#fff; }
+    .sc-combined-tip .ct-empty{ color:#94a3b8; }
+    /* Run-forecast analysis modal — confidence ring */
+    .sc-run-analysis-modal{ width:min(560px, 94vw); }
+    .ra-header{ display:flex; align-items:flex-start; gap:12px; }
+    .ra-head-text{ flex:1; min-width:0; }
+    .ra-header .sc-modal-title{ font-size:19px; }
+    .ra-subtitle{ font-size:13px; color:#64748b; margin-top:3px; }
+    .ra-ring-wrap{ position:relative; width:200px; height:200px; margin:14px auto 4px; }
+    .ra-ring{ display:block; width:200px; height:200px; transform:rotate(-90deg); }
+    .ra-ring-track{ stroke:#e5e7eb; stroke-width:9; }
+    .ra-ring-arc{ stroke:var(--ait-primary,#326fd1); stroke-width:9; stroke-linecap:round; }
+    .ra-ring-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+    .ra-pct{ font-size:36px; font-weight:800; color:#0f172a; line-height:1; }
+    .ra-pct-lbl{ font-size:15px; color:#475569; margin-top:7px; line-height:1.25; }
+    .ra-stats{ display:flex; justify-content:space-between; align-items:center; margin-top:18px; font-size:15px; color:#0f172a; }
+    .ra-stats b{ font-weight:700; }
+    .ra-status{ margin-top:10px; font-size:13px; color:#64748b; min-height:18px; }
+    /* Display settings modal */
+    .sc-display-settings-modal{ width:min(420px, 94vw); }
+    .ds-group{ padding:14px 0; border-bottom:1px solid #eef2f7; }
+    .ds-group:last-child{ border-bottom:none; }
+    .ds-group-title{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#94a3b8; margin-bottom:10px; }
+    .ds-check{ display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:#1e293b; cursor:pointer; }
+    .ds-check input, .ds-radio input{ width:16px; height:16px; accent-color:var(--ait-primary,#326fd1); cursor:pointer; }
+    .ds-hint{ font-size:12px; color:#94a3b8; margin:5px 0 0 26px; }
+    .ds-radio{ display:flex; align-items:center; gap:10px; font-size:14px; color:#334155; cursor:pointer; padding:5px 0; }
+    .ds-footer{ display:flex; justify-content:flex-end; padding:14px 22px 18px; }
+    .ait-aicurve-foot{margin-top:10px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; font-size:11.5px}
+    .ait-aicurve-foot .lg{display:inline-flex; align-items:center; gap:6px; color:var(--text-muted,var(--ait-muted)); font-weight:400}
     .ait-aicurve-foot .sw{width:16px; border-top:3px solid; border-radius:2px; flex-shrink:0}
     .ait-aicurve-foot .delta{margin-left:auto; font-size:11.5px; color:var(--ait-muted); font-weight:500}
     .ait-aicurve-foot .delta b{color:var(--ait-primary-d)}
@@ -239,14 +278,8 @@
               <i class="pi pi-users"></i> Switch user
             </button>
             <div class="sc-kebab-divider"></div>
-            <div class="sc-kebab-section-label">View (A/B test)</div>
-            <button class="sc-kebab-item sc-kebab-item--radio" type="button" data-view-choice="accordion" onclick="setSectionsView('accordion')" aria-checked="true">
-              <i class="pi pi-list"></i> Accordion view
-              <i class="pi pi-check sc-kebab-check"></i>
-            </button>
-            <button class="sc-kebab-item sc-kebab-item--radio" type="button" data-view-choice="tabs" onclick="setSectionsView('tabs')" aria-checked="false">
-              <i class="pi pi-window-maximize"></i> Tab view
-              <i class="pi pi-check sc-kebab-check"></i>
+            <button class="sc-kebab-item" type="button" onclick="toggleKebabMenu();openDisplaySettings()">
+              <i class="pi pi-sliders-h"></i> Settings
             </button>
             <div class="sc-kebab-divider"></div>
             <button class="sc-kebab-item" type="button" onclick="toggleKebabMenu();startAiTour()">
@@ -355,13 +388,13 @@
               <span class="sc-line-dot sc-line-dot--budget"></span> Budget
             </button>
             <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('earned')" data-line="earned" aria-pressed="true">
-              <span class="sc-line-dot sc-line-dot--earned"></span> Earned
+              <span class="sc-line-dot sc-line-dot--earned"></span> Earned (AI)
             </button>
             <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('actual')" data-line="actual" aria-pressed="true">
-              <span class="sc-line-dot sc-line-dot--actual"></span> Actual / ETC
+              <span class="sc-line-dot sc-line-dot--actual"></span> Actual / ETC (AI)
             </button>
             <button class="sc-line-toggle" type="button" onclick="toggleForecastLine('incurred')" data-line="incurred" aria-pressed="true">
-              <span class="sc-line-dot sc-line-dot--incurred"></span> Incurred / ETC
+              <span class="sc-line-dot sc-line-dot--incurred"></span> Incurred / ETC (AI)
             </button>
             <div class="sc-line-more-wrap" id="lineMoreWrap">
               <button class="sc-line-toggle sc-line-more-btn" type="button" id="lineMoreBtn" onclick="toggleLineMoreMenu()" aria-expanded="false" aria-haspopup="true">
@@ -447,7 +480,7 @@
         <div class="sc-compare-row" id="scCompareRow">
         <div class="sc-chart-outer">
           <div class="sc-chart-title-row">
-            <span class="sc-chart-title-label">S-curve <i class="pi pi-info-circle sc-chart-info-icon" title="Cumulative cost S-curve with periodic bar chart"></i></span>
+            <span class="sc-chart-title-label"><i class="ph-fill ph-sparkle" style="color:var(--ait-primary)"></i> AI S-curve <i class="pi pi-info-circle sc-chart-info-icon" title="AI-generated cumulative cost S-curve"></i></span>
             <button type="button" class="ait-compare-btn" id="aiCompareBtn" onclick="toggleAiCompare()" aria-pressed="false" title="Compare the AI forecast against the human-entered forecast">
               <i class="ph-fill ph-sparkle"></i> <span id="aiCompareBtnTxt">AI compare</span>
             </button>
@@ -466,14 +499,14 @@
         <!-- AI comparison panel (revealed by the AI Compare button) -->
         <div class="sc-chart-outer ait-aicurve-panel" id="aiCurvePanel" style="display:none">
           <div class="sc-chart-title-row">
-            <span class="sc-chart-title-label"><i class="ph-fill ph-sparkle" style="color:var(--ait-primary)"></i> AI S-curve</span>
-            <span class="ait-aicurve-sub">User Adopted Forecast Vs. AI Generated Forecast</span>
+            <span class="sc-chart-title-label"><i class="pi pi-user" style="color:var(--ait-muted)"></i> User Adoption</span>
+            <span class="ait-aicurve-sub">AI Generated Forecast Vs. User Adopted Forecast</span>
           </div>
           <div class="sc-chart-wrap" style="height:320px">
             <canvas id="ai-scurve-chart"></canvas>
             <div class="ait-aicurve-loader" id="aiCurveLoader" aria-hidden="true">
               <div class="ait-aicurve-loader-spinner"></div>
-              <div class="ait-aicurve-loader-text">Generating AI S-curve…</div>
+              <div class="ait-aicurve-loader-text">Loading user adoption forecast…</div>
             </div>
             <div class="sc-chart-dragger" id="aiChartDragger" style="display:none" aria-hidden="true">
               <div class="sc-chart-dragger-line"></div>
@@ -490,9 +523,9 @@
         <!-- Chart legend (below chart) — mirrors the line toggles -->
         <div class="sc-bottom-legend">
           <span class="sc-bl-item sc-bl-combined sc-bl-budget">Budget</span>
-          <span class="sc-bl-item sc-bl-combined sc-bl-earned">Earned</span>
-          <span class="sc-bl-item sc-bl-combined sc-bl-actual">Actual / ETC</span>
-          <span class="sc-bl-item sc-bl-combined sc-bl-incurred">Incurred / ETC</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-earned">Earned (AI)</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-actual">Actual / ETC (AI)</span>
+          <span class="sc-bl-item sc-bl-combined sc-bl-incurred">Incurred / ETC (AI)</span>
           <span class="sc-bl-item sc-bl-combined sc-bl-control">Control budget</span>
           <span class="sc-bl-item sc-bl-combined sc-bl-finance">Finance budget</span>
           <span class="sc-bl-item sc-bl-combined sc-bl-cashflow">Cashflow</span>
@@ -843,9 +876,192 @@
       requestAnimationFrame(frame);
     }
 
-    /* Scan interstitial disabled — Run Project Forecast now runs the forecast
-       directly, without showing the "Running AI forecast" modal. */
-    function installRunInterstitial(){ /* no-op: scan modal hidden */ }
+    /* ── Run-forecast analysis modal ──────────────────────────────────
+       On Run forecast: a modal (app modal component) steps through the
+       control accounts one-by-one with done / remaining counters and an
+       embedded animated wave, then applies the real forecast. */
+    var _runModal = null, _runWaveRaf = null, _runActive = false;
+    var _showLoadModal = true;   // Settings → "Show loading modal"
+
+    function buildRunModal(){
+      if(_runModal) return _runModal;
+      var ov = document.createElement('div');
+      ov.className = 'sc-modal-overlay';
+      ov.id = 'runAnalysisOverlay';
+      ov.style.display = 'none';
+      ov.innerHTML =
+        '<div class="sc-modal sc-run-analysis-modal" role="dialog" aria-modal="true" aria-label="Running AI forecast">' +
+          '<div class="sc-modal-header ra-header">' +
+            '<div class="ra-head-text">' +
+              '<div class="sc-modal-title">Running AI forecast</div>' +
+              '<div class="ra-subtitle">Scanning project control account history…</div>' +
+            '</div>' +
+            '<button class="sc-modal-close" id="raClose" aria-label="Close"><i class="pi pi-times"></i></button>' +
+          '</div>' +
+          '<div class="sc-modal-body">' +
+            '<div class="ra-ring-wrap">' +
+              '<svg class="ra-ring" viewBox="0 0 120 120">' +
+                '<circle class="ra-ring-track" cx="60" cy="60" r="52" fill="none"></circle>' +
+                '<circle class="ra-ring-arc" id="raArc" cx="60" cy="60" r="52" fill="none"></circle>' +
+              '</svg>' +
+              '<div class="ra-ring-center"><div class="ra-pct" id="raPct">0%</div>' +
+                '<div class="ra-pct-lbl">Forecast<br>confidence</div></div>' +
+            '</div>' +
+            '<div class="ra-stats">' +
+              '<span class="ra-scanned"><b id="raScanned">0</b> scanned</span>' +
+              '<span class="ra-matches"><b id="raMatches">0</b> matches</span>' +
+            '</div>' +
+            '<div class="ra-status" id="raStatus">Scanning project control account history…</div>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(ov);
+      _runModal = ov;
+      return ov;
+    }
+
+    // Target values for the run: forecast confidence + matched accounts from the active CA
+    function runTargets(){
+      var ca = (typeof CA_DATA !== 'undefined' && typeof ACTIVE_CA_ID !== 'undefined' && (CA_DATA[ACTIVE_CA_ID] || CA_DATA['ca-1042'])) || {};
+      var conf = Math.round(ca.bannerConf || 80);
+      var matches = ca.bannerSimilar || 7;
+      var scanned = 980 + matches * 30;        // staged "history scanned" total
+      return { conf: conf, matches: matches, scanned: scanned };
+    }
+
+    function showRunAnalysis(onDone){
+      if(_runActive) return;
+      _runActive = true;
+      var ov = buildRunModal();
+      var T = runTargets();
+      var arc = ov.querySelector('#raArc'), pctEl = ov.querySelector('#raPct'),
+          scannedEl = ov.querySelector('#raScanned'), matchesEl = ov.querySelector('#raMatches'),
+          statusEl = ov.querySelector('#raStatus'), closeBtn = ov.querySelector('#raClose');
+      var C = 2 * Math.PI * 52;
+      arc.style.strokeDasharray = C;
+      arc.style.strokeDashoffset = C;
+      pctEl.textContent = '0%'; scannedEl.textContent = '0'; matchesEl.textContent = '0';
+      ov.style.display = 'flex';
+
+      var PHASES = [
+        [0,    'Scanning project control account history…'],
+        [0.4,  'Matching historical accounts via Gower distance…'],
+        [0.68, 'Weighting matches by SPI/CPI performance…'],
+        [0.9,  'Finalizing forecast…']
+      ];
+      var DUR = 2600, t0 = null, cancelled = false;
+      var ease = function(t){ return 1 - Math.pow(1 - t, 3); };
+
+      function frame(now){
+        if(cancelled) return;
+        if(t0 === null) t0 = now;
+        var p = Math.min(1, (now - t0) / DUR);
+        var e = ease(p);
+        // confidence climbs to target with an early up/down wobble as accounts are scanned
+        var wobble = p < 0.85 ? Math.sin(p * 26) * 5 * (1 - p) : 0;
+        var conf = Math.max(0, Math.min(T.conf, e * T.conf + wobble));
+        pctEl.textContent = Math.round(conf) + '%';
+        arc.style.strokeDashoffset = C * (1 - conf / 100);
+        scannedEl.textContent = Math.round(e * T.scanned).toLocaleString();
+        matchesEl.textContent = Math.floor(e * T.matches);
+        var ph = PHASES[0][1];
+        for(var k = 0; k < PHASES.length; k++){ if(p >= PHASES[k][0]) ph = PHASES[k][1]; }
+        statusEl.textContent = ph;
+
+        if(p < 1){ _runWaveRaf = requestAnimationFrame(frame); return; }
+        // settle on the final forecast confidence, then close
+        pctEl.textContent = T.conf + '%';
+        arc.style.strokeDashoffset = C * (1 - T.conf / 100);
+        scannedEl.textContent = T.scanned.toLocaleString();
+        matchesEl.textContent = T.matches;
+        statusEl.innerHTML = '<i class="pi pi-check-circle" style="color:#16a34a"></i> Forecast ready — ' +
+          T.conf + '% confidence, ' + T.matches + ' matched accounts';
+        setTimeout(finish, 750);
+      }
+      function finish(){
+        if(cancelled) return;
+        ov.style.display = 'none';
+        _runActive = false;
+        if(_runWaveRaf){ cancelAnimationFrame(_runWaveRaf); _runWaveRaf = null; }
+        if(typeof onDone === 'function') onDone();
+      }
+      closeBtn.onclick = function(){            // cancel — abort without applying the forecast
+        cancelled = true; _runActive = false;
+        if(_runWaveRaf){ cancelAnimationFrame(_runWaveRaf); _runWaveRaf = null; }
+        ov.style.display = 'none';
+      };
+      _runWaveRaf = requestAnimationFrame(frame);
+    }
+
+    // Wrap runAiForecast so the analysis modal plays first, then the forecast applies.
+    function installRunInterstitial(){
+      var original = window.runAiForecast;
+      if(typeof original !== 'function' || original.__aiWrapped) return;
+      var wrapped = function(){
+        if(_runActive) return;
+        var ctx = this, args = arguments;
+        var run = function(){ try { original.apply(ctx, args); } catch(e){ console.error(e); } };
+        if(_showLoadModal) showRunAnalysis(run); else run();   // Settings toggle
+      };
+      wrapped.__aiWrapped = true;
+      window.runAiForecast = wrapped;
+    }
+
+    /* ── Display settings modal (kebab → Settings) ──────────────────── */
+    var _dsModal = null;
+    function buildDisplaySettings(){
+      if(_dsModal) return _dsModal;
+      var ov = document.createElement('div');
+      ov.className = 'sc-modal-overlay';
+      ov.id = 'displaySettingsOverlay';
+      ov.style.display = 'none';
+      ov.innerHTML =
+        '<div class="sc-modal sc-display-settings-modal" role="dialog" aria-modal="true" aria-label="Settings">' +
+          '<div class="sc-modal-header"><div class="sc-modal-title"><i class="pi pi-sliders-h"></i> Settings</div>' +
+            '<button class="sc-modal-close" id="dsClose" aria-label="Close"><i class="pi pi-times"></i></button></div>' +
+          '<div class="sc-modal-body">' +
+            '<div class="ds-group">' +
+              '<label class="ds-check"><input type="checkbox" id="dsLoadModal"><span>Show loading modal</span></label>' +
+              '<div class="ds-hint">Show the AI-analysis modal while a forecast runs.</div>' +
+            '</div>' +
+            '<div class="ds-group"><div class="ds-group-title">View</div>' +
+              '<label class="ds-radio"><input type="radio" name="dsView" value="tabs"><span>Tab view</span></label>' +
+              '<label class="ds-radio"><input type="radio" name="dsView" value="accordion"><span>Accordion view</span></label>' +
+            '</div>' +
+            '<div class="ds-group"><div class="ds-group-title">Tooltip (AI compare)</div>' +
+              '<label class="ds-radio"><input type="radio" name="dsTip" value="combined"><span>Combined</span></label>' +
+              '<label class="ds-radio"><input type="radio" name="dsTip" value="synced"><span>Separate (per-chart)</span></label>' +
+            '</div>' +
+          '</div>' +
+          '<div class="ds-footer"><button class="btn btn-primary" id="dsDone">Done</button></div>' +
+        '</div>';
+      document.body.appendChild(ov);
+      _dsModal = ov;
+
+      ov.querySelector('#dsLoadModal').addEventListener('change', function(){ _showLoadModal = this.checked; });
+      ov.querySelectorAll('input[name="dsView"]').forEach(function(r){
+        r.addEventListener('change', function(){ if(this.checked && typeof setSectionsView === 'function') setSectionsView(this.value); });
+      });
+      ov.querySelectorAll('input[name="dsTip"]').forEach(function(r){
+        r.addEventListener('change', function(){ if(this.checked && typeof setTooltipMode === 'function') setTooltipMode(this.value); });
+      });
+      ov.querySelector('#dsClose').onclick = closeDisplaySettings;
+      ov.querySelector('#dsDone').onclick = closeDisplaySettings;
+      ov.addEventListener('click', function(e){ if(e.target === ov) closeDisplaySettings(); });
+      return ov;
+    }
+
+    window.openDisplaySettings = function(){
+      var ov = buildDisplaySettings();
+      // sync controls to current state
+      ov.querySelector('#dsLoadModal').checked = _showLoadModal;
+      var view = (document.getElementById('scSections') || {}).dataset ? document.getElementById('scSections').dataset.view : 'accordion';
+      ov.querySelectorAll('input[name="dsView"]').forEach(function(r){ r.checked = (r.value === view); });
+      var tip = 'synced';
+      try { if (localStorage.getItem('sc-tooltip-mode') === 'combined') tip = 'combined'; } catch(e){}
+      ov.querySelectorAll('input[name="dsTip"]').forEach(function(r){ r.checked = (r.value === tip); });
+      ov.style.display = 'flex';
+    };
+    window.closeDisplaySettings = function(){ if(_dsModal) _dsModal.style.display = 'none'; };
 
     /* Forecast Explanation tab content: "AI-learned forecast" provenance strip,
        the "Why you can trust this forecast" panel, and the method cross-check. */
@@ -921,11 +1137,15 @@
       // 8/9 = confidence band (around Actual/ETC), 13/14/15 = dashed forecast lines.
       // The AI forecast is stored in its own dedicated fields, distinct from the
       // user-adopted forecast on the main chart.
-      const AI_FIELD = { 13: 'Actual/ETC (AI)', 14: 'Incurred/ETC (AI)', 15: 'Earned (AI)' };
+      const AI_FIELD = { 13: 'Actual / ETC', 14: 'Incurred / ETC', 15: 'Earned' };
       [13, 14, 15].forEach(i => {
         if(!datasets[i]) return;
         datasets[i].data = liftForecast(datasets[i].data, todayIdx);
         datasets[i].label = AI_FIELD[i];
+      });
+      // User Adoption chart is human-adopted — strip any "(AI)" suffix from the historical lines
+      [10, 11, 12].forEach(i => {
+        if(datasets[i] && typeof datasets[i].label === 'string') datasets[i].label = datasets[i].label.replace(/ \(AI\)$/, '');
       });
       if(datasets[8] && datasets[13]) datasets[8].data = datasets[13].data.map(v => v==null?null:+(v*1.06).toFixed(2));
       if(datasets[9] && datasets[13]) datasets[9].data = datasets[13].data.map(v => v==null?null:+(v*0.94).toFixed(2));
@@ -951,10 +1171,10 @@
       let delta = '';
       if(human != null && aiEnd != null){
         const pct = (aiEnd - human) / human * 100;
-        delta = `<span class="delta">Actual/ETC (AI) <b>${fmt(aiEnd)}</b> vs adopted <b>${fmt(human)}</b> — <b>+${pct.toFixed(1)}%</b></span>`;
+        delta = `<span class="delta">AI forecast <b>${fmt(aiEnd)}</b> vs user adoption <b>${fmt(human)}</b> — <b>+${pct.toFixed(1)}%</b></span>`;
       }
       foot.innerHTML =
-        '<span class="lg"><i class="ph-fill ph-sparkle" style="color:var(--ait-primary)"></i> AI forecast fields:</span>'+
+        '<span class="lg"><i class="pi pi-user" style="color:var(--ait-muted)"></i> User adoption fields:</span>'+
         fields + delta;
     }
 
@@ -990,8 +1210,20 @@
           interaction:{mode:'index', intersect:false},
           plugins:{
             legend:{display:false},
-            tooltip:{ filter:(it)=> !it.dataset.label.startsWith('_') && it.raw != null,
-              callbacks:{ label:(c)=> c.raw==null ? null : ` ${c.dataset.label}: ${m ? m.valFmt(c.raw) : '$'+(+c.raw).toFixed(1)+'M'}` } }
+            tooltip:{ filter:(it, index, array)=> {
+                if(it.dataset.label.startsWith('_') || it.raw == null) return false;
+                // Drop duplicate same-series entries (historical + forecast halves overlap at "today")
+                var key = it.dataset.label + '|' + it.dataset.type;
+                return array.findIndex(x => x.raw != null && (x.dataset.label + '|' + x.dataset.type) === key) === index;
+              },
+              usePointStyle:true,
+              callbacks:{
+                labelPointStyle:(c)=> ({ pointStyle: c.dataset.type === 'bar' ? 'rect' : 'line', rotation: 0 }),
+                labelColor:(c)=> {
+                  var col = c.dataset.borderColor || c.dataset.backgroundColor || '#9ca3af';
+                  return { borderColor: col, backgroundColor: col, borderWidth: c.dataset.type === 'bar' ? 0 : 3 };
+                },
+                label:(c)=> c.raw==null ? null : ` ${c.dataset.label}: ${m ? m.valFmt(c.raw) : '$'+(+c.raw).toFixed(1)+'M'}` } }
           },
           scales:{
             x:{ grid:{color:'#f3f4f6'}, ticks:{font:{size:11}, color:'#6b7280'},
@@ -1004,6 +1236,136 @@
       });
       setupAiDragger();
       updateAiFooter(datasets);
+      setupTooltipSync();
+    }
+
+    // While AI compare is on, hovering either chart shows tooltips on BOTH charts
+    // at the same time point. Two variations (toggled from the kebab menu):
+    //   'synced'   — a tooltip mirrored on each chart (default)
+    //   'combined' — one side-by-side tooltip with AI + User Adoption columns
+    var _tooltipSyncDone = false;
+    var _combinedTooltip = false;
+    var _combinedEl = null;
+
+    function _panelOpen(){ var p = document.getElementById('aiCurvePanel'); return !!(p && p.style.display !== 'none'); }
+
+    function _clearTip(tgt){
+      if(!tgt) return;
+      tgt.setActiveElements([]);
+      if(tgt.tooltip) tgt.tooltip.setActiveElements([], { x:0, y:0 });
+      tgt.update();
+    }
+
+    function _combinedTipEl(){
+      if(_combinedEl) return _combinedEl;
+      _combinedEl = document.createElement('div');
+      _combinedEl.className = 'sc-combined-tip';
+      _combinedEl.style.display = 'none';
+      document.body.appendChild(_combinedEl);
+      return _combinedEl;
+    }
+    function _hideCombined(){ if(_combinedEl) _combinedEl.style.display = 'none'; }
+
+    // Visible line series (deduped, "(AI)" stripped) at an index, for one chart
+    function _seriesAt(chart, idx){
+      var out = [], seen = {};
+      chart.data.datasets.forEach(function(ds, di){
+        if(!chart.isDatasetVisible(di)) return;
+        if(typeof ds.label !== 'string' || ds.label.charAt(0) === '_') return;
+        if(ds.type === 'bar') return;
+        var v = ds.data[idx]; if(v == null) return;
+        var label = ds.label.replace(/ \(AI\)$/, '');
+        if(seen[label]) return; seen[label] = 1;
+        out.push({ label: label, color: ds.borderColor || '#9ca3af', value: v });
+      });
+      return out;
+    }
+    function _fmtVal(v){ var mm = metric(); return mm ? mm.valFmt(v) : '$' + (+v).toFixed(1) + 'M'; }
+
+    function _showCombined(idx, evt){
+      if(typeof scurveChart === 'undefined' || !scurveChart || !aiChart) return;
+      var el = _combinedTipEl();
+      var labels = scurveChart.data.labels || [];
+      function col(title, icon, rows){
+        return '<div class="ct-col"><div class="ct-col-title">' + icon + ' ' + title + '</div>' +
+          (rows.length ? rows.map(function(r){
+            return '<div class="ct-row"><span class="ct-sw" style="background:' + r.color + '"></span>' +
+                   '<span class="ct-lbl">' + r.label + '</span><span class="ct-val">' + _fmtVal(r.value) + '</span></div>';
+          }).join('') : '<div class="ct-row ct-empty">—</div>') + '</div>';
+      }
+      el.innerHTML = '<div class="ct-head">' + (labels[idx] || '') + '</div>' +
+        '<div class="ct-cols">' +
+          col('AI S-curve', '<i class="ph-fill ph-sparkle" style="color:#8ab4f0"></i>', _seriesAt(scurveChart, idx)) +
+          col('User Adoption', '<i class="pi pi-user" style="color:#cbd5e1"></i>', _seriesAt(aiChart, idx)) +
+        '</div>';
+      el.style.display = 'block';
+      var pad = 16, w = el.offsetWidth, h = el.offsetHeight;
+      var x = evt.clientX + pad, y = evt.clientY + pad;
+      if(x + w > window.innerWidth - 8) x = evt.clientX - w - pad;
+      if(y + h > window.innerHeight - 8) y = window.innerHeight - h - 8;
+      el.style.left = Math.max(8, x) + 'px';
+      el.style.top  = Math.max(8, y) + 'px';
+    }
+
+    // Native tooltips are disabled only while the combined tooltip is active AND compare is open
+    function applyTooltipMode(){
+      var combined = _combinedTooltip && _panelOpen();
+      [scurveChart, aiChart].forEach(function(c){
+        if(c && c.options && c.options.plugins && c.options.plugins.tooltip){
+          c.options.plugins.tooltip.enabled = !combined;
+          c.update();
+        }
+      });
+      if(!combined) _hideCombined();
+    }
+
+    window.setTooltipMode = function(mode){
+      _combinedTooltip = (mode === 'combined');
+      try { localStorage.setItem('sc-tooltip-mode', mode); } catch(e){}
+      document.querySelectorAll('[data-tip-mode]').forEach(function(b){
+        b.setAttribute('aria-checked', String(b.dataset.tipMode === mode));
+      });
+      applyTooltipMode();
+    };
+
+    function setupTooltipSync(){
+      if(_tooltipSyncDone) return;
+      if(typeof scurveChart === 'undefined' || !scurveChart || !aiChart) return;
+      _tooltipSyncDone = true;
+
+      function onMove(src){
+        return function(evt){
+          if(!_panelOpen()) return;
+          var pts = src.getElementsAtEventForMode(evt, 'index', { intersect:false }, true);
+          if(!pts.length){
+            if(_combinedTooltip) _hideCombined(); else { _clearTip(scurveChart); _clearTip(aiChart); }
+            return;
+          }
+          var idx = pts[0].index;
+          if(_combinedTooltip){ _showCombined(idx, evt); return; }
+          // synced: mirror to the OTHER chart (native tooltip shows on src)
+          var tgt = (src === scurveChart) ? aiChart : scurveChart, els = [];
+          tgt.data.datasets.forEach(function(ds, di){
+            if(!tgt.isDatasetVisible(di)) return;
+            if(typeof ds.label === 'string' && ds.label.charAt(0) === '_') return;
+            if(ds.data[idx] == null) return;
+            els.push({ datasetIndex: di, index: idx });
+          });
+          if(!els.length){ _clearTip(tgt); return; }
+          tgt.setActiveElements(els);
+          tgt.tooltip.setActiveElements(els, { x: tgt.scales.x.getPixelForValue(idx), y: tgt.chartArea.top + 8 });
+          tgt.update();
+        };
+      }
+      function onLeave(){ if(!_panelOpen()) return; if(_combinedTooltip) _hideCombined(); else { _clearTip(scurveChart); _clearTip(aiChart); } }
+
+      scurveChart.canvas.addEventListener('mousemove', onMove(scurveChart));
+      scurveChart.canvas.addEventListener('mouseleave', onLeave);
+      aiChart.canvas.addEventListener('mousemove', onMove(aiChart));
+      aiChart.canvas.addEventListener('mouseleave', onLeave);
+
+      var saved; try { saved = localStorage.getItem('sc-tooltip-mode'); } catch(e){}
+      if(saved === 'combined') window.setTooltipMode('combined'); else applyTooltipMode();
     }
 
     // Re-sync the AI chart from the main chart (data, date-range window, footer, head).
@@ -1089,6 +1451,7 @@
       const aiPanel = document.getElementById('aiCurvePanel');
       if(aiPanel) aiPanel.classList.remove('is-loading');
       if(!aiChart) buildAiChart(); else { syncAiChartFromMain(); aiChart.resize(); }
+      if(typeof applyTooltipMode === 'function') applyTooltipMode();
     }
 
     window.toggleAiCompare = function(){
@@ -1103,7 +1466,7 @@
       const txt = document.getElementById('aiCompareBtnTxt');
       if(txt) txt.textContent = show ? 'Hide AI compare' : 'AI compare';
       if(row) row.classList.toggle('is-comparing', show);
-      if(show){ _renderAiCurve(); } else { panel.classList.remove('is-loading'); }
+      if(show){ _renderAiCurve(); } else { panel.classList.remove('is-loading'); if(typeof applyTooltipMode === 'function') applyTooltipMode(); }
       // the main chart column changed width — let Chart.js re-fit it
       if(typeof scurveChart !== 'undefined' && scurveChart && scurveChart.resize){
         setTimeout(()=>scurveChart.resize(), 0);
