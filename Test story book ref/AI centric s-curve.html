@@ -261,14 +261,11 @@
             <div class="sc-acct-drop-no-results" id="acctDropNoResults" style="display:none">No accounts found</div>
           </div>
         </div>
-        <!-- <button class="sc-toolbar-icon-btn" title="Filter settings" aria-label="Filter settings">
-          <i class="pi pi-sliders-h"></i>
-        </button> -->
-      </div>
-      <div class="sc-toolbar-right">
-        <button class="btn btn-primary sc-run-btn" onclick="runAiForecast()">
+        <button class="btn btn-primary sc-run-btn" onclick="runAiForecast()" style="margin-left:16px">
           <i class="pi pi-play btn-icon-left"></i> Run project forecast
         </button>
+      </div>
+      <div class="sc-toolbar-right">
         <button class="sc-toolbar-icon-btn sc-forecast-settings-btn" onclick="openSettingsModal()" title="AI forecast settings" aria-label="AI forecast settings">
           <i class="pi pi-cog"></i>
         </button>
@@ -487,7 +484,7 @@
         <div class="sc-compare-row" id="scCompareRow">
         <div class="sc-chart-outer">
           <div class="sc-chart-title-row">
-            <span class="sc-chart-title-label">Predictive forecast <i class="pi pi-info-circle sc-chart-info-icon" title="AI-generated prediction based on project signals"></i></span>
+            <span class="sc-chart-title-label">AI forecast <i class="pi pi-info-circle sc-chart-info-icon" title="AI-generated forecast"></i></span>
             <button type="button" class="ait-compare-btn" id="aiCompareBtn" onclick="toggleAiCompare()" aria-pressed="false" title="Compare the AI forecast against the human-entered forecast">
               <span id="aiCompareBtnTxt">Compare</span>
             </button>
@@ -506,7 +503,7 @@
         <!-- AI comparison panel (revealed by the AI Compare button) -->
         <div class="sc-chart-outer ait-aicurve-panel" id="aiCurvePanel" style="display:none">
           <div class="sc-chart-title-row">
-            <span class="sc-chart-title-label">Committed forecast <i class="pi pi-info-circle sc-chart-info-icon" title="Forecast owned and approved by the project team"></i></span>
+            <span class="sc-chart-title-label">Current forecast <i class="pi pi-info-circle sc-chart-info-icon" title="Forecast selected by the project team"></i></span>
             <button type="button" class="ait-hide-btn" onclick="toggleAiCompare()" title="Hide comparison"><i class="pi pi-times"></i> Hide</button>
           </div>
           <div class="sc-chart-wrap" style="height:320px">
@@ -1185,9 +1182,14 @@
         const ds = aiDatasets[i];
         return ds ? `<span class="lg"><span class="sw" style="border-top-color:${ds.borderColor || '#326fd1'}"></span>${ds.label}</span>` : '';
       }).join('');
+      let delta = '';
+      if(human != null && aiEnd != null){
+        const pct = (aiEnd - human) / human * 100;
+        delta = `<span class="delta">AI <b>${fmt(aiEnd)}</b> vs current <b>${fmt(human)}</b> — <b>+${pct.toFixed(1)}%</b></span>`;
+      }
       foot.innerHTML =
-        '<span class="lg">Committed forecast fields:</span>'+
-        fields;
+        '<span class="lg">Current forecast fields:</span>'+
+        fields + delta;
     }
 
     // Position the AI panel's draggable "Today" head at the current TODAY_IDX.
@@ -1317,8 +1319,8 @@
 
       el.innerHTML = '<div class="ct-grid">' +
           '<div class="ct-head ct-head-month">' + (labels[idx] || '') + '</div>' +
-          '<div class="ct-head ct-head-ai">Predictive forecast</div>' +
-          '<div class="ct-head ct-head-ua">Committed forecast</div>' +
+          '<div class="ct-head ct-head-ai">AI forecast</div>' +
+          '<div class="ct-head ct-head-ua">Current forecast</div>' +
           cells +
         '</div>';
       el.style.display = 'block';
@@ -1868,7 +1870,7 @@
       showCard({
         icon:'pi-compass', cap:'AI forecasting — guided tour',
         title:'AI forecasting',
-        text:'Learn how to build an effective forecast and evaluate it against the Predictive Forecast.',
+        text:'Learn how to build an effective forecast and evaluate it against the AI forecast.',
         primaryLabel:'Start tour',
         primary:function(){ hideCard(); showStep(1); }
       });
