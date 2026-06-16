@@ -88,6 +88,11 @@
   <script src="components/top-nav.js"></script>
   <script>
     var _isAdminContext = new URLSearchParams(window.location.search).get('context') === 'admin';
+    // Admin → S-curve forecasting opens straight to the page; skip the version picker.
+    if (_isAdminContext) {
+      var _vp = document.getElementById('versionPicker');
+      if (_vp) _vp.classList.add('is-hidden');
+    }
     renderTopNav({ activeItem: _isAdminContext ? 'admin' : 'projects' });
   </script>
   <div id="left-nav-mount"></div>
