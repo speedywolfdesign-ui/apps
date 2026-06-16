@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wave loader — demo</title>
+  <style>
+    html, body { margin: 0; height: 100%; font-family: 'Inter', system-ui, sans-serif; background: #f5f7fb; color: #1e293b; }
+    .demo { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 40px; text-align: center; }
+    .demo h1 { margin: 0; font-size: 22px; }
+    .demo p { margin: 0; color: #64748b; max-width: 460px; line-height: 1.5; }
+    .demo .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+    .demo button { background: #326fd1; color: #fff; border: none; border-radius: 10px; padding: 11px 18px; font: 600 14px 'Inter', sans-serif; cursor: pointer; }
+    .demo button.alt { background: #e2e8f0; color: #334155; }
+    .demo button:hover { filter: brightness(1.05); }
+  </style>
+</head>
+<body>
+  <div class="demo">
+    <h1>Wave loader</h1>
+    <p>A compact, character-based animated 3D wave you can drop over any screen while work is in progress.</p>
+    <div class="row">
+      <button onclick="WaveLoader.show('Running AI forecast')">Show loader</button>
+      <button class="alt" onclick="WaveLoader.show('Analyzing'); setTimeout(()=>WaveLoader.hide(), 3000)">Show for 3s</button>
+      <button class="alt" onclick="WaveLoader.hide()">Hide</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       WAVE LOADER  —  drop-in overlay loader.
+       Usage:  WaveLoader.show('Loading')   /   WaveLoader.hide()
+       Self-contained: injects its own overlay + styles, animates a
+       rippling 3D ASCII wave, and only runs while visible.
+       ============================================================ -->
+  <script>
+  window.WaveLoader = (function () {
+    'use strict';
+
+    // Compact character grid
+    const W = 50, H = 28, cx = W / 2, cy = H / 2;
+
+    // Flat grid of sample points over [-1,1]² — y is computed per frame as a wave
+    const GX = 34, GZ = 28;
+    const grid = [];
+    for (let i = 0; i < GX; i++) {
+      for (let j = 0; j < GZ; j++) {
+        grid.push({ gx: (i / (GX - 1)) * 2 - 1, gz: (j / (GZ - 1)) * 2 - 1 });
+      }
+    }
+
+    // Wave + projection params
+    const AMP = 0.5, KX = 2.2, KZ = 1.7;        // amplitude + wave numbers
+    const ZSCALE = 1.45;                         // plane depth
+    const CAM = 5, SX = 82, SY = 38;             // perspective
+    const TILT = 1.02;                           // look across the surface
+    const cT = Math.cos(TILT), sT = Math.sin(TILT);
+    const MAXA = AMP * 1.55;                      // for height normalization
+    const RAMP = '.,-~:=+xX#';                    // trough → crest ('~' reads as wave)
+
+    let overlay, canvas, ctx, label, raf = null, visible = false, phase = 0, tick = 0, baseText = 'Loading';
+    let cwpx = 0, chpx = 0, fontPx = 13, dpr = 1;
+    const chBuf = new Array(W * H), zBuf = new Float32Array(W * H), lBuf = new Float32Array(W * H), hBuf = new Float32Array(W * H);
+
+    function injectStyles() {
+      if (document.getElementById('wave-loader-styles')) return;
+      const s = document.createElement('style');
+      s.id = 'wave-loader-styles';
+      s.textContent =
+        '.wave-loader-overlay{position:fixed;inset:0;z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;' +
+        'background:rgba(8,16,48,.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}' +
+        '.wave-loader-overlay canvas{display:block;filter:drop-shadow(0 6px 22px rgba(40,90,200,.45))}' +
+        '.wave-loader-label{font:600 14px/1.4 "Courier New",monospace;letter-spacing:.06em;color:#cfe0ff;text-transform:uppercase}';
+      document.head.appendChild(s);
+    }
+
+    function build() {
+      if (overlay) return;
+      injectStyles();
+      overlay = document.createElement('div');
+      overlay.className = 'wave-loader-overlay';
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'polite');
+      canvas = document.createElement('canvas');
+      label = document.createElement('div');
+      label.className = 'wave-loader-label';
+      overlay.appendChild(canvas);
+      overlay.appendChild(label);
+      document.body.appendChild(overlay);
+      ctx = canvas.getContext('2d');
+      layout();
+      window.addEventListener('resize', layout);
+    }
+
+    function layout() {
+      if (!ctx) return;
+      dpr = window.devicePixelRatio || 1;
+      const target = Math.min(window.innerWidth, window.innerHeight) * 0.34;
+      fontPx = Math.max(7, Math.min(16, Math.floor(target / H)));
+      ctx.font = '700 ' + fontPx + "px 'Courier New', monospace";
+      cwpx = ctx.measureText('M').width || fontPx * 0.6;
+      chpx = fontPx;
+      canvas.style.width = (W * cwpx) + 'px';
+      canvas.style.height = (H * chpx) + 'px';
+      canvas.width = Math.floor(W * cwpx * dpr);
+      canvas.height = Math.floor(H * chpx * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.font = '700 ' + fontPx + "px 'Courier New', monospace";
+      ctx.textBaseline = 'top';
+    }
+
+    function render() {
+      phase += 0.12;
+      chBuf.fill(undefined); zBuf.fill(-1e9);
+      let minO = 1e9, maxO = -1e9;
+
+      for (let p = 0; p < grid.length; p++) {
+        const g = grid[p];
+        const X = g.gx;
+        const Zc = g.gz * ZSCALE;
+        // travelling wave (sum of two for organic motion)
+        const Y = AMP * (Math.sin(KX * Math.PI * g.gx - phase) + 0.55 * Math.sin(KZ * Math.PI * g.gz - phase * 0.8));
+        // tilt the plane about the horizontal axis, then project
+        const Y2 = Y * cT - Zc * sT;
+        const Z2 = Y * sT + Zc * cT;
+        const ooz = 1 / (Z2 + CAM);
+        const px = (cx + SX * ooz * X) | 0;
+        const py = (cy - SY * ooz * Y2) | 0;
+        if (px < 0 || px >= W || py < 0 || py >= H) continue;
+        const idx = px + py * W;
+        if (ooz > zBuf[idx]) {
+          zBuf[idx] = ooz;
+          lBuf[idx] = ooz;
+          hBuf[idx] = Math.max(0, Math.min(1, (Y / MAXA + 1) / 2));   // 0 trough → 1 crest
+          chBuf[idx] = RAMP[Math.min(RAMP.length - 1, (hBuf[idx] * (RAMP.length - 1)) | 0)];
+          if (ooz < minO) minO = ooz;
+          if (ooz > maxO) maxO = ooz;
+        }
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const range = (maxO - minO) || 1;
+      for (let y = 0; y < H; y++) {
+        const yy = y * chpx;
+        for (let x = 0; x < W; x++) {
+          const idx = x + y * W, c = chBuf[idx];
+          if (c === undefined) continue;
+          const depth = (lBuf[idx] - minO) / range;        // far 0 → near 1
+          const t = 0.45 * depth + 0.55 * hBuf[idx];        // crests + nearness brighten
+          const r = Math.round(40 + 160 * t), g = Math.round(120 + 135 * t);
+          ctx.fillStyle = 'rgb(' + r + ',' + g + ',255)';
+          ctx.fillText(c, x * cwpx, yy);
+        }
+      }
+
+      if ((tick++ % 18) === 0) {
+        const n = Math.floor(tick / 18) % 4;
+        label.innerHTML = baseText + '<span style="opacity:.4">' + '.'.repeat(n) +
+                          '</span><span style="opacity:0">' + '.'.repeat(3 - n) + '</span>';
+      }
+    }
+
+    function loop() { if (!visible) { raf = null; return; } render(); raf = requestAnimationFrame(loop); }
+
+    const api = {
+      show: function (text) {
+        build();
+        baseText = text || 'Loading';
+        label.textContent = baseText;
+        overlay.style.display = 'flex';
+        layout();
+        if (!visible) { visible = true; if (!raf) raf = requestAnimationFrame(loop); }
+      },
+      hide: function () {
+        visible = false;
+        if (overlay) overlay.style.display = 'none';
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+      },
+      toggle: function (text) { (visible ? this.hide() : this.show(text)); }
+    };
+    window.DnaLoader = api;   // backwards-compatible alias
+    return api;
+  })();
+  </script>
+</body>
+</html>

@@ -1435,6 +1435,14 @@ window.selectAccount = function(id) {
   if (id === ACTIVE_CA_ID) return;
   ACTIVE_CA_ID = id;
 
+  // Run button label: "Run project forecast" for the rolled-up summary, "Run forecast" for a single CA
+  const _runBtn = document.querySelector('.sc-run-btn');
+  if (_runBtn) {
+    const _runLbl = (id === 'project-summary') ? 'Run project forecast' : 'Run forecast';
+    const _ic = _runBtn.querySelector('.pi');
+    _runBtn.innerHTML = (_ic ? _ic.outerHTML : '<i class="pi pi-play btn-icon-left"></i>') + ' ' + _runLbl;
+  }
+
   // Update mutable globals
   REAL_TODAY_IDX    = ca.realTodayIdx;
   TODAY_IDX         = REAL_TODAY_IDX;
@@ -1687,6 +1695,9 @@ function initScurveChart() {
 
   const m = CHART_METRICS[CHART_METRIC];
 
+  // On the AI-centric page the main S-curve IS the AI forecast — suffix its line labels.
+  const _aiSfx = /AI centric/i.test(decodeURIComponent(window.location.pathname || '')) ? ' (AI)' : '';
+
   scurveChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -1705,13 +1716,13 @@ function initScurveChart() {
         { type: 'line', label: '_p90', data: p90Band, borderWidth: 0, pointRadius: 0, fill: '+1', backgroundColor: 'rgba(37,99,235,0.10)', borderColor: 'transparent', tension: 0.45, spanGaps: false, order: 1 },
         { type: 'line', label: '_p10', data: p10Band, borderWidth: 0, pointRadius: 0, fill: false, backgroundColor: 'transparent',          borderColor: 'transparent', tension: 0.45, spanGaps: false, order: 1 },
         // Historical solid lines — indices 10 (_hist_actual), 11 (_hist_incurred), 12 (_hist_earned)
-        { type: 'line', label: 'Actual / ETC',   data: histActual,   borderColor: '#2563eb', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
-        { type: 'line', label: 'Incurred / ETC', data: histIncurred, borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
-        { type: 'line', label: 'Earned',         data: histEarned,   borderColor: '#059669', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Actual / ETC' + _aiSfx,   data: histActual,   borderColor: '#2563eb', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Incurred / ETC' + _aiSfx, data: histIncurred, borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Earned' + _aiSfx,         data: histEarned,   borderColor: '#059669', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.45, order: 1 },
         // Forecast dashed lines — indices 13 (Actual/ETC), 14 (Incurred/ETC), 15 (Earned)
-        { type: 'line', label: 'Actual / ETC',   data: projActual,   borderColor: '#2563eb', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#2563eb', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
-        { type: 'line', label: 'Incurred / ETC', data: projIncurred, borderColor: '#f59e0b', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
-        { type: 'line', label: 'Earned',   data: projEarned,   borderColor: '#059669', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#059669', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
+        { type: 'line', label: 'Actual / ETC' + _aiSfx,   data: projActual,   borderColor: '#2563eb', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#2563eb', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
+        { type: 'line', label: 'Incurred / ETC' + _aiSfx, data: projIncurred, borderColor: '#f59e0b', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
+        { type: 'line', label: 'Earned' + _aiSfx,   data: projEarned,   borderColor: '#059669', borderWidth: 2, borderDash: [6, 4], pointRadius: junctionDot, pointBackgroundColor: '#059669', pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.45, order: 1, spanGaps: true },
         // BAC reference — index 16
         { type: 'line', label: '_bac', data: Array(24).fill(40), borderColor: '#9ca3af', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false, order: 3 },
         // Budget comparison lines — indices 17 (Budget), 18 (Control budget), 19 (Finance budget), 20 (Cashflow)
@@ -2240,7 +2251,10 @@ function _updateKpiFromForecast(impliedEAC, neighbors) {
   const n      = neighbors.length;
   const sims   = neighbors.map(x => x.adjSim);
   const medSim = sims.length ? sims.slice().sort((a, b) => a - b)[Math.floor(sims.length / 2)] : 0;
-  const confPct = Math.round(medSim * 100);
+  // Use the account's forecast confidence so the on-screen pill matches the
+  // appendix "Forecast confidence" ring and the run-analysis donut.
+  const _caConf = (CA_DATA[ACTIVE_CA_ID] || {}).bannerConf;
+  const confPct = (_caConf != null) ? _caConf : Math.round(medSim * 100);
   const level   = confPct >= 70 ? 'High' : confPct >= 50 ? 'Medium' : 'Low';
 
   const confEl = document.querySelector('.sc-high-confidence-pill');

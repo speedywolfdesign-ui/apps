@@ -159,17 +159,16 @@
     .ait-aicurve-sub{font-size:11.5px; color:var(--ait-muted); font-weight:500}
     /* Combined side-by-side tooltip (AI vs User adoption) */
     .sc-combined-tip{ position:fixed; z-index:120; pointer-events:none;
-      background:rgba(17,24,39,.94); color:#fff; border-radius:9px; padding:11px 13px;
-      font-family:'Inter',sans-serif; font-size:12px; box-shadow:0 10px 28px rgba(0,0,0,.32); }
-    .sc-combined-tip .ct-head{ font-weight:700; font-size:12.5px; margin-bottom:8px; color:#e5e7eb; }
-    .sc-combined-tip .ct-cols{ display:flex; gap:22px; }
-    .sc-combined-tip .ct-col-title{ font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;
-      color:#cbd5e1; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
-    .sc-combined-tip .ct-row{ display:flex; align-items:center; gap:7px; margin-bottom:3px; white-space:nowrap; }
-    .sc-combined-tip .ct-sw{ width:14px; height:3px; border-radius:2px; flex-shrink:0; }
-    .sc-combined-tip .ct-lbl{ color:#cbd5e1; }
-    .sc-combined-tip .ct-val{ margin-left:auto; padding-left:14px; font-weight:600; color:#fff; }
-    .sc-combined-tip .ct-empty{ color:#94a3b8; }
+      background:rgba(15,23,42,.96); color:#fff; border-radius:10px; padding:13px 15px;
+      font-family:'Inter',sans-serif; font-size:12.5px; box-shadow:0 12px 30px rgba(0,0,0,.42); }
+    .sc-combined-tip .ct-grid{ display:grid; grid-template-columns:1fr auto auto; gap:8px 22px; align-items:center; }
+    .sc-combined-tip .ct-head{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; }
+    .sc-combined-tip .ct-head-month{ font-size:14px; font-weight:700; text-transform:none; letter-spacing:0; color:#e5e7eb; }
+    .sc-combined-tip .ct-head-ai, .sc-combined-tip .ct-head-ua{ display:inline-flex; align-items:center; justify-content:flex-end; gap:5px; white-space:nowrap; }
+    .sc-combined-tip .ct-head-ai i{ color:#8ab4f0; }
+    .sc-combined-tip .ct-lbl{ display:flex; align-items:center; gap:9px; color:#cbd5e1; white-space:nowrap; }
+    .sc-combined-tip .ct-sw{ width:16px; height:3px; border-radius:2px; flex-shrink:0; }
+    .sc-combined-tip .ct-ai, .sc-combined-tip .ct-ua{ text-align:right; font-weight:700; color:#fff; white-space:nowrap; font-variant-numeric:tabular-nums; }
     /* Run-forecast analysis modal — confidence ring */
     .sc-run-analysis-modal{ width:min(560px, 94vw); }
     .ra-header{ display:flex; align-items:flex-start; gap:12px; }
@@ -1286,17 +1285,28 @@
       if(typeof scurveChart === 'undefined' || !scurveChart || !aiChart) return;
       var el = _combinedTipEl();
       var labels = scurveChart.data.labels || [];
-      function col(title, icon, rows){
-        return '<div class="ct-col"><div class="ct-col-title">' + icon + ' ' + title + '</div>' +
-          (rows.length ? rows.map(function(r){
-            return '<div class="ct-row"><span class="ct-sw" style="background:' + r.color + '"></span>' +
-                   '<span class="ct-lbl">' + r.label + '</span><span class="ct-val">' + _fmtVal(r.value) + '</span></div>';
-          }).join('') : '<div class="ct-row ct-empty">—</div>') + '</div>';
-      }
-      el.innerHTML = '<div class="ct-head">' + (labels[idx] || '') + '</div>' +
-        '<div class="ct-cols">' +
-          col('AI S-curve', '<i class="ph-fill ph-sparkle" style="color:#8ab4f0"></i>', _seriesAt(scurveChart, idx)) +
-          col('User Adoption', '<i class="pi pi-user" style="color:#cbd5e1"></i>', _seriesAt(aiChart, idx)) +
+      var ai = _seriesAt(scurveChart, idx);   // AI S-curve series
+      var ua = _seriesAt(aiChart, idx);        // User Adoption series
+      var uaMap = {}; ua.forEach(function(r){ uaMap[r.label] = r.value; });
+      // one row per series, in a stable order
+      var order = ['Actual / ETC', 'Incurred / ETC', 'Earned', 'Budget'];
+      var byLabel = {}; ai.forEach(function(r){ byLabel[r.label] = r; });
+      var rows = [];
+      order.forEach(function(l){ if(byLabel[l]) rows.push(byLabel[l]); });
+      ai.forEach(function(r){ if(order.indexOf(r.label) === -1) rows.push(r); });
+
+      var cells = rows.map(function(r){
+        var uav = (uaMap[r.label] != null) ? _fmtVal(uaMap[r.label]) : '—';
+        return '<span class="ct-lbl"><span class="ct-sw" style="background:' + r.color + '"></span>' + r.label + '</span>' +
+               '<span class="ct-ai">' + _fmtVal(r.value) + '</span>' +
+               '<span class="ct-ua">' + uav + '</span>';
+      }).join('');
+
+      el.innerHTML = '<div class="ct-grid">' +
+          '<div class="ct-head ct-head-month">' + (labels[idx] || '') + '</div>' +
+          '<div class="ct-head ct-head-ai"><i class="ph-fill ph-sparkle"></i> AI S-curve</div>' +
+          '<div class="ct-head ct-head-ua"><i class="pi pi-user"></i> User Adoption</div>' +
+          cells +
         '</div>';
       el.style.display = 'block';
       var pad = 16, w = el.offsetWidth, h = el.offsetHeight;
