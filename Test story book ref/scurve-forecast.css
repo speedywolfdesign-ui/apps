@@ -929,7 +929,7 @@
 /* Settings modal overrides */
 .sc-settings-modal { width: min(880px, 96vw); }
 .sc-settings-modal-body {
-  padding: 20px 22px 0; overflow-y: auto; flex: 1;
+  padding: 20px 22px 20px; overflow-y: auto; flex: 1;
 }
 .sc-settings-modal-body .sc-settings-section { margin-bottom: 16px; }
 .sc-settings-modal-body .sc-settings-reset-btn { display: none; } /* moved to footer */

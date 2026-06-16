@@ -14,8 +14,75 @@
   <link rel="stylesheet" href="components/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="scurve-forecast.css" />
+  <style>
+    .vp-overlay{
+      position:fixed; inset:0; z-index:100000; display:flex; align-items:center; justify-content:center;
+      padding:20px; background:rgba(15,23,42,.55); backdrop-filter:blur(3px);
+      font-family:'Inter',system-ui,sans-serif;
+    }
+    .vp-overlay.is-hidden{ display:none; }
+    .vp-card{
+      width:min(460px,100%); background:#fff; border-radius:16px; overflow:hidden;
+      box-shadow:0 24px 60px rgba(0,0,0,.3); animation:vpUp .2s ease;
+    }
+    @keyframes vpUp{ from{ transform:translateY(14px); opacity:0; } to{ transform:none; opacity:1; } }
+    .vp-head{
+      padding:24px 24px 18px; text-align:center;
+      background:linear-gradient(135deg,#eef3fb 0%,#f6faff 100%); border-bottom:1px solid #eef2f7;
+    }
+    .vp-head-icon{ font-size:30px; color:#326fd1; }
+    .vp-title{ font-size:20px; font-weight:700; color:#0f172a; margin:10px 0 4px; }
+    .vp-sub{ font-size:13px; color:#64748b; margin:0; }
+    .vp-options{ padding:16px; display:flex; flex-direction:column; gap:10px; }
+    .vp-option{
+      display:flex; align-items:center; gap:14px; padding:14px 16px;
+      border:1px solid #e2e8f0; border-radius:12px; text-decoration:none; cursor:pointer;
+      transition:border-color .15s, background .15s, box-shadow .15s;
+    }
+    .vp-option:hover{ border-color:#326fd1; background:#f8fafc; box-shadow:0 4px 14px rgba(50,111,209,.1); }
+    .vp-option-icon{
+      flex-shrink:0; width:42px; height:42px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      background:#eef2f7; color:#475569; font-size:20px;
+    }
+    .vp-option--primary .vp-option-icon{ background:#eef3fb; color:#326fd1; }
+    .vp-option-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+    .vp-option-title{ font-size:14.5px; font-weight:600; color:#1e293b; }
+    .vp-option-desc{ font-size:12.5px; color:#64748b; }
+    .vp-option-arrow{ color:#94a3b8; font-size:14px; flex-shrink:0; }
+    .vp-option:hover .vp-option-arrow{ color:#326fd1; }
+  </style>
 </head>
 <body>
+
+  <!-- Version picker overlay — shown on every page load -->
+  <div class="vp-overlay" id="versionPicker">
+    <div class="vp-card" role="dialog" aria-modal="true" aria-label="Choose version">
+      <div class="vp-head">
+        <i class="pi pi-clone vp-head-icon"></i>
+        <h2 class="vp-title">Choose a version</h2>
+        <p class="vp-sub">Which S-curve forecast experience would you like to view?</p>
+      </div>
+      <div class="vp-options">
+        <a class="vp-option" href="scurve-forecast.html" onclick="document.getElementById('versionPicker').classList.add('is-hidden');return false;">
+          <span class="vp-option-icon"><i class="pi pi-history"></i></span>
+          <span class="vp-option-text">
+            <span class="vp-option-title">Show old version</span>
+            <span class="vp-option-desc">The current S-curve forecast.</span>
+          </span>
+          <i class="pi pi-arrow-right vp-option-arrow"></i>
+        </a>
+        <a class="vp-option vp-option--primary" href="AI centric s-curve.html">
+          <span class="vp-option-icon"><i class="ph-fill ph-sparkle"></i></span>
+          <span class="vp-option-text">
+            <span class="vp-option-title">Show latest version</span>
+            <span class="vp-option-desc">The new AI-centric S-curve forecast.</span>
+          </span>
+          <i class="pi pi-arrow-right vp-option-arrow"></i>
+        </a>
+      </div>
+    </div>
+  </div>
 
   <div id="top-nav-mount"></div>
   <script src="components/top-nav.js"></script>

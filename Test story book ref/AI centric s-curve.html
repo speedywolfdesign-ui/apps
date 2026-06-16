@@ -1169,11 +1169,7 @@
     .tour-welcome-body h2{ font-size:19px; margin:0 0 8px; color:#0f172a; }
     .tour-welcome-body p{ font-size:13.5px; line-height:1.55; color:#475569; margin:0 0 20px; }
     .tour-welcome-actions{ display:flex; gap:10px; }
-    .tour-start{ flex:1; background:var(--primary-500,#326fd1); color:#fff; border:none; border-radius:10px;
-      padding:11px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
-    .tour-start:hover{ background:var(--primary-600,#2859a7); }
-    .tour-later{ background:#f1f5f9; color:#475569; border:none; border-radius:10px; padding:11px 16px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
-    .tour-later:hover{ background:#e2e8f0; }
+    .tour-welcome-actions .btn-primary{ margin-left:auto; }   /* primary always on the right */
   </style>
   <script>
   (function(){
@@ -1257,8 +1253,8 @@
             '<h2 id="tourCardTitle"></h2>' +
             '<p id="tourCardText"></p>' +
             '<div class="tour-welcome-actions">' +
-              '<button class="tour-start" id="tourCardPrimary"></button>' +
-              '<button class="tour-later" id="tourCardSecondary"></button>' +
+              '<button class="btn btn-secondary" id="tourCardSecondary"></button>' +
+              '<button class="btn btn-primary" id="tourCardPrimary"></button>' +
             '</div>' +
           '</div>' +
         '</div>';
