@@ -58,7 +58,7 @@
         { key: 'validate-data',         label: 'Validate Data',           href: '#' },
         { key: 'other-utilities',       label: 'Other Utilities',         href: '#' },
       ]},
-      { key: 'ai-forecasting', label: 'AI Forecasting', href: 'scurve-forecast.html' },
+      { key: 'ai-forecasting', label: 'AI Forecasting', href: 'AI centric s-curve.html' },
     ]},
     { key: 'field',        icon: 'pi-map',       label: 'Field Management',  href: '#' },
     { key: 'procurement',  icon: 'pi-box',       label: 'Procurement',       children: [
