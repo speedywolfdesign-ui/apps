@@ -3111,8 +3111,9 @@ function _buildAndMountSettings(container) {
     </div>
     <div class="sc-pool-body" id="learningPoolBody">
       <div class="sc-pool-toolbar">
-        <span class="sc-pool-search"><i class="pi pi-search"></i><input type="text" placeholder="Search projects…" oninput="filterLearningProjects(this.value)" aria-label="Search learning pool projects" /></span>
         <label class="sc-pool-selectall"><input type="checkbox" id="poolSelectAll" ${poolActive === LEARNING_PROJECTS.length ? 'checked' : ''} ${canPool ? '' : 'disabled'} onchange="toggleAllLearningProjects(this.checked)" /> Select all</label>
+        <label class="sc-pool-selectall"><input type="checkbox" id="poolShowSelected" onchange="toggleShowSelected()" /> Show selected</label>
+        <span class="sc-pool-search"><i class="pi pi-search"></i><input type="text" placeholder="Search projects…" oninput="filterLearningProjects()" aria-label="Search learning pool projects" /></span>
       </div>
       <div class="sc-pool-list" id="learningPoolList">
         ${LEARNING_PROJECTS.map(p => _poolRowHtml(p, canPool)).join('')}
@@ -3407,6 +3408,7 @@ function _refreshLearningPool() {
   if (badge) badge.textContent = `${active} / ${LEARNING_PROJECTS.length}`;
   const all = document.getElementById('poolSelectAll');
   if (all) all.checked = active === LEARNING_PROJECTS.length;
+  if (typeof _applyPoolFilter === 'function') _applyPoolFilter();   // keep "Show selected" filter in sync
 }
 
 window.toggleLearningProject = function(id, on) {
@@ -3447,13 +3449,17 @@ window.toggleLearningPoolSection = function() {
   if (header) header.setAttribute('aria-expanded', String(!collapsed));
 };
 
-window.filterLearningProjects = function(q) {
-  const term = (q || '').trim().toLowerCase();
+function _applyPoolFilter() {
   const list = document.getElementById('learningPoolList');
   if (!list) return;
+  const searchEl = document.querySelector('.sc-pool-search input');
+  const term = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  const showSelEl = document.getElementById('poolShowSelected');
+  const selectedOnly = !!(showSelEl && showSelEl.checked);
   let visible = 0;
   list.querySelectorAll('.sc-pool-row').forEach(row => {
-    const match = !term || row.dataset.name.includes(term);
+    const match = (!term || row.dataset.name.includes(term)) &&
+                  (!selectedOnly || !row.classList.contains('is-excluded'));
     row.style.display = match ? '' : 'none';
     if (match) visible++;
   });
@@ -3462,13 +3468,15 @@ window.filterLearningProjects = function(q) {
     if (!empty) {
       empty = document.createElement('div');
       empty.className = 'sc-pool-empty';
-      empty.textContent = 'No projects match your search.';
       list.appendChild(empty);
     }
+    empty.textContent = selectedOnly && !term ? 'No selected projects.' : 'No projects match your search.';
   } else if (empty) {
     empty.remove();
   }
-};
+}
+window.filterLearningProjects = function() { _applyPoolFilter(); };
+window.toggleShowSelected = function() { _applyPoolFilter(); };
 
 const SIM_ACCOUNT_PROJECTS = [
   { id: 'CA-0812 · Civil fnds.',  project: 'Port Arthur Exp.', region: 'NA',   budget: 14.2, match: 96, varPct:  4.1 },

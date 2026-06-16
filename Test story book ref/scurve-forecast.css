@@ -638,7 +638,7 @@
   display: flex; align-items: center; gap: 10px;
   padding: 10px 14px; border-bottom: 1px solid #f1f5f9; background: #fafbfc;
 }
-.sc-pool-search { position: relative; flex: 1; display: flex; align-items: center; }
+.sc-pool-search { position: relative; flex: 0 0 200px; margin-left: auto; display: flex; align-items: center; }
 .sc-pool-search > i { position: absolute; left: 10px; color: #94a3b8; font-size: 12px; pointer-events: none; }
 .sc-pool-search input {
   width: 100%; padding: 7px 10px 7px 30px;
