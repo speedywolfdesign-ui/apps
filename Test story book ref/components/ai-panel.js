@@ -38,12 +38,22 @@
       label: 'S-curve forecast',
       greeting: "Hi! I can control the S-curve forecast directly — simulate time, switch accounts, run AI analysis, adjust driver weights, or answer what-if questions. Try a suggestion below.",
       chips: ['Simulate to Jan 2026', 'Run AI forecast', 'Switch to MEP Systems', 'What\'s the current EAC?', 'What if SPI improves to 0.95?']
+    },
+    'AI centric s-curve.html': {
+      icon: 'pi-chart-line',
+      label: 'AI-centric S-curve',
+      greeting: "Hi! I can drive this AI forecast for you — run the analysis, compare the AI vs human forecast, explain how the curve was built, surface warnings, open the AI settings, simulate time or switch accounts. Try a suggestion below.",
+      chips: ['Run AI forecast', 'Compare AI vs human forecast', 'Explain the forecast', 'Show warnings', 'Open forecast settings', 'Start the tour']
     }
   };
 
+  function currentPage() {
+    var raw = window.location.pathname.split('/').pop() || 'home.html';
+    try { return decodeURIComponent(raw); } catch (e) { return raw; }
+  }
+
   function getPageContext() {
-    var page = window.location.pathname.split('/').pop() || 'home.html';
-    return PAGE_CONTEXTS[page] || PAGE_CONTEXTS['home.html'];
+    return PAGE_CONTEXTS[currentPage()] || PAGE_CONTEXTS['home.html'];
   }
 
   /* ══════════════════════════════════════════
@@ -406,7 +416,11 @@
   ══════════════════════════════════════════ */
 
   function isScurvePage() {
-    return window.location.pathname.split('/').pop() === 'scurve-forecast.html';
+    var p = currentPage();
+    return p === 'scurve-forecast.html' || p === 'AI centric s-curve.html';
+  }
+  function isAiCentricPage() {
+    return currentPage() === 'AI centric s-curve.html';
   }
 
   function extractMonthIdx(text) {
@@ -513,6 +527,61 @@
         if (typeof window.resetToRealToday === 'function') window.resetToRealToday();
       }},
       { label: 'Restoring original S-curve', delay: 500, fn: function() {} }
+    ];
+  }
+
+  /* ── AI-centric S-curve actions ── */
+  function openAccordion(id) {
+    if (typeof window.toggleAcc !== 'function') return;
+    var h = document.querySelector('#' + id + ' .sc-acc-header');
+    if (h && h.getAttribute('aria-expanded') === 'false') window.toggleAcc(id);
+    var sec = document.getElementById(id);
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function buildAiCompareSteps() {
+    return [
+      { label: 'Loading the human-entered forecast', delay: 500, fn: function() {} },
+      { label: 'Generating the AI S-curve', delay: 650, fn: function() {
+        // Reveal the AI S-curve section with a loading state, then render the graph
+        if (typeof window.openAiCompare === 'function') window.openAiCompare(true);
+        else if (typeof window.toggleAiCompare === 'function') window.toggleAiCompare();
+      }},
+      { label: 'Comparison ready', delay: 1100, fn: function() {} }
+    ];
+  }
+
+  function buildAiExplainSteps() {
+    return [
+      { label: 'Opening the Forecast explanation', delay: 450, fn: function() {} },
+      { label: 'Surfacing matched accounts, methods & assumptions', delay: 600, fn: function() {
+        openAccordion('acc-appendix');
+      }}
+    ];
+  }
+
+  function buildAiWarningsSteps() {
+    return [
+      { label: 'Scanning forecast for issues', delay: 500, fn: function() {} },
+      { label: 'Opening the Warnings panel', delay: 550, fn: function() {
+        openAccordion('acc-warnings');
+      }}
+    ];
+  }
+
+  function buildAiOpenSettingsSteps() {
+    return [
+      { label: 'Opening AI forecast settings', delay: 450, fn: function() {
+        if (typeof window.openSettingsModal === 'function') window.openSettingsModal();
+      }}
+    ];
+  }
+
+  function buildAiTourSteps() {
+    return [
+      { label: 'Launching the guided tour', delay: 450, fn: function() {
+        if (typeof window.startAiTour === 'function') window.startAiTour();
+      }}
     ];
   }
 
@@ -636,8 +705,9 @@
         }
       }
 
-      // Run AI Forecast
-      if (/run.*forecast|run.*ai|run.*analys|apply.*forecast|ai.*forecast|forecast.*now/i.test(t)) {
+      // Run AI Forecast (but not "compare AI vs human forecast" — that's handled below)
+      if (!/\bcompare\b|vs\.?\s*human|human.*forecast|side.?by.?side/i.test(t) &&
+          /run.*forecast|run.*ai|run.*analys|apply.*forecast|ai.*forecast|forecast.*now/i.test(t)) {
         return { type: 'multistep', reply: 'Running AI forecast analysis…', steps: buildScurveRunForecastSteps() };
       }
 
@@ -665,6 +735,37 @@
         }
       }
 
+      // ── AI-centric actions (only where the page supports them) ──
+      // Compare AI vs human forecast — toggles the on-page AI compare
+      if (typeof window.toggleAiCompare === 'function' && /\bcompare\b|ai.*vs.*human|human.*vs.*ai|side.?by.?side|vs.*human/i.test(t)) {
+        var aiP = document.getElementById('aiCurvePanel');
+        if (aiP && aiP.style.display !== 'none') {
+          return { type: 'multistep', reply: 'Hiding the AI vs human comparison.', steps: [
+            { label: 'Closing the AI S-curve', delay: 350, fn: function() { if (typeof window.toggleAiCompare === 'function') window.toggleAiCompare(); } }
+          ]};
+        }
+        return { type: 'multistep', reply: 'Overlaying the <strong>AI-generated</strong> forecast against the <strong>human-entered</strong> one.', steps: buildAiCompareSteps() };
+      }
+      // Explain the forecast (Forecast explanation / appendix)
+      if (typeof window.toggleAcc === 'function' && document.getElementById('acc-appendix') &&
+          /explain.*forecast|forecast.*explanation|how.*(forecast|curve|reach)|appendix|basis.*forecast|why.*forecast|matched.*account/i.test(t)) {
+        return { type: 'multistep', reply: 'Opening the <strong>Forecast explanation</strong> — matched neighbour accounts, methods and the assumptions behind the curve.', steps: buildAiExplainSteps() };
+      }
+      // Warnings
+      if (typeof window.toggleAcc === 'function' && document.getElementById('acc-warnings') &&
+          /\bwarning|exception|flag(ged)?|anomal|data.*quality|issue/i.test(t)) {
+        return { type: 'multistep', reply: 'Opening <strong>Warnings</strong> — data-quality issues, anomalies and low-confidence segments flagged for review.', steps: buildAiWarningsSteps() };
+      }
+      // Open AI forecast settings
+      if (typeof window.openSettingsModal === 'function' &&
+          /(open|show|adjust|configure|change|edit).*(setting|weight|driver|parameter)|forecast.*setting|ai.*setting/i.test(t)) {
+        return { type: 'multistep', reply: 'Opening <strong>AI forecast settings</strong> — tune the driver weights and methods, then re-run.', steps: buildAiOpenSettingsSteps() };
+      }
+      // Start the guided tour
+      if (typeof window.startAiTour === 'function' && /\btour\b|walkthrough|guide me|show me around|how.*use.*page/i.test(t)) {
+        return { type: 'multistep', reply: 'Starting the <strong>guided tour</strong>.', steps: buildAiTourSteps() };
+      }
+
       // Status / EAC query
       if (/\beac\b|current.*status|show.*status|forecast.*status|how.*are.*we|what.*is.*the/i.test(t)) {
         return { type: 'simple', reply: scurveLiveStatus() };
@@ -688,7 +789,9 @@
       // S-curve page fallback
       return {
         type: 'simple',
-        reply: 'On this page I can: <strong>simulate time</strong> ("Simulate to Jan 2026"), <strong>run AI forecast</strong>, <strong>switch accounts</strong> ("Switch to MEP Systems"), answer <strong>what-if questions</strong> ("What if SPI is 0.95?"), or show <strong>driver weights</strong>. What would you like to do?'
+        reply: isAiCentricPage()
+          ? 'On this page I can: <strong>run the AI forecast</strong>, <strong>compare AI vs human</strong>, <strong>explain the forecast</strong>, show <strong>warnings</strong>, <strong>open AI settings</strong>, <strong>start the tour</strong>, simulate time ("Simulate to Jan 2026"), switch accounts, or answer what-if questions ("What if SPI is 0.95?"). What would you like to do?'
+          : 'On this page I can: <strong>simulate time</strong> ("Simulate to Jan 2026"), <strong>run AI forecast</strong>, <strong>switch accounts</strong> ("Switch to MEP Systems"), answer <strong>what-if questions</strong> ("What if SPI is 0.95?"), or show <strong>driver weights</strong>. What would you like to do?'
       };
     }
 

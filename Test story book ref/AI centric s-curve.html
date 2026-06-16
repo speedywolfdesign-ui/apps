@@ -147,6 +147,15 @@
     .ait-compare-btn.is-active{background:linear-gradient(135deg,var(--ait-primary-d),var(--ait-primary)); color:#fff; border-color:var(--ait-primary-d)}
     .ait-compare-btn .pi{font-size:13px}
     .ait-aicurve-panel{border-color:var(--ait-primary) !important; box-shadow:0 0 0 1px var(--ait-primary-50)}
+    /* Loading state shown before the AI S-curve renders */
+    .ait-aicurve-loader{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+      background:linear-gradient(135deg,#f6faff,#eef3fb); border-radius:8px; z-index:3; }
+    .ait-aicurve-panel.is-loading .ait-aicurve-loader{ display:flex; }
+    .ait-aicurve-panel.is-loading canvas{ visibility:hidden; }
+    .ait-aicurve-loader-spinner{ width:34px; height:34px; border-radius:50%;
+      border:3px solid var(--ait-primary-50,#dbe7fb); border-top-color:var(--ait-primary,#326fd1); animation:aiCurveSpin .8s linear infinite; }
+    .ait-aicurve-loader-text{ font-size:12.5px; font-weight:600; color:var(--ait-primary-d,#1e3a5f); }
+    @keyframes aiCurveSpin{ to{ transform:rotate(360deg); } }
     .ait-aicurve-sub{font-size:11.5px; color:var(--ait-muted); font-weight:500}
     .ait-aicurve-foot{margin-top:10px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; font-size:12px}
     .ait-aicurve-foot .lg{display:inline-flex; align-items:center; gap:6px; color:var(--ait-text); font-weight:600}
@@ -462,6 +471,10 @@
           </div>
           <div class="sc-chart-wrap" style="height:320px">
             <canvas id="ai-scurve-chart"></canvas>
+            <div class="ait-aicurve-loader" id="aiCurveLoader" aria-hidden="true">
+              <div class="ait-aicurve-loader-spinner"></div>
+              <div class="ait-aicurve-loader-text">Generating AI S-curve…</div>
+            </div>
             <div class="sc-chart-dragger" id="aiChartDragger" style="display:none" aria-hidden="true">
               <div class="sc-chart-dragger-line"></div>
               <button type="button" class="sc-chart-dragger-handle" aria-label="Drag to simulate a different point in time" title="Drag to scrub time">
@@ -1072,6 +1085,12 @@
       });
     }
 
+    function _renderAiCurve(){
+      const aiPanel = document.getElementById('aiCurvePanel');
+      if(aiPanel) aiPanel.classList.remove('is-loading');
+      if(!aiChart) buildAiChart(); else { syncAiChartFromMain(); aiChart.resize(); }
+    }
+
     window.toggleAiCompare = function(){
       const panel = document.getElementById('aiCurvePanel');
       const btn   = document.getElementById('aiCompareBtn');
@@ -1084,13 +1103,34 @@
       const txt = document.getElementById('aiCompareBtnTxt');
       if(txt) txt.textContent = show ? 'Hide AI compare' : 'AI compare';
       if(row) row.classList.toggle('is-comparing', show);
-      if(show){
-        if(!aiChart) buildAiChart(); else { syncAiChartFromMain(); aiChart.resize(); }
-      }
+      if(show){ _renderAiCurve(); } else { panel.classList.remove('is-loading'); }
       // the main chart column changed width — let Chart.js re-fit it
       if(typeof scurveChart !== 'undefined' && scurveChart && scurveChart.resize){
         setTimeout(()=>scurveChart.resize(), 0);
       }
+    };
+
+    // Open the comparison with a brief loading state in the AI S-curve section,
+    // then reveal the graph. Used by the AI assistant panel.
+    window.openAiCompare = function(withLoading){
+      const panel = document.getElementById('aiCurvePanel');
+      const btn   = document.getElementById('aiCompareBtn');
+      const row   = document.getElementById('scCompareRow');
+      if(!panel || !btn) return;
+      if(panel.style.display !== 'none'){ _renderAiCurve(); return; }  // already open
+      // reveal the section
+      panel.style.display = '';
+      btn.classList.add('is-active'); btn.setAttribute('aria-pressed','true');
+      const txt = document.getElementById('aiCompareBtnTxt'); if(txt) txt.textContent = 'Hide AI compare';
+      if(row) row.classList.add('is-comparing');
+      if(typeof scurveChart !== 'undefined' && scurveChart && scurveChart.resize){ setTimeout(()=>scurveChart.resize(), 0); }
+      panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      // Make sure the AI forecast is active so the main S-curve shows the AI band
+      const needRun = !window.AI_FORECAST_ACTIVE && typeof window.runAiForecast === 'function';
+      if(withLoading === false && !needRun){ _renderAiCurve(); return; }
+      panel.classList.add('is-loading');          // show the loading S-curve section
+      if(needRun) window.runAiForecast();         // generate the AI forecast (left chart band)
+      setTimeout(_renderAiCurve, needRun ? 1300 : 1100);   // then open the AI S-curve graph
     };
   })();
   </script>
