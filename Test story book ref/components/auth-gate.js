@@ -21,6 +21,10 @@
     location.reload();
   };
 
+  // Sign-in gate disabled — users are let in directly (no password screen).
+  return;
+
+  /* eslint-disable no-unreachable */
   try { if (sessionStorage.getItem(KEY) === '1') return; } catch (e) {}
 
   var ROOT = document.documentElement;
