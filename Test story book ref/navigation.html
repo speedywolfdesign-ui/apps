@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Access gate — must load first -->
+  <script src="components/auth-gate.js"></script>
   <title>Navigation — Contruent</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -4201,7 +4203,7 @@ body.ai-panel-open .proj-content {
         </div>
         <div class="tnav-profile-divider"></div>
         <a class="tnav-profile-item" href="#"><i class="pi pi-info-circle"></i> Upgrade plan</a>
-        <a class="tnav-profile-item tnav-profile-item-danger" href="#"><i class="pi pi-sign-out"></i> Logout</a>
+        <a class="tnav-profile-item tnav-profile-item-danger" href="#" onclick="event.preventDefault(); window.appLock ? window.appLock() : location.reload();"><i class="pi pi-sign-out"></i> Lock &amp; sign out</a>
       </div>
     </div>
   </div>

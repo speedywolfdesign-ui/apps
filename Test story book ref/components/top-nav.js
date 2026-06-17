@@ -166,7 +166,7 @@
         </div>
         <div class="tnav-profile-divider"></div>
         <a class="tnav-profile-item" href="#"><i class="pi pi-info-circle"></i> Upgrade plan</a>
-        <a class="tnav-profile-item tnav-profile-item-danger" href="#"><i class="pi pi-sign-out"></i> Logout</a>
+        <a class="tnav-profile-item tnav-profile-item-danger" href="#" onclick="event.preventDefault(); window.appLock ? window.appLock() : location.reload();"><i class="pi pi-sign-out"></i> Lock &amp; sign out</a>
       </div>
     </div>
   </div>
