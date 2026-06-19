@@ -1072,8 +1072,13 @@ function _refreshSettingsGroupPoints() {
 // (same source as the "Driven by" pills — DRIVER_GROUPS order: classification, numerical, spi, shape)
 function _refreshSettingsSectionPcts() {
   const pcts = _groupPctsSum100();
-  document.querySelectorAll('.sc-settings-section-pct').forEach((el, i) => {
-    if (pcts[i] != null) el.textContent = pcts[i] + '%';
+  // Map by data-sec so the Project learning pool badge (which also carries
+  // .sc-settings-section-pct but shows "X / Y", not a %) is left untouched and
+  // doesn't shift the driver-group indices by one.
+  DRIVER_GROUPS.forEach((g, i) => {
+    if (pcts[i] == null) return;
+    const el = document.querySelector(`.sc-settings-section[data-sec="${g.id}"] .sc-settings-section-pct`);
+    if (el) el.textContent = pcts[i] + '%';
   });
   // Keep the "Driven by" pills in sync with the same numbers
   _renderSummaryPills();
@@ -1122,6 +1127,7 @@ window.resetSettingsWeights = function() {
   if (AI_FORECAST_ACTIVE) {
     AI_FORECAST_ACTIVE = false;
     window.updateChartTime(TODAY_IDX);
+    _refreshCurveState();   // AI forecast cleared → hide the Adopt button
   }
   ACTIVE_WEIGHTS = Object.assign({}, FEATURE_WEIGHTS);
   for (const f of SETTINGS_FEATURE_DEFS) {
@@ -1422,15 +1428,49 @@ CA_DATA['project-summary'] = (function () {
 
 let ACTIVE_CA_ID = 'ca-1042';
 
+/* ── TWO-LEVEL FORECAST SELECTOR ─────────────────────────────────────
+   1st dropdown = category, 2nd dropdown = item within that category.
+   Items are placeholder groupings that each resolve to an existing CA
+   forecast (no per-item data yet). "Project summary" has no inner items,
+   so its 2nd dropdown is disabled and it loads the rolled-up summary. */
+const FORECAST_GROUPS = [
+  { id: 'project-summary',      label: 'Project summary',      ca: 'project-summary', items: [] },
+  { id: 'group-title',          label: 'Group Title',          items: [
+    { id: 'gt-civil', label: 'Civil Foundations', ca: 'ca-1042' },
+    { id: 'gt-steel', label: 'Structural Steel',   ca: 'ca-1043' },
+    { id: 'gt-mep',   label: 'MEP Systems',        ca: 'ca-1044' },
+    { id: 'gt-site',  label: 'Site Preparation',   ca: 'ca-1045' },
+  ]},
+  { id: 'standard-group-title', label: 'Standard Group Title', items: [
+    { id: 'sgt-found', label: 'Foundations — Phase 2',    ca: 'ca-1042' },
+    { id: 'sgt-erect', label: 'Steel Erection — Phase 1', ca: 'ca-1043' },
+    { id: 'sgt-mech',  label: 'Mechanical & Electrical',  ca: 'ca-1044' },
+    { id: 'sgt-site',  label: 'Sitework & Earthworks',    ca: 'ca-1045' },
+  ]},
+  { id: 'module-group-title',   label: 'Module Group Title',   items: [
+    { id: 'mgt-pour',  label: 'Foundation Pour Module', ca: 'ca-1042' },
+    { id: 'mgt-frame', label: 'Steel Frame Module',     ca: 'ca-1043' },
+    { id: 'mgt-hvac',  label: 'HVAC & Power Module',     ca: 'ca-1044' },
+    { id: 'mgt-earth', label: 'Earthworks Module',       ca: 'ca-1045' },
+  ]},
+  { id: 'control-accounts',     label: 'Control accounts',     items: [
+    { id: 'ca-1042', label: 'CA-1042 · Civil Foundations — P2', ca: 'ca-1042' },
+    { id: 'ca-1043', label: 'CA-1043 · Structural Steel — P1',  ca: 'ca-1043' },
+    { id: 'ca-1044', label: 'CA-1044 · MEP Systems',            ca: 'ca-1044' },
+    { id: 'ca-1045', label: 'CA-1045 · Site Preparation',       ca: 'ca-1045' },
+  ]},
+];
+let ACTIVE_FC_GROUP = 'group-title';
+let ACTIVE_FC_ITEM  = 'gt-civil';
+
+// Per-control-account "Adopt AI forecast" decision. When a CA's forecast is
+// adopted, its curve ID source flips from Manual → AI. Persists for the
+// session and is remembered when switching between control accounts.
+let CA_CURVE_ADOPTED = {};
+
 window.selectAccount = function(id) {
   const ca = CA_DATA[id];
   if (!ca) return;
-
-  // Close dropdown regardless
-  const dropdown = document.getElementById('acctDropdown');
-  if (dropdown) dropdown.style.display = 'none';
-  const acctSBtn = document.getElementById('acctSelectorBtn');
-  if (acctSBtn) acctSBtn.setAttribute('aria-expanded', 'false');
 
   if (id === ACTIVE_CA_ID) return;
   ACTIVE_CA_ID = id;
@@ -1517,15 +1557,8 @@ window.selectAccount = function(id) {
   const subEl = document.querySelector('.sc-page-subtitle');
   if (subEl) subEl.textContent = ca.subtitle;
 
-  // Update selector button label
-  if (acctSBtn) {
-    acctSBtn.innerHTML = `${ca.label} <i class="pi pi-chevron-down sc-acct-chevron"></i>`;
-  }
-
-  // Update dropdown active state
-  document.querySelectorAll('.sc-acct-drop-item').forEach(el => {
-    el.classList.toggle('sc-acct-drop-item--active', el.dataset.id === id);
-  });
+  // Reflect this CA's adopted/curve-ID state (AI forecast is no longer active)
+  _refreshCurveState();
 
   // Reset time slider to the new CA's real today
   const slider = document.getElementById('scTimeSlider');
@@ -1726,9 +1759,9 @@ function initScurveChart() {
         // BAC reference — index 16
         { type: 'line', label: '_bac', data: Array(24).fill(40), borderColor: '#9ca3af', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false, order: 3 },
         // Budget comparison lines — indices 17 (Budget), 18 (Control budget), 19 (Finance budget), 20 (Cashflow)
-        { type: 'line', label: 'Budget',         data: lineBudget,   borderColor: '#7c3aed', borderWidth: 2,   pointRadius: 0, fill: false, tension: 0.45, order: 1, segment: { borderDash: (c) => c.p0DataIndex >= TODAY_IDX ? [2, 3] : undefined } },
-        { type: 'line', label: 'Control budget', data: lineControl,  borderColor: '#db2777', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
-        { type: 'line', label: 'Finance budget', data: lineFinance,  borderColor: '#0d9488', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
+        { type: 'line', label: 'Budget',         data: lineBudget,   borderColor: '#7c3aed', borderWidth: 2,   pointRadius: 0, fill: false, tension: 0.45, order: 1 },
+        { type: 'line', label: 'Control budget', data: lineControl,  borderColor: '#db2777', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
+        { type: 'line', label: 'Finance budget', data: lineFinance,  borderColor: '#0d9488', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
         { type: 'line', label: 'Cashflow',       data: lineCashflow, borderColor: '#0891b2', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.45, order: 1, hidden: true },
       ]
     },
@@ -2154,7 +2187,80 @@ window.runAiForecast = function() {
     if (detailPanel && detailPanel.dataset.built && detailPanel.style.display !== 'none') {
       detailPanel.innerHTML = buildAiBannerDetail();
     }
+
+    // Surface the "Adopt AI forecast" action now that a forecast is on the chart
+    _refreshCurveState();
   }, 1100);
+};
+
+/* ── ADOPT AI FORECAST (curve ID: Manual → AI) ───────────────────── */
+// Curve ID for a control account, e.g. ca-1042 → CRV-1042, project-summary → CRV-PROJ
+function _curveIdFor(caId) {
+  if (caId === 'project-summary') return 'CRV-PROJ';
+  const m = /(\d+)/.exec(caId || '');
+  return 'CRV-' + (m ? m[1] : String(caId || '').toUpperCase());
+}
+
+// Sync the Curve ID badge, Adopt button, revert control and banner tag to the
+// active CA's adopted state. Safe to call whenever AI state or the CA changes.
+// True when the AI-vs-current compare view is open (AI centric page only)
+function _isComparing() {
+  const row = document.getElementById('scCompareRow');
+  return !!(row && row.classList.contains('is-comparing'));
+}
+
+// Force the "Current forecast" compare panel to redraw. That panel is built by
+// an IIFE-private function, but it re-syncs from a globally-registered Chart.js
+// afterUpdate plugin — so updating the main chart repaints it. Without this the
+// panel only refreshes on hover.
+function _syncCompareChart() {
+  if (typeof scurveChart !== 'undefined' && scurveChart) scurveChart.update('none');
+}
+
+function _refreshCurveState() {
+  const adopted = !!CA_CURVE_ADOPTED[ACTIVE_CA_ID];
+
+  // Single toggle button: "Adopt AI forecast" → "Revert to manual" once adopted.
+  // Visible when adopted, when an AI forecast is on the chart, or in compare view.
+  const btn = document.getElementById('scAdoptBtn');
+  if (btn) {
+    btn.style.display = _isComparing() ? '' : 'none';
+    btn.textContent = adopted ? 'Revert to current' : 'Adopt AI forecast';
+    btn.classList.toggle('is-revert', adopted);
+    btn.title = adopted
+      ? 'Revert the current forecast back to its previous values'
+      : 'Adopt this AI forecast as the current forecast for this control account';
+  }
+
+  const tag = document.querySelector('.sc-ai-active-tag');
+  if (tag) tag.textContent = adopted ? 'AI forecast accepted' : 'AI forecast active';
+}
+
+// One button toggles between adopt and revert based on the active CA's state
+window.toggleAdoptForecast = function() {
+  if (CA_CURVE_ADOPTED[ACTIVE_CA_ID]) revertAiForecast();
+  else adoptAiForecast();
+};
+
+window.adoptAiForecast = function() {
+  if (!AI_FORECAST_ACTIVE && !_isComparing()) return;
+  if (!ACTIVE_USER.perms.runForecast) return;
+  CA_CURVE_ADOPTED[ACTIVE_CA_ID] = true;
+  _refreshCurveState();
+  _syncCompareChart();   // make the "Current forecast" panel match the AI forecast
+  const ca = CA_DATA[ACTIVE_CA_ID];
+  showToast('success', 'AI forecast adopted',
+    `Current forecast for ${ca ? ca.label : ACTIVE_CA_ID} now matches the AI forecast (${_curveIdFor(ACTIVE_CA_ID)} · AI).`);
+};
+
+window.revertAiForecast = function() {
+  if (!CA_CURVE_ADOPTED[ACTIVE_CA_ID]) return;
+  CA_CURVE_ADOPTED[ACTIVE_CA_ID] = false;
+  _refreshCurveState();
+  _syncCompareChart();   // restore the "Current forecast" panel to its previous values
+  const ca = CA_DATA[ACTIVE_CA_ID];
+  showToast('info', 'Reverted to current forecast',
+    `${ca ? ca.label : ACTIVE_CA_ID} restored to its previous current forecast.`);
 };
 
 function _applyForecastToChart(forecast, impliedEAC) {
@@ -2334,39 +2440,153 @@ window.toggleAcc = function(id) {
   }
 };
 
-window.toggleAcctDropdown = function() {
-  const dropdown = document.getElementById('acctDropdown');
-  const btn = document.getElementById('acctSelectorBtn');
+// Set a selector button's label inside a truncating span (so the button
+// keeps a fixed width) and add a hover tooltip only when the text is clipped.
+// Preserves the current chevron icon (e.g. the lock icon for restricted roles).
+function _setSelectorLabel(btn, text) {
+  if (!btn) return;
+  const icon = btn.querySelector('i');
+  const iconClass = icon ? icon.className : 'pi pi-chevron-down sc-acct-chevron';
+  btn.innerHTML = `<span class="sc-acct-selector-label"></span> <i class="${iconClass}"></i>`;
+  const lbl = btn.querySelector('.sc-acct-selector-label');
+  lbl.textContent = text;
+  if (lbl.scrollWidth > lbl.clientWidth + 1) btn.title = text;
+  else btn.removeAttribute('title');
+}
+
+// After a dropdown opens (items now have layout), add a tooltip to any item
+// whose text is clipped by the fixed dropdown width.
+function _applyClipTitles(container) {
+  if (!container) return;
+  container.querySelectorAll('.sc-acct-drop-item').forEach(el => {
+    if (el.scrollWidth > el.clientWidth + 1) el.title = el.textContent.trim();
+    else el.removeAttribute('title');
+  });
+}
+
+// ── 1st dropdown: category selector ──────────────────────────────
+window.toggleFcGroupDropdown = function() {
+  const dropdown = document.getElementById('fcGroupDropdown');
+  const btn = document.getElementById('fcGroupBtn');
+  if (!dropdown) return;
+  const isOpen = dropdown.style.display !== 'none';
+  dropdown.style.display = isOpen ? 'none' : 'block';
+  btn && btn.setAttribute('aria-expanded', String(!isOpen));
+  if (!isOpen) _applyClipTitles(dropdown);
+};
+
+window.selectForecastGroup = function(groupId) {
+  const g = FORECAST_GROUPS.find(x => x.id === groupId);
+  if (!g) return;
+  ACTIVE_FC_GROUP = groupId;
+
+  // Close category dropdown + sync its button / active state
+  const dd = document.getElementById('fcGroupDropdown');
+  if (dd) dd.style.display = 'none';
+  const btn = document.getElementById('fcGroupBtn');
+  if (btn) {
+    _setSelectorLabel(btn, g.label);
+    btn.setAttribute('aria-expanded', 'false');
+  }
+  document.querySelectorAll('#fcGroupDropdown .sc-acct-drop-item').forEach(el =>
+    el.classList.toggle('sc-acct-drop-item--active', el.dataset.group === groupId));
+
+  if (!g.items.length) {
+    // Project summary — no inner items: disable the 2nd dropdown, load the roll-up
+    _setFcItemDisabled(true, 'All control accounts');
+    ACTIVE_FC_ITEM = null;
+    selectAccount(g.ca);
+  } else {
+    _setFcItemDisabled(false);
+    _renderFcItems(g.items);
+    // Auto-select the first item so a forecast always loads on category change
+    selectForecastItem(g.items[0].id);
+  }
+};
+
+// ── 2nd dropdown: item selector (cascades from the category) ──────
+function _setFcItemDisabled(disabled, placeholderLabel) {
+  const btn = document.getElementById('fcItemBtn');
+  const dd  = document.getElementById('fcItemDropdown');
+  if (dd) dd.style.display = 'none';
+  if (!btn) return;
+  btn.disabled = !!disabled;
+  btn.setAttribute('aria-expanded', 'false');
+  if (disabled && placeholderLabel != null) {
+    _setSelectorLabel(btn, placeholderLabel);
+  }
+}
+
+function _renderFcItems(items) {
+  const list = document.getElementById('fcItemList');
+  if (!list) return;
+  list.innerHTML = items.map(it =>
+    `<div class="sc-acct-drop-item" data-id="${it.id}" onclick="selectForecastItem('${it.id}')">${it.label}</div>`
+  ).join('');
+}
+
+window.toggleFcItemDropdown = function() {
+  const btn = document.getElementById('fcItemBtn');
+  if (btn && btn.disabled) return;
+  const dropdown = document.getElementById('fcItemDropdown');
   if (!dropdown) return;
   const isOpen = dropdown.style.display !== 'none';
   dropdown.style.display = isOpen ? 'none' : 'block';
   btn && btn.setAttribute('aria-expanded', String(!isOpen));
   if (!isOpen) {
-    const search = document.getElementById('acctSearch');
-    if (search) { search.value = ''; filterAcctDropdown(''); }
-    setTimeout(() => { const s = document.getElementById('acctSearch'); if (s) s.focus(); }, 30);
+    const search = document.getElementById('fcItemSearch');
+    if (search) { search.value = ''; filterFcItems(''); }
+    _applyClipTitles(dropdown);
+    setTimeout(() => { const s = document.getElementById('fcItemSearch'); if (s) s.focus(); }, 30);
   }
 };
 
-window.filterAcctDropdown = function(query) {
+window.selectForecastItem = function(itemId) {
+  const g = FORECAST_GROUPS.find(x => x.id === ACTIVE_FC_GROUP);
+  if (!g) return;
+  const it = g.items.find(x => x.id === itemId);
+  if (!it) return;
+  ACTIVE_FC_ITEM = itemId;
+
+  // Close item dropdown + sync its button / active state
+  const dd = document.getElementById('fcItemDropdown');
+  if (dd) dd.style.display = 'none';
+  const btn = document.getElementById('fcItemBtn');
+  if (btn) {
+    _setSelectorLabel(btn, it.label);
+    btn.setAttribute('aria-expanded', 'false');
+  }
+  document.querySelectorAll('#fcItemDropdown .sc-acct-drop-item').forEach(el =>
+    el.classList.toggle('sc-acct-drop-item--active', el.dataset.id === itemId));
+
+  selectAccount(it.ca);
+};
+
+window.filterFcItems = function(query) {
   const q = (query || '').trim().toLowerCase();
-  const items = document.querySelectorAll('#acctDropdown .sc-acct-drop-item');
+  const items = document.querySelectorAll('#fcItemList .sc-acct-drop-item');
   let visible = 0;
   items.forEach(item => {
     const match = !q || item.textContent.toLowerCase().includes(q);
     item.style.display = match ? '' : 'none';
     if (match) visible++;
   });
-  const noResults = document.getElementById('acctDropNoResults');
+  const noResults = document.getElementById('fcItemNoResults');
   if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
 };
 
 document.addEventListener('click', e => {
-  if (!e.target.closest('#acctSelectorWrap')) {
-    const d = document.getElementById('acctDropdown');
+  if (!e.target.closest('#fcGroupWrap')) {
+    const d = document.getElementById('fcGroupDropdown');
     if (d) d.style.display = 'none';
-    const sBtn = document.getElementById('acctSelectorBtn');
-    if (sBtn) sBtn.setAttribute('aria-expanded', 'false');
+    const gBtn = document.getElementById('fcGroupBtn');
+    if (gBtn) gBtn.setAttribute('aria-expanded', 'false');
+  }
+  if (!e.target.closest('#fcItemWrap')) {
+    const d = document.getElementById('fcItemDropdown');
+    if (d) d.style.display = 'none';
+    const iBtn = document.getElementById('fcItemBtn');
+    if (iBtn) iBtn.setAttribute('aria-expanded', 'false');
   }
   if (!e.target.closest('#kebabWrap')) {
     const d = document.getElementById('kebabDropdown');
@@ -2512,18 +2732,19 @@ function applyUserPermissions(user) {
     runBtn.style.opacity = p.runForecast ? '' : '0.5';
   }
 
-  // Account selector button
-  const acctBtn = document.getElementById('acctSelectorBtn');
-  if (acctBtn) {
-    acctBtn.disabled = !p.changeAccount;
-    acctBtn.style.opacity = p.changeAccount ? '' : '0.55';
-    acctBtn.style.cursor = p.changeAccount ? '' : 'not-allowed';
-    acctBtn.title = p.changeAccount ? '' : 'Your role cannot change the account';
-    const chevron = acctBtn.querySelector('i');
+  // Forecast selector buttons (category + item)
+  ['fcGroupBtn', 'fcItemBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.disabled = !p.changeAccount;
+    btn.style.opacity = p.changeAccount ? '' : '0.55';
+    btn.style.cursor = p.changeAccount ? '' : 'not-allowed';
+    btn.title = p.changeAccount ? '' : 'Your role cannot change the account';
+    const chevron = btn.querySelector('i');
     if (chevron) {
       chevron.className = p.changeAccount ? 'pi pi-chevron-down sc-acct-chevron' : 'pi pi-lock sc-acct-chevron';
     }
-  }
+  });
 
   // Export gate flag (checked in kebabExportExcel)
   window._canExport = p.exportData;
@@ -2805,7 +3026,9 @@ function _gatherExportData() {
     simAccts:   document.querySelector('.sc-similar-accts')?.textContent || '',
     driverPills:[...document.querySelectorAll('.sc-driver-pill')].map(p => p.textContent).join(' · '),
     expText:    document.querySelector('.sc-forecast-exp-box')?.textContent || '',
-    caLabel:    (document.getElementById('acctSelectorBtn')?.textContent || '').trim().replace(/\s*$/, '').replace(/<[^>]+>/g, '').trim(),
+    caLabel:    [document.getElementById('fcGroupBtn'), document.getElementById('fcItemBtn')]
+                  .map(b => (b?.textContent || '').replace(/<[^>]+>/g, '').trim())
+                  .filter(Boolean).join(' — '),
     subtitle:   document.querySelector('.sc-page-subtitle')?.textContent || '',
     simMonth:   document.getElementById('scTsMonth')?.textContent || '',
     isSimulated:document.getElementById('scTsSimBadge')?.style.display !== 'none',
@@ -3223,7 +3446,7 @@ function _buildAndMountSettings(container) {
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid #f1f5f9">
         <div>
           <span style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Enable SPI / CPI as matching factors</span>
-          <span style="font-size:12px;color:var(--text-muted)">Accounts with similar performance index profiles are weighted higher during curve matching for all 3 forecast lines.</span>
+          <span style="font-size:12px;color:var(--text-muted)">Individual performance of the control account is considered as part of the forecast evaluation.</span>
         </div>
         <div class="sc-settings-weight-control">
           <span class="sc-wval-wrap">
@@ -3994,4 +4217,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initWarningsContent();
   initDriverSettingsContent();
   _restoreSectionsView();
+  _refreshCurveState();   // set initial Curve ID badge (Manual)
 });

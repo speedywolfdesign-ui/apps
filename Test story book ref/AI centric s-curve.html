@@ -234,7 +234,7 @@
 
     <!-- Page title block -->
     <div class="sc-page-title-block">
-      <h1 class="page-title" style="margin-bottom:2px"><i class="ph-fill ph-sparkle" style="color:var(--ait-primary)"></i> AI-centric S-curve forecast</h1>
+      <h1 class="page-title" style="margin-bottom:2px">AI-centric S-curve forecast</h1>
       <!-- <div class="sc-page-subtitle"><span style="color:var(--primary-700,#1e437d);font-weight:600">Learned from 1,240 completed control accounts</span></div> -->
     </div>
 
@@ -242,25 +242,36 @@
     <div class="sc-toolbar">
       <div class="sc-toolbar-left">
         <span class="sc-acct-label" id="acctSelectorLabel">Forecast</span>
-        <div class="sc-acct-selector-wrap" id="acctSelectorWrap">
-          <button class="sc-acct-selector" onclick="toggleAcctDropdown()" aria-expanded="false" id="acctSelectorBtn">
-            Project summary <i class="pi pi-chevron-down sc-acct-chevron"></i>
-          </button>
-          <div class="sc-acct-dropdown" id="acctDropdown" style="display:none">
-            <div class="sc-acct-search-wrap">
-              <i class="pi pi-search sc-acct-search-icon"></i>
-              <input class="sc-acct-search" id="acctSearch" type="text"
-                placeholder="Search accounts…"
-                oninput="filterAcctDropdown(this.value)"
-                autocomplete="off" />
+        <div class="sc-fc-selectors">
+          <!-- 1st dropdown: category -->
+          <div class="sc-acct-selector-wrap" id="fcGroupWrap">
+            <button class="sc-acct-selector" onclick="toggleFcGroupDropdown()" aria-expanded="false" id="fcGroupBtn">
+              <span class="sc-acct-selector-label">Project summary</span> <i class="pi pi-chevron-down sc-acct-chevron"></i>
+            </button>
+            <div class="sc-acct-dropdown" id="fcGroupDropdown" style="display:none">
+              <div class="sc-acct-drop-item sc-acct-drop-item--active" data-group="project-summary" onclick="selectForecastGroup('project-summary')">Project summary</div>
+              <div class="sc-acct-drop-item" data-group="group-title" onclick="selectForecastGroup('group-title')">Group Title</div>
+              <div class="sc-acct-drop-item" data-group="standard-group-title" onclick="selectForecastGroup('standard-group-title')">Standard Group Title</div>
+              <div class="sc-acct-drop-item" data-group="module-group-title" onclick="selectForecastGroup('module-group-title')">Module Group Title</div>
+              <div class="sc-acct-drop-item" data-group="control-accounts" onclick="selectForecastGroup('control-accounts')">Control accounts</div>
             </div>
-            <div class="sc-acct-drop-item sc-acct-drop-item--active" data-id="project-summary" onclick="selectAccount('project-summary')">Project summary</div>
-            <div class="sc-acct-drop-divider" aria-hidden="true"></div>
-            <div class="sc-acct-drop-item" data-id="ca-1042" onclick="selectAccount('ca-1042')">CA-1042 · Civil Foundations — P2</div>
-            <div class="sc-acct-drop-item" data-id="ca-1043" onclick="selectAccount('ca-1043')">CA-1043 · Structural Steel — P1</div>
-            <div class="sc-acct-drop-item" data-id="ca-1044" onclick="selectAccount('ca-1044')">CA-1044 · MEP Systems</div>
-            <div class="sc-acct-drop-item" data-id="ca-1045" onclick="selectAccount('ca-1045')">CA-1045 · Site Preparation</div>
-            <div class="sc-acct-drop-no-results" id="acctDropNoResults" style="display:none">No accounts found</div>
+          </div>
+          <!-- 2nd dropdown: item (cascades from category; disabled for Project summary) -->
+          <div class="sc-acct-selector-wrap" id="fcItemWrap">
+            <button class="sc-acct-selector" onclick="toggleFcItemDropdown()" aria-expanded="false" id="fcItemBtn" disabled>
+              <span class="sc-acct-selector-label">All control accounts</span> <i class="pi pi-chevron-down sc-acct-chevron"></i>
+            </button>
+            <div class="sc-acct-dropdown" id="fcItemDropdown" style="display:none">
+              <div class="sc-acct-search-wrap">
+                <i class="pi pi-search sc-acct-search-icon"></i>
+                <input class="sc-acct-search" id="fcItemSearch" type="text"
+                  placeholder="Search…"
+                  oninput="filterFcItems(this.value)"
+                  autocomplete="off" />
+              </div>
+              <div id="fcItemList"></div>
+              <div class="sc-acct-drop-no-results" id="fcItemNoResults" style="display:none">No items found</div>
+            </div>
           </div>
         </div>
         <button class="btn btn-primary sc-run-btn" onclick="runAiForecast()" style="margin-left:16px">
@@ -487,9 +498,12 @@
         <div class="sc-chart-outer">
           <div class="sc-chart-title-row">
             <span class="sc-chart-title-label">AI forecast <i class="pi pi-info-circle sc-chart-info-icon" title="AI-generated forecast"></i></span>
-            <button type="button" class="ait-compare-btn" id="aiCompareBtn" onclick="toggleAiCompare()" aria-pressed="false" title="Compare the AI forecast against the human-entered forecast">
-              <span id="aiCompareBtnTxt">Compare</span>
-            </button>
+            <span class="sc-chart-title-actions">
+              <button type="button" class="btn btn-secondary sc-adopt-btn" id="scAdoptBtn" onclick="toggleAdoptForecast()" style="display:none" title="Adopt this AI forecast as the active curve for this control account">Adopt AI forecast</button>
+              <button type="button" class="ait-compare-btn" id="aiCompareBtn" onclick="toggleAiCompare()" aria-pressed="false" title="Compare the AI forecast against the human-entered forecast">
+                <span id="aiCompareBtnTxt">Compare</span>
+              </button>
+            </span>
           </div>
           <div class="sc-chart-wrap" style="height:320px">
             <canvas id="scurve-chart"></canvas>
@@ -1153,10 +1167,14 @@
       // 8/9 = confidence band (around Actual/ETC), 13/14/15 = dashed forecast lines.
       // The AI forecast is stored in its own dedicated fields, distinct from the
       // user-adopted forecast on the main chart.
+      // Once the AI forecast is adopted for this control account, the current
+      // forecast IS the AI forecast — no lift, so the two charts match exactly.
+      const adopted = (typeof CA_CURVE_ADOPTED !== 'undefined') && typeof ACTIVE_CA_ID !== 'undefined'
+        && !!CA_CURVE_ADOPTED[ACTIVE_CA_ID];
       const AI_FIELD = { 13: 'Actual / ETC', 14: 'Incurred / ETC', 15: 'Earned' };
       [13, 14, 15].forEach(i => {
         if(!datasets[i]) return;
-        datasets[i].data = liftForecast(datasets[i].data, todayIdx);
+        if(!adopted) datasets[i].data = liftForecast(datasets[i].data, todayIdx);
         datasets[i].label = AI_FIELD[i];
       });
       // User Adoption chart is human-adopted — strip any "(AI)" suffix from the historical lines
@@ -1491,6 +1509,7 @@
       btn.style.display = show ? 'none' : '';   // Compare lives only on the AI card; hide it while comparing
       btn.setAttribute('aria-pressed', String(show));
       if(row) row.classList.toggle('is-comparing', show);
+      if(typeof _refreshCurveState === 'function') _refreshCurveState();  // compare view governs Adopt button visibility
       if(show){ _renderAiCurve(); } else { panel.classList.remove('is-loading'); if(typeof applyTooltipMode === 'function') applyTooltipMode(); }
       // the main chart column changed width — let Chart.js re-fit it
       if(typeof scurveChart !== 'undefined' && scurveChart && scurveChart.resize){
@@ -1510,6 +1529,7 @@
       panel.style.display = '';
       btn.style.display = 'none'; btn.setAttribute('aria-pressed','true');
       if(row) row.classList.add('is-comparing');
+      if(typeof _refreshCurveState === 'function') _refreshCurveState();  // compare view governs Adopt button visibility
       if(typeof scurveChart !== 'undefined' && scurveChart && scurveChart.resize){ setTimeout(()=>scurveChart.resize(), 0); }
       panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
       // Make sure the AI forecast is active so the main S-curve shows the AI band
@@ -1529,9 +1549,9 @@
   <script>
   (function(){
     function setDefault(){
-      if(typeof window.selectAccount === 'function' && typeof scurveChart !== 'undefined' && scurveChart){
+      if(typeof window.selectForecastGroup === 'function' && typeof scurveChart !== 'undefined' && scurveChart){
         if(typeof ACTIVE_CA_ID === 'undefined' || ACTIVE_CA_ID !== 'project-summary'){
-          window.selectAccount('project-summary');
+          window.selectForecastGroup('project-summary');
         }
       } else {
         setTimeout(setDefault, 30);   // chart not built yet — retry shortly

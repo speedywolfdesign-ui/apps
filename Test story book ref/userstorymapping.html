@@ -174,7 +174,6 @@
       font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px;
       border:1px solid var(--usm-border-2); color:var(--usm-muted); background:#fff;
     }
-    .usm-pri{font-size:10px; font-weight:700; display:inline-flex; align-items:center; gap:4px}
 
     /* ---------- Acceptance criteria ---------- */
     .usm-ac-toggle{
@@ -196,7 +195,7 @@
     }
     .usm-ac-list li:last-child{margin-bottom:0}
     .usm-ac-list li::before{
-      content:'\\2713'; position:absolute; left:0; top:0;
+      content:'\2713'; position:absolute; left:0; top:0;
       color:#16a34a; font-weight:800; font-size:10px;
     }
     .usm-ac-list li.usm-ac-given{font-size:9.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--usm-muted); margin-bottom:6px; padding-left:0}
@@ -296,10 +295,6 @@
       <div class="usm-chips" id="personaChips"></div>
     </div>
     <div class="usm-filter-group">
-      <span class="usm-filter-label"><i class="pi pi-flag"></i> Priority</span>
-      <div class="usm-chips" id="priChips"></div>
-    </div>
-    <div class="usm-filter-group">
       <span class="usm-filter-label"><i class="pi pi-search"></i> Search</span>
       <div class="usm-search-wrap">
         <i class="pi pi-search usm-search-icon"></i>
@@ -359,11 +354,6 @@
   ];
   const P = Object.fromEntries(PERSONAS.map(p=>[p.id,p]));
 
-  const PRIORITIES = [
-    { id:'high', name:'High',   color:'#dc2626' },
-    { id:'med',  name:'Medium', color:'#d97706' },
-    { id:'low',  name:'Low',    color:'#16a34a' },
-  ];
   const RELEASES = [
     { id:'mvp', name:'MVP' },
     { id:'r1',  name:'Release 1' },
@@ -382,6 +372,7 @@
     { id:'insight',  title:'Appendix & Warnings',         kicker:'Epic 8',  color:'#d97706' },
     { id:'report',   title:'Reporting & Export',          kicker:'Epic 9',  color:'#0891b2' },
     { id:'admin',    title:'Administration, Roles & Access', kicker:'Epic 10', color:'#dc2626' },
+    { id:'onboard',  title:'Onboarding & Guided Tours',    kicker:'Epic 11', color:'#9333ea' },
   ];
 
   const FEATURES = [
@@ -452,6 +443,24 @@
     { id:'role-context',epic:'admin', title:'Admin vs project context', icon:'pi-sitemap' },
     { id:'admin-settings',epic:'admin',title:'Admin settings page', icon:'pi-cog' },
     { id:'audit-log',   epic:'admin', title:'Configuration audit log', icon:'pi-history' },
+    // ===== latest — AI-centric forecast updates =====
+    { id:'forecast-labels', epic:'viz', title:'AI vs Current forecast', icon:'pi-tag' },
+    { id:'forecast-info',   epic:'viz', title:'Forecast info tooltips', icon:'pi-info-circle' },
+    { id:'compare',         epic:'viz', title:'Compare AI vs Current', icon:'pi-clone' },
+    { id:'sync-tooltip',    epic:'viz', title:'Synced & combined tooltips', icon:'pi-table' },
+    { id:'run-modal',       epic:'ai',  title:'Forecast run progress modal', icon:'pi-spinner' },
+    { id:'run-label',       epic:'ai',  title:'Run button context label', icon:'pi-play' },
+    { id:'ai-weights-note', epic:'ai',  title:'AI-tuned weights note', icon:'pi-microchip-ai' },
+    { id:'explain-cards',   epic:'insight',  title:'Forecast explanation cards', icon:'pi-id-card' },
+    { id:'display-settings',epic:'settings', title:'Display settings (view / tooltip / loader / tour)', icon:'pi-sliders-h' },
+    { id:'learning-pool',   epic:'settings', title:'Project learning pool', icon:'pi-database' },
+    { id:'nl-compare',      epic:'assist', title:'NL compare AI vs current', icon:'pi-clone' },
+    { id:'nl-tour',         epic:'assist', title:'NL explain / settings / tour', icon:'pi-compass' },
+    { id:'first-run',       epic:'onboard', title:'First-run welcome', icon:'pi-compass' },
+    { id:'guided-tour',     epic:'onboard', title:'Guided (spotlight) tour', icon:'pi-search' },
+    { id:'pendo-tour',      epic:'onboard', title:'Product tour (balloons)', icon:'pi-map-marker' },
+    { id:'tour-replay',     epic:'onboard', title:'Help & replay tour', icon:'pi-question-circle' },
+    { id:'tour-style',      epic:'onboard', title:'Tour style switch', icon:'pi-sync' },
   ];
 
   /* Each story: feature, who (persona), title (task), benefit, priority, release, ac[] */
@@ -621,6 +630,61 @@
       ac:['Admin settings modal/page opens for admins','Changes can be saved or cancelled','Non-admins see read-only inline settings'] },
     { f:'audit-log', who:'ad', t:'Review a configuration audit log', b:'see who changed what and when', pri:'med', rel:'r2',
       ac:['Log lists user, role, action and timestamp','Entries are ordered by time','New configuration changes append an entry'] },
+
+    // ===== latest — AI-centric forecast updates =====
+    { f:'forecast-labels', who:'pm', t:'Tell the AI forecast apart from the Current forecast', b:'distinguish the AI prediction from the team-owned plan', pri:'high', rel:'r1',
+      ac:['Default chart is titled "AI forecast"','Comparison chart is titled "Current forecast"','AI forecast line labels are suffixed "(AI)"'] },
+    { f:'forecast-info', who:'cd', t:'Hover an info icon to learn what each forecast is', b:'understand the source of each curve', pri:'low', rel:'r1',
+      ac:['AI forecast info reads "AI-generated forecast"','Current forecast info reads "Forecast selected by the project team"'] },
+
+    { f:'compare', who:'pm', t:'Compare the AI forecast against the current forecast side by side', b:'evaluate the AI projection vs our committed plan', pri:'high', rel:'r1',
+      ac:['Compare reveals the Current forecast chart beside the AI forecast','A brief loading state shows before the chart renders','The AI forecast runs first if it is not already active'] },
+    { f:'compare', who:'ce', t:'Hide the comparison again', b:'collapse back to a single chart quickly', pri:'med', rel:'r1',
+      ac:['The Compare button hides while comparing','A Hide button sits top-right of the Current forecast card','Hiding restores the single AI forecast view'] },
+
+    { f:'sync-tooltip', who:'pm', t:'See aligned tooltips on both charts while comparing', b:'read both values at the same point in time', pri:'med', rel:'r1',
+      ac:['Hovering one chart shows the tooltip on both at the same index','Duplicate historical/forecast entries are de-duplicated','Markers render as lines, not squares'] },
+    { f:'sync-tooltip', who:'ce', t:'Switch to a single combined tooltip', b:'see AI vs current values in one place', pri:'low', rel:'r2',
+      ac:['Combined tooltip shows the month plus AI and Current columns','Each series lists both values side by side','Mode is chosen in Settings (Combined / Separate)'] },
+
+    { f:'run-modal', who:'pm', t:'Watch an analysis modal while the forecast runs', b:'get feedback that the AI is working', pri:'med', rel:'r1',
+      ac:['A confidence ring climbs as control accounts are scanned','Scanned count and matched-accounts count update live','Status cycles scan → match → weight → finalize'] },
+    { f:'run-modal', who:'ce', t:'See the final confidence, then auto-close', b:'know the confidence before the result renders', pri:'med', rel:'r1',
+      ac:['Ring settles on the account’s forecast confidence','Final value matches the on-screen confidence','Modal closes and the forecast applies'] },
+
+    { f:'run-label', who:'pm', t:'See the run button reflect my selection', b:'know if I am running one CA or the whole project', pri:'low', rel:'r1',
+      ac:['"Run project forecast" for the project summary','"Run forecast" for a single control account','Icon swaps to a spinner while running'] },
+
+    { f:'ai-weights-note', who:'ce', t:'See that weights were AI-tuned from comparable accounts', b:'trust the recommended starting point', pri:'low', rel:'r2',
+      ac:['Settings note states weights were derived from N matched accounts','Note references back-tested accuracy','I can still override any weight'] },
+
+    { f:'explain-cards', who:'cd', t:'Read the forecast explanation cards', b:'understand how the AI reached the curve', pri:'med', rel:'r1',
+      ac:['Forecast confidence card with ring + similar-account count','EAC range card (P10 / P50 / P90)','Similar accounts and Basis-of-forecast cards'] },
+
+    { f:'display-settings', who:'pm', t:'Open a Settings dialog from the kebab menu', b:'control display options in one place', pri:'med', rel:'r2',
+      ac:['Settings opens a modal with grouped options','Controls reflect the current state on open','Each change applies immediately'] },
+    { f:'display-settings', who:'ce', t:'Toggle the loading modal, view and tooltip mode', b:'tailor the experience to my workflow', pri:'low', rel:'r2',
+      ac:['"Show loading modal" toggles the run-analysis modal','View switches Tab / Accordion','Tooltip switches Combined / Separate'] },
+
+    { f:'learning-pool', who:'ce', t:'Choose which historical projects feed the matcher', b:'control the evidence base for the forecast', pri:'med', rel:'r2',
+      ac:['Pool lists projects with include toggles','Select all, a "Show selected" filter and search','Excluded projects are skipped during the scan'] },
+
+    { f:'nl-compare', who:'pm', t:'Ask the assistant to compare AI vs current', b:'open the comparison hands-free', pri:'low', rel:'r2',
+      ac:['"Compare" toggles the AI-vs-current comparison','Opening shows the loading state then the chart','Asking again hides it'] },
+    { f:'nl-tour', who:'pm', t:'Ask the assistant to explain, warn, open settings or start the tour', b:'reach key features conversationally', pri:'low', rel:'r2',
+      ac:['"Explain the forecast" opens the explanation','"Show warnings" opens the warnings','"Open settings" / "Start the tour" trigger those flows'] },
+
+    // ===== onboarding & guided tours =====
+    { f:'first-run', who:'pm', t:'See a welcome on my first visit', b:'understand what the page offers before diving in', pri:'med', rel:'r1',
+      ac:['Welcome shows only on the first visit (remembered per session)','It offers a Start tour action','It can be closed'] },
+    { f:'guided-tour', who:'pm', t:'Take a spotlight tour of the key steps', b:'learn settings, run, explanation and warnings', pri:'med', rel:'r1',
+      ac:['A spotlight highlights each target with a tooltip','Steps cover Settings, Run forecast, Forecast explanation and Warnings','The backdrop dims the rest of the page'] },
+    { f:'pendo-tour', who:'pm', t:'Take a product tour with anchored balloons', b:'step through features with Back/Next', pri:'med', rel:'r1',
+      ac:['A balloon anchors to each element with a pointer','Step dots plus Back / Next / Done controls','Steps: Summary, Settings, Run forecast, Forecast explanation, Warnings'] },
+    { f:'tour-replay', who:'cd', t:'Replay the tour anytime from Help', b:'revisit guidance when I need it', pri:'low', rel:'r1',
+      ac:['A "Help & tour" item in the kebab menu launches the tour','The completion card offers Replay tour'] },
+    { f:'tour-style', who:'ce', t:'Switch between guided and product-tour styles', b:'use the onboarding style I prefer', pri:'low', rel:'r2',
+      ac:['Settings offers Guided (spotlight) and Product tour styles','The choice persists','Help launches the selected style (Pendo-style by default)'] },
   ];
 
   /* =====================================================================
@@ -1043,7 +1107,6 @@
   const state = {
     epics: new Set(),      // empty => all
     personas: new Set(),
-    pris: new Set(),
     q: '',
   };
 
@@ -1074,13 +1137,6 @@
       c.onclick = ()=>toggle(state.personas, p.id, c);
       pc.appendChild(c);
     });
-    // Priorities
-    const prc = document.getElementById('priChips');
-    PRIORITIES.forEach(pr=>{
-      const c = chip(pr.name, false, pr.color);
-      c.onclick = ()=>toggle(state.pris, pr.id, c);
-      prc.appendChild(c);
-    });
     document.getElementById('searchInput').addEventListener('input', e=>{
       state.q = e.target.value.trim().toLowerCase();
       render();
@@ -1090,9 +1146,7 @@
     // Legend
     const lg = document.getElementById('legend');
     lg.innerHTML =
-      `<span class="li"><b style="color:var(--usm-text)">Priority:</b></span>` +
-      PRIORITIES.map(p=>`<span class="li"><span class="pri-dot" style="background:${p.color}"></span>${p.name}</span>`).join('') +
-      `<span class="li" style="margin-left:14px"><b style="color:var(--usm-text)">User types:</b></span>` +
+      `<span class="li"><b style="color:var(--usm-text)">User types:</b></span>` +
       PERSONAS.map(p=>`<span class="li"><span class="pri-dot" style="background:${p.color}"></span>${p.short}</span>`).join('');
   }
 
@@ -1103,7 +1157,7 @@
   }
 
   function resetFilters(){
-    state.epics.clear(); state.personas.clear(); state.pris.clear();
+    state.epics.clear(); state.personas.clear();
     state.q = '';
     document.getElementById('searchInput').value = '';
     document.querySelectorAll('.usm-chip.is-active').forEach(c=>c.classList.remove('is-active'));
@@ -1117,7 +1171,6 @@
     const feat = FEATURES.find(f=>f.id===s.f);
     if(state.epics.size && !state.epics.has(feat.epic)) return false;
     if(state.personas.size && !state.personas.has(s.who)) return false;
-    if(state.pris.size && !state.pris.has(s.pri)) return false;
     if(state.q){
       const hay = (s.t + ' ' + s.b + ' ' + feat.title + ' ' + P[s.who].name).toLowerCase();
       if(!hay.includes(state.q)) return false;
@@ -1146,7 +1199,6 @@
 
         const cards = matched.map(s=>{
           const per = P[s.who];
-          const pri = PRIORITIES.find(p=>p.id===s.pri);
           const rel = RELEASES.find(r=>r.id===s.rel);
           const ac = Array.isArray(s.ac) ? s.ac : [];
           const acBlock = ac.length ? `
@@ -1162,7 +1214,6 @@
               ${acBlock}
               <div class="usm-card-meta">
                 <span class="usm-persona-tag" style="background:${per.color}"><i class="pi pi-user" style="font-size:9px"></i>${esc(per.short)}</span>
-                <span class="usm-pri" style="color:${pri.color}"><span class="pri-dot" style="background:${pri.color}"></span>${pri.name}</span>
                 <span class="usm-tag">${rel.name}</span>
               </div>
             </div>`;

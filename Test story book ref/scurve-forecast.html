@@ -119,23 +119,41 @@
     <!-- Toolbar -->
     <div class="sc-toolbar">
       <div class="sc-toolbar-left">
-        <div class="sc-acct-selector-wrap" id="acctSelectorWrap">
-          <button class="sc-acct-selector" onclick="toggleAcctDropdown()" aria-expanded="false" id="acctSelectorBtn">
-            CA-1042 · Civil Foundations — P2 <i class="pi pi-chevron-down sc-acct-chevron"></i>
-          </button>
-          <div class="sc-acct-dropdown" id="acctDropdown" style="display:none">
-            <div class="sc-acct-search-wrap">
-              <i class="pi pi-search sc-acct-search-icon"></i>
-              <input class="sc-acct-search" id="acctSearch" type="text"
-                placeholder="Search accounts…"
-                oninput="filterAcctDropdown(this.value)"
-                autocomplete="off" />
+        <div class="sc-fc-selectors">
+          <!-- 1st dropdown: category -->
+          <div class="sc-acct-selector-wrap" id="fcGroupWrap">
+            <button class="sc-acct-selector" onclick="toggleFcGroupDropdown()" aria-expanded="false" id="fcGroupBtn">
+              <span class="sc-acct-selector-label">Group Title</span> <i class="pi pi-chevron-down sc-acct-chevron"></i>
+            </button>
+            <div class="sc-acct-dropdown" id="fcGroupDropdown" style="display:none">
+              <div class="sc-acct-drop-item" data-group="project-summary" onclick="selectForecastGroup('project-summary')">Project summary</div>
+              <div class="sc-acct-drop-item sc-acct-drop-item--active" data-group="group-title" onclick="selectForecastGroup('group-title')">Group Title</div>
+              <div class="sc-acct-drop-item" data-group="standard-group-title" onclick="selectForecastGroup('standard-group-title')">Standard Group Title</div>
+              <div class="sc-acct-drop-item" data-group="module-group-title" onclick="selectForecastGroup('module-group-title')">Module Group Title</div>
+              <div class="sc-acct-drop-item" data-group="control-accounts" onclick="selectForecastGroup('control-accounts')">Control accounts</div>
             </div>
-            <div class="sc-acct-drop-item sc-acct-drop-item--active" data-id="ca-1042" onclick="selectAccount('ca-1042')">CA-1042 · Civil Foundations — P2</div>
-            <div class="sc-acct-drop-item" data-id="ca-1043" onclick="selectAccount('ca-1043')">CA-1043 · Structural Steel — P1</div>
-            <div class="sc-acct-drop-item" data-id="ca-1044" onclick="selectAccount('ca-1044')">CA-1044 · MEP Systems</div>
-            <div class="sc-acct-drop-item" data-id="ca-1045" onclick="selectAccount('ca-1045')">CA-1045 · Site Preparation</div>
-            <div class="sc-acct-drop-no-results" id="acctDropNoResults" style="display:none">No accounts found</div>
+          </div>
+          <!-- 2nd dropdown: item (cascades from category; disabled for Project summary) -->
+          <div class="sc-acct-selector-wrap" id="fcItemWrap">
+            <button class="sc-acct-selector" onclick="toggleFcItemDropdown()" aria-expanded="false" id="fcItemBtn">
+              <span class="sc-acct-selector-label">Civil Foundations</span> <i class="pi pi-chevron-down sc-acct-chevron"></i>
+            </button>
+            <div class="sc-acct-dropdown" id="fcItemDropdown" style="display:none">
+              <div class="sc-acct-search-wrap">
+                <i class="pi pi-search sc-acct-search-icon"></i>
+                <input class="sc-acct-search" id="fcItemSearch" type="text"
+                  placeholder="Search…"
+                  oninput="filterFcItems(this.value)"
+                  autocomplete="off" />
+              </div>
+              <div id="fcItemList">
+                <div class="sc-acct-drop-item sc-acct-drop-item--active" data-id="gt-civil" onclick="selectForecastItem('gt-civil')">Civil Foundations</div>
+                <div class="sc-acct-drop-item" data-id="gt-steel" onclick="selectForecastItem('gt-steel')">Structural Steel</div>
+                <div class="sc-acct-drop-item" data-id="gt-mep" onclick="selectForecastItem('gt-mep')">MEP Systems</div>
+                <div class="sc-acct-drop-item" data-id="gt-site" onclick="selectForecastItem('gt-site')">Site Preparation</div>
+              </div>
+              <div class="sc-acct-drop-no-results" id="fcItemNoResults" style="display:none">No items found</div>
+            </div>
           </div>
         </div>
         <!-- <button class="sc-toolbar-icon-btn" title="Filter settings" aria-label="Filter settings">
@@ -366,6 +384,7 @@
         <div class="sc-chart-outer">
           <div class="sc-chart-title-row">
             <span class="sc-chart-title-label">S-curve <i class="pi pi-info-circle sc-chart-info-icon" title="Cumulative cost S-curve with periodic bar chart"></i></span>
+            <button type="button" class="btn btn-secondary sc-adopt-btn" id="scAdoptBtn" onclick="toggleAdoptForecast()" style="display:none" title="Adopt this AI forecast as the active curve for this control account">Adopt AI forecast</button>
           </div>
           <div class="sc-chart-wrap" style="height:320px">
             <canvas id="scurve-chart"></canvas>
