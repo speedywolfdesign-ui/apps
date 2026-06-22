@@ -296,6 +296,24 @@ let ACTIVE_FORECAST_LINE = 'actual'; // 'actual' | 'incurred' | 'earned'
 // SPI/CPI matching weight (user-adjustable, 0 = off — replaces the old on/off toggle)
 let SPI_CPI_WEIGHT = 3.0;
 
+// True once the user has touched any control in the AI forecast settings modal
+// (weight slider/input, SPI-CPI weight, or the cost-breakdown toggle). The compare
+// view uses this to decide whether to draw the "Current forecast" chart or an
+// empty state prompting the user to add weights first. Reset by "Reset to defaults".
+window.SETTINGS_EDITED = false;
+
+// Divergence of the tunable "Current forecast" compare panel from the fixed
+// "AI forecast" (main chart), driven entirely by the settings weights. Changing
+// a weight re-renders ONLY the Current forecast panel via this factor — the AI
+// forecast/main chart never moves. Default settings reproduce the old 0.13 lift;
+// heavier weights diverge more, zeroed weights converge back to the AI forecast.
+window.currentForecastLift = function() {
+  const baseTotal = TOTAL_WEIGHT + 3.0;                 // default feature weights + default SPI/CPI
+  const curTotal  = getTotalWeight() + SPI_CPI_WEIGHT;  // live, settings-adjusted total
+  if (baseTotal <= 0) return 0.13;
+  return Math.max(0, Math.min(0.30, 0.13 * (curTotal / baseTotal)));
+};
+
 /* ── CLASSIFICATION GROUPS (shared by settings modal + driver detail) ─ */
 const CLASSIFICATION_GROUPS = [
   { source: 'Project groups', items: [
@@ -1091,6 +1109,7 @@ function _fmtWeight(v) {
 }
 
 window.updateSettingsWeight = function(key, value) {
+  window.SETTINGS_EDITED = true;
   ACTIVE_WEIGHTS[key] = value;
   const valEl = document.getElementById('wval-' + key);
   if (valEl) valEl.value = _fmtWeight(value);
@@ -1099,6 +1118,8 @@ window.updateSettingsWeight = function(key, value) {
   const row = document.getElementById('row-' + key);
   if (row) row.style.opacity = value === 0 ? '0.45' : '';
   _refreshSettingsGroupPoints();
+  // Apply the change to the Current forecast compare panel only (main chart stays put)
+  if (typeof window._refreshAiCompareEmptyState === 'function') window._refreshAiCompareEmptyState();
 };
 
 // Typed weight entry — clamp to 0–5, sync slider, then run the normal update path
@@ -1123,6 +1144,7 @@ window.stepWeight = function(key, delta) {
 };
 
 window.resetSettingsWeights = function() {
+  window.SETTINGS_EDITED = false;
   // Reset AI forecast state and restore original SIM-based chart
   if (AI_FORECAST_ACTIVE) {
     AI_FORECAST_ACTIVE = false;
@@ -1158,6 +1180,7 @@ window.resetSettingsWeights = function() {
 
 // SPI/CPI matching weight — replaces the old on/off toggle. 0 = excluded.
 window.setSpiCpiWeight = function(v) {
+  window.SETTINGS_EDITED = true;
   v = Math.min(5, Math.max(0, Math.round((isNaN(v) ? 0 : v) * 100) / 100));
   SPI_CPI_WEIGHT = v;
   const valEl  = document.getElementById('wval-spi_cpi');
@@ -1165,6 +1188,8 @@ window.setSpiCpiWeight = function(v) {
   if (valEl)  valEl.value = _fmtWeight(v);
   if (slider) { slider.value = v; slider.style.setProperty('--fill-pct', (v / 5 * 100).toFixed(0) + '%'); }
   _refreshSettingsSectionPcts();
+  // Apply the change to the Current forecast compare panel only (main chart stays put)
+  if (typeof window._refreshAiCompareEmptyState === 'function') window._refreshAiCompareEmptyState();
 };
 
 window.spiCpiWeightInput = function(raw) {
@@ -1198,6 +1223,7 @@ window.toggleNumGroup = function(id) {
 };
 
 window.toggleCostBreakdown = function(enabled) {
+  window.SETTINGS_EDITED = true;
   const mixKeys = ['labor_mix','material_mix','equip_mix','subcontract_mix'];
   const newWeight = enabled ? FEATURE_WEIGHTS.labor_mix : 0;
   for (const k of mixKeys) {
@@ -1227,6 +1253,8 @@ window.toggleCostBreakdown = function(enabled) {
     if (icon)    icon.className = 'pi pi-exclamation-circle';
   }
   _refreshSettingsGroupPoints();
+  // Apply the change to the Current forecast compare panel only (main chart stays put)
+  if (typeof window._refreshAiCompareEmptyState === 'function') window._refreshAiCompareEmptyState();
 };
 
 /* ── CHART DATA ─────────────────────────────────────────────────── */
@@ -1435,19 +1463,19 @@ let ACTIVE_CA_ID = 'ca-1042';
    so its 2nd dropdown is disabled and it loads the rolled-up summary. */
 const FORECAST_GROUPS = [
   { id: 'project-summary',      label: 'Project summary',      ca: 'project-summary', items: [] },
-  { id: 'group-title',          label: 'Group Title',          items: [
+  { id: 'group-title',          label: 'Enterprise group',     items: [
     { id: 'gt-civil', label: 'Civil Foundations', ca: 'ca-1042' },
     { id: 'gt-steel', label: 'Structural Steel',   ca: 'ca-1043' },
     { id: 'gt-mep',   label: 'MEP Systems',        ca: 'ca-1044' },
     { id: 'gt-site',  label: 'Site Preparation',   ca: 'ca-1045' },
   ]},
-  { id: 'standard-group-title', label: 'Standard Group Title', items: [
+  { id: 'standard-group-title', label: 'Standard groups',      items: [
     { id: 'sgt-found', label: 'Foundations — Phase 2',    ca: 'ca-1042' },
     { id: 'sgt-erect', label: 'Steel Erection — Phase 1', ca: 'ca-1043' },
     { id: 'sgt-mech',  label: 'Mechanical & Electrical',  ca: 'ca-1044' },
     { id: 'sgt-site',  label: 'Sitework & Earthworks',    ca: 'ca-1045' },
   ]},
-  { id: 'module-group-title',   label: 'Module Group Title',   items: [
+  { id: 'module-group-title',   label: 'Standard groups',      items: [
     { id: 'mgt-pour',  label: 'Foundation Pour Module', ca: 'ca-1042' },
     { id: 'mgt-frame', label: 'Steel Frame Module',     ca: 'ca-1043' },
     { id: 'mgt-hvac',  label: 'HVAC & Power Module',     ca: 'ca-1044' },
@@ -3549,7 +3577,7 @@ window.openSettingsModal = function() {
         </button>
         <div style="display:flex;gap:8px">
           <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
-          <button class="btn btn-primary sc-settings-modal-run" onclick="closeSettingsModal();runAiForecast()" ${canRun ? '' : 'disabled'} style="${canRun ? '' : 'opacity:0.5'}" title="${canRun ? '' : 'Your role cannot run AI forecasts'}">
+          <button class="btn btn-primary sc-settings-modal-run" onclick="applySettingsToCurrentForecast()" ${canRun ? '' : 'disabled'} style="${canRun ? '' : 'opacity:0.5'}" title="${canRun ? '' : 'Your role cannot run AI forecasts'}">
             Run analysis
           </button>
         </div>
@@ -3575,6 +3603,27 @@ window.closeSettingsModal = function() {
   document.removeEventListener('keydown', _settingsModalEscHandler);
   // Modal opening tore down the inline driver settings — rebuild it
   initDriverSettingsContent();
+  // If the compare view is open, let it reconcile its empty state now that the
+  // user may have edited (or reset) the settings.
+  if (typeof window._refreshAiCompareEmptyState === 'function') window._refreshAiCompareEmptyState();
+};
+
+// Primary action of the settings modal. On the AI-centric page the settings
+// drive the "Current forecast" comparison panel ONLY — the AI forecast/main
+// chart is never re-run here. On other pages (no compare panel) it falls back
+// to running the main forecast as before.
+window.applySettingsToCurrentForecast = function() {
+  closeSettingsModal();
+  const hasComparePanel = !!document.getElementById('aiCurvePanel');
+  if (hasComparePanel && typeof window.revealAiCompare === 'function') {
+    // Play the AI-analysis interstitial first (like the main run), then apply
+    // the result to the Current forecast panel only — main chart untouched.
+    const apply = function() { window.revealAiCompare(); };
+    if (typeof window.runWithAnalysisModal === 'function') window.runWithAnalysisModal(apply);
+    else apply();
+  } else if (typeof window.runAiForecast === 'function') {
+    window.runAiForecast();             // legacy behavior on pages without compare
+  }
 };
 
 function _updateSettingsModalLockNotice() {

@@ -165,6 +165,19 @@
       border:3px solid var(--ait-primary-50,#dbe7fb); border-top-color:var(--ait-primary,#326fd1); animation:aiCurveSpin .8s linear infinite; }
     .ait-aicurve-loader-text{ font-size:12.5px; font-weight:600; color:var(--ait-primary-d,#1e3a5f); }
     @keyframes aiCurveSpin{ to{ transform:rotate(360deg); } }
+    /* Empty state shown in the Current forecast panel when settings are untouched */
+    .ait-aicurve-empty{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+      text-align:center; padding:24px; background:linear-gradient(135deg,#f6faff,#eef3fb); border-radius:8px; z-index:4; }
+    .ait-aicurve-panel.is-empty .ait-aicurve-empty{ display:flex; }
+    .ait-aicurve-panel.is-empty canvas{ visibility:hidden; }
+    .ait-aicurve-empty-icon{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+      background:var(--ait-primary-50,#dbe7fb); color:var(--ait-primary,#326fd1); }
+    .ait-aicurve-empty-icon .pi{ font-size:18px; }
+    .ait-aicurve-empty-text{ font-size:13px; font-weight:600; color:var(--ait-primary-d,#1e3a5f); max-width:260px; line-height:1.4; }
+    .ait-aicurve-empty-link{ display:inline-flex; align-items:center; gap:6px; font-family:inherit; font-size:12.5px; font-weight:600;
+      color:var(--ait-primary,#326fd1); background:transparent; border:none; padding:2px 4px; cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+    .ait-aicurve-empty-link:hover{ color:var(--ait-primary-d,#1e3a5f); }
+    .ait-aicurve-empty-link .pi{ font-size:12px; }
     .ait-aicurve-sub{font-size:11.5px; color:var(--ait-muted); font-weight:500}
     /* Combined side-by-side tooltip (AI vs User adoption) */
     .sc-combined-tip{ position:fixed; z-index:120; pointer-events:none;
@@ -250,9 +263,9 @@
             </button>
             <div class="sc-acct-dropdown" id="fcGroupDropdown" style="display:none">
               <div class="sc-acct-drop-item sc-acct-drop-item--active" data-group="project-summary" onclick="selectForecastGroup('project-summary')">Project summary</div>
-              <div class="sc-acct-drop-item" data-group="group-title" onclick="selectForecastGroup('group-title')">Group Title</div>
-              <div class="sc-acct-drop-item" data-group="standard-group-title" onclick="selectForecastGroup('standard-group-title')">Standard Group Title</div>
-              <div class="sc-acct-drop-item" data-group="module-group-title" onclick="selectForecastGroup('module-group-title')">Module Group Title</div>
+              <div class="sc-acct-drop-item" data-group="group-title" onclick="selectForecastGroup('group-title')">Enterprise groups</div>
+              <div class="sc-acct-drop-item" data-group="standard-group-title" onclick="selectForecastGroup('standard-group-title')">Standard groups</div>
+              <div class="sc-acct-drop-item" data-group="module-group-title" onclick="selectForecastGroup('module-group-title')">Standard groups</div>
               <div class="sc-acct-drop-item" data-group="control-accounts" onclick="selectForecastGroup('control-accounts')">Control accounts</div>
             </div>
           </div>
@@ -527,6 +540,11 @@
             <div class="ait-aicurve-loader" id="aiCurveLoader" aria-hidden="true">
               <div class="ait-aicurve-loader-spinner"></div>
               <div class="ait-aicurve-loader-text">Loading user adoption forecast…</div>
+            </div>
+            <div class="ait-aicurve-empty" id="aiCurveEmpty" aria-hidden="true">
+              <div class="ait-aicurve-empty-icon"><i class="pi pi-sliders-h"></i></div>
+              <div class="ait-aicurve-empty-text">No changes made. Start by adding weights manually.</div>
+              <button type="button" class="ait-aicurve-empty-link" onclick="openSettingsModal()"><i class="pi pi-cog"></i> Open settings</button>
             </div>
             <div class="sc-chart-dragger" id="aiChartDragger" style="display:none" aria-hidden="true">
               <div class="sc-chart-dragger-line"></div>
@@ -1026,6 +1044,14 @@
       window.runAiForecast = wrapped;
     }
 
+    // Play the AI-analysis interstitial (when the "Show loading modal" setting is
+    // on), then invoke onDone. Used by the settings modal's "Run analysis" button
+    // so applying settings shows the same modal we play for a main forecast run.
+    window.runWithAnalysisModal = function(onDone){
+      var done = (typeof onDone === 'function') ? onDone : function(){};
+      if(_showLoadModal) showRunAnalysis(done); else done();
+    };
+
     /* ── Display settings modal (kebab → Settings) ──────────────────── */
     var _dsModal = null;
     function buildDisplaySettings(){
@@ -1139,10 +1165,13 @@
       if(!Array.isArray(arr)) return arr;
       const lastIdx = arr.length - 1;
       const span = Math.max(1, lastIdx - todayIdx);
+      // Divergence is driven by the settings weights so that changing a weight
+      // moves the Current forecast panel only (AI/main chart is left untouched).
+      const lift = (typeof window.currentForecastLift === 'function') ? window.currentForecastLift() : AI_LIFT_MAX;
       return arr.map((v, i) => {
         if(v == null || i <= todayIdx) return v;          // identical history
         const t = (i - todayIdx) / span;                  // 0 → 1 across the forecast
-        return +(v * (1 + AI_LIFT_MAX * t)).toFixed(2);
+        return +(v * (1 + lift * t)).toFixed(2);
       });
     }
 
@@ -1485,9 +1514,19 @@
         afterUpdate(chart){
           if(syncing) return;
           if(typeof scurveChart === 'undefined' || chart !== scurveChart) return;
-          if(!aiChart || !panelVisible()) return;
+          if(!panelVisible()) return;
           syncing = true;
-          requestAnimationFrame(()=>{ try{ syncAiChartFromMain(); } finally { syncing = false; } });
+          requestAnimationFrame(()=>{
+            try{
+              const panel = document.getElementById('aiCurvePanel');
+              const showingEmpty = panel && panel.classList.contains('is-empty');
+              // Fast path: chart already up and settings still edited → just mirror.
+              // Otherwise let _renderAiCurve reconcile the empty state (e.g. settings
+              // were just edited, so build the chart; or were reset, so go empty).
+              if(aiChart && window.SETTINGS_EDITED && !showingEmpty){ syncAiChartFromMain(); }
+              else { _renderAiCurve(); }
+            } finally { syncing = false; }
+          });
         }
       });
     }
@@ -1495,9 +1534,21 @@
     function _renderAiCurve(){
       const aiPanel = document.getElementById('aiCurvePanel');
       if(aiPanel) aiPanel.classList.remove('is-loading');
+      // No settings touched yet → show the empty state instead of the chart.
+      const edited = !!window.SETTINGS_EDITED;
+      if(aiPanel) aiPanel.classList.toggle('is-empty', !edited);
+      const foot = document.getElementById('aiCurveFoot');
+      if(foot) foot.style.display = edited ? '' : 'none';
+      if(!edited) return;   // skip building/syncing the chart while empty
       if(!aiChart) buildAiChart(); else { syncAiChartFromMain(); aiChart.resize(); }
       if(typeof applyTooltipMode === 'function') applyTooltipMode();
     }
+
+    // Re-run the empty-state check while the compare panel is open (called after
+    // the settings modal closes, since editing weights doesn't redraw the main chart).
+    window._refreshAiCompareEmptyState = function(){
+      if(panelVisible()) _renderAiCurve();
+    };
 
     window.toggleAiCompare = function(){
       const panel = document.getElementById('aiCurvePanel');
@@ -1538,6 +1589,25 @@
       panel.classList.add('is-loading');          // show the loading S-curve section
       if(needRun) window.runAiForecast();         // generate the AI forecast (left chart band)
       setTimeout(_renderAiCurve, needRun ? 1300 : 1100);   // then open the AI S-curve graph
+    };
+
+    // Reveal the Current forecast panel and (re)render it WITHOUT touching the
+    // main "AI forecast" chart — used when applying settings, which must affect
+    // the Current forecast only. Idempotent: if already open, just re-renders.
+    window.revealAiCompare = function(){
+      const panel = document.getElementById('aiCurvePanel');
+      const btn   = document.getElementById('aiCompareBtn');
+      const row   = document.getElementById('scCompareRow');
+      if(!panel) return;
+      if(panel.style.display === 'none'){
+        panel.style.display = '';
+        if(btn){ btn.style.display = 'none'; btn.setAttribute('aria-pressed','true'); }
+        if(row) row.classList.add('is-comparing');
+        if(typeof _refreshCurveState === 'function') _refreshCurveState();
+        if(typeof scurveChart !== 'undefined' && scurveChart && scurveChart.resize){ setTimeout(()=>scurveChart.resize(), 0); }
+        panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      }
+      _renderAiCurve();   // reflects the current weights via the settings-driven lift
     };
   })();
   </script>
