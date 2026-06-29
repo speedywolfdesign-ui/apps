@@ -1475,12 +1475,6 @@ const FORECAST_GROUPS = [
     { id: 'sgt-mech',  label: 'Mechanical & Electrical',  ca: 'ca-1044' },
     { id: 'sgt-site',  label: 'Sitework & Earthworks',    ca: 'ca-1045' },
   ]},
-  { id: 'module-group-title',   label: 'Standard groups',      items: [
-    { id: 'mgt-pour',  label: 'Foundation Pour Module', ca: 'ca-1042' },
-    { id: 'mgt-frame', label: 'Steel Frame Module',     ca: 'ca-1043' },
-    { id: 'mgt-hvac',  label: 'HVAC & Power Module',     ca: 'ca-1044' },
-    { id: 'mgt-earth', label: 'Earthworks Module',       ca: 'ca-1045' },
-  ]},
   { id: 'control-accounts',     label: 'Control accounts',     items: [
     { id: 'ca-1042', label: 'CA-1042 · Civil Foundations — P2', ca: 'ca-1042' },
     { id: 'ca-1043', label: 'CA-1043 · Structural Steel — P1',  ca: 'ca-1043' },
@@ -4250,6 +4244,26 @@ function initAdminSettingsPage() {
   _renderAdminLog();
   _adminSetInlineReadonly(); // inline view is always read-only — Edit opens the modal
 }
+
+/* ── RIPPLE EFFECT (settings icon button) ───────────────────────── */
+// Spawn a Material-style ripple originating from the press point.
+function _spawnSettingsRipple(btn, e) {
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const ripple = document.createElement('span');
+  ripple.className = 'sc-ripple';
+  ripple.style.width = ripple.style.height = size + 'px';
+  const cx = (e && e.clientX != null) ? e.clientX : rect.left + rect.width / 2;
+  const cy = (e && e.clientY != null) ? e.clientY : rect.top + rect.height / 2;
+  ripple.style.left = (cx - rect.left - size / 2) + 'px';
+  ripple.style.top  = (cy - rect.top  - size / 2) + 'px';
+  ripple.addEventListener('animationend', () => ripple.remove());
+  btn.appendChild(ripple);
+}
+document.addEventListener('pointerdown', (e) => {
+  const btn = e.target.closest && e.target.closest('.sc-forecast-settings-btn');
+  if (btn) _spawnSettingsRipple(btn, e);
+});
 
 /* ── INIT ───────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {

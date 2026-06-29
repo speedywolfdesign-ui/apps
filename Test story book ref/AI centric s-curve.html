@@ -265,7 +265,7 @@
               <div class="sc-acct-drop-item sc-acct-drop-item--active" data-group="project-summary" onclick="selectForecastGroup('project-summary')">Project summary</div>
               <div class="sc-acct-drop-item" data-group="group-title" onclick="selectForecastGroup('group-title')">Enterprise groups</div>
               <div class="sc-acct-drop-item" data-group="standard-group-title" onclick="selectForecastGroup('standard-group-title')">Standard groups</div>
-              <div class="sc-acct-drop-item" data-group="module-group-title" onclick="selectForecastGroup('module-group-title')">Standard groups</div>
+              <!-- <div class="sc-acct-drop-item" data-group="module-group-title" onclick="selectForecastGroup('module-group-title')">Standard groups</div> -->
               <div class="sc-acct-drop-item" data-group="control-accounts" onclick="selectForecastGroup('control-accounts')">Control accounts</div>
             </div>
           </div>
@@ -1534,12 +1534,11 @@
     function _renderAiCurve(){
       const aiPanel = document.getElementById('aiCurvePanel');
       if(aiPanel) aiPanel.classList.remove('is-loading');
-      // No settings touched yet → show the empty state instead of the chart.
-      const edited = !!window.SETTINGS_EDITED;
-      if(aiPanel) aiPanel.classList.toggle('is-empty', !edited);
+      // Always show the graph as it was earlier (the current forecast), even
+      // before any settings are edited — never fall back to the empty state.
+      if(aiPanel) aiPanel.classList.remove('is-empty');
       const foot = document.getElementById('aiCurveFoot');
-      if(foot) foot.style.display = edited ? '' : 'none';
-      if(!edited) return;   // skip building/syncing the chart while empty
+      if(foot) foot.style.display = '';
       if(!aiChart) buildAiChart(); else { syncAiChartFromMain(); aiChart.resize(); }
       if(typeof applyTooltipMode === 'function') applyTooltipMode();
     }
@@ -1730,38 +1729,34 @@
     function warningsTarget(){ return viewIsTabs() ? document.querySelector('.sc-tab-btn[data-tab="acc-warnings"]') : document.querySelector('#acc-warnings .sc-acc-header'); }
     // Nth card inside the Forecast Explanation (appendix) section.
     function appxCard(n){ return function(){ return document.querySelectorAll('#appendix-container .sc-appx-card')[n] || null; }; }
+    function ensureSummaryOpen(){ openAcc('acc-forecast'); }
     function ensureAppendixOpen(){ openAcc('acc-appendix'); }
     function ensureWarningsOpen(){ openAcc('acc-warnings'); }
     function warnTableTarget(){ return document.querySelector('#warnings-container .sc-warn-table-wrap') || document.getElementById('warnings-container'); }
 
     var steps = [
       { kind:'welcome' },
+      { kind:'spot', target:'#fcGroupBtn', icon:'pi-sitemap',
+        title:'Forecast scope', advance:'next',
+        text:'Start here. Choose what to forecast — the rolled-up project summary or a specific group of control accounts.' },
+      { kind:'spot', target:'#fcItemBtn', icon:'pi-list',
+        title:'Sub-category', advance:'next',
+        text:'Once a group is selected, narrow to a specific item within it to forecast that account on its own.' },
       { kind:'spot', target:'.sc-forecast-settings-btn', icon:'pi-cog',
-        title:'Settings', advance:'click', afterDelay:240,
-        text:'Start by reviewing your settings. Configure forecasting options and preferences before running your analysis.' },
-      { kind:'spot', target:'#settingsModal', icon:'pi-sliders-h', mask:false, tipAt:'bottom',
         title:'Settings', advance:'next',
-        onNext:function(){ if (typeof closeSettingsModal === 'function') closeSettingsModal(); },
-        text:'Here you can manage forecasting parameters, configure assumptions, and customize options that influence your results.' },
-      { kind:'spot', target:'.sc-run-btn', icon:'pi-play',
-        title:'Run Forecast', advance:'click', afterDelay:1300,
-        text:'You’re all set. Click <b>Run Forecast</b> to generate your forecast results.' },
+        text:'Open AI forecast settings to tune the driver weights and methods that shape the curve.' },
+      { kind:'spot', target:'#kebabBtn', icon:'pi-ellipsis-v',
+        title:'More options', advance:'next',
+        text:'Export the forecast, switch user, adjust display settings, or relaunch this tour from the More menu.' },
+      { kind:'spot', target:summaryTarget, icon:'pi-chart-line',
+        title:'Summary', advance:'next', before:ensureSummaryOpen,
+        text:'Your forecast at a glance — the cumulative-spend S-curve, KPIs and the AI confidence for this account.' },
       { kind:'spot', target:appendixTarget, icon:'pi-list',
-        title:'Appendix', advance:'click', afterDelay:500,
-        text:'The Appendix contains the supporting detail behind the forecast. Let’s walk through each card.' },
-      { kind:'spot', target:appxCard(0), title:'Forecast confidence', advance:'next', before:ensureAppendixOpen,
-        text:'How confident the AI is in this forecast — based on how many similar historical accounts matched, and how closely they fit.' },
-      { kind:'spot', target:appxCard(1), title:'EAC forecast range', advance:'next', before:ensureAppendixOpen,
-        text:'The probabilistic estimate-at-completion range — optimistic (P10), base (P50) and downside (P90) — derived from model uncertainty and historical variance.' },
-      { kind:'spot', target:appxCard(2), title:'Similar accounts', advance:'next', before:ensureAppendixOpen,
-        text:'The completed accounts the AI matched to this one, ranked by similarity — the evidence base the projection is built on.' },
-      { kind:'spot', target:appxCard(3), title:'Basis of forecast', advance:'next', before:ensureAppendixOpen,
-        text:'The key assumptions and adjustments — pattern matching, CPI/SPI corrections and the earned-value ceiling — that shaped the curve.' },
+        title:'Forecast explanation', advance:'next', before:ensureAppendixOpen,
+        text:'See how the AI reached this forecast — matched neighbour accounts, methods and the assumptions behind the curve.' },
       { kind:'spot', target:warningsTarget, icon:'pi-exclamation-triangle',
-        title:'Warnings', advance:'click', afterDelay:400,
-        text:'Review warnings to identify data quality issues, assumptions, exceptions, or areas that may require your attention before finalizing the results.' },
-      { kind:'spot', target:warnTableTarget, title:'Account warnings', advance:'next', btn:'Done', before:ensureWarningsOpen,
-        text:'A per-account breakdown: each control account with an issue, its severity, the issue type, and remarks with the recommended action. High-severity items — like a blocked forecast pending updated schedule dates — should be resolved before you finalize the results.' },
+        title:'Warnings', advance:'next', btn:'Done', before:ensureWarningsOpen,
+        text:'Review data-quality issues, anomalies and low-confidence segments flagged for your attention before you finalize the results.' },
       { kind:'complete' }
     ];
 
@@ -1991,14 +1986,17 @@
     /* ════════════════════════════════════════════════════════════════
        VARIATION 2 — Pendo-style product tour: an anchored balloon with a
        pointer arrow, step dots and Back/Next, lighter highlight.
-       Steps: Summary → Settings → Run forecast → Forecast explanation → Warnings.
+       Steps: Forecast scope → Sub-category → Settings → More options → Summary →
+       Forecast explanation → Warnings.
        ════════════════════════════════════════════════════════════════ */
     var PT_STEPS = [
-      { target: summaryTarget, title: 'Summary', text: 'Your forecast at a glance — the cumulative-spend S-curve, KPIs and the AI confidence for this account.' },
+      { target: '#fcGroupBtn', title: 'Forecast scope', text: 'Start here — choose the rolled-up project summary or a specific group of control accounts to forecast.' },
+      { target: '#fcItemBtn', title: 'Sub-category', text: 'Once a group is selected, narrow to a specific item within it to forecast that account on its own.' },
       { target: '.sc-forecast-settings-btn', title: 'Settings', text: 'Open AI forecast settings to tune the driver weights and methods that shape the curve.' },
-      { target: '.sc-run-btn', title: 'Run forecast', text: 'Generate the AI projection from your settings — the curve, KPIs and explanation update from matched history.' },
-      { target: appendixTarget, title: 'Forecast explanation', text: 'See how the AI reached this forecast — matched neighbour accounts, methods and the assumptions behind the curve.' },
-      { target: warningsTarget, title: 'Warnings', text: 'Review data-quality issues, anomalies and low-confidence segments flagged for your attention before you finalize.' }
+      { target: '#kebabBtn', title: 'More options', text: 'Export the forecast, switch user, adjust display settings, or relaunch this tour from the More menu.' },
+      { target: summaryTarget, title: 'Summary', before: ensureSummaryOpen, text: 'Your forecast at a glance — the cumulative-spend S-curve, KPIs and the AI confidence for this account.' },
+      { target: appendixTarget, title: 'Forecast explanation', before: ensureAppendixOpen, text: 'See how the AI reached this forecast — matched neighbour accounts, methods and the assumptions behind the curve.' },
+      { target: warningsTarget, title: 'Warnings', before: ensureWarningsOpen, text: 'Review data-quality issues, anomalies and low-confidence segments flagged for your attention before you finalize.' }
     ];
     var ptEls = {}, ptIdx = -1, ptReposition = null;
 
@@ -2028,6 +2026,7 @@
       ptIdx = i;
       var s = PT_STEPS[i];
       if (!s){ ptEnd(false); return; }
+      if (typeof s.before === 'function'){ try { s.before(); } catch(e){} }   // open the section first
       var el = ptResolve(s.target), tries = 0;
       if (!el){
         var poll = setInterval(function(){ el = ptResolve(s.target); if (el){ clearInterval(poll); ptRender(s, el); } else if (++tries > 20){ clearInterval(poll); if (i < PT_STEPS.length - 1) ptShow(i + 1); else ptEnd(false); } }, 60);
