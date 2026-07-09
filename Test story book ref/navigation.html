@@ -3985,12 +3985,12 @@ body.ai-panel-open .proj-content {
        ========================================================= */
     .nav-demo-stage{
       display:flex; align-items:center; justify-content:center;
-      min-height:calc(100vh - 200px); padding:24px;
+      min-height:calc(100vh - 200px);
       font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
       color:var(--surface-500,#737373);
     }
     /* When a master–detail screen is hosted, fill the stage instead of centering */
-    .nav-demo-stage.mds-host{ display:block; padding:16px; color:inherit; }
+    .nav-demo-stage.mds-host{ display:block; color:inherit; }
     .mds-screen{ width:100%; }
 
     /* =========================================================
@@ -4173,7 +4173,11 @@ body.ai-panel-open .proj-content {
     /* Bottom "Groups / Breakdown Structures" area + tab strip */
     .cas-bottom{ margin-top:10px; }
     .cas-bottom .cas-nav-grid .table-wrap{ border:none; max-height:280px; overflow:auto; }
-    .cas-tabs{ display:flex; gap:2px; overflow-x:auto; border-bottom:2px solid var(--surface-200,#e5e5e5); margin-top:8px; }
+    .cas-tabs-wrap{ display:flex; align-items:stretch; border-bottom:2px solid var(--surface-200,#e5e5e5); }
+    .cas-tabs{ display:flex; gap:2px; overflow-x:auto; flex:1; min-width:0; scrollbar-width:none; -ms-overflow-style:none; scroll-behavior:smooth; }
+    .cas-tabs::-webkit-scrollbar{ display:none; height:0; width:0; }
+    .cas-tabs-more{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; width:28px; border:none; background:var(--surface-50,#fafafa); color:var(--surface-600,#616161); cursor:pointer; font-family:inherit; }
+    .cas-tabs-more:hover{ background:var(--surface-100,#f5f5f5); color:var(--primary-700); }
     .cas-tab{ padding:5px 10px; font-size:11.5px; white-space:nowrap; border:none; background:none; color:var(--surface-600,#616161); border-bottom:2px solid transparent; cursor:pointer; font-family:inherit; }
     .cas-tab:hover{ background:var(--surface-100,#f5f5f5); }
     .cas-tab.is-active{ border-bottom-color:var(--primary-500); color:var(--primary-700); font-weight:600; }
@@ -4283,7 +4287,7 @@ body.ai-panel-open .proj-content {
     .lnavc-collapse .pi{ display:block; line-height:1; transition:transform .2s; }
     .lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
     /* Anchor for the absolute arrow; push the breadcrumb clear of it */
-    .nav-toprow{ position:relative; align-items:center; padding-left:32px; }
+    .nav-toprow{ position:relative; align-items:center;}
     .nav-toprow .breadcrumb{ align-self:center; line-height:1; }
 
     /* Collapsed mode: rail only; the sub-menu panel becomes a hover flyout overlay */
@@ -5657,9 +5661,12 @@ function applyProjectContext() {
       var tabBody = caState.tab === 'Groups / Breakdown Structures'
         ? groupsGrid
         : '<div class="cas-tabbody">' + esc(caState.tab) + ' — no data to display</div>';
-      var tabStrip = '<div class="cas-tabs">' + CA_TABS.map(function(tb){
-        return '<button class="cas-tab' + (tb === caState.tab ? ' is-active' : '') + '" data-catab="' + esc(tb) + '">' + esc(tb) + '</button>';
-      }).join('') + '</div>';
+      var tabStrip = '<div class="cas-tabs-wrap">' +
+        '<div class="cas-tabs">' + CA_TABS.map(function(tb){
+          return '<button class="cas-tab' + (tb === caState.tab ? ' is-active' : '') + '" data-catab="' + esc(tb) + '">' + esc(tb) + '</button>';
+        }).join('') + '</div>' +
+        '<button class="cas-tabs-more" data-catabscroll title="Scroll tabs"><i class="pi pi-angle-right"></i></button>' +
+      '</div>';
 
       var atStart = sel === 0 ? ' disabled' : '';
       var atEnd   = sel === total - 1 ? ' disabled' : '';
@@ -5721,9 +5728,8 @@ function applyProjectContext() {
           '</div>' +
           // Bottom Groups / Breakdown Structures + tab strip
           '<section class="panel cas-bottom">' +
-            '<header class="panel-header cas-head cas-head-data"><span class="panel-title">Control Accounts - ' + esc(caState.tab) + '</span></header>' +
-            tabBody +
             tabStrip +
+            tabBody +
           '</section>' +
         '</div>';
 
@@ -5734,6 +5740,12 @@ function applyProjectContext() {
     document.addEventListener('click', function(e){
       if(!caState) return;
       if(!e.target.closest('.cas-screen')) return;
+      var scroller = e.target.closest('[data-catabscroll]');
+      if(scroller){
+        var strip = scroller.parentNode.querySelector('.cas-tabs');
+        if(strip){ strip.scrollBy({ left: Math.max(120, strip.clientWidth * 0.6), behavior: 'smooth' }); }
+        return;
+      }
       var tab = e.target.closest('[data-catab]');
       if(tab){ caState.tab = tab.dataset.catab; renderCA(); return; }
       var tr = e.target.closest('.cas-nav .proj-table tbody tr');
