@@ -4,14 +4,116 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Access gate — must load first -->
-  <script src="components/auth-gate.js"></script>
+  <script data-inlined-from="components/auth-gate.js">
+/* ============================================================
+   AUTH GATE — a simple access-password screen shown before any
+   page content. Include this as the FIRST script in <head> on
+   every page:  <script src="components/auth-gate.js"><\/script>
+
+   NOTE: this is a lightweight client-side gate for demos/previews,
+   not real security — the password lives in this file and is
+   visible to anyone who views source. Change ACCESS_PASSWORD below.
+   Unlock is remembered for the browser session (sessionStorage).
+   ============================================================ */
+(function () {
+  'use strict';
+
+  var ACCESS_PASSWORD = 'contruent';        // ← set the access password here
+  var KEY = 'app-access-granted';
+
+  // Log out / re-lock — clears the session unlock and returns to the password screen.
+  // Defined before the early-return so it's available even when already authenticated.
+  window.appLogout = window.appLock = function () {
+    try { sessionStorage.removeItem(KEY); } catch (e) {}
+    location.reload();
+  };
+
+  // Sign-in gate disabled — users are let in directly (no password screen).
+  return;
+
+  /* eslint-disable no-unreachable */
+  try { if (sessionStorage.getItem(KEY) === '1') return; } catch (e) {}
+
+  var ROOT = document.documentElement;
+
+  // Hide page content until unlocked (no flash). The gate lives on <html>,
+  // outside <body>, so it stays visible while the body is hidden.
+  var hideCss = document.createElement('style');
+  hideCss.id = 'appAuthHide';
+  hideCss.textContent = [
+    'body{visibility:hidden !important}',
+    '#appAuthGate{visibility:visible;position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:20px;',
+      'background:linear-gradient(135deg,#0f2343 0%,#1e437d 100%);font-family:Inter,system-ui,sans-serif}',
+    '#appAuthGate .ag-card{width:360px;max-width:100%;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.35);padding:30px 28px;text-align:center;box-sizing:border-box}',
+    '#appAuthGate .ag-logo{width:46px;height:46px;border-radius:12px;background:#eef3fb;color:#326fd1;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:22px}',
+    '#appAuthGate h2{margin:0 0 6px;font-size:20px;color:#0f172a;font-weight:700}',
+    '#appAuthGate p{margin:0 0 20px;font-size:13.5px;color:#64748b;line-height:1.5}',
+    '#appAuthGate input{width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #d4d4d4;border-radius:10px;font-size:14px;font-family:inherit;color:#1e293b;outline:none}',
+    '#appAuthGate input:focus{border-color:#326fd1;box-shadow:0 0 0 3px #eef3fb}',
+    '#appAuthGate .ag-err{color:#dc2626;font-size:12.5px;margin-top:8px;min-height:16px;text-align:left}',
+    '#appAuthGate button{width:100%;margin-top:12px;background:#326fd1;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}',
+    '#appAuthGate button:hover{background:#2859a7}',
+    '#appAuthGate.ag-shake .ag-card{animation:agShake .35s}',
+    '@keyframes agShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}'
+  ].join('');
+  ROOT.appendChild(hideCss);
+
+  function build() {
+    if (document.getElementById('appAuthGate')) return;
+    var gate = document.createElement('div');
+    gate.id = 'appAuthGate';
+    gate.innerHTML =
+      '<div class="ag-card" role="dialog" aria-modal="true" aria-label="Sign in">' +
+        '<div class="ag-logo">&#128274;</div>' +
+        '<h2>Sign in</h2>' +
+        '<p>Enter the access password to continue.</p>' +
+        '<input type="password" id="agPass" placeholder="Password" autocomplete="current-password" aria-label="Access password" />' +
+        '<div class="ag-err" id="agErr" role="alert"></div>' +
+        '<button type="button" id="agBtn">Unlock</button>' +
+      '</div>';
+    ROOT.appendChild(gate);
+
+    var input = gate.querySelector('#agPass'),
+        btn   = gate.querySelector('#agBtn'),
+        err   = gate.querySelector('#agErr');
+
+    function grant() {
+      try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+      gate.parentNode && gate.parentNode.removeChild(gate);
+      var h = document.getElementById('appAuthHide');
+      if (h && h.parentNode) h.parentNode.removeChild(h);
+    }
+
+    function reject() {
+      err.textContent = 'Incorrect password. Please try again.';
+      gate.classList.remove('ag-shake'); void gate.offsetWidth; gate.classList.add('ag-shake');
+      input.select();
+    }
+    // The visible Unlock button always rejects — knowing the password alone isn't enough.
+    btn.addEventListener('click', reject);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); reject(); } });
+
+    // Secret unlock: click the top-left 12x12px corner (no element in the DOM) WITH the correct password.
+    gate.addEventListener('click', function (e) {
+      if (e.clientX <= 12 && e.clientY <= 12) {
+        if (input.value === ACCESS_PASSWORD) grant(); else reject();
+      }
+    });
+
+    setTimeout(function () { input.focus(); }, 50);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
+  else build();
+})();
+
+</script>
   <title>Navigation — Contruent</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
-  <style>
-/* ===== inlined components/tokens.css ===== */
+  <style data-inlined-from="components/tokens.css">
 /*
  * =====================================================================
  * CONTRUENT DESIGN SYSTEM — TOKENS
@@ -799,8 +901,7 @@
 }
 
 </style>
-  <style>
-/* ===== inlined components/styles.css ===== */
+  <style data-inlined-from="components/styles.css">
 /* ===== RESET & BASE ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -1324,6 +1425,21 @@ ul { list-style: none; }
 }
 .lnav-toggle-icon path { transition: fill 0.15s; }
 .lnav-toggle:hover .lnav-toggle-icon path { fill: var(--surface-400); }
+
+/* Collapse/expand control — single arrow floating in the gap between the left nav
+   and the breadcrumb (absolute, replaces the grip-dot edge handle) */
+.lnav-toggle { display: none; }
+.lnav-toprow-left { display: flex; align-items: center;}
+.lnav-arrow-toggle {
+  position: absolute; left: -21px ; top: 10px; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: flex-start;
+  width: 24px; height: 24px; flex-shrink: 0; padding: 0; line-height: 1;
+  border: none; background: transparent; box-shadow: none; cursor: pointer;
+  color: var(--surface-500, #737373); font-size: 16px;
+}
+.lnav-arrow-toggle:hover { color: var(--surface-900, #262626); }
+.lnav-arrow-toggle .pi { display: block; line-height: 1; transition: transform 0.2s; }
+body.lnav-collapsed .lnav-arrow-toggle .pi { transform: rotate(180deg); }
 
 /* ===== MAIN CONTENT ===== */
 .main-content {
@@ -2840,7 +2956,7 @@ body { background: var(--default-surface-secondary); }
   margin-top: 56px;
   flex: 1;
   min-width: 0;
-  padding: 24px 24px;
+  padding: 20px 24px 60px;
   transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1),
               margin-right 0.3s cubic-bezier(0.4,0,0.2,1);
 }
@@ -2855,15 +2971,15 @@ body.lnav-collapsed .proj-content {
   justify-content: space-between;
   margin-bottom: 8px;
   background: transparent;
+  position: relative;   /* anchor for the absolutely-placed collapse arrow */
 }
 .breadcrumb {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--default-text-secondary);
   flex-wrap: wrap;
-  margin-bottom: 0px;
 }
 .breadcrumb a {
   color: var(--default-text-secondary);
@@ -3873,6 +3989,9 @@ body.ai-panel-open .proj-content {
       font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
       color:var(--surface-500,#737373);
     }
+    /* When a master–detail screen is hosted, fill the stage instead of centering */
+    .nav-demo-stage.mds-host{ display:block; padding:16px; color:inherit; }
+    .mds-screen{ width:100%; }
 
     /* =========================================================
        DESIGN B — ribbon-tab navigation (self-contained)
@@ -3898,6 +4017,23 @@ body.ai-panel-open .proj-content {
     .navb-tab:hover{ background:var(--surface-100,#f5f5f5); }
     .navb-tab.is-active{ border-bottom-color:var(--primary-500,#326fd1); background:var(--primary-50,#eef3fb); }
     .navb-tab.is-active span{ color:var(--primary-700,#1e437d); }
+    /* Second-level (sub) tabs — shown under a parent tab that has children */
+    .navb-subtabs{
+      display:flex; gap:4px; margin-top:6px; padding:6px 0 0;
+      border-top:1px solid var(--surface-200,#e5e5e5); overflow-x:auto;
+    }
+    .navb-subtab{
+      display:flex; align-items:center; gap:6px;
+      padding:6px 12px; background:none; border:none;
+      border-bottom:2px solid transparent; border-radius:6px 6px 0 0; cursor:pointer;
+      font-family:'Inter',sans-serif; color:var(--surface-600,#616161); white-space:nowrap;
+    }
+    .navb-subtab .pi{ font-size:14px; color:var(--surface-500,#757575); }
+    .navb-subtab span{ font-size:12px; font-weight:500; line-height:1.2; }
+    .navb-subtab:hover{ background:var(--surface-100,#f5f5f5); }
+    .navb-subtab.is-active{ border-bottom-color:var(--primary-500,#326fd1); background:var(--surface-50,#fafafa); }
+    .navb-subtab.is-active span{ color:var(--primary-700,#1e437d); font-weight:600; }
+    .navb-subtab.is-active .pi{ color:var(--primary-600,#2859a7); }
     .navb-tabpage{ min-height:calc(100vh - 320px); }
     .navb-pagename{
       display:flex; align-items:center; justify-content:center;
@@ -3905,6 +4041,143 @@ body.ai-panel-open .proj-content {
       font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
       color:var(--surface-500,#737373);
     }
+
+    /* ---- Master–detail definition screen — layout glue only.
+           All visuals come from the shared design-system components
+           (.toolbar, .btn, .panel, .proj-table, .input-*, .dropdown, .checkbox-*). ---- */
+    .mds-split{ display:flex; align-items:stretch; gap:var(--space-4); margin-top:var(--space-3); }
+    .mds-split > .panel.mds-nav{ flex:0 0 44%; max-width:44%; display:flex; flex-direction:column; }
+    .mds-split > .panel.mds-data{ flex:1; min-width:0; }
+    .mds-nav .table-wrap{ border:none; border-radius:0; flex:1; }
+    .mds-nav table.proj-table{ min-width:0; }
+    .mds-nav .proj-table tbody tr{ cursor:pointer; }
+    .mds-nav .proj-table tbody tr.is-selected td{ background:var(--brand-surface); color:var(--primary-700); font-weight:var(--font-weight-semibold); }
+    .mds-form-row{ display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-3); }
+    .mds-form-row > .input-label{ flex:0 0 96px; }
+    .mds-form-row > .input-text,
+    .mds-form-row > .dropdown{ flex:1; max-width:300px; }
+    .mds-form-row > .input-text.input-sm{ max-width:110px; }
+    .mds-groups{ display:flex; gap:var(--space-4); flex-wrap:wrap; margin-top:var(--space-4); }
+    .mds-groups > .panel{ width:auto; min-width:230px; }
+    .mds-groups .mds-form-row{ margin-bottom:var(--space-2); }
+    .mds-groups .mds-form-row > .input-label{ flex:0 0 128px; font-weight:var(--font-weight-normal); }
+    .mds-groups .checkbox-wrapper{ margin-bottom:var(--space-2); }
+    .mds-toolbar-info{ padding:0 var(--space-2); font-size:12px; color:var(--default-text); white-space:nowrap; }
+    .mds-toolbar-sep{ width:1px; align-self:stretch; background:var(--panel-header-border); margin:0 var(--space-1); }
+
+    /* ---- Compact density — scoped to the Change Order Impact detail screen only ---- */
+    .mds-screen .toolbar{ padding:var(--space-2); gap:var(--space-1half); flex-wrap:wrap; }
+    .mds-screen .toolbar-start{ gap:var(--space-1); flex-wrap:wrap; }
+    .mds-screen .btn-sm{ padding:5px 8px; font-size:12px; }
+    .mds-screen .btn-icon-only.btn-sm{ width:28px; padding:5px 0; }
+    .mds-screen .btn-icon-left{ margin-right:5px; }
+    .mds-screen .btn-icon-right{ margin-left:5px; }
+    .mds-screen .btn .pi{ font-size:12px; }
+    .mds-screen .toolbar-search{ height:28px; width:170px; font-size:12px; }
+
+    .mds-screen .mds-split{ margin-top:var(--space-2); gap:var(--space-2); }
+    .mds-screen .panel-header{ padding:var(--space-1half) var(--space-3); }
+    .mds-screen .panel-title{ font-size:12.5px; }
+    .mds-screen .panel-content{ padding:var(--space-3); }
+
+    .mds-screen .proj-table{ font-size:12px; }
+    .mds-screen .proj-table th{ padding:5px 10px; font-size:11px; }
+    .mds-screen .proj-table td{ padding:5px 10px; }
+
+    .mds-screen .mds-form-row{ margin-bottom:var(--space-1half); }
+    .mds-screen .mds-form-row > .input-label{ flex-basis:88px; font-size:12px; }
+    .mds-screen .input-text.input-sm{ padding:5px 8px; font-size:12px; }
+    .mds-screen .dropdown{ padding:5px 8px; }
+    .mds-screen .dropdown-value{ font-size:12px; }
+    .mds-screen .mds-groups{ gap:var(--space-3); margin-top:var(--space-3); }
+    .mds-screen .mds-groups > .panel{ min-width:210px; }
+    .mds-screen .mds-groups .mds-form-row > .input-label{ flex-basis:120px; }
+    .mds-screen .checkbox-box{ width:16px; height:16px; }
+    .mds-screen .checkbox-check-icon{ font-size:10px; }
+    .mds-screen .checkbox-label{ font-size:12px; }
+    .mds-screen .checkbox-wrapper{ gap:var(--space-1half); }
+
+    /* =========================================================
+       CONTROL ACCOUNTS SCREEN — self-contained style (.cas-*).
+       Uses the shared DS components (.toolbar/.btn/.panel/.proj-table/
+       .input-text/.dropdown/.checkbox) but keeps its own compact,
+       colour-headed density so it never touches the Change Order
+       Impact (.mds-*) styles or the shared component files.
+       ========================================================= */
+    .cas-screen{ width:100%; font-family:'Inter',sans-serif; }
+    .cas-screen .toolbar{ padding:var(--space-2); gap:var(--space-1half); flex-wrap:wrap; }
+    .cas-screen .toolbar-start{ gap:var(--space-1); flex-wrap:wrap; }
+    .cas-screen .btn-sm{ padding:5px 8px; font-size:12px; }
+    .cas-screen .btn-icon-only.btn-sm{ width:28px; padding:5px 0; }
+    .cas-screen .btn .pi{ font-size:12px; }
+    .cas-screen .btn-icon-left{ margin-right:5px; }
+    .cas-screen .btn-icon-right{ margin-left:5px; }
+    .cas-screen .toolbar-search{ height:28px; width:180px; font-size:12px; }
+    .cas-toolbar-sep{ width:1px; align-self:stretch; background:var(--panel-header-border); margin:0 var(--space-1); }
+    .cas-toolbar-info{ padding:0 var(--space-2); font-size:12px; color:var(--default-text); white-space:nowrap; }
+
+    /* Neutral DS panel headers — matches the Change Order Impact screen */
+    .cas-screen .panel-header{ padding:var(--space-1half) var(--space-3); }
+    .cas-screen .panel-title{ font-size:12.5px; }
+    .cas-screen .cas-head .pi{ font-size:12px; color:var(--surface-500); }
+
+    .cas-split{ display:flex; align-items:stretch; gap:var(--space-2); margin-top:var(--space-2); }
+    .cas-split > .panel.cas-nav{ flex:0 0 34%; max-width:34%; display:flex; flex-direction:column; }
+    .cas-split > .panel.cas-data{ flex:1; min-width:0; }
+    .cas-nav .table-wrap{ border:none; border-radius:0; flex:1; max-height:440px; overflow:auto; }
+    .cas-nav table.proj-table{ min-width:0; }
+    .cas-screen .proj-table{ font-size:12px; }
+    .cas-screen .proj-table th{ padding:4px 10px; font-size:11px; }
+    .cas-screen .proj-table td{ padding:4px 10px; }
+    .cas-nav .proj-table tbody tr{ cursor:pointer; }
+    .cas-nav .proj-table tbody tr.is-selected td{ background:var(--brand-surface); color:var(--primary-700); font-weight:var(--font-weight-semibold); }
+
+    .cas-data .panel-content{ padding:var(--space-3); }
+    .cas-form{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 20px; }
+    .cas-frow{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .cas-frow > label{ font-size:12px; font-weight:var(--font-weight-semibold); color:var(--surface-700); white-space:nowrap; }
+    .cas-screen .cas-frow .input-text{ padding:4px 8px; font-size:12px; width:220px; }
+    .cas-screen .cas-frow .input-text.cas-grow{ width:420px; max-width:60vw; }
+    .cas-screen .cas-frow .dropdown{ padding:4px 8px; min-width:96px; width:auto; }
+    .cas-screen .cas-frow .dropdown-value{ font-size:12px; }
+    .cas-frow .checkbox-wrapper{ gap:6px; }
+    .cas-screen .cas-frow .checkbox-box{ width:15px; height:15px; }
+    .cas-screen .cas-frow .checkbox-check-icon{ font-size:9px; }
+    .cas-screen .cas-frow .checkbox-label{ font-size:12px; color:var(--surface-700); }
+
+    .cas-fieldset{ border:var(--border-1) solid var(--panel-content-border); border-radius:var(--radius-md); background:var(--surface-0); padding:8px 12px 10px; }
+    .cas-fieldset > legend{ font-size:12px; font-weight:var(--font-weight-bold); color:var(--surface-700); padding:0 6px; }
+
+    /* Control Account Totals matrix */
+    .cas-totals{ width:100%; border-collapse:collapse; font-size:11px; margin-top:2px; }
+    .cas-totals th{ text-align:center; font-weight:600; color:#4f4f4f; padding:2px 4px; vertical-align:bottom; line-height:1.25; }
+    .cas-totals th:first-child{ text-align:left; }
+    .cas-totals td{ padding:2px 4px; }
+    .cas-totals td:first-child{ font-weight:600; color:var(--surface-700); white-space:nowrap; }
+    .cas-cell{ width:82px; padding:3px 6px; text-align:right; border:1px solid var(--surface-300,#cfd1d2); border-radius:3px; background:#fff; font-size:11px; font-family:inherit; color:var(--surface-800,#333); }
+
+    .cas-groups{ display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; align-items:flex-start; }
+    .cas-groups > .cas-fieldset{ flex:1 1 220px; min-width:210px; }
+    .cas-mini{ display:grid; grid-template-columns:auto 1fr; gap:5px 8px; align-items:center; }
+    .cas-mini > label{ font-size:11.5px; color:var(--surface-700); white-space:nowrap; }
+    .cas-screen .cas-mini .input-text{ padding:3px 6px; font-size:11px; width:100%; }
+    .cas-screen .cas-mini .dropdown{ padding:3px 6px; width:100%; }
+    .cas-screen .cas-mini .dropdown-value{ font-size:11px; }
+    .cas-dates-scroll{ overflow-x:auto; min-width:0; }
+    .cas-dates{ border-collapse:collapse; font-size:11px; }
+    .cas-dates th{ font-size:10.5px; font-weight:600; color:#4f4f4f; padding:2px 4px; text-align:left; white-space:nowrap; }
+    .cas-dates td{ padding:1px 3px; }
+    .cas-dates td:first-child{ color:var(--surface-700); font-weight:600; padding-right:6px; white-space:nowrap; }
+    .cas-date{ width:72px; padding:3px 5px; border:1px solid var(--surface-300,#cfd1d2); border-radius:3px; background:#fff; font-size:10.5px; font-family:inherit; color:var(--surface-800,#333); }
+
+    /* Bottom "Groups / Breakdown Structures" area + tab strip */
+    .cas-bottom{ margin-top:10px; }
+    .cas-bottom .cas-nav-grid .table-wrap{ border:none; max-height:280px; overflow:auto; }
+    .cas-tabs{ display:flex; gap:2px; overflow-x:auto; border-bottom:2px solid var(--surface-200,#e5e5e5); margin-top:8px; }
+    .cas-tab{ padding:5px 10px; font-size:11.5px; white-space:nowrap; border:none; background:none; color:var(--surface-600,#616161); border-bottom:2px solid transparent; cursor:pointer; font-family:inherit; }
+    .cas-tab:hover{ background:var(--surface-100,#f5f5f5); }
+    .cas-tab.is-active{ border-bottom-color:var(--primary-500); color:var(--primary-700); font-weight:600; }
+    .cas-tabbody{ padding:14px; font-size:12px; color:var(--surface-500,#737373); }
 
     /* =========================================================
        DESIGN C — icon rail + expanded accordion flyout panel
@@ -4275,6 +4548,7 @@ body.ai-panel-open .proj-content {
     <div id="designB">
       <div class="navb-ribbon" id="navbRibbon">
         <div class="navb-tabs" id="navbTabs"></div>
+        <div class="navb-subtabs" id="navbSubtabs" style="display:none"></div>
       </div>
       <div class="navb-tabpage" id="navbTabPage">Select a category from the side navigation</div>
     </div>
@@ -4326,6 +4600,10 @@ body.ai-panel-open .proj-content {
           { key: 'escalations',            label: 'Escalations',                       href: '#' },
           { key: 'multipliers',            label: 'Multipliers',                       href: '#' },
           { key: 'indirect-costs',         label: 'Indirect Costs',                    href: '#' },
+          { key: 'change-order-impact',    label: 'Change Order Impact',               href: '#' },
+          { key: 'change-order-status',    label: 'Change Order Status',               href: '#' },
+          { key: 'trend-risk-steps',       label: 'Trend/Risk Steps',                  href: '#' },
+          { key: 'cm-explanation-titles',  label: 'Change Management Explanation Titles', href: '#' },
         ]},
         { key: 'cost-settings',     label: 'Settings',          href: '#' },
       ]},
@@ -4366,8 +4644,14 @@ body.ai-panel-open .proj-content {
       { key: 'subcontractor-invoices', label: 'Subcontractor Invoices', href: '#' },
     ]},
     { key: 'change-mgmt',  icon: 'pi-refresh',   label: 'Change Management', children: [
-      { key: 'change-orders',    label: 'Change Orders',    href: '#' },
+      { key: 'trends',            label: 'Trends',            href: '#' },
+      { key: 'change-orders',     label: 'Change Orders',     href: '#' },
       { key: 'potential-changes', label: 'Potential Changes', href: '#' },
+      { key: 'form-1',            label: 'Form 1',            href: '#' },
+      { key: 'form-2',            label: 'Form 2',            href: '#' },
+      { key: 'form-3',            label: 'Form 3',            href: '#' },
+      { key: 'form-4',            label: 'Form 4',            href: '#' },
+      { key: 'form-5',            label: 'Form 5',            href: '#' },
     ]},
     { key: 'reports',      icon: 'pi-chart-bar', label: 'Reports',           children: [
       { key: 'reports-overview', label: 'Overview',       href: '#' },
@@ -4841,7 +5125,11 @@ function applyProjectContext() {
 
     function showNavPage(name){
       var stage = document.getElementById('navStage');
-      if(stage) stage.textContent = name + ' page';
+      if(!stage) return;
+      if(openDetail(name, 'navStage')) return;   // master–detail screen for definitions
+      mdsState = null;
+      stage.classList.remove('mds-host');
+      stage.textContent = name + ' page';
     }
 
     /* Breadcrumb — reflects the selected menu path. Pass the trail after "Home". */
@@ -4911,7 +5199,8 @@ function applyProjectContext() {
       { kind:'group', icon:'pi-book',      label:'Invoices', children:[
         { label:'Owner Invoices' }, { label:'Subcontractor Invoices' } ]},
       { kind:'group', icon:'pi-refresh',   label:'Change Management', children:[
-        { label:'Change Orders' }, { label:'Potential Changes' } ]},
+        { label:'Trends' }, { label:'Change Orders' }, { label:'Potential Changes' },
+        { label:'Form 1' }, { label:'Form 2' }, { label:'Form 3' }, { label:'Form 4' }, { label:'Form 5' } ]},
       { kind:'group', icon:'pi-chart-bar', label:'Reports', children:[
         { label:'Overview' }, { label:'Custom Reports' } ]},
       { kind:'link',  icon:'pi-folder',    label:'Drive' },
@@ -4924,6 +5213,50 @@ function applyProjectContext() {
       'cost-reports': { tabs:[ ['Reports','pi-chart-bar'],['Lists','pi-list'],['Summary','pi-table'],['Excel Reports','pi-file-excel'],['Report Writer','pi-pencil'] ] },
       'import-utilities': { tabs:[ ['Import / Export','pi-upload'],['Special Import / Export','pi-download'],['Copy Dates to Accounts','pi-copy'],['Validate Data','pi-check-circle'],['Other Utilities','pi-wrench'] ] },
     };
+
+    // Second-level tabs: a parent tab label → its sub-tabs. Definitions mirrors
+    // the nested "Definitions" group in the left-nav (ITEMS).
+    var SUBTABS_B = {
+      'Definitions': [
+        ['Default / Cost Reporting Periods','pi-calendar'],
+        ['Funding Sources','pi-wallet'],
+        ['Project Staff','pi-users'],
+        ['Ledger / Control Account Mapping','pi-sitemap'],
+        ['Ledger / Control Element Mapping','pi-share-alt'],
+        ['Escalations','pi-arrow-up-right'],
+        ['Multipliers','pi-percentage'],
+        ['Indirect Costs','pi-money-bill'],
+        ['Change Order Impact','pi-exclamation-triangle'],
+        ['Change Order Status','pi-flag'],
+        ['Trend/Risk Steps','pi-chart-line'],
+        ['Change Management Explanation Titles','pi-file-edit'],
+      ],
+    };
+    var curParentTabB = null;   // parent tab whose sub-tabs are currently shown
+
+    // Master–detail data for definition screens. imp = [Approved Budget,
+    // Financial_Budget, Control Budget, Estimate at Completion].
+    var STATUS_OPTS = ['INITIATED','SUBMITTED','APPROVED','REJECTED'];
+    var COI_DATA = {
+      title: 'Change Order Impact',
+      cols: ['Impact ID', 'Description'],
+      rows: [
+        { id:'EAC',       desc:'EAC Change Only',                    sort:'A', imp:[false,false,false,true ], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'AE',        desc:'Approved Budget & EAC',              sort:'B', imp:[true, false,false,true ], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'APPR_BUDG', desc:'Approved Budget Only',               sort:'C', imp:[true, false,false,false], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'CONT_BUDG', desc:'Control Budget Only',                sort:'D', imp:[false,false,true, false], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'FINI_BUDG', desc:'Financial Budget Only',              sort:'E', imp:[false,true, false,false], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'ACE',       desc:'Approved-Control_EAC',               sort:'F', imp:[true, false,true, true ], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'FUND_APPR', desc:'Funding Tranfer to Approved Budget', sort:'G', imp:[true, false,false,false], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'AF',        desc:'Approved Budget & Financial Budget', sort:'H', imp:[true, true, false,false], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'DATES',     desc:'Schedule Date Changes',              sort:'I', imp:[false,false,false,false], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'ALL',       desc:'All Budgets and EAC',                sort:'J', imp:[true, true, true, true ], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+        { id:'BB',        desc:'Baseline Budget',                    sort:'K', imp:[false,false,false,false], status:['INITIATED','SUBMITTED','APPROVED','REJECTED'] },
+      ],
+    };
+    var DETAIL_DATA = { 'Change Order Impact': COI_DATA };
+    var mdsState = null;   // { data, sel } for the currently rendered detail screen
+    var caState = null;    // { sel, target, tab } for the Control Accounts screen
 
     // Build the Design B sidebar with the shared .lnav component classes
     function renderNavB(){
@@ -4964,16 +5297,181 @@ function applyProjectContext() {
         return '<button class="navb-tab' + (i === 0 ? ' is-active' : '') + '" data-label="' + t[0] + '">' +
                '<i class="pi ' + t[1] + '"></i><span>' + t[0] + '</span></button>';
       }).join('');
-      showTabPage(cat.tabs[0][0]);
       bcTrailB = ['Cost', catLabelB(key)];
-      setBreadcrumb(bcTrailB.concat([cat.tabs[0][0]]));   // include the default-active tab
+      setSubtabs(cat.tabs[0][0]);   // renders sub-tabs (if any) + page + breadcrumb
+    }
+
+    // Activate a parent tab: render its second-level tabs when it has any,
+    // otherwise hide the sub-tab row and show the parent's page directly.
+    function setSubtabs(parentLabel){
+      curParentTabB = parentLabel;
+      var subs = SUBTABS_B[parentLabel];
+      var el = document.getElementById('navbSubtabs');
+      if(!subs){
+        el.style.display = 'none';
+        el.innerHTML = '';
+        showDefPage(parentLabel);   // renders a detail screen (e.g. Control Accounts) if one exists, else a plain page
+        setBreadcrumb(bcTrailB.concat([parentLabel]));
+        return;
+      }
+      el.style.display = '';
+      el.innerHTML = subs.map(function(t, i){
+        return '<button class="navb-subtab' + (i === 0 ? ' is-active' : '') + '" data-label="' + t[0] + '">' +
+               '<i class="pi ' + t[1] + '"></i><span>' + t[0] + '</span></button>';
+      }).join('');
+      showDefPage(subs[0][0]);
+      setBreadcrumb(bcTrailB.concat([parentLabel, subs[0][0]]));
     }
 
     function pageName(name){ return '<div class="navb-pagename">' + name + ' page</div>'; }
-    function showTabPage(name){ document.getElementById('navbTabPage').innerHTML = pageName(name); }
+    function showTabPage(name){ mdsState = null; caState = null; document.getElementById('navbTabPage').innerHTML = pageName(name); }
     function showLeafB(name){
+      mdsState = null; caState = null;
       document.getElementById('navbRibbon').style.display = 'none';
       document.getElementById('navbTabPage').innerHTML = pageName(name);
+    }
+
+    // Render the master–detail screen for `label` into element `targetId`.
+    // Returns true when a dataset exists (screen rendered), false otherwise.
+    // Shared by all three designs (nested sidebar, ribbon tabs, icon-rail flyout).
+    function openDetail(label, targetId){
+      // Control Accounts — its own self-contained screen (separate .cas-* style)
+      if(label === 'Control Accounts' && typeof CA_ROWS !== 'undefined'){
+        mdsState = null;
+        caState = { sel: 0, target: targetId, tab: 'Groups / Breakdown Structures' };
+        var elc = document.getElementById(targetId);
+        if(elc) elc.classList.add('mds-host');
+        renderCA();
+        return true;
+      }
+      var data = DETAIL_DATA && DETAIL_DATA[label];
+      if(!data){ caState = null; return false; }
+      caState = null;
+      mdsState = { data: data, sel: 0, target: targetId };
+      var el = document.getElementById(targetId);
+      if(el) el.classList.add('mds-host');   // opt out of the stage's centering layout
+      renderDetail();
+      return true;
+    }
+
+    // Design B sub-tab page: master–detail screen, else placeholder page.
+    function showDefPage(label){
+      if(openDetail(label, 'navbTabPage')) return;
+      showTabPage(label);
+    }
+
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function renderDetail(){
+      var d = mdsState.data, sel = mdsState.sel, row = d.rows[sel], total = d.rows.length;
+      var t = d.title;
+
+      // Navigation grid rows (shared .proj-table component)
+      var rowsHtml = d.rows.map(function(r, i){
+        return '<tr class="' + (i === sel ? 'is-selected' : '') + '" data-idx="' + i + '">' +
+                 '<td>' + esc(r.id) + '</td><td>' + esc(r.desc) + '</td></tr>';
+      }).join('');
+
+      // Status fields — shared .dropdown component (toggleDropdown/selectOption)
+      var statusFields = [
+        ['Default Status ID',   row.status[0]],
+        ['Submitted Status ID', row.status[1]],
+        ['Approved Status ID',  row.status[2]],
+        ['Rejected Status ID',  row.status[3]],
+      ].map(function(f, i){
+        var id = 'mdsdd-' + i;
+        var opts = STATUS_OPTS.map(function(o){
+          var active = o === f[1] ? ' dropdown-item-active' : '';
+          return '<li class="dropdown-item' + active + '" onclick="selectOption(\'' + id + '\',\'' + o + '\')">' + o + '</li>';
+        }).join('');
+        return '<div class="mds-form-row">' +
+                 '<label class="input-label">' + f[0] + '</label>' +
+                 '<div class="dropdown" id="' + id + '" onclick="toggleDropdown(\'' + id + '\')">' +
+                   '<span class="dropdown-value">' + esc(f[1]) + '</span>' +
+                   '<i class="pi pi-chevron-down dropdown-arrow"></i>' +
+                   '<ul class="dropdown-menu">' + opts + '</ul>' +
+                 '</div>' +
+               '</div>';
+      }).join('');
+
+      // Impact checkboxes — shared .checkbox component (toggleCheck)
+      var impactLabels = ['Approved Budget', 'Financial_Budget', 'Control Budget', 'Estimate at Completion'];
+      var impactChecks = impactLabels.map(function(lbl, i){
+        var on = row.imp[i];
+        return '<label class="checkbox-wrapper">' +
+                 '<span class="checkbox-box' + (on ? ' checked' : '') + '" onclick="toggleCheck(this)">' +
+                   (on ? '<i class="pi pi-check checkbox-check-icon"></i>' : '') +
+                 '</span>' +
+                 '<span class="checkbox-label">' + lbl + '</span>' +
+               '</label>';
+      }).join('');
+
+      var atStart = sel === 0 ? ' disabled' : '';
+      var atEnd   = sel === total - 1 ? ' disabled' : '';
+
+      var html =
+        '<div class="mds-screen">' +
+        // Toolbar — shared .toolbar component
+        '<div class="toolbar">' +
+          '<div class="toolbar-start">' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-table btn-icon-left"></i>Grid mode</button>' +
+            '<span class="mds-toolbar-sep"></span>' +
+            '<div class="btn-group">' +
+              '<button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" data-act="first" title="First"' + atStart + '><i class="pi pi-angle-double-left"></i></button>' +
+              '<button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" data-act="prev" title="Previous"' + atStart + '><i class="pi pi-angle-left"></i></button>' +
+            '</div>' +
+            '<span class="mds-toolbar-info">' + (sel + 1) + ' of ' + total + '</span>' +
+            '<div class="btn-group">' +
+              '<button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" data-act="next" title="Next"' + atEnd + '><i class="pi pi-angle-right"></i></button>' +
+              '<button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" data-act="last" title="Last"' + atEnd + '><i class="pi pi-angle-double-right"></i></button>' +
+            '</div>' +
+            '<span class="mds-toolbar-sep"></span>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-plus btn-icon-left"></i>Add</button>' +
+            '<button class="btn btn-sm btn-secondary" disabled><i class="pi pi-times btn-icon-left"></i>Delete</button>' +
+            '<button class="btn btn-sm btn-primary"><i class="pi pi-save btn-icon-left"></i>Save</button>' +
+            '<button class="btn btn-sm btn-secondary btn-icon-only" title="Undo"><i class="pi pi-undo"></i></button>' +
+            '<button class="btn btn-sm btn-secondary btn-icon-only" title="Refresh"><i class="pi pi-refresh"></i></button>' +
+            '<span class="mds-toolbar-sep"></span>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-filter btn-icon-left"></i>Filter</button>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-cog btn-icon-left"></i>Tools<i class="pi pi-angle-down btn-icon-right"></i></button>' +
+          '</div>' +
+          '<div class="toolbar-end">' +
+            '<div class="toolbar-search-wrap">' +
+              '<input type="text" class="toolbar-search" placeholder="Search">' +
+              '<i class="pi pi-search toolbar-search-icon"></i>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        // Master–detail: two shared .panel components side by side
+        '<div class="mds-split">' +
+          '<section class="panel mds-nav">' +
+            '<header class="panel-header">' +
+              '<span class="panel-title">' + t + ' — navigation</span>' +
+              '<i class="pi pi-thumbtack panel-toggle" title="Pin" style="width:auto;height:auto;padding:4px"></i>' +
+            '</header>' +
+            '<div class="table-wrap">' +
+              '<table class="proj-table"><thead><tr><th>' + d.cols[0] + '</th><th>' + d.cols[1] + '</th></tr></thead>' +
+              '<tbody>' + rowsHtml + '</tbody></table>' +
+            '</div>' +
+          '</section>' +
+          '<section class="panel mds-data">' +
+            '<header class="panel-header"><span class="panel-title">' + t + ' — data</span></header>' +
+            '<div class="panel-content">' +
+              '<div class="mds-form-row"><label class="input-label">Impact ID</label><input type="text" class="input-text input-sm" value="' + esc(row.id) + '"></div>' +
+              '<div class="mds-form-row"><label class="input-label">Description</label><input type="text" class="input-text input-sm" value="' + esc(row.desc) + '"></div>' +
+              '<div class="mds-form-row"><label class="input-label">Sort Code</label><input type="text" class="input-text input-sm" style="max-width:110px" value="' + esc(row.sort) + '"></div>' +
+              '<div class="mds-groups">' +
+                '<section class="panel"><header class="panel-header"><span class="panel-title">Details</span></header>' +
+                  '<div class="panel-content">' + statusFields + '</div></section>' +
+                '<section class="panel"><header class="panel-header"><span class="panel-title">Impacts</span></header>' +
+                  '<div class="panel-content">' + impactChecks + '</div></section>' +
+              '</div>' +
+            '</div>' +
+          '</section>' +
+        '</div>' +
+        '</div>';
+
+      document.getElementById(mdsState.target).innerHTML = html;
     }
 
     renderNavB();
@@ -4994,14 +5492,262 @@ function applyProjectContext() {
       }
     });
 
-    // Tab clicks (Design B) — switch the tab inside the open page
+    // Parent tab clicks (Design B) — switch the tab; if it has sub-tabs, show them
     document.getElementById('navbTabs').addEventListener('click', function(e){
       var tab = e.target.closest('.navb-tab');
       if(!tab) return;
       this.querySelectorAll('.navb-tab').forEach(function(x){ x.classList.remove('is-active'); });
       tab.classList.add('is-active');
-      showTabPage(tab.dataset.label);
-      setBreadcrumb(bcTrailB.concat([tab.dataset.label]));
+      setSubtabs(tab.dataset.label);
+    });
+
+    // Sub-tab clicks (Design B) — switch the second-level tab inside the parent
+    document.getElementById('navbSubtabs').addEventListener('click', function(e){
+      var tab = e.target.closest('.navb-subtab');
+      if(!tab) return;
+      this.querySelectorAll('.navb-subtab').forEach(function(x){ x.classList.remove('is-active'); });
+      tab.classList.add('is-active');
+      showDefPage(tab.dataset.label);
+      setBreadcrumb(bcTrailB.concat([curParentTabB, tab.dataset.label]));
+    });
+
+    // Master–detail interactions — pick a grid row or page through records.
+    // Document-level so it serves all three designs (navStage / navbTabPage / navStageC).
+    document.addEventListener('click', function(e){
+      if(!mdsState) return;
+      if(!e.target.closest('.mds-screen')) return;
+      var tr = e.target.closest('.mds-nav .proj-table tbody tr');
+      if(tr && tr.dataset.idx != null){ mdsState.sel = +tr.dataset.idx; renderDetail(); return; }
+      var pg = e.target.closest('[data-act]');
+      if(pg){
+        var n = mdsState.data.rows.length, s = mdsState.sel, act = pg.dataset.act;
+        if(act === 'first')      s = 0;
+        else if(act === 'prev')  s = Math.max(0, s - 1);
+        else if(act === 'next')  s = Math.min(n - 1, s + 1);
+        else if(act === 'last')  s = n - 1;
+        mdsState.sel = s;
+        renderDetail();
+      }
+    });
+
+    /* =====================================================================
+       CONTROL ACCOUNTS SCREEN — self-contained (data + renderer + events).
+       Reuses the shared DS components; all styling lives in the .cas-* block.
+       ===================================================================== */
+    var CA_ROWS = [
+      ['100.2500.P005','Electrical Materials Purchase - General - Z'],
+      ['100.4019.P003','Pipe and Fittings Purchase - General'],
+      ['100.4026.P004','Valves Purchase - General - Z'],
+      ['100.9012.C001','Project Management, Home Office Labour - General'],
+      ['100.9013.C001','Engineering Design drawing, Home Office Labour - General'],
+      ['100.9014.C001','Contracts Admin \\ Home Office Labour - General'],
+      ['100.9016.C001','Procurement, Home Office Labour - General'],
+      ['100.9091.C001','Owner Commisioning - General'],
+      ['152.0171.C002','Surveying - Potable Water Area'],
+      ['152.0223.C003','Facility Excavation and Fill - Potable Water Area'],
+      ['152.0300.C003','Concrete - Potable Water Area'],
+      ['152.2500.C005','Electrical Installation - Potable Water Area'],
+      ['152.4019.C004','Pipe and Fittings Installation - Potable Water Area'],
+      ['152.4321.C004','Liquid Pumps Installation - Potable Water Area'],
+      ['152.4321.P001','Liquid Pumps Purchase - Potable Water Area'],
+      ['152.9012.C001','Project Management, Home Office Labour - Potable Water Area'],
+      ['152.9013.C001','Engineering Design drawing, Home Office Labour - Potable Water Area'],
+      ['152.9016.C001','Procurement, Home Office Labour - Potable Water Area'],
+    ];
+    var CA_TOTAL_COLS = ['Baseline Budget','Approved Changes','Approved Budget','Actual Period','Actual To Date','Open Commitment','Total Commitment','Estimate To Complete','Estimate At Completion'];
+    var CA_COST  = ['85,277','','85,277','','','','','85,277','85,277'];
+    var CA_HOURS = ['','','','','','','','',''];
+    var CA_DATES = [
+      ['Baseline','10/8/2018','12/7/2018','11/5/2018','1/4/2019'],
+      ['Approved','10/8/2018','12/7/2018','11/5/2018','1/4/2019'],
+      ['Control', '10/8/2018','12/7/2018','11/5/2018','1/4/2019'],
+      ['Current', '11/2/2018','1/3/2019','11/30/2018','1/31/2019'],
+    ];
+    var CA_CURVES = ['Baseline Budget','Approved Budget','Control Budget','Estimate To Complete'];
+    var CURVE_OPTS = ['FRONT','MIDDLE','BACK','LINEAR'];
+    var CA_GROUPS = [
+      ['Organization Breakdown Structure','OBS','','Electrical'],
+      ['CSI Level 1','Enterprise','25','Electrical'],
+      ['CSI Level 2','Enterprise','2500','Electrical Services'],
+      ['CSI Level 3','Enterprise','250120','Life-Cycle Activities for Electrical Transmission and Distribution - Life...'],
+      ['Phase','Enterprise','2','Procurement'],
+      ['Cost Type','Enterprise','D','Direct'],
+      ['Report Level','Enterprise','1','Direct and Indirects'],
+      ['Control Account Manager','Standard','HM','Howard Much'],
+      ['standarg group 02 control acct','Standard','',''],
+      ['Control Package','Module','P005','Light Standard Supply'],
+      ['Project','Module','4567-89','Project D'],
+    ];
+    var CA_TABS = ['Groups / Breakdown Structures','Quantity','Hours','Cost','Proposed','TP Quantity','TP Hours','TP Cost','TP Proposed','Period Actuals','Actuals History','ETC Detail','Commitments','Changes','Change Approvers','Activities','Budget Details','Budget Sources','Risk Items','Funding','Amounts','Progress Tasks','Linked Accounts','Engineering Accounts'];
+
+    // DS dropdown markup helper (uses global toggleDropdown/selectOption)
+    function caDD(id, val, opts){
+      var items = opts.map(function(o){
+        return '<li class="dropdown-item' + (o === val ? ' dropdown-item-active' : '') + '" onclick="selectOption(\'' + id + '\',\'' + o + '\')">' + o + '</li>';
+      }).join('');
+      return '<div class="dropdown" id="' + id + '" onclick="toggleDropdown(\'' + id + '\')">' +
+               '<span class="dropdown-value' + (val ? '' : ' dropdown-placeholder') + '">' + (val || '&nbsp;') + '</span>' +
+               '<i class="pi pi-chevron-down dropdown-arrow"></i>' +
+               '<ul class="dropdown-menu">' + items + '</ul></div>';
+    }
+
+    function renderCA(){
+      var sel = caState.sel, total = CA_ROWS.length, row = CA_ROWS[sel];
+      var accId = row[0], desc = row[1];
+
+      var navRows = CA_ROWS.map(function(r, i){
+        return '<tr class="' + (i === sel ? 'is-selected' : '') + '" data-idx="' + i + '">' +
+                 '<td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>';
+      }).join('');
+
+      // Control Account Totals matrix
+      var totHead = '<tr><th></th>' + CA_TOTAL_COLS.map(function(c){ return '<th>' + c.replace(/ /g, '<br>') + '</th>'; }).join('') + '</tr>';
+      function totRow(label, vals){
+        return '<tr><td>' + label + '</td>' + vals.map(function(v){
+          return '<td><input type="text" class="cas-cell" value="' + esc(v) + '"></td>';
+        }).join('') + '</tr>';
+      }
+      var totals = '<table class="cas-totals"><thead>' + totHead + '</thead><tbody>' +
+                   totRow('Hours', CA_HOURS) + totRow('Cost', CA_COST) + '</tbody></table>';
+
+      // Percent Complete
+      var pct =
+        '<fieldset class="cas-fieldset"><legend>Percent Complete</legend>' +
+          '<div class="cas-mini">' +
+            '<label></label><label style="text-align:right;font-weight:600">Percent</label>' +
+            '<label>Current</label><input type="text" class="input-text" value="52.63">' +
+            '<label>Previous</label><input type="text" class="input-text" value="">' +
+            '<label>Method</label>' + caDD('cadd-method', 'SCH', ['SCH','MAN','PCT','LOE']) +
+          '</div>' +
+        '</fieldset>';
+
+      // Schedule Dates
+      var dateRows = CA_DATES.map(function(r){
+        return '<tr><td>' + r[0] + '</td>' +
+          '<td><input type="text" class="cas-date" value="' + r[1] + '"></td>' +
+          '<td><input type="text" class="cas-date" value="' + r[2] + '"></td>' +
+          '<td><input type="text" class="cas-date" value="' + r[3] + '"></td>' +
+          '<td><input type="text" class="cas-date" value="' + r[4] + '"></td></tr>';
+      }).join('');
+      var dates =
+        '<fieldset class="cas-fieldset"><legend>Schedule Dates</legend>' +
+          '<div class="cas-dates-scroll">' +
+            '<table class="cas-dates"><thead><tr><th></th><th>Early Start</th><th>Early Finish</th><th>Late Start</th><th>Late Finish</th></tr></thead>' +
+            '<tbody>' + dateRows + '</tbody></table>' +
+          '</div>' +
+        '</fieldset>';
+
+      // Time Phased Data Curves
+      var curveRows = CA_CURVES.map(function(c, i){
+        return '<label>' + c + '</label>' + caDD('cadd-curve' + i, 'MIDDLE', CURVE_OPTS);
+      }).join('');
+      var curves =
+        '<fieldset class="cas-fieldset"><legend>Time Phased Data Curves</legend>' +
+          '<div class="cas-mini"><label></label><label style="text-align:center;font-weight:600">Curve ID</label>' + curveRows + '</div>' +
+        '</fieldset>';
+
+      // Bottom groups grid / active tab body
+      var groupsGrid =
+        '<div class="cas-nav-grid"><div class="table-wrap"><table class="proj-table">' +
+          '<thead><tr><th>Title</th><th>Type</th><th>ID</th><th>Description</th></tr></thead><tbody>' +
+          CA_GROUPS.map(function(g){
+            return '<tr><td>' + esc(g[0]) + '</td><td>' + esc(g[1]) + '</td><td>' + esc(g[2]) + '</td><td>' + esc(g[3]) + '</td></tr>';
+          }).join('') +
+        '</tbody></table></div></div>';
+      var tabBody = caState.tab === 'Groups / Breakdown Structures'
+        ? groupsGrid
+        : '<div class="cas-tabbody">' + esc(caState.tab) + ' — no data to display</div>';
+      var tabStrip = '<div class="cas-tabs">' + CA_TABS.map(function(tb){
+        return '<button class="cas-tab' + (tb === caState.tab ? ' is-active' : '') + '" data-catab="' + esc(tb) + '">' + esc(tb) + '</button>';
+      }).join('') + '</div>';
+
+      var atStart = sel === 0 ? ' disabled' : '';
+      var atEnd   = sel === total - 1 ? ' disabled' : '';
+
+      var html =
+        '<div class="cas-screen">' +
+          // Toolbar
+          '<div class="toolbar"><div class="toolbar-start">' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-table btn-icon-left"></i>Grid mode</button>' +
+            '<span class="cas-toolbar-sep"></span>' +
+            '<div class="btn-group">' +
+              '<button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" data-act="first" title="First"' + atStart + '><i class="pi pi-angle-double-left"></i></button>' +
+              '<button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" data-act="prev" title="Previous"' + atStart + '><i class="pi pi-angle-left"></i></button>' +
+            '</div>' +
+            '<span class="cas-toolbar-info">' + (sel + 1) + ' of ' + total + '</span>' +
+            '<div class="btn-group">' +
+              '<button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" data-act="next" title="Next"' + atEnd + '><i class="pi pi-angle-right"></i></button>' +
+              '<button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" data-act="last" title="Last"' + atEnd + '><i class="pi pi-angle-double-right"></i></button>' +
+            '</div>' +
+            '<span class="cas-toolbar-sep"></span>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-plus btn-icon-left"></i>Add</button>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-times btn-icon-left"></i>Delete</button>' +
+            '<button class="btn btn-sm btn-primary"><i class="pi pi-save btn-icon-left"></i>Save</button>' +
+            '<button class="btn btn-sm btn-secondary btn-icon-only" title="Undo"><i class="pi pi-undo"></i></button>' +
+            '<button class="btn btn-sm btn-secondary btn-icon-only" title="Refresh"><i class="pi pi-refresh"></i></button>' +
+            '<span class="cas-toolbar-sep"></span>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-filter btn-icon-left"></i>Filter</button>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-cog btn-icon-left"></i>Tools<i class="pi pi-angle-down btn-icon-right"></i></button>' +
+            '<span class="cas-toolbar-sep"></span>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-calculator btn-icon-left"></i>Calculate Account Totals</button>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-chart-bar btn-icon-left"></i>Spread Budgets</button>' +
+            '<button class="btn btn-sm btn-secondary"><i class="pi pi-chart-line btn-icon-left"></i>Spread ETC/Earned</button>' +
+          '</div><div class="toolbar-end"><div class="toolbar-search-wrap">' +
+            '<input type="text" class="toolbar-search" placeholder="Search"><i class="pi pi-search toolbar-search-icon"></i>' +
+          '</div></div></div>' +
+          // Master (nav) + detail (data)
+          '<div class="cas-split">' +
+            '<section class="panel cas-nav">' +
+              '<header class="panel-header cas-head cas-head-nav"><span class="panel-title">Control Accounts - Navigation</span><i class="pi pi-thumbtack"></i></header>' +
+              '<div class="table-wrap"><table class="proj-table"><thead><tr><th>Control Account ID</th><th>Description</th></tr></thead>' +
+              '<tbody>' + navRows + '</tbody></table></div>' +
+            '</section>' +
+            '<section class="panel cas-data">' +
+              '<header class="panel-header cas-head cas-head-data"><span class="panel-title">Control Accounts - Data</span></header>' +
+              '<div class="panel-content">' +
+                '<div class="cas-form">' +
+                  '<div class="cas-frow"><label>Account ID</label><input type="text" class="input-text" value="' + esc(accId) + '"></div>' +
+                  '<div class="cas-frow"><label>Currency ID</label>' + caDD('cadd-curr', 'USD', ['USD','EUR','GBP','CAD']) + '</div>' +
+                  '<div class="cas-frow" style="flex-basis:100%"><label>Description</label><input type="text" class="input-text cas-grow" value="' + esc(desc) + '"></div>' +
+                  '<div class="cas-frow"><label>Master Account ID</label>' + caDD('cadd-master', '', ['100.2500.P005','100.4019.P003','100.4026.P004']) + '</div>' +
+                  '<div class="cas-frow"><label>Vendor ID</label>' + caDD('cadd-vendor', 'ACME', ['ACME','Globex','Initech']) + '</div>' +
+                  '<div class="cas-frow"><label class="checkbox-wrapper"><span class="checkbox-box" onclick="toggleCheck(this)"></span><span class="checkbox-label">Prime Contract</span></label></div>' +
+                  '<div class="cas-frow"><label>Labor Rate Type</label>' + caDD('cadd-labor', '', ['Standard','Overtime','Double Time']) + '</div>' +
+                '</div>' +
+                '<fieldset class="cas-fieldset" style="margin-top:10px"><legend>Control Account Totals</legend>' + totals + '</fieldset>' +
+                '<div class="cas-groups">' + pct + dates + curves + '</div>' +
+              '</div>' +
+            '</section>' +
+          '</div>' +
+          // Bottom Groups / Breakdown Structures + tab strip
+          '<section class="panel cas-bottom">' +
+            '<header class="panel-header cas-head cas-head-data"><span class="panel-title">Control Accounts - ' + esc(caState.tab) + '</span></header>' +
+            tabBody +
+            tabStrip +
+          '</section>' +
+        '</div>';
+
+      document.getElementById(caState.target).innerHTML = html;
+    }
+
+    // Control Accounts interactions — row select, record pager, bottom tabs
+    document.addEventListener('click', function(e){
+      if(!caState) return;
+      if(!e.target.closest('.cas-screen')) return;
+      var tab = e.target.closest('[data-catab]');
+      if(tab){ caState.tab = tab.dataset.catab; renderCA(); return; }
+      var tr = e.target.closest('.cas-nav .proj-table tbody tr');
+      if(tr && tr.dataset.idx != null){ caState.sel = +tr.dataset.idx; renderCA(); return; }
+      var pg = e.target.closest('[data-act]');
+      if(pg){
+        var n = CA_ROWS.length, s = caState.sel, act = pg.dataset.act;
+        if(act === 'first')      s = 0;
+        else if(act === 'prev')  s = Math.max(0, s - 1);
+        else if(act === 'next')  s = Math.min(n - 1, s + 1);
+        else if(act === 'last')  s = n - 1;
+        caState.sel = s;
+        renderCA();
+      }
     });
 
     /* =====================================================================
@@ -5057,7 +5803,11 @@ function applyProjectContext() {
 
     function showCPage(name){
       var stage = document.getElementById('navStageC');
-      if(stage) stage.textContent = name + ' page';
+      if(!stage) return;
+      if(openDetail(name, 'navStageC')) return;   // master–detail screen for definitions
+      mdsState = null;
+      stage.classList.remove('mds-host');
+      stage.textContent = name + ' page';
     }
 
     function sectionLabelC(key){
