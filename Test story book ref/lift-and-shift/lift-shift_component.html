@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lift &amp; Shift — Component Library</title>
+
+  <!-- Icons vendored locally -->
+  <link rel="stylesheet" href="../vendor/primeicons/primeicons.css" />
+  <!-- Design system: tokens BEFORE styles -->
+  <link rel="stylesheet" href="../components/tokens.css" />
+  <link rel="stylesheet" href="../components/styles.css" />
+  <!-- Lift & shift component library -->
+  <link rel="stylesheet" href="lift-shift.css" />
+  <style>
+    /* showcase-only layout helpers (not part of the library) */
+    body{ background:var(--surface-100,#f3f4f6); margin:0; font-family:'Inter',sans-serif; color:var(--surface-900,#262626); }
+    .lsref-head{ background:var(--primary-700,#1e437d); color:#fff; padding:22px 32px; }
+    .lsref-head h1{ margin:0 0 4px; font-size:20px; font-weight:800; }
+    .lsref-head p{ margin:0; font-size:13px; color:#dbe6f6; max-width:900px; }
+    .lsref-toc{ font-size:12.5px; color:#dbe6f6; margin-top:12px; }
+    .lsref-toc a{ color:#fff; margin-right:14px; text-decoration:none; white-space:nowrap; }
+    .lsref-toc a:hover{ text-decoration:underline; }
+    .lsref-body{ padding:24px 32px; max-width:1180px; margin:0 auto; }
+    .lsref-section{ margin-bottom:40px; }
+    .lsref-section > h2{ font-size:17px; font-weight:700; color:var(--surface-950,#212121); margin:0 0 4px; }
+    .lsref-section > p{ font-size:13px; color:var(--surface-600,#616161); margin:0 0 14px; }
+    .lsref-section code{ background:var(--surface-200,#e5e5e5); border-radius:4px; padding:1px 5px; font-size:12px; }
+    .lsref-demo{ border:1px solid var(--surface-200,#e5e5e5); border-radius:10px; padding:16px; background:var(--surface-50,#fafafa); }
+    .lsref-demo--flush{ padding:0; overflow:hidden; }
+    pre.lsref-code{ background:#0f2343; color:#dbe6f6; border-radius:10px; padding:16px 18px; font-size:12px; line-height:1.6; overflow-x:auto; margin:0; }
+    pre.lsref-code .k{ color:#8fd3ff; }
+  </style>
+</head>
+<body>
+  <div class="lsref-head">
+    <h1>Lift &amp; Shift — Component Library</h1>
+    <p>Reusable <code style="background:rgba(255,255,255,.15);color:#fff">.ls-*</code> components for building legacy desktop master/detail data-entry screens on the web, in a modern flat look (gray canvas, rounded white cards, hairline borders, compact fields). Built on the Contruent design system. Link <b>lift-shift.css</b> and follow the patterns below when creating a new lift &amp; shift page.</p>
+    <div class="lsref-toc">
+      <a href="#start">Getting started</a>
+      <a href="#shell">Screen &amp; cards</a>
+      <a href="#toolbar">Toolbar</a>
+      <a href="#split">Master / detail</a>
+      <a href="#grid">Navigation grid</a>
+      <a href="#form">Data form</a>
+      <a href="#section">Titled section</a>
+      <a href="#matrix">Numeric matrix</a>
+      <a href="#cols">Side-by-side columns</a>
+      <a href="#tabs">Bottom tabs</a>
+    </div>
+  </div>
+
+  <div class="lsref-body">
+
+    <!-- GETTING STARTED -->
+    <section class="lsref-section" id="start">
+      <h2>1. Getting started</h2>
+      <p>Load the four stylesheets (in order) plus <code>components/script.js</code>, then wrap your screen in <code>.ls-screen</code>. Each direct child becomes a rounded card with 12px gaps.</p>
+      <pre class="lsref-code">&lt;!-- in &lt;head&gt; --&gt;
+&lt;link rel="stylesheet" href="../vendor/primeicons/primeicons.css" /&gt;
+&lt;link rel="stylesheet" href="../components/tokens.css" /&gt;   <span class="k">&lt;!-- tokens BEFORE styles --&gt;</span>
+&lt;link rel="stylesheet" href="../components/styles.css" /&gt;
+&lt;link rel="stylesheet" href="lift-shift.css" /&gt;
+
+&lt;!-- screen shell --&gt;
+&lt;div class="ls-screen"&gt;
+  &lt;div class="toolbar"&gt;…&lt;/div&gt;                <span class="k">&lt;!-- card --&gt;</span>
+  &lt;div class="ls-split"&gt;
+    &lt;section class="panel ls-nav"&gt;…&lt;/section&gt;   <span class="k">&lt;!-- master card --&gt;</span>
+    &lt;section class="panel ls-data"&gt;…&lt;/section&gt;  <span class="k">&lt;!-- detail card --&gt;</span>
+  &lt;/div&gt;
+  &lt;section class="panel ls-bottom"&gt;…&lt;/section&gt;  <span class="k">&lt;!-- card --&gt;</span>
+&lt;/div&gt;
+
+&lt;script src="../components/script.js"&gt;&lt;/script&gt;   <span class="k">&lt;!-- dropdowns / checkboxes / tabs --&gt;</span></pre>
+    </section>
+
+    <!-- SCREEN + CARDS -->
+    <section class="lsref-section" id="shell">
+      <h2>2. Screen shell &amp; section cards</h2>
+      <p><code>.ls-screen</code> is a flex-column layout (no padding, transparent background); the <code>.toolbar</code>, <code>.ls-split</code> and <code>.ls-bottom</code> children render as rounded white cards spaced 12px apart. A miniature full screen:</p>
+      <div class="lsref-demo lsref-demo--flush">
+        <div class="ls-screen">
+          <div class="toolbar"><div class="toolbar-start">
+            <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-plus btn-icon-left"></i>Add</button>
+            <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-filter btn-icon-left"></i>Filter</button>
+          </div></div>
+          <div class="ls-split">
+            <section class="panel ls-nav" style="flex-basis:40%;max-width:40%">
+              <header class="ls-head"><span class="panel-title">Records - navigation</span><i class="pi pi-thumbtack"></i></header>
+              <div class="table-wrap"><table class="proj-table"><thead><tr><th class="ls-gutter"></th><th>ID</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr class="is-selected"><td class="ls-gutter"></td><td>R-001</td><td>First record</td></tr>
+                  <tr><td class="ls-gutter"></td><td>R-002</td><td>Second record</td></tr>
+                </tbody></table></div>
+            </section>
+            <section class="panel ls-data">
+              <header class="ls-head"><span class="panel-title">Records - data</span></header>
+              <div class="panel-content"><span style="font-size:12px;color:var(--surface-600)">Detail form goes here.</span></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOOLBAR -->
+    <section class="lsref-section" id="toolbar">
+      <h2>3. Action toolbar</h2>
+      <p>Flat, borderless buttons on a white card. Uses DS <code>.toolbar</code> / <code>.btn</code>, plus <code>.ls-toolbar-sep</code> dividers, <code>.ls-toolbar-info</code> position text, and a record pager.</p>
+      <div class="lsref-demo" style="background:#fff">
+        <div class="ls-screen" style="padding:0;background:transparent;gap:0">
+          <div class="toolbar" style="box-shadow:none"><div class="toolbar-start">
+            <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-table btn-icon-left"></i>Grid mode</button>
+            <span class="ls-toolbar-sep"></span>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" title="First" type="button"><i class="pi pi-angle-double-left"></i></button>
+              <button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" title="Previous" type="button"><i class="pi pi-angle-left"></i></button>
+            </div>
+            <span class="ls-toolbar-info">1 of 6</span>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" title="Next" type="button"><i class="pi pi-angle-right"></i></button>
+              <button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" title="Last" type="button"><i class="pi pi-angle-double-right"></i></button>
+            </div>
+            <span class="ls-toolbar-sep"></span>
+            <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-plus btn-icon-left"></i>Add</button>
+            <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-times btn-icon-left"></i>Delete</button>
+            <button class="btn btn-sm btn-secondary btn-icon-only" title="Save" type="button"><i class="pi pi-save"></i></button>
+          </div><div class="toolbar-end"><div class="toolbar-search-wrap">
+            <input type="text" class="toolbar-search" placeholder="Search"><i class="pi pi-search toolbar-search-icon"></i>
+          </div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MASTER/DETAIL -->
+    <section class="lsref-section" id="split">
+      <h2>4. Panel header &amp; master / detail split</h2>
+      <p>Section titles are subtle uppercase gray labels (<code>.ls-head</code> › <code>.panel-title</code>) with a hairline underline. <code>.ls-split</code> lays out a fixed-width <code>.ls-nav</code> master card and a fluid <code>.ls-data</code> detail card.</p>
+      <div class="lsref-demo lsref-demo--flush">
+        <div class="ls-screen" style="gap:0">
+          <div class="ls-split">
+            <section class="panel ls-nav" style="flex-basis:38%;max-width:38%">
+              <header class="ls-head"><span class="panel-title">Records - navigation</span><i class="pi pi-thumbtack"></i></header>
+              <div class="panel-content" style="padding:12px 16px;font-size:12px;color:var(--surface-600)">Master list / grid.</div>
+            </section>
+            <section class="panel ls-data">
+              <header class="ls-head"><span class="panel-title">Records - data</span></header>
+              <div class="panel-content" style="font-size:12px;color:var(--surface-600)">Detail form.</div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRID -->
+    <section class="lsref-section" id="grid">
+      <h2>5. Navigation grid</h2>
+      <p>DS <code>.proj-table</code> with flat left-aligned headers and airy rows. Add a first <code>.ls-gutter</code> cell to each row; mark the current row <code>.is-selected</code> for the light-blue highlight + blue left accent.</p>
+      <div class="lsref-demo lsref-demo--flush">
+        <div class="ls-screen" style="gap:0">
+          <section class="panel ls-nav">
+            <header class="ls-head"><span class="panel-title">Records - navigation</span></header>
+            <div class="table-wrap"><table class="proj-table"><thead><tr><th class="ls-gutter"></th><th>Contract ID</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr class="is-selected"><td class="ls-gutter"></td><td>C001</td><td>Engineering, Procurement &amp; Construction Mgmt Contract</td></tr>
+                <tr><td class="ls-gutter"></td><td>C002</td><td>Surveying Services</td></tr>
+                <tr><td class="ls-gutter"></td><td>C003</td><td>Concrete Installation Contract</td></tr>
+              </tbody></table></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORM -->
+    <section class="lsref-section" id="form">
+      <h2>6. Data form</h2>
+      <p>Inline label + control rows: <code>.ls-form</code> › <code>.ls-frow</code>, with <code>.ls-grow</code> / <code>.ls-sm</code> width modifiers and <code>.ls-frow-fill</code> for full-width rows. Fields use DS <code>.input-text</code> / <code>.dropdown</code> at compact height.</p>
+      <div class="lsref-demo" style="background:#fff">
+        <div class="ls-screen" style="padding:0;background:transparent;gap:0">
+          <section class="panel ls-data" style="border:none;box-shadow:none">
+            <div class="panel-content" style="padding:0">
+              <div class="ls-form">
+                <div class="ls-frow"><label>Contract ID</label><input class="input-text ls-sm" type="text" value="C001"></div>
+                <div class="ls-frow ls-frow-inline" style="margin-left:auto">
+                  <label>Currency ID</label>
+                  <div class="dropdown" id="ref-curr" onclick="toggleDropdown('ref-curr')"><span class="dropdown-value">CAD</span><i class="pi pi-chevron-down dropdown-arrow"></i>
+                    <ul class="dropdown-menu"><li class="dropdown-item dropdown-item-active" onclick="selectOption('ref-curr','CAD')">CAD</li><li class="dropdown-item" onclick="selectOption('ref-curr','USD')">USD</li></ul></div>
+                </div>
+                <div class="ls-frow ls-frow-fill"><label>Description</label><input class="input-text ls-grow" type="text" value="Engineering, Procurement &amp; Construction Mgmt Contract"></div>
+                <div class="ls-frow ls-frow-fill"><label class="checkbox-wrapper"><span class="checkbox-box checked" onclick="toggleCheck(this)"><i class="pi pi-check checkbox-check-icon"></i></span><span class="checkbox-label">Prime contract</span></label></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION -->
+    <section class="lsref-section" id="section">
+      <h2>7. Titled section group</h2>
+      <p>A borderless <code>.ls-fieldset</code> with a <code>&lt;legend&gt;</code> renders a bold section title over a hairline rule — no boxed border or fill.</p>
+      <div class="lsref-demo" style="background:#fff">
+        <div class="ls-screen" style="padding:0;background:transparent;gap:0">
+          <fieldset class="ls-fieldset" style="margin-top:0"><legend>Status details</legend>
+            <span style="font-size:12px;color:var(--surface-600)">Grouped fields go under the title.</span>
+          </fieldset>
+        </div>
+      </div>
+    </section>
+
+    <!-- MATRIX -->
+    <section class="lsref-section" id="matrix">
+      <h2>8. Numeric matrix (horizontal scroll)</h2>
+      <p>Wrap a <code>.ls-totals</code> table in <code>.ls-totals-scroll</code>; the table sizes to content (<code>width:max-content</code>) so wide column sets scroll horizontally with an always-visible scrollbar. Cells use <code>.ls-cell</code>.</p>
+      <div class="lsref-demo" style="background:#fff">
+        <div class="ls-screen" style="padding:0;background:transparent;gap:0">
+          <fieldset class="ls-fieldset" style="margin-top:0"><legend>Contract totals</legend>
+            <div class="ls-totals-scroll"><table class="ls-totals">
+              <thead><tr><th></th><th>Original</th><th>Approved<br>Changes</th><th>Approved</th><th>Pending<br>Changes</th><th>Forecast final</th><th>Percent<br>Complete</th><th>Earned value</th><th>Approved<br>Invoices</th><th>Retention</th><th>Remaining To<br>Invoice</th></tr></thead>
+              <tbody>
+                <tr><td>Hours</td><td><input class="ls-cell" value="10,403" readonly></td><td><input class="ls-cell" value="" readonly></td><td><input class="ls-cell" value="10,403" readonly></td><td><input class="ls-cell" value="" readonly></td><td><input class="ls-cell" value="10,403" readonly></td><td><input class="ls-cell" value="51.39" readonly></td><td><input class="ls-cell" value="5,347" readonly></td><td><input class="ls-cell" value="5,582" readonly></td><td><input class="ls-cell" value="" readonly></td><td><input class="ls-cell" value="4,822" readonly></td></tr>
+                <tr><td>Cost</td><td><input class="ls-cell" value="2,702,522" readonly></td><td><input class="ls-cell" value="" readonly></td><td><input class="ls-cell" value="2,702,522" readonly></td><td><input class="ls-cell" value="" readonly></td><td><input class="ls-cell" value="2,702,522" readonly></td><td><input class="ls-cell" value="51.36" readonly></td><td><input class="ls-cell" value="1,387,916" readonly></td><td><input class="ls-cell" value="1,446,412" readonly></td><td><input class="ls-cell" value="" readonly></td><td><input class="ls-cell" value="1,256,110" readonly></td></tr>
+              </tbody>
+            </table></div>
+          </fieldset>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLUMNS -->
+    <section class="lsref-section" id="cols">
+      <h2>9. Side-by-side columns</h2>
+      <p>Two <code>.ls-fieldset</code> groups laid out with <code>.ls-cols</code>; each uses a two-column label/control grid (<code>.ls-col-form</code>). Use <code>.full</code> to span a row and <code>.ls-updrow</code> for a field + inline button.</p>
+      <div class="lsref-demo" style="background:#fff">
+        <div class="ls-screen" style="padding:0;background:transparent;gap:0">
+          <div class="ls-cols">
+            <fieldset class="ls-fieldset" style="margin-top:0"><legend>Status details</legend>
+              <div class="ls-col-form">
+                <label>Status ID</label>
+                <div class="dropdown" id="ref-status" onclick="toggleDropdown('ref-status')"><span class="dropdown-value">Awarded</span><i class="pi pi-chevron-down dropdown-arrow"></i>
+                  <ul class="dropdown-menu"><li class="dropdown-item dropdown-item-active" onclick="selectOption('ref-status','Awarded')">Awarded</li><li class="dropdown-item" onclick="selectOption('ref-status','Pending')">Pending</li></ul></div>
+                <label>Award date</label><input class="input-text" type="text" value="12/19/2017">
+                <label>Contractor ID</label>
+                <div class="ls-updrow"><input class="input-text" type="text" value="ARES PROJECT MA"><button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-refresh btn-icon-left"></i>Update</button></div>
+              </div>
+            </fieldset>
+            <fieldset class="ls-fieldset" style="margin-top:0"><legend>References</legend>
+              <div class="ls-col-form">
+                <label class="full checkbox-wrapper" style="justify-self:start"><span class="checkbox-box checked" onclick="toggleCheck(this)"><i class="pi pi-check checkbox-check-icon"></i></span><span class="checkbox-label">Commit pay items to control account</span></label>
+                <label>Prime contract ID</label>
+                <div class="dropdown" id="ref-prime" onclick="toggleDropdown('ref-prime')"><span class="dropdown-value">PC-0001</span><i class="pi pi-chevron-down dropdown-arrow"></i>
+                  <ul class="dropdown-menu"><li class="dropdown-item dropdown-item-active" onclick="selectOption('ref-prime','PC-0001')">PC-0001</li></ul></div>
+                <label>Alternate ID</label><input class="input-text" type="text" value="">
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM TABS -->
+    <section class="lsref-section" id="tabs">
+      <h2>10. Bottom detail panel &amp; tab strip</h2>
+      <p>A fixed-height <code>.ls-bottom</code> card whose tab strip acts as the header. Use the DS Tab Menu (<code>.tab-menu</code> › <code>.tab-menu-item</code>, active = <code>.active</code>) inside <code>.ls-tabs-wrap</code>, with an optional <code>.ls-tabs-more</code> scroll arrow; the body (<code>.ls-tabbody</code>) fills the rest and scrolls.</p>
+      <div class="lsref-demo lsref-demo--flush">
+        <div class="ls-screen" style="gap:0">
+          <section class="panel ls-bottom" style="height:160px">
+            <div class="ls-tabs-wrap">
+              <ul class="tab-menu">
+                <li class="tab-menu-item active">Detailed description</li>
+                <li class="tab-menu-item">Pay items</li>
+                <li class="tab-menu-item">Events</li>
+                <li class="tab-menu-item">Clauses</li>
+                <li class="tab-menu-item">Risks</li>
+                <li class="tab-menu-item">Bonds</li>
+                <li class="tab-menu-item">Insurance</li>
+                <li class="tab-menu-item">Attachments</li>
+                <li class="tab-menu-item">Notes</li>
+              </ul>
+              <button class="ls-tabs-more" title="Scroll tabs" type="button" onclick="this.parentNode.querySelector('.tab-menu').scrollBy({left:200,behavior:'smooth'})"><i class="pi pi-angle-right"></i></button>
+            </div>
+            <div class="ls-tabbody">To provided engineering, procurement and construction management services.</div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="../components/script.js"></script>
+</body>
+</html>

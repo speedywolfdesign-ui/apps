@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<!-- =====================================================================
+     LIFT & SHIFT — STARTER TEMPLATE
+     Copy this file to start a new lift & shift screen. It already links
+     the component library, so the page ALWAYS uses lift-shift.css styling.
+     Fill in the placeholders marked "TODO". See lift-shift_component.html
+     for every component's markup.
+     ===================================================================== -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="../components/auth-gate.js"></script>
+  <title>Cisco Systems — TODO Page — Contruent</title>
+
+  <!-- REQUIRED — lift & shift styling (keep this order, do NOT inline styles here) -->
+  <link rel="stylesheet" href="../vendor/primeicons/primeicons.css" />
+  <link rel="stylesheet" href="../components/tokens.css" />   <!-- tokens BEFORE styles -->
+  <link rel="stylesheet" href="../components/styles.css" />
+  <link rel="stylesheet" href="lift-shift.css" />          <!-- the lift & shift component library -->
+</head>
+<body>
+  <div id="top-nav-mount"></div>
+  <script src="../components/top-nav.js"></script>
+  <script>renderTopNav({ activeItem: 'projects' });</script>
+
+  <div id="left-nav-mount"></div>
+
+  <!-- ===== PAGE CONTENT ===== -->
+  <div class="proj-content">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="breadcrumb-item" href="../project-home.html">Project Home</a>
+      <i class="pi pi-angle-right breadcrumb-sep"></i>
+      <span class="breadcrumb-item breadcrumb-current">TODO Page</span>
+    </nav>
+
+    <!-- Page header (design-system section-header component) -->
+    <div class="section-header">
+      <h1 class="section-title">TODO page title</h1>
+      <p class="section-desc">TODO short description of the screen.</p>
+    </div>
+
+    <!-- Lift & shift screen shell: each child of .ls-screen is a rounded card -->
+    <div class="ls-screen">
+
+      <!-- Toolbar card -->
+      <div class="toolbar"><div class="toolbar-start">
+        <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-plus btn-icon-left"></i>Add</button>
+        <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-times btn-icon-left"></i>Delete</button>
+        <span class="ls-toolbar-sep"></span>
+        <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-filter btn-icon-left"></i>Filter</button>
+      </div><div class="toolbar-end"><div class="toolbar-search-wrap">
+        <input type="text" class="toolbar-search" placeholder="Search"><i class="pi pi-search toolbar-search-icon"></i>
+      </div></div></div>
+
+      <!-- Master / detail split -->
+      <div class="ls-split">
+        <section class="panel ls-nav">
+          <header class="ls-head"><span class="panel-title">TODO - Navigation</span><i class="pi pi-thumbtack"></i></header>
+          <div class="table-wrap"><table class="proj-table">
+            <thead><tr><th class="ls-gutter"></th><th>ID</th><th>Description</th></tr></thead>
+            <tbody>
+              <!-- TODO: rows. Mark the current row class="is-selected" -->
+              <tr class="is-selected"><td class="ls-gutter"></td><td>R-001</td><td>First record</td></tr>
+              <tr><td class="ls-gutter"></td><td>R-002</td><td>Second record</td></tr>
+            </tbody>
+          </table></div>
+        </section>
+
+        <section class="panel ls-data">
+          <header class="ls-head"><span class="panel-title">TODO - Data</span></header>
+          <div class="panel-content">
+            <!-- TODO: form fields -->
+            <div class="ls-form">
+              <div class="ls-frow"><label>Field A</label><input class="input-text ls-sm" type="text" value=""></div>
+              <div class="ls-frow ls-frow-fill"><label>Description</label><input class="input-text ls-grow" type="text" value=""></div>
+            </div>
+
+            <fieldset class="ls-fieldset"><legend>Section title</legend>
+              <!-- TODO: grouped fields -->
+            </fieldset>
+          </div>
+        </section>
+      </div>
+
+      <!-- Bottom detail panel (tabs act as the header) -->
+      <section class="panel ls-bottom">
+        <div class="ls-tabs-wrap">
+          <ul class="tab-menu">
+            <li class="tab-menu-item active">Tab one</li>
+            <li class="tab-menu-item">Tab two</li>
+            <li class="tab-menu-item">Tab three</li>
+          </ul>
+          <button class="ls-tabs-more" title="Scroll tabs" type="button" onclick="this.parentNode.querySelector('.tab-menu').scrollBy({left:200,behavior:'smooth'})"><i class="pi pi-angle-right"></i></button>
+        </div>
+        <div class="ls-tabbody">TODO: active tab content.</div>
+      </section>
+
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Component scripts -->
+  <script src="../components/left-nav.js"></script>
+  <script src="../components/ai-panel.js"></script>
+  <script src="../components/dialog.js"></script>
+  <script src="../components/script.js"></script>
+  <script>
+    renderLeftNav({ /* TODO: expandedGroup / activeSub */ });
+
+    // Keep: makes a nav link that points at THIS page inert (prevents a file:// self-prefetch error).
+    // This page lives in a sub-folder; rebase the shared nav's root-relative links to "../".
+    (function rebaseNav(){
+      var links = document.querySelectorAll('a[href]');
+      Array.prototype.forEach.call(links, function(a){
+        var h = a.getAttribute('href');
+        if (!h || h.charAt(0)==='#' || h.charAt(0)==='/' || h.indexOf('..')===0 || /^[a-z]+:/i.test(h)) return;
+        a.setAttribute('href', '../' + h);
+      });
+    })();
+
+    (function neutralizeSelfLinks(){
+      var here = location.href.split('#')[0];
+      Array.prototype.forEach.call(document.querySelectorAll('a[href]'), function(a){
+        if (a.href.split('#')[0] === here){ a.removeAttribute('href'); a.style.cursor = 'default'; }
+      });
+    })();
+  </script>
+</body>
+</html>
