@@ -1,11 +1,4 @@
 <!DOCTYPE html>
-<!-- =====================================================================
-     LIFT & SHIFT — STARTER TEMPLATE
-     Copy this file to start a new lift & shift screen. It already links
-     the component library, so the page ALWAYS uses lift-shift.css styling.
-     Fill in the placeholders marked "TODO". See lift-shift_component.html
-     for every component's markup.
-     ===================================================================== -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -114,9 +107,7 @@
 })();
 
 </script>
-  <title>Cisco Systems — TODO Page — Contruent</title>
-
-  <!-- REQUIRED — lift & shift styling (keep this order, do NOT inline styles here) -->
+  <title>Cisco Systems - Compensation events - Contruent</title>
   <style>
 @font-face {
     font-family: 'primeicons';
@@ -2235,7 +2226,7 @@
   --z-toast:     9999;
 }
 
-</style>   <!-- tokens BEFORE styles -->
+</style>
   <style>
 /* ===== RESET & BASE ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -5296,7 +5287,315 @@ body.ai-panel-open .proj-content {
 
 
 </style>
-  <link rel="stylesheet" href="lift-shift.css" />          <!-- the lift & shift component library -->
+  <style>
+/* =====================================================================
+   LIFT & SHIFT — Component Library  (.ls-*)
+   ---------------------------------------------------------------------
+   Reusable styling for "lift & shift" screens: legacy desktop master /
+   detail data-entry forms rebuilt on the web in a modern flat look —
+   gray canvas, rounded white section cards (12px gaps), hairline
+   borders, compact inputs & checkboxes, subtle uppercase section
+   labels, light-blue row selection, blue used only as an accent.
+
+   DEPENDENCIES (load in this order, BEFORE this file):
+     1. components/tokens.css        (design tokens: colors, spacing…)
+     2. components/styles.css        (DS primitives this library builds on:
+                                      .toolbar .btn .panel .proj-table
+                                      .input-text .dropdown .checkbox .tab-menu)
+     3. vendor/primeicons/primeicons.css   (pi icons)
+     4. lift-shift.css               (this file)
+   Also load components/script.js for dropdown / checkbox / tab behavior.
+
+   USAGE: wrap the screen in <div class="ls-screen"> … </div>. Each direct
+   child (.toolbar, .ls-split, .ls-bottom) becomes a rounded card.
+   See lift-shift_component.html for a full reference + starter template.
+   ===================================================================== */
+
+.ls-screen{
+  width:100%;
+  font-family:'Inter',sans-serif;
+  color:var(--surface-900,#262626);
+  /* no padding, no background: rounded white cards sit flush, separated by a 12px gap */
+  background:transparent;
+  border:none;
+  border-radius:0;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+/* shared card look for each section */
+.ls-screen .toolbar,
+.ls-screen > .panel,
+.ls-split > .panel,
+.ls-navcol > .panel,
+.ls-bottom{
+  background:var(--surface-0,#fff);
+  border:var(--border-1,1px) solid var(--surface-200,#e5e5e5);
+  border-radius:10px;
+  box-shadow:0 1px 2px rgba(16,24,40,.05);
+  overflow:hidden;
+}
+
+/* PAGE HEADER — DS .section-header tuned for lift & shift screens:
+   weight 600 (not extrabold), no bottom border, 16px gap below */
+.section-header{ border-bottom:none; padding-bottom:16px; margin-bottom:0; }
+.section-title{ font-weight:600; font-size:var(--font-size-2xl); }
+
+/* ─────────────────────────────────────────────────────────────
+   1. LEGACY RIBBON  (optional — icon-over-label command groups)
+   ───────────────────────────────────────────────────────────── */
+.ls-ribbon{
+  display:flex; align-items:stretch; gap:0;
+  padding:6px 8px 0;
+  background:var(--surface-50,#fafafa);
+  border-bottom:var(--border-1,1px) solid var(--surface-200,#e5e5e5);
+  overflow-x:auto;
+  scrollbar-width:thin;
+}
+.ls-ribbon-group{ display:flex; flex-direction:column; align-items:center; padding:0 6px 2px; min-width:0; }
+.ls-ribbon-row{ display:flex; align-items:flex-start; gap:2px; flex:1; }
+.ls-ribbon-caption{ margin-top:2px; padding-top:3px; width:100%; text-align:center; font-size:10.5px; color:var(--surface-600,#616161); border-top:var(--border-1,1px) solid var(--surface-200,#e5e5e5); }
+.ls-ribbon-sep{ width:1px; align-self:stretch; background:var(--surface-200,#e5e5e5); margin:2px 4px; }
+.ls-rbtn{ display:flex; flex-direction:column; align-items:center; gap:3px; min-width:52px; max-width:76px; padding:5px 6px 4px; border:1px solid transparent; border-radius:var(--radius-sm,4px); background:none; cursor:pointer; font-family:inherit; color:var(--surface-800,#3d3d3d); text-align:center; transition:background .12s, border-color .12s; }
+.ls-rbtn:hover{ background:var(--blue-50,#eef3fb); border-color:var(--blue-200,#c1d3f1); }
+.ls-rbtn .pi{ font-size:20px; color:var(--primary-500,#326fd1); }
+.ls-rbtn-label{ font-size:10.5px; line-height:1.15; }
+.ls-rbtn-sm{ flex-direction:row; min-width:110px; max-width:none; gap:6px; padding:3px 6px; }
+.ls-rbtn-sm .pi{ font-size:14px; }
+.ls-rbtn-sm .ls-rbtn-label{ font-size:11px; white-space:nowrap; }
+.ls-rbtn-stack{ display:flex; flex-direction:column; gap:1px; }
+
+/* ─────────────────────────────────────────────────────────────
+   2. MDI TAB (optional — the "Doc ✕" window tab)
+   ───────────────────────────────────────────────────────────── */
+.ls-mditabs{ display:flex; align-items:center; gap:2px; padding:4px 8px 0; background:var(--surface-50,#fafafa); border-bottom:var(--border-1,1px) solid var(--surface-200,#e5e5e5); }
+.ls-mditab{ display:flex; align-items:center; gap:8px; padding:5px 10px; font-size:12px; font-weight:var(--font-weight-semibold,600); color:var(--surface-800,#3d3d3d); background:var(--surface-0,#fff); border:var(--border-1,1px) solid var(--surface-200,#e5e5e5); border-bottom:none; border-radius:5px 5px 0 0; }
+.ls-mditab .pi-times{ font-size:11px; color:var(--surface-500,#737373); cursor:pointer; }
+.ls-mditab .pi-times:hover{ color:var(--red-600,#c0392b); }
+.ls-mditab-icon{ color:var(--primary-500,#326fd1); font-size:12px; }
+
+/* ─────────────────────────────────────────────────────────────
+   3. ACTION TOOLBAR — flat, white, compact
+   ───────────────────────────────────────────────────────────── */
+.ls-screen .toolbar{ padding:6px 12px; gap:2px; flex-wrap:nowrap; }
+/* buttons scroll horizontally instead of wrapping/overflowing the card */
+.ls-screen .toolbar-start{ gap:1px; flex-wrap:nowrap; align-items:center; flex:1 1 auto; min-width:0; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none; }
+.ls-screen .toolbar-start::-webkit-scrollbar{ height:0; width:0; display:none; }
+.ls-screen .toolbar-end{ flex:0 0 auto; }
+.ls-screen .toolbar .btn-secondary{ background:transparent; border-color:transparent; color:var(--surface-700,#4f4f4f); box-shadow:none; font-weight:500; }
+.ls-screen .toolbar .btn-secondary:hover{ background:var(--surface-100,#f5f5f5); border-color:transparent; }
+.ls-screen .toolbar .btn-group{ border:none; box-shadow:none; }
+.ls-screen .toolbar .btn-group .pi{ color:var(--surface-600,#616161); }
+.ls-screen .btn-sm{ padding:4px 8px; font-size:12px; }
+.ls-screen .btn-icon-only.btn-sm{ width:26px; padding:4px 0; }
+.ls-screen .btn .pi{ font-size:12px; }
+.ls-screen .btn-icon-left{ margin-right:5px; }
+.ls-screen .btn-icon-right{ margin-left:4px; }
+.ls-screen .toolbar-search{ height:26px; width:190px; font-size:12px; }
+.ls-toolbar-sep{ width:1px; align-self:center; height:18px; background:var(--surface-200,#e5e5e5); margin:0 6px; }
+.ls-toolbar-info{ padding:0 7px; font-size:12px; color:var(--surface-700,#4f4f4f); white-space:nowrap; }
+
+/* ─────────────────────────────────────────────────────────────
+   4. PANEL HEADERS — subtle uppercase labels + master/detail split
+   ───────────────────────────────────────────────────────────── */
+.ls-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:7px 14px; background:var(--surface-0,#fff);
+  border:none; border-bottom:var(--border-1,1px) solid var(--surface-200,#e5e5e5); border-radius:0;
+}
+.ls-head .panel-title,
+.ls-head .ls-title{ color:var(--surface-500,#737373); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; text-shadow:none; }
+.ls-head .pi{ font-size:12px; color:var(--surface-400,#bdbdbd); cursor:pointer; margin-left:10px; }
+.ls-head .pi:hover{ color:var(--primary-500,#326fd1); }
+
+.ls-split{ display:flex; align-items:stretch; gap:12px; padding:0; background:transparent; }
+.ls-split > .panel.ls-nav{ flex:0 0 34%; max-width:34%; display:flex; flex-direction:column; }
+.ls-split > .panel.ls-data{ flex:1; min-width:0; }
+/* multi-column layout helpers (e.g. 3-column report writer: side / main / side) */
+.ls-split > .panel.ls-col-side{ flex:0 0 224px; max-width:224px; min-width:0; display:flex; flex-direction:column; }
+.ls-split > .panel.ls-col-main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+
+/* stacked master column: two+ navigation cards on the left, sharing the split height */
+.ls-split > .ls-navcol{ flex:0 0 30%; max-width:30%; min-width:0; display:flex; flex-direction:column; gap:12px; }
+.ls-navcol > .panel{ display:flex; flex-direction:column; flex:1 1 0; min-height:0; }
+
+.ls-nav .table-wrap{ border:none; border-radius:0; flex:1; max-height:460px; overflow:auto; }
+.ls-nav table.proj-table{ min-width:0; }
+.ls-screen .proj-table{ font-size:12px; border-collapse:collapse; }
+/* flat, left-aligned, hairline column headers */
+.ls-screen .proj-table th{
+  padding:5px 12px; font-size:11px; text-align:left; font-weight:600;
+  color:var(--surface-700,#4f4f4f); background:var(--surface-0,#fff);
+  border-right:none; border-bottom:var(--border-1,1px) solid var(--surface-200,#e5e5e5);
+}
+.ls-screen .proj-table td{ padding:5px 12px; border-right:none; border-bottom:var(--border-1,1px) solid var(--surface-100,#f5f5f5); color:var(--surface-800,#3d3d3d); }
+.ls-nav .proj-table tbody tr{ cursor:pointer; }
+.ls-nav .proj-table tbody tr:hover td{ background:var(--surface-50,#fafafa); }
+/* light-blue selection with a blue left accent (via the gutter cell) */
+.ls-nav .proj-table tbody tr.is-selected td{ background:var(--blue-50,#eef3fb); color:var(--surface-900,#262626); font-weight:500; }
+.ls-screen .proj-table .ls-gutter{ width:3px; min-width:3px; padding:0; text-align:center; background:transparent; border:none; }
+.ls-nav .proj-table tbody td.ls-gutter .pi{ display:none; }
+.ls-nav .proj-table tbody tr.is-selected td.ls-gutter{ background:var(--primary-500,#326fd1); }
+
+/* ─────────────────────────────────────────────────────────────
+   5. DATA FORM (labelled inline fields) — compact
+   ───────────────────────────────────────────────────────────── */
+.ls-data .panel-content{ padding:12px 16px; background:var(--surface-0,#fff); }
+.ls-form{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 22px; }
+.ls-frow{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.ls-frow > label{ font-size:12px; font-weight:500; color:var(--surface-600,#616161); white-space:nowrap; }
+.ls-frow-fill{ flex-basis:100%; }
+.ls-screen .ls-frow .input-text{ padding:3px 9px; font-size:12px; width:230px; }
+.ls-screen .ls-frow .input-text.ls-grow{ width:560px; max-width:60vw; }
+.ls-screen .ls-frow .input-text.ls-sm{ width:130px; }
+.ls-screen .ls-frow .dropdown{ padding:3px 9px; min-width:110px; width:auto; }
+.ls-screen .ls-frow .dropdown-value{ font-size:12px; }
+.ls-frow .checkbox-wrapper{ gap:6px; }
+.ls-screen .ls-frow .checkbox-label{ font-size:12px; color:var(--surface-700,#4f4f4f); }
+.ls-frow-inline{ display:flex; align-items:center; gap:8px; }
+
+/* small checkboxes everywhere on the screen */
+.ls-screen .checkbox-box{ width:14px; height:14px; }
+.ls-screen .checkbox-check-icon{ font-size:9px; }
+
+/* compact inputs & dropdowns across the whole screen */
+.ls-screen .input-text{ padding:3px 9px; font-size:12px; }
+.ls-screen .dropdown{ padding:3px 9px; }
+
+/* Flat titled section groups (no box, no fill).
+   min-width:0 defeats the <fieldset> min-content quirk so it can't
+   expand past its parent (lets wide matrices scroll instead). */
+.ls-fieldset{ border:none; border-radius:0; background:transparent; padding:0; margin-top:14px; min-width:0; }
+.ls-fieldset > legend{ display:block; width:100%; box-sizing:border-box; font-size:12.5px; font-weight:600; color:var(--surface-800,#3d3d3d); padding:0 0 6px; margin-bottom:10px; border-bottom:var(--border-1,1px) solid var(--surface-200,#e5e5e5); }
+.ls-fieldset.ls-tint{ background:transparent; border:none; }
+
+/* Numeric matrix (e.g. totals) — light + compact, scrolls horizontally */
+.ls-totals-scroll{ overflow-x:auto; max-width:100%; padding-bottom:4px; scrollbar-width:thin; scrollbar-color:var(--surface-300,#d4d4d4) var(--surface-100,#f5f5f5); }
+/* always-visible horizontal scrollbar (macOS hides overlay scrollbars) */
+.ls-totals-scroll::-webkit-scrollbar{ height:10px; }
+.ls-totals-scroll::-webkit-scrollbar-track{ background:var(--surface-100,#f5f5f5); border-radius:6px; }
+.ls-totals-scroll::-webkit-scrollbar-thumb{ background:var(--surface-300,#d4d4d4); border-radius:6px; }
+.ls-totals-scroll::-webkit-scrollbar-thumb:hover{ background:var(--surface-400,#bdbdbd); }
+.ls-totals{ width:max-content; min-width:100%; border-collapse:collapse; font-size:11px; margin-top:2px; }
+.ls-totals th{ text-align:center; font-weight:500; color:var(--surface-500,#737373); padding:2px 5px; vertical-align:bottom; line-height:1.2; white-space:nowrap; }
+.ls-totals th:first-child{ text-align:left; }
+.ls-totals td{ padding:2px 5px; }
+.ls-totals td:first-child{ font-weight:500; color:var(--surface-600,#616161); white-space:nowrap; }
+.ls-cell{ width:86px; padding:4px 7px; text-align:right; border:var(--border-1,1px) solid var(--surface-200,#e5e5e5); border-radius:4px; background:var(--surface-0,#fff); font-size:11px; font-family:inherit; color:var(--surface-800,#3d3d3d); }
+.ls-cell[readonly]{ background:var(--surface-50,#fafafa); color:var(--surface-600,#616161); }
+
+/* Side-by-side fieldset columns */
+.ls-cols{ display:flex; gap:30px; flex-wrap:wrap; margin-top:0; align-items:flex-start; }
+.ls-cols > .ls-fieldset{ flex:1 1 340px; min-width:320px; }
+.ls-col-form{ display:grid; grid-template-columns:auto 1fr; gap:6px 12px; align-items:center; }
+.ls-col-form > label{ font-size:12px; font-weight:500; color:var(--surface-600,#616161); white-space:nowrap; }
+.ls-col-form .full{ grid-column:1 / -1; }
+.ls-screen .ls-col-form .input-text{ padding:3px 9px; font-size:12px; width:100%; box-sizing:border-box; }
+.ls-screen .ls-col-form .dropdown{ padding:3px 9px; width:100%; box-sizing:border-box; }
+.ls-screen .ls-col-form .dropdown-value{ font-size:12px; }
+.ls-updrow{ display:flex; align-items:center; gap:6px; }
+.ls-updrow .input-text{ flex:1; }
+
+/* vertical checkbox / option group */
+.ls-checklist{ display:flex; flex-direction:column; gap:9px; }
+
+/* tree / list navigation (Report list, Tables, Report objects) */
+.ls-tree{ list-style:none; margin:0; padding:6px 0; font-size:12px; }
+.ls-tree li{ padding:4px 12px; cursor:pointer; color:var(--surface-800,#3d3d3d); white-space:nowrap; }
+.ls-tree li:hover{ background:var(--surface-50,#fafafa); }
+.ls-tree li.is-active{ background:var(--blue-50,#eef3fb); color:var(--primary-700,#1e437d); font-weight:500; box-shadow:inset 3px 0 0 var(--primary-500,#326fd1); }
+.ls-tree li .pi{ font-size:10px; color:var(--surface-500,#737373); margin-right:5px; }
+.ls-tree .lvl-1{ padding-left:26px; }
+.ls-tree .lvl-2{ padding-left:44px; }
+.ls-tree .lvl-3{ padding-left:62px; }
+
+/* small checkbox matrix (e.g. No title / Page break / No total columns) */
+.ls-matrix{ width:100%; border-collapse:collapse; font-size:11.5px; }
+.ls-matrix th{ font-weight:500; color:var(--surface-500,#737373); padding:2px 6px; text-align:center; white-space:nowrap; line-height:1.2; }
+.ls-matrix td{ padding:3px 6px; }
+.ls-matrix td:first-child{ color:var(--surface-600,#616161); white-space:nowrap; }
+.ls-matrix .ls-mx-check{ text-align:center; }
+.ls-matrix .checkbox-box{ margin:0 auto; }
+
+/* horizontal labeled fields (sub-label above the control) */
+.ls-fieldrow{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-end; }
+.ls-field{ display:flex; flex-direction:column; gap:4px; }
+.ls-field > label{ font-size:11.5px; font-weight:500; color:var(--surface-600,#616161); }
+.ls-screen .ls-field .dropdown, .ls-screen .ls-field .input-text{ width:120px; box-sizing:border-box; }
+
+/* read-only mode: toggle .is-readonly on .ls-screen to render controls as plain values */
+.ls-screen.is-readonly .input-text,
+.ls-screen.is-readonly .dropdown{ border-color:transparent; background:transparent; }
+.ls-screen.is-readonly .dropdown{ pointer-events:none; }
+.ls-screen.is-readonly .dropdown-arrow{ visibility:hidden; }
+.ls-screen.is-readonly .checkbox-box{ pointer-events:none; }
+.ls-screen.is-readonly .ls-editonly{ display:none; }   /* browse "…" / inline-edit affordances hidden when read-only */
+
+/* ─────────────────────────────────────────────────────────────
+   6. BOTTOM DETAIL PANEL + tab strip (tabs act as the header)
+   ───────────────────────────────────────────────────────────── */
+.ls-bottom{ margin:0; height:220px; display:flex; flex-direction:column; }
+.ls-bottom .ls-tabbody{ background:var(--surface-0,#fff); flex:1 1 auto; overflow:auto; }
+.ls-tabbody{ padding:10px 16px; font-size:12px; color:var(--surface-700,#4f4f4f); min-height:48px; }
+.ls-tabbody .ls-empty{ color:var(--surface-500,#737373); }
+/* full-area editable text (e.g. a Detailed Description body) */
+.ls-detail-editor{ width:100%; height:100%; box-sizing:border-box; border:none; outline:none; resize:none; background:transparent; font:inherit; font-size:12px; line-height:1.6; color:var(--surface-800,#3d3d3d); }
+
+.ls-tabs-wrap{ display:flex; align-items:stretch; background:var(--surface-0,#fff); border-bottom:var(--border-1,1px) solid var(--surface-200,#e5e5e5); }
+.ls-tabs{ display:flex; gap:2px; overflow-x:auto; flex:1; min-width:0; scrollbar-width:none; -ms-overflow-style:none; scroll-behavior:smooth; }
+.ls-tabs::-webkit-scrollbar{ display:none; height:0; width:0; }
+.ls-tabs-more{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; width:28px; border:none; background:var(--surface-0,#fff); color:var(--surface-500,#737373); cursor:pointer; font-family:inherit; }
+.ls-tabs-more:hover{ background:var(--surface-100,#f5f5f5); color:var(--primary-500,#326fd1); }
+.ls-tab{ padding:7px 12px; font-size:12px; white-space:nowrap; border:none; background:none; color:var(--surface-600,#616161); border-bottom:2px solid transparent; cursor:pointer; font-family:inherit; }
+.ls-tab:hover{ color:var(--surface-900,#262626); }
+/* active bottom tab = underline accent (modern flat) */
+.ls-tab.is-active{ color:var(--primary-500,#326fd1); border-bottom-color:var(--primary-500,#326fd1); font-weight:600; }
+
+/* Bottom tab strip may use the design-system Tab Menu (.tab-menu / .tab-menu-item),
+   fitted into the strip with hidden scrollbar + optional end arrow (.ls-tabs-more) */
+.ls-tabs-wrap .tab-menu{ flex:1; min-width:0; margin:0; background:transparent; border-bottom:none; scrollbar-width:none; -ms-overflow-style:none; scroll-behavior:smooth; }
+.ls-tabs-wrap .tab-menu::-webkit-scrollbar{ display:none; height:0; width:0; }
+.ls-tabs-wrap .tab-menu-item{ padding:7px 12px; font-size:12px; margin-bottom:0; font-weight:400; }  /* drop the DS -2px + bold so tabs sit flush and un-bold */
+
+/* ─────────────────────────────────────────────────────────────
+   LEFT NAV — icon rail + panel (Design C, adapted from navigation.html)
+   Replaces the standard left nav on lift & shift pages.
+   ───────────────────────────────────────────────────────────── */
+.proj-content{ margin-left:344px; }                 /* rail (88) + panel (256) */
+.lnavc{ width:344px; flex-direction:row; padding:0; background:#fff; overflow:visible; }
+.lnavc-rail{ width:88px; flex-shrink:0; background:var(--surface-50,#fafafa); border-right:1px solid var(--surface-200,#e5e5e5); padding:12px 6px; overflow-y:auto; display:flex; flex-direction:column; gap:0; }
+.lnavc-railitem{ display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; padding:7px 4px; border:none; background:transparent; cursor:pointer; border-radius:8px; text-align:center; font-family:'Inter',sans-serif; font-size:10px; font-weight:500; line-height:1.2; color:var(--surface-800,#404040); }
+.lnavc-railitem:hover{ background:var(--surface-200,#e5e5e5); }
+.lnavc-railicon{ display:flex; align-items:center; justify-content:center; width:46px; height:34px; border-radius:8px; font-size:16px; color:var(--surface-700,#525252); }
+.lnavc-raillabel{ max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lnavc-railitem.is-active{ color:var(--primary-500,#326fd1); font-weight:600; }
+.lnavc-railitem.is-active .lnavc-railicon{ background:var(--blue-50,#eef3fb); color:var(--primary-500,#326fd1); }
+.lnavc-panel{ flex:1; min-width:0; overflow-y:auto; padding:6px 0; background:#fff; }
+.lnavc-grouphead{ display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; padding:10px 20px; border:none; background:transparent; cursor:pointer; font-family:'Inter',sans-serif; font-size:12px; font-weight:600; color:var(--surface-900,#262626); text-align:left; }
+.lnavc-grouphead:hover{ background:var(--surface-50,#fafafa); }
+.lnavc-chev{ font-size:12px; color:var(--surface-500,#737373); transition:transform .2s; flex-shrink:0; }
+.lnavc-group.is-open > .lnavc-grouphead .lnavc-chev{ transform:rotate(180deg); }
+.lnavc-items{ display:none; margin:0 0 6px 28px; border-left:1px solid var(--surface-200,#e5e5e5); }
+.lnavc-group.is-open > .lnavc-items{ display:block; }
+.lnavc-link{ display:flex; align-items:center; gap:8px; width:100%; padding:8px 20px; border:none; background:transparent; cursor:pointer; font-family:'Inter',sans-serif; font-size:12px; font-weight:400; color:var(--surface-700,#525252); text-align:left; text-decoration:none; }
+.lnavc-link:hover{ background:var(--surface-50,#fafafa); color:var(--surface-900,#262626); }
+.lnavc-link.is-active{ color:var(--primary-500,#326fd1); font-weight:500; }
+
+/* ─────────────────────────────────────────────────────────────
+   ACTION MENU (dropdown button) + REGISTER grid
+   ───────────────────────────────────────────────────────────── */
+.ls-menuwrap{ position:relative; display:inline-block; }
+.ls-menu{ position:absolute; top:100%; left:0; margin-top:4px; min-width:150px; background:var(--surface-0,#fff); border:1px solid var(--surface-200,#e5e5e5); border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,.12); padding:4px; z-index:50; display:none; }
+.ls-menu.open{ display:block; }
+.ls-menu-item{ display:flex; align-items:center; gap:9px; width:100%; padding:7px 10px; border:none; background:none; border-radius:6px; font-family:inherit; font-size:12.5px; color:var(--surface-800,#3d3d3d); text-align:left; cursor:pointer; }
+.ls-menu-item:hover{ background:var(--surface-100,#f5f5f5); }
+.ls-menu-item .pi{ font-size:12px; color:var(--surface-500,#737373); }
+/* register: narrow checkbox column, selected-row tint */
+.ls-reg .proj-table th:first-child, .ls-reg .proj-table td:first-child{ width:34px; text-align:center; padding-left:8px; padding-right:8px; }
+.ls-reg .proj-table tbody tr:hover td{ background:var(--surface-50,#fafafa); }
+
+</style>
 </head>
 <body>
   <div id="top-nav-mount"></div>
@@ -5490,86 +5789,50 @@ body.ai-panel-open .proj-content {
 
 </script>
   <script>renderTopNav({ activeItem: 'projects' });</script>
-
   <div id="left-nav-mount"></div>
-
-  <!-- ===== PAGE CONTENT ===== -->
   <div class="proj-content">
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a class="breadcrumb-item">Project Home</a>
       <i class="pi pi-angle-right breadcrumb-sep"></i>
-      <span class="breadcrumb-item breadcrumb-current">TODO Page</span>
+      <span class="breadcrumb-item">Contracts</span>
+      <i class="pi pi-angle-right breadcrumb-sep"></i>
+      <span class="breadcrumb-item breadcrumb-current">Compensation Events</span>
     </nav>
-
-    <!-- Page header (design-system section-header component) -->
     <div class="section-header">
-      <h1 class="section-title">TODO page title</h1>
-      <p class="section-desc">TODO short description of the screen.</p>
+      <h1 class="section-title">Compensation events</h1>
+      <p class="section-desc">Register of compensation events.</p>
     </div>
-
-    <!-- Lift & shift screen shell: each child of .ls-screen is a rounded card -->
     <div class="ls-screen">
-
-      <!-- Toolbar card -->
       <div class="toolbar"><div class="toolbar-start">
-        <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-plus btn-icon-left"></i>Add</button>
-        <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-times btn-icon-left"></i>Delete</button>
+        <div class="ls-menuwrap">
+          <button class="btn btn-sm btn-secondary" onclick="lsToggleMenu(this)" type="button"><i class="pi pi-cog btn-icon-left"></i>Actions<i class="pi pi-angle-down btn-icon-right"></i></button>
+          <div class="ls-menu">
+            <button class="ls-menu-item" onclick="regAdd()" type="button"><i class="pi pi-plus"></i>Add</button>
+            <button class="ls-menu-item" onclick="regDelete()" type="button"><i class="pi pi-trash"></i>Delete</button>
+            <button class="ls-menu-item" onclick="regCancel()" type="button"><i class="pi pi-ban"></i>Cancel</button>
+          </div>
+        </div>
         <span class="ls-toolbar-sep"></span>
-        <button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-filter btn-icon-left"></i>Filter</button>
+        <span class="ls-toolbar-info">Status</span>
+        <div class="dropdown" id="reg-filter" onclick="regFilterToggle(this)" style="width:150px"><span class="dropdown-value">All statuses</span><i class="pi pi-chevron-down dropdown-arrow"></i><ul class="dropdown-menu"><li class="dropdown-item dropdown-item-active" onclick="selectOption('reg-filter','All statuses');regFilter('All')">All statuses</li><li class="dropdown-item" onclick="selectOption('reg-filter','Notified');regFilter('Notified')">Notified</li><li class="dropdown-item" onclick="selectOption('reg-filter','Quotation due');regFilter('Quotation due')">Quotation due</li><li class="dropdown-item" onclick="selectOption('reg-filter','Implemented');regFilter('Implemented')">Implemented</li></ul></div>
       </div><div class="toolbar-end"><div class="toolbar-search-wrap">
-        <input type="text" class="toolbar-search" placeholder="Search"><i class="pi pi-search toolbar-search-icon"></i>
+        <input type="text" class="toolbar-search" placeholder="Search" oninput="regSearch(this.value)"><i class="pi pi-search toolbar-search-icon"></i>
       </div></div></div>
 
-      <!-- Master / detail split -->
-      <div class="ls-split">
-        <section class="panel ls-nav">
-          <header class="ls-head"><span class="panel-title">TODO - Navigation</span><i class="pi pi-thumbtack"></i></header>
-          <div class="table-wrap"><table class="proj-table">
-            <thead><tr><th class="ls-gutter"></th><th>ID</th><th>Description</th></tr></thead>
-            <tbody>
-              <!-- TODO: rows. Mark the current row class="is-selected" -->
-              <tr class="is-selected"><td class="ls-gutter"></td><td>R-001</td><td>First record</td></tr>
-              <tr><td class="ls-gutter"></td><td>R-002</td><td>Second record</td></tr>
-            </tbody>
-          </table></div>
-        </section>
-
-        <section class="panel ls-data">
-          <header class="ls-head"><span class="panel-title">TODO - Data</span></header>
-          <div class="panel-content">
-            <!-- TODO: form fields -->
-            <div class="ls-form">
-              <div class="ls-frow"><label>Field A</label><input class="input-text ls-sm" type="text" value=""></div>
-              <div class="ls-frow ls-frow-fill"><label>Description</label><input class="input-text ls-grow" type="text" value=""></div>
-            </div>
-
-            <fieldset class="ls-fieldset"><legend>Section title</legend>
-              <!-- TODO: grouped fields -->
-            </fieldset>
-          </div>
-        </section>
-      </div>
-
-      <!-- Bottom detail panel (tabs act as the header) -->
-      <section class="panel ls-bottom">
-        <div class="ls-tabs-wrap">
-          <ul class="tab-menu">
-            <li class="tab-menu-item active">Tab one</li>
-            <li class="tab-menu-item">Tab two</li>
-            <li class="tab-menu-item">Tab three</li>
-          </ul>
-          <button class="ls-tabs-more" title="Scroll tabs" type="button" onclick="this.parentNode.querySelector('.tab-menu').scrollBy({left:200,behavior:'smooth'})"><i class="pi pi-angle-right"></i></button>
-        </div>
-        <div class="ls-tabbody">TODO: active tab content.</div>
+      <section class="panel ls-data ls-reg">
+        <header class="ls-head"><span class="panel-title">Compensation events - register</span></header>
+        <div class="table-wrap"><table class="proj-table">
+          <thead><tr><th><span class="checkbox-box" id="regSelectAll" onclick="regSelectAll(this)"></span></th><th>CE ID</th><th>Description</th><th>Notified</th><th>Status</th><th>Amount</th></tr></thead>
+          <tbody id="regBody" data-cols="6">
+                <tr data-status="Notified"><td><span class="checkbox-box" onclick="toggleCheck(this)"></span></td><td>CE-001</td><td>Change to scope - additional works</td><td>12/01/2018</td><td>Notified</td><td>12,500</td></tr>
+                <tr data-status="Quotation due"><td><span class="checkbox-box" onclick="toggleCheck(this)"></span></td><td>CE-002</td><td>Adverse weather delay</td><td>05/02/2018</td><td>Quotation due</td><td>8,200</td></tr>
+                <tr data-status="Implemented"><td><span class="checkbox-box" onclick="toggleCheck(this)"></span></td><td>CE-003</td><td>Access restriction</td><td>18/02/2018</td><td>Implemented</td><td>3,000</td></tr>
+                </tbody>
+        </table></div>
       </section>
-
     </div>
   </div>
-
   <div id="toastContainer" class="toast-container"></div>
-
-  <!-- Component scripts -->
-  
   <script>
 /* ===== AI PANEL COMPONENT =====
  * Full-action AI assistant. Covers every workflow on the contracts page:
@@ -7158,36 +7421,46 @@ function applyProjectContext() {
       { key:'drive',        icon:'pi-folder',      label:'Drive' }
     ];
     (function renderRail(){
-      var mount = document.getElementById('left-nav-mount');
-      if (!mount) return;
-      var here = location.pathname.split('/').pop();
-      var activeKey = 'contracts';
+      var mount = document.getElementById('left-nav-mount'); if(!mount) return;
+      var here = location.pathname.split('/').pop(); var activeKey='contracts';
       LS_SECTIONS.forEach(function(s){ (s.groups||[]).forEach(function(g){ g.items.forEach(function(it){ if(it.href===here) activeKey=s.key; }); }); });
-      function panelFor(key){
-        var sec = LS_SECTIONS.filter(function(s){return s.key===key;})[0];
-        if (!sec || !sec.groups) return '<div style="padding:14px 20px;font-size:12px;color:var(--surface-500,#737373)">No items in this section.</div>';
-        return sec.groups.map(function(g){
-          var open = g.items.some(function(it){return it.href===here;});
-          var links = g.items.map(function(it){
-            var cur = it.href===here;
-            return '<a class="lnavc-link'+(cur?' is-active':'')+'" href="'+it.href+'"><span>'+it.label+'</span></a>';
-          }).join('');
-          return '<div class="lnavc-group'+(open?' is-open':'')+'"><button class="lnavc-grouphead" data-toggle="1" type="button"><span>'+g.label+'</span><i class="pi pi-angle-down lnavc-chev"></i></button><div class="lnavc-items">'+links+'</div></div>';
-        }).join('');
+      function panelFor(key){ var sec=LS_SECTIONS.filter(function(s){return s.key===key;})[0];
+        if(!sec||!sec.groups) return '<div style="padding:14px 20px;font-size:12px;color:var(--surface-500,#737373)">No items in this section.</div>';
+        return sec.groups.map(function(g){ var open=g.items.some(function(it){return it.href===here;});
+          var links=g.items.map(function(it){ var cur=it.href===here;
+            return '<a class="lnavc-link'+(cur?' is-active':'')+'" href="'+it.href+'"><span>'+it.label+'</span></a>'; }).join('');
+          return '<div class="lnavc-group'+(open?' is-open':'')+'"><button class="lnavc-grouphead" data-toggle="1" type="button"><span>'+g.label+'</span><i class="pi pi-angle-down lnavc-chev"></i></button><div class="lnavc-items">'+links+'</div></div>'; }).join('');
       }
-      var rail = LS_SECTIONS.map(function(s){
-        return '<button class="lnavc-railitem'+(s.key===activeKey?' is-active':'')+'" data-key="'+s.key+'" title="'+s.label+'" type="button"><span class="lnavc-railicon"><i class="pi '+s.icon+'"></i></span><span class="lnavc-raillabel">'+s.label+'</span></button>';
-      }).join('');
-      mount.outerHTML = '<aside class="lnav lnavc" id="leftNavC" aria-label="Project navigation"><div class="lnavc-rail" id="lnavcRail">'+rail+'</div><div class="lnavc-panel" id="lnavcPanel">'+panelFor(activeKey)+'</div></aside>';
+      var rail=LS_SECTIONS.map(function(s){ return '<button class="lnavc-railitem'+(s.key===activeKey?' is-active':'')+'" data-key="'+s.key+'" title="'+s.label+'" type="button"><span class="lnavc-railicon"><i class="pi '+s.icon+'"></i></span><span class="lnavc-raillabel">'+s.label+'</span></button>'; }).join('');
+      mount.outerHTML='<aside class="lnav lnavc" id="leftNavC" aria-label="Project navigation"><div class="lnavc-rail" id="lnavcRail">'+rail+'</div><div class="lnavc-panel" id="lnavcPanel">'+panelFor(activeKey)+'</div></aside>';
       var railEl=document.getElementById('lnavcRail'), panelEl=document.getElementById('lnavcPanel');
       railEl.addEventListener('click', function(e){ var b=e.target.closest('.lnavc-railitem'); if(!b)return; railEl.querySelectorAll('.lnavc-railitem').forEach(function(x){x.classList.remove('is-active');}); b.classList.add('is-active'); panelEl.innerHTML=panelFor(b.dataset.key); });
       panelEl.addEventListener('click', function(e){ var t=e.target.closest('[data-toggle]'); if(t){ t.closest('.lnavc-group').classList.toggle('is-open'); } });
     })();
-    (function scopeNav(){
-      var self=location.pathname.split('/').pop();
+    (function scopeNav(){ var self=location.pathname.split('/').pop();
       function lf(h){ var s=(h||'').split('#')[0].split('?')[0].split('/').pop(); return /^(liftandshift-contract-.+\.html|lift-shift_contract\.html)$/.test(s)?s:null; }
       Array.prototype.forEach.call(document.querySelectorAll('a[href]'), function(a){ var t=lf(a.getAttribute('href')); if(t&&t!==self){ a.setAttribute('href',t); } else { a.removeAttribute('href'); a.style.cursor='default'; } });
     })();
+  </script>
+  <script>
+  (function(){ 'use strict';
+    window.__q=''; window.__f='All';
+    window.applyReg=function(){ var q=window.__q,f=window.__f;
+      Array.prototype.forEach.call(document.querySelectorAll('#regBody tr'),function(tr){
+        var okQ=tr.textContent.toLowerCase().indexOf(q)>=0;
+        var okF=(f==='All')||(tr.getAttribute('data-status')===f);
+        tr.style.display=(okQ&&okF)?'':'none'; }); };
+    window.regSearch=function(v){ window.__q=(v||'').toLowerCase(); applyReg(); };
+    window.regFilter=function(s){ window.__f=s; applyReg(); };
+    function setCheck(b,on){ if(!b)return; b.classList.toggle('checked',on); b.innerHTML=on?'<i class="pi pi-check checkbox-check-icon"></i>':''; }
+    window.regSelectAll=function(el){ var on=!el.classList.contains('checked'); setCheck(el,on); Array.prototype.forEach.call(document.querySelectorAll('#regBody tr'),function(tr){ if(tr.style.display!=='none') setCheck(tr.querySelector('.checkbox-box'),on); }); };
+    window.regAdd=function(){ var tb=document.getElementById('regBody'); var cols=+tb.getAttribute('data-cols'); var h='<td><span class="checkbox-box" onclick="toggleCheck(this)"></span></td>'; for(var i=1;i<cols;i++) h+='<td></td>'; var tr=document.createElement('tr'); tr.innerHTML=h; tb.appendChild(tr); lsCloseMenus(); };
+    window.regDelete=function(){ Array.prototype.forEach.call(document.querySelectorAll('#regBody tr'),function(tr){ var b=tr.querySelector('.checkbox-box'); if(b&&b.classList.contains('checked')) tr.parentNode.removeChild(tr); }); lsCloseMenus(); };
+    window.regCancel=function(){ Array.prototype.forEach.call(document.querySelectorAll('#regBody .checkbox-box, #regSelectAll'),function(b){ setCheck(b,false); }); lsCloseMenus(); };
+    window.lsToggleMenu=function(btn){ var m=btn.parentNode.querySelector('.ls-menu'); var open=m.classList.contains('open'); lsCloseMenus(); if(!open){ var r=btn.getBoundingClientRect(); m.style.position='fixed'; m.style.top=(r.bottom+4)+'px'; m.style.left=r.left+'px'; m.classList.add('open'); } }; window.regFilterToggle=function(dd){ toggleDropdown('reg-filter'); var menu=dd.querySelector('.dropdown-menu'); if(dd.classList.contains('open')){ var r=dd.getBoundingClientRect(); menu.style.position='fixed'; menu.style.top=(r.bottom+2)+'px'; menu.style.left=r.left+'px'; menu.style.right='auto'; menu.style.width=r.width+'px'; } };
+    window.lsCloseMenus=function(){ Array.prototype.forEach.call(document.querySelectorAll('.ls-menu.open'),function(m){m.classList.remove('open');}); };
+    document.addEventListener('click', function(e){ if(!e.target.closest('.ls-menuwrap')) lsCloseMenus(); });
+  })();
   </script>
 </body>
 </html>

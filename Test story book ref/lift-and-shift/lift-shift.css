@@ -88,8 +88,11 @@
 /* ─────────────────────────────────────────────────────────────
    3. ACTION TOOLBAR — flat, white, compact
    ───────────────────────────────────────────────────────────── */
-.ls-screen .toolbar{ padding:6px 12px; gap:2px; flex-wrap:wrap; }
-.ls-screen .toolbar-start{ gap:1px; flex-wrap:wrap; align-items:center; }
+.ls-screen .toolbar{ padding:6px 12px; gap:2px; flex-wrap:nowrap; }
+/* buttons scroll horizontally instead of wrapping/overflowing the card */
+.ls-screen .toolbar-start{ gap:1px; flex-wrap:nowrap; align-items:center; flex:1 1 auto; min-width:0; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none; }
+.ls-screen .toolbar-start::-webkit-scrollbar{ height:0; width:0; display:none; }
+.ls-screen .toolbar-end{ flex:0 0 auto; }
 .ls-screen .toolbar .btn-secondary{ background:transparent; border-color:transparent; color:var(--surface-700,#4f4f4f); box-shadow:none; font-weight:500; }
 .ls-screen .toolbar .btn-secondary:hover{ background:var(--surface-100,#f5f5f5); border-color:transparent; }
 .ls-screen .toolbar .btn-group{ border:none; box-shadow:none; }
@@ -264,3 +267,40 @@
 .ls-tabs-wrap .tab-menu{ flex:1; min-width:0; margin:0; background:transparent; border-bottom:none; scrollbar-width:none; -ms-overflow-style:none; scroll-behavior:smooth; }
 .ls-tabs-wrap .tab-menu::-webkit-scrollbar{ display:none; height:0; width:0; }
 .ls-tabs-wrap .tab-menu-item{ padding:7px 12px; font-size:12px; margin-bottom:0; font-weight:400; }  /* drop the DS -2px + bold so tabs sit flush and un-bold */
+
+/* ─────────────────────────────────────────────────────────────
+   LEFT NAV — icon rail + panel (Design C, adapted from navigation.html)
+   Replaces the standard left nav on lift & shift pages.
+   ───────────────────────────────────────────────────────────── */
+.proj-content{ margin-left:344px; }                 /* rail (88) + panel (256) */
+.lnavc{ width:344px; flex-direction:row; padding:0; background:#fff; overflow:visible; }
+.lnavc-rail{ width:88px; flex-shrink:0; background:var(--surface-50,#fafafa); border-right:1px solid var(--surface-200,#e5e5e5); padding:12px 6px; overflow-y:auto; display:flex; flex-direction:column; gap:0; }
+.lnavc-railitem{ display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; padding:7px 4px; border:none; background:transparent; cursor:pointer; border-radius:8px; text-align:center; font-family:'Inter',sans-serif; font-size:10px; font-weight:500; line-height:1.2; color:var(--surface-800,#404040); }
+.lnavc-railitem:hover{ background:var(--surface-200,#e5e5e5); }
+.lnavc-railicon{ display:flex; align-items:center; justify-content:center; width:46px; height:34px; border-radius:8px; font-size:16px; color:var(--surface-700,#525252); }
+.lnavc-raillabel{ max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lnavc-railitem.is-active{ color:var(--primary-500,#326fd1); font-weight:600; }
+.lnavc-railitem.is-active .lnavc-railicon{ background:var(--blue-50,#eef3fb); color:var(--primary-500,#326fd1); }
+.lnavc-panel{ flex:1; min-width:0; overflow-y:auto; padding:6px 0; background:#fff; }
+.lnavc-grouphead{ display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; padding:10px 20px; border:none; background:transparent; cursor:pointer; font-family:'Inter',sans-serif; font-size:12px; font-weight:600; color:var(--surface-900,#262626); text-align:left; }
+.lnavc-grouphead:hover{ background:var(--surface-50,#fafafa); }
+.lnavc-chev{ font-size:12px; color:var(--surface-500,#737373); transition:transform .2s; flex-shrink:0; }
+.lnavc-group.is-open > .lnavc-grouphead .lnavc-chev{ transform:rotate(180deg); }
+.lnavc-items{ display:none; margin:0 0 6px 28px; border-left:1px solid var(--surface-200,#e5e5e5); }
+.lnavc-group.is-open > .lnavc-items{ display:block; }
+.lnavc-link{ display:flex; align-items:center; gap:8px; width:100%; padding:8px 20px; border:none; background:transparent; cursor:pointer; font-family:'Inter',sans-serif; font-size:12px; font-weight:400; color:var(--surface-700,#525252); text-align:left; text-decoration:none; }
+.lnavc-link:hover{ background:var(--surface-50,#fafafa); color:var(--surface-900,#262626); }
+.lnavc-link.is-active{ color:var(--primary-500,#326fd1); font-weight:500; }
+
+/* ─────────────────────────────────────────────────────────────
+   ACTION MENU (dropdown button) + REGISTER grid
+   ───────────────────────────────────────────────────────────── */
+.ls-menuwrap{ position:relative; display:inline-block; }
+.ls-menu{ position:absolute; top:100%; left:0; margin-top:4px; min-width:150px; background:var(--surface-0,#fff); border:1px solid var(--surface-200,#e5e5e5); border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,.12); padding:4px; z-index:50; display:none; }
+.ls-menu.open{ display:block; }
+.ls-menu-item{ display:flex; align-items:center; gap:9px; width:100%; padding:7px 10px; border:none; background:none; border-radius:6px; font-family:inherit; font-size:12.5px; color:var(--surface-800,#3d3d3d); text-align:left; cursor:pointer; }
+.ls-menu-item:hover{ background:var(--surface-100,#f5f5f5); }
+.ls-menu-item .pi{ font-size:12px; color:var(--surface-500,#737373); }
+/* register: narrow checkbox column, selected-row tint */
+.ls-reg .proj-table th:first-child, .ls-reg .proj-table td:first-child{ width:34px; text-align:center; padding-left:8px; padding-right:8px; }
+.ls-reg .proj-table tbody tr:hover td{ background:var(--surface-50,#fafafa); }
