@@ -2201,6 +2201,13 @@ ul { list-style: none; }
 /* Dropdown trigger */
 .tnav-link-dropdown { gap: 5px; }
 .tnav-chevron { font-size: 10px; color: var(--surface-500); transition: transform var(--transition-fast); }
+
+/* ===== TOP-NAV "PROJECTS" DROPDOWN — dark pill trigger (per design) ===== */
+#tnd-projects > .tnav-link-dropdown{ height:34px; align-self:center; margin:0 4px 0 0; padding:0 14px; border-radius:8px; background:#4b4b4b; color:#fff; font-weight:600; font-size:14px; border-bottom:none; }
+#tnd-projects > .tnav-link-dropdown:hover{ background:#5a5a5a; color:#fff; }
+#tnd-projects.open > .tnav-link-dropdown{ background:#3f3f3f; color:#fff; }
+#tnd-projects > .tnav-link-dropdown .tnav-chevron{ color:#fff; font-size:11px; }
+.tnav-proj-item{ cursor:pointer; }
 .tnav-item.open .tnav-chevron { transform: rotate(180deg); }
 .tnav-item.open > .tnav-link { color: var(--surface-900); background: var(--surface-50); }
 
@@ -5832,5 +5839,15 @@ function applyProjectContext() {
 }
 
 </script>
+  <script>
+  /* ls-dropdown-escape: keep DS dropdown menus from being clipped by card overflow:hidden */
+  (function(){ if(window.__lsDDEsc) return; window.__lsDDEsc=1;
+    function place(){ Array.prototype.forEach.call(document.querySelectorAll('.ls-screen .dropdown.open'),function(dd){
+      var m=dd.querySelector('.dropdown-menu'); if(!m) return;
+      var r=dd.getBoundingClientRect();
+      m.style.position='fixed'; m.style.top=(r.bottom+2)+'px'; m.style.left=r.left+'px'; m.style.right='auto'; m.style.minWidth=r.width+'px'; m.style.maxHeight='300px'; m.style.overflowY='auto'; }); }
+    document.addEventListener('click', function(){ setTimeout(place,0); }, false);
+  })();
+  </script>
 </body>
 </html>

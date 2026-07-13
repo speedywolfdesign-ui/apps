@@ -2305,6 +2305,13 @@ ul { list-style: none; }
 /* Dropdown trigger */
 .tnav-link-dropdown { gap: 5px; }
 .tnav-chevron { font-size: 10px; color: var(--surface-500); transition: transform var(--transition-fast); }
+
+/* ===== TOP-NAV "PROJECTS" DROPDOWN — dark pill trigger (per design) ===== */
+#tnd-projects > .tnav-link-dropdown{ height:34px; align-self:center; margin:0 4px 0 0; padding:0 14px; border-radius:8px; background:#4b4b4b; color:#fff; font-weight:600; font-size:14px; border-bottom:none; }
+#tnd-projects > .tnav-link-dropdown:hover{ background:#5a5a5a; color:#fff; }
+#tnd-projects.open > .tnav-link-dropdown{ background:#3f3f3f; color:#fff; }
+#tnd-projects > .tnav-link-dropdown .tnav-chevron{ color:#fff; font-size:11px; }
+.tnav-proj-item{ cursor:pointer; }
 .tnav-item.open .tnav-chevron { transform: rotate(180deg); }
 .tnav-item.open > .tnav-link { color: var(--surface-900); background: var(--surface-50); }
 
@@ -5338,9 +5345,12 @@ body.ai-panel-open .proj-content {
   background:var(--surface-0,#fff);
   border:var(--border-1,1px) solid var(--surface-200,#e5e5e5);
   border-radius:10px;
-  box-shadow:0 1px 2px rgba(16,24,40,.05);
+  box-shadow:none;
   overflow:hidden;
 }
+/* flat look — no elevation shadows on any dropdown/menu in lift & shift */
+.ls-screen .dropdown-menu,
+.dropdown-menu{ box-shadow:none; }
 
 /* PAGE HEADER — DS .section-header tuned for lift & shift screens:
    weight 600 (not extrabold), no bottom border, 16px gap below */
@@ -5587,11 +5597,21 @@ body.ai-panel-open .proj-content {
 .lnavc-link:hover{ background:var(--surface-50,#fafafa); color:var(--surface-900,#262626); }
 .lnavc-link.is-active{ color:var(--primary-500,#326fd1); font-weight:500; }
 
+/* ── Collapse / expand toggle + collapsed hover-flyout (icon rail + panel, from navigation.html Design C) ── */
+.lnavc-collapse{ position:absolute; right:-11px; top:14px; z-index:130; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; padding:0; line-height:1; border:1px solid var(--surface-200,#e5e5e5); border-radius:50%; background:var(--surface-0,#fff); box-shadow:none; cursor:pointer; color:var(--surface-500,#737373); font-size:12px; }
+.lnavc-collapse:hover{ color:var(--surface-900,#262626); border-color:var(--surface-300,#d4d4d4); }
+.lnavc-collapse .pi{ display:block; line-height:1; transition:transform .2s; }
+.lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
+.lnavc[data-cmode="collapsed"]{ width:88px; }
+.lnavc[data-cmode="collapsed"] ~ .proj-content{ margin-left:88px; }
+.lnavc[data-cmode="collapsed"] .lnavc-panel{ position:absolute; left:88px; top:0; bottom:0; width:256px; background:var(--surface-0,#fff); border-right:1px solid var(--surface-200,#e5e5e5); box-shadow:none; z-index:120; overflow-y:auto; transform:translateX(-10px); opacity:0; pointer-events:none; transition:transform .18s ease, opacity .18s ease; }
+.lnavc[data-cmode="collapsed"].flyout-open .lnavc-panel{ transform:translateX(0); opacity:1; pointer-events:auto; }
+
 /* ─────────────────────────────────────────────────────────────
    ACTION MENU (dropdown button) + REGISTER grid
    ───────────────────────────────────────────────────────────── */
 .ls-menuwrap{ position:relative; display:inline-block; }
-.ls-menu{ position:absolute; top:100%; left:0; margin-top:4px; min-width:150px; background:var(--surface-0,#fff); border:1px solid var(--surface-200,#e5e5e5); border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,.12); padding:4px; z-index:50; display:none; }
+.ls-menu{ position:absolute; top:100%; left:0; margin-top:4px; min-width:150px; background:var(--surface-0,#fff); border:1px solid var(--surface-200,#e5e5e5); border-radius:8px; box-shadow:none; padding:4px; z-index:50; display:none; }
 .ls-menu.open{ display:block; }
 .ls-menu-item{ display:flex; align-items:center; gap:9px; width:100%; padding:7px 10px; border:none; background:none; border-radius:6px; font-family:inherit; font-size:12.5px; color:var(--surface-800,#3d3d3d); text-align:left; cursor:pointer; }
 .ls-menu-item:hover{ background:var(--surface-100,#f5f5f5); }
@@ -5600,9 +5620,142 @@ body.ai-panel-open .proj-content {
 .ls-reg .proj-table th:first-child, .ls-reg .proj-table td:first-child{ width:34px; text-align:center; padding-left:8px; padding-right:8px; }
 .ls-reg .proj-table tbody tr:hover td{ background:var(--surface-50,#fafafa); }
 
+
+/* ===== LAUNCHER CARDS (grid of clickable action cards) ===== */
+.ls-cards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+.ls-card{ display:flex; gap:12px; align-items:flex-start; padding:16px; background:var(--surface-0,#fff); border:1px solid var(--surface-200,#e5e5e5); border-radius:10px; text-decoration:none; color:inherit; cursor:pointer; transition:border-color .12s ease, background .12s ease; }
+.ls-card:hover{ border-color:var(--primary-400,#5b8def); background:var(--blue-50,#eef3fb); }
+.ls-card-icon{ flex:0 0 auto; width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; background:var(--blue-50,#eef3fb); color:var(--primary-600,#2b5cb0); }
+.ls-card-icon .pi{ font-size:18px; }
+.ls-card-body{ min-width:0; }
+.ls-card-title{ display:block; font-size:13.5px; font-weight:600; color:var(--surface-900,#1f1f1f); margin:0 0 3px; }
+.ls-card-desc{ display:block; font-size:12px; color:var(--surface-500,#737373); margin:0; line-height:1.4; }
+
+
+/* ===== NAV DESIGN SWITCHER (nested / ribbon / rail) ===== */
+body[data-lsnav="nested"] .proj-content{ margin-left:var(--lnav-width-open,256px); }
+body[data-lsnav="rail"] .proj-content{ margin-left:344px; }
+body[data-lsnav="ribbon"] .proj-content{ margin-left:0; margin-top:150px; }
+body[data-lsnav="ribbon"] #leftNavC[data-cmode]{ display:none; }
+body[data-lsnav="nested"].lnav-collapsed .proj-content{ margin-left:var(--lnav-width-collapsed,56px); }
+.lnav-collapse-btn{ position:absolute; right:-11px; top:14px; z-index:130; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; padding:0; line-height:1; border:1px solid var(--surface-200,#e5e5e5); border-radius:50%; background:var(--surface-0,#fff); cursor:pointer; color:var(--surface-500,#737373); font-size:12px; }
+.lnav-collapse-btn:hover{ color:var(--surface-900,#262626); border-color:var(--surface-300,#d4d4d4); }
+.lnav-collapse-btn .pi{ display:block; line-height:1; transition:transform .2s; }
+.lnav-collapse-btn.is-collapsed .pi{ transform:rotate(180deg); }
+/* Ribbon */
+.lsrib{ position:fixed; top:56px; left:0; right:0; z-index:80; background:var(--surface-0,#fff); border-bottom:1px solid var(--surface-200,#e5e5e5); }
+.lsrib-tabs{ display:flex; gap:2px; padding:4px 12px 0; overflow-x:auto; border-bottom:1px solid var(--surface-200,#e5e5e5); scrollbar-width:none; }
+.lsrib-tabs::-webkit-scrollbar{ height:0; }
+.lsrib-tab{ display:flex; align-items:center; gap:7px; padding:8px 14px; background:none; border:none; border-bottom:3px solid transparent; cursor:pointer; font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; color:var(--surface-700,#4f4f4f); white-space:nowrap; }
+.lsrib-tab .pi{ font-size:15px; color:var(--primary-600,#2859a7); }
+.lsrib-tab:hover{ background:var(--surface-100,#f5f5f5); }
+.lsrib-tab.is-active{ border-bottom-color:var(--primary-500,#326fd1); color:var(--primary-700,#1e437d); }
+.lsrib-groups{ display:flex; gap:0; padding:8px 12px; overflow-x:auto; align-items:flex-start; }
+.lsrib-group{ display:flex; flex-direction:column; padding:0 14px; border-right:1px solid var(--surface-200,#e5e5e5); }
+.lsrib-group:last-child{ border-right:none; }
+.lsrib-glabel{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--surface-500,#737373); font-weight:700; margin-bottom:5px; white-space:nowrap; }
+.lsrib-links{ display:flex; flex-direction:column; flex-wrap:wrap; align-content:flex-start; gap:2px 20px; max-height:158px; }
+.lsrib-link{ font-size:12px; color:var(--surface-700,#525252); text-decoration:none; white-space:nowrap; padding:2px 3px; border-radius:4px; }
+.lsrib-link:hover{ background:var(--blue-50,#eef3fb); color:var(--primary-700,#1e437d); }
+.lsrib-link.is-active{ color:var(--primary-600,#2859a7); font-weight:600; }
+/* Settings gear + modal */
+.lsnav-gear{ position:fixed; top:64px; right:18px; z-index:95; width:34px; height:34px; border-radius:50%; border:1px solid var(--surface-200,#e5e5e5); background:var(--surface-0,#fff); color:var(--surface-600,#616161); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.lsnav-gear:hover{ color:var(--primary-600,#2859a7); border-color:var(--surface-300,#d4d4d4); }
+.lsnav-gear .pi{ font-size:15px; }
+.lsnav-ov{ position:fixed; inset:0; z-index:200; background:rgba(16,24,40,.35); display:flex; align-items:center; justify-content:center; }
+.lsnav-modal{ width:420px; max-width:92vw; background:var(--surface-0,#fff); border-radius:14px; padding:18px 20px 20px; }
+.lsnav-modal-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.lsnav-modal-h b{ font-size:15px; color:var(--surface-900,#1f1f1f); }
+.lsnav-x{ border:none; background:none; font-size:20px; line-height:1; color:var(--surface-500,#737373); cursor:pointer; }
+.lsnav-opt{ display:flex; align-items:center; gap:12px; width:100%; padding:12px 14px; border:1px solid var(--surface-200,#e5e5e5); border-radius:10px; background:var(--surface-0,#fff); cursor:pointer; text-align:left; font-family:'Inter',sans-serif; margin-bottom:10px; }
+.lsnav-opt:hover{ border-color:var(--primary-400,#5b8def); }
+.lsnav-opt.is-active{ border-color:var(--primary-500,#326fd1); background:var(--blue-50,#eef3fb); }
+.lsnav-opt .pi{ font-size:20px; color:var(--primary-600,#2859a7); width:22px; text-align:center; }
+.lsnav-opt b{ display:block; font-size:13.5px; color:var(--surface-900,#1f1f1f); }
+.lsnav-opt small{ color:var(--surface-500,#737373); font-size:12px; }
+
 </style>
 </head>
 <body>
+<script>
+window.LS=(function(){var P='lsc:';
+function rd(k,d){try{var v=localStorage.getItem(P+k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function wr(k,v){try{localStorage.setItem(P+k,JSON.stringify(v));}catch(e){}}
+var SEED={contracts:[
+      { id:'C001', desc:'Engineering, Procurement & Construction Mgmt Contract', rfp:'C001',
+        currency:'CAD', fx:'0.750000',
+        totals:[
+          ['10,403','','10,403','','10,403','51.39','5,347','5,582','','4,822','53.65',''],
+          ['2,702,522','','2,702,522','','2,702,522','51.36','1,387,916','1,446,412','','1,256,110','53.52','']
+        ],
+        status:{ id:'Awarded', event:'', award:'12/19/2017', mob:'1/2/2018',
+                 contractorId:'ARES PROJECT MA', contractorName:'Ares Project Management Consulting Services' },
+        refs:{ agreement:'EELEC', option:'', commit:true, control:'', prime:'PC-0001', alt:'' },
+        detail:'To provided engineering, procurement and construction management services.' },
+
+      { id:'C002', desc:'Surveying Services', rfp:'C002',
+        currency:'CAD', fx:'0.750000',
+        totals:[
+          ['1,240','','1,240','','1,240','40.00','496','520','','360','29.03',''],
+          ['186,000','','186,000','','186,000','40.00','74,400','78,000','','54,000','29.03','']
+        ],
+        status:{ id:'Awarded', event:'', award:'2/14/2018', mob:'3/1/2018',
+                 contractorId:'GEOSPAN', contractorName:'GeoSpan Land Surveying Ltd.' },
+        refs:{ agreement:'GSURV', option:'', commit:false, control:'', prime:'PC-0002', alt:'' },
+        detail:'Topographic and boundary surveying services for the project site.' },
+
+      { id:'C003', desc:'Concrete Installation Contract', rfp:'C003',
+        currency:'USD', fx:'1.000000',
+        totals:[
+          ['8,900','','8,900','','8,900','62.10','5,527','5,900','','5,100','57.30',''],
+          ['1,450,000','','1,450,000','','1,450,000','62.10','900,450','962,000','','831,700','57.36','']
+        ],
+        status:{ id:'Awarded', event:'', award:'4/3/2018', mob:'5/2/2018',
+                 contractorId:'FORMACON', contractorName:'FormaCon Concrete Contractors Inc.' },
+        refs:{ agreement:'CCONC', option:'', commit:true, control:'', prime:'PC-0003', alt:'' },
+        detail:'Supply, form, place and finish structural concrete works.' },
+
+      { id:'C004', desc:'Mechanical and Piping Installation Contract', rfp:'C004',
+        currency:'USD', fx:'1.000000',
+        totals:[
+          ['12,600','','12,600','','12,600','18.50','2,331','2,500','','2,100','16.67',''],
+          ['3,180,000','','3,180,000','','3,180,000','18.50','588,300','630,000','','529,200','16.67','']
+        ],
+        status:{ id:'Pending', event:'Bid evaluation', award:'', mob:'',
+                 contractorId:'MECHPRO', contractorName:'MechPro Industrial Piping LLC' },
+        refs:{ agreement:'MMECH', option:'', commit:false, control:'', prime:'PC-0004', alt:'' },
+        detail:'Fabrication and installation of mechanical systems and process piping.' },
+
+      { id:'TEST CONTRACT', desc:'Thisis test contract', rfp:'',
+        currency:'CAD', fx:'0.750000',
+        totals:[
+          ['','','','','','','','','','','',''],
+          ['','','','','','','','','','','','']
+        ],
+        status:{ id:'Draft', event:'', award:'', mob:'',
+                 contractorId:'', contractorName:'' },
+        refs:{ agreement:'', option:'', commit:false, control:'', prime:'', alt:'' },
+        detail:'' },
+
+      { id:'UX002', desc:'UX test 2 desc.', rfp:'',
+        currency:'USD', fx:'1.000000',
+        totals:[
+          ['','','','','','','','','','','',''],
+          ['','','','','','','','','','','','']
+        ],
+        status:{ id:'Draft', event:'', award:'', mob:'',
+                 contractorId:'', contractorName:'' },
+        refs:{ agreement:'', option:'', commit:false, control:'', prime:'', alt:'' },
+        detail:'' }
+    ],instructedChanges:[],executedChanges:[]};
+function ensure(k){if(localStorage.getItem(P+k)==null)wr(k,SEED[k]!==undefined?SEED[k]:[]);}
+return{get:function(k){ensure(k);return rd(k,[]);},set:function(k,v){wr(k,v);},
+seed:function(k,d){if(localStorage.getItem(P+k)==null)wr(k,d);return rd(k,[]);},
+add:function(k,o){var a=this.get(k);a.push(o);wr(k,a);return o;},
+update:function(k,p,patch){var a=this.get(k);for(var i=0;i<a.length;i++)if(p(a[i],i)){for(var q in patch)a[i][q]=patch[q];}wr(k,a);},
+remove:function(k,p){var a=this.get(k).filter(function(x,i){return !p(x,i);});wr(k,a);},
+uid:function(pfx){var n=(rd('seq:'+pfx,0))+1;wr('seq:'+pfx,n);return pfx+'-'+('000'+n).slice(-4);}};})();
+</script>
   <div id="top-nav-mount"></div>
   <script>
 /* ===== TOP NAVIGATION COMPONENT =====
@@ -5640,7 +5793,7 @@ body.ai-panel-open .proj-content {
       </button>
       <ul class="tnav-dropdown tnav-dropdown-projects" role="menu">
         <div class="tnav-proj-header">Recently opened</div>
-        <a class="tnav-proj-item" href="project-home.html" onclick="selectProject(this)"
+        <a class="tnav-proj-item" onclick="selectProject(this)"
            data-proj-name="Project 001" data-proj-id="0128-0919-0001" data-proj-initials="P1" data-proj-color="#1565c0">
           <span class="tnav-proj-avatar" style="background:#1565c0">P1</span>
           <div class="tnav-proj-info">
@@ -5648,7 +5801,7 @@ body.ai-panel-open .proj-content {
             <span class="tnav-proj-name">Project 001</span>
           </div>
         </a>
-        <a class="tnav-proj-item" href="project-home.html" onclick="selectProject(this)"
+        <a class="tnav-proj-item" onclick="selectProject(this)"
            data-proj-name="Project 002" data-proj-id="0128-0919-1228" data-proj-initials="P2" data-proj-color="#00897b">
           <span class="tnav-proj-avatar" style="background:#00897b">P2</span>
           <div class="tnav-proj-info">
@@ -5656,7 +5809,7 @@ body.ai-panel-open .proj-content {
             <span class="tnav-proj-name">Project 002</span>
           </div>
         </a>
-        <a class="tnav-proj-item" href="project-home.html" onclick="selectProject(this)"
+        <a class="tnav-proj-item" onclick="selectProject(this)"
            data-proj-name="Project 003" data-proj-id="0128-0919-1229" data-proj-initials="P3" data-proj-color="#8e44ad">
           <span class="tnav-proj-avatar" style="background:#8e44ad">P3</span>
           <div class="tnav-proj-info">
@@ -5664,7 +5817,7 @@ body.ai-panel-open .proj-content {
             <span class="tnav-proj-name">Project 003</span>
           </div>
         </a>
-        <a class="tnav-proj-item" href="project-home.html" onclick="selectProject(this)"
+        <a class="tnav-proj-item" onclick="selectProject(this)"
            data-proj-name="Project 004" data-proj-id="0128-0919-1230" data-proj-initials="P4" data-proj-color="#1abc9c">
           <span class="tnav-proj-avatar" style="background:#1abc9c">P4</span>
           <div class="tnav-proj-info">
@@ -5672,7 +5825,7 @@ body.ai-panel-open .proj-content {
             <span class="tnav-proj-name">Project 004</span>
           </div>
         </a>
-        <a class="tnav-proj-item" href="project-home.html" onclick="selectProject(this)"
+        <a class="tnav-proj-item" onclick="selectProject(this)"
            data-proj-name="Project 005" data-proj-id="0128-0919-1231" data-proj-initials="P5" data-proj-color="#00acc1">
           <span class="tnav-proj-avatar" style="background:#00acc1">P5</span>
           <div class="tnav-proj-info">
@@ -5680,7 +5833,7 @@ body.ai-panel-open .proj-content {
             <span class="tnav-proj-name">Project 005</span>
           </div>
         </a>
-        <a class="tnav-proj-item" href="project-home.html" onclick="selectProject(this)"
+        <a class="tnav-proj-item" onclick="selectProject(this)"
            data-proj-name="Project 006" data-proj-id="0128-0919-1232" data-proj-initials="P6" data-proj-color="#283593">
           <span class="tnav-proj-avatar" style="background:#283593">P6</span>
           <div class="tnav-proj-info">
@@ -7376,9 +7529,30 @@ function applyProjectContext() {
   <script>
     var LS_SECTIONS = [
       { key:'project-home', icon:'pi-home',       label:'Home' },
-      { key:'cost',         icon:'pi-chart-line',  label:'Cost' },
+      { key:'cost', icon:'pi-chart-line', label:'Cost', groups:[
+        { label:'Data entry', items:[ { label:'Control accounts', href:'cost/lns-cost-control-accounts.html' },{ label:'Staffing plans', href:'cost/lns-cost-staffing-plans.html' },{ label:'Employee plans', href:'cost/lns-cost-employee-plans.html' },{ label:'Budget details', href:'cost/lns-cost-budget-details.html' },{ label:'Commitments', href:'cost/lns-cost-commitments.html' },{ label:'Period actuals', href:'cost/lns-cost-period-actuals.html' },{ label:'Variance analysis', href:'cost/lns-cost-variance-analysis.html' },{ label:'Settings', href:'cost/lns-cost-settings.html' } ] },
+        { label:'Definitions', items:[ { label:'Default / cost reporting periods', href:'cost/lns-cost-default-cost-reporting-periods.html' },{ label:'Funding sources', href:'cost/lns-cost-funding-sources.html' },{ label:'Project staff', href:'cost/lns-cost-project-staff.html' },{ label:'Ledger / control account mapping', href:'cost/lns-cost-ledger-control-account-mapping.html' },{ label:'Ledger / control element mapping', href:'cost/lns-cost-ledger-control-element-mapping.html' },{ label:'Escalations', href:'cost/lns-cost-escalations.html' },{ label:'Multipliers', href:'cost/lns-cost-multipliers.html' },{ label:'Indirect costs', href:'cost/lns-cost-indirect-costs.html' },{ label:'Change order impact', href:'cost/lns-cost-change-order-impact.html' },{ label:'Change order status', href:'cost/lns-cost-change-order-status.html' },{ label:'Trend / risk steps', href:'cost/lns-cost-trend-risk-steps.html' },{ label:'Change management explanation titles', href:'cost/lns-cost-change-management-explanation-titles.html' } ] },
+        { label:'Calculations', items:[ { label:'Calculate totals', href:'cost/lns-cost-calculate-totals.html' },{ label:'Spread time phased data', href:'cost/lns-cost-spread-time-phased-data.html' },{ label:'Close period', href:'cost/lns-cost-close-period.html' },{ label:'Other calculations', href:'cost/lns-cost-other-calculations.html' } ] },
+        { label:'Reports', items:[ { label:'Reports', href:'cost/lns-cost-reports.html' },{ label:'Lists', href:'cost/lns-cost-lists.html' },{ label:'Summary', href:'cost/lns-cost-summary.html' },{ label:'Excel reports', href:'cost/lns-cost-excel-reports.html' },{ label:'Report writer', href:'cost/lns-cost-report-writer.html' } ] },
+        { label:'Import / export & utilities', items:[ { label:'Import / export', href:'cost/lns-cost-import-export.html' },{ label:'Special import / export', href:'cost/lns-cost-special-import-export.html' },{ label:'Copy dates to accounts', href:'cost/lns-cost-copy-dates-to-accounts.html' },{ label:'Validate data', href:'cost/lns-cost-validate-data.html' },{ label:'Other utilities', href:'cost/lns-cost-other-utilities.html' } ] },
+        { label:'AI forecasting', items:[ { label:'AI forecasting', href:'cost/lns-cost-ai-forecasting.html' } ] } ] },
       { key:'field',        icon:'pi-map',         label:'Field' },
-      { key:'procurement',  icon:'pi-box',         label:'Procurement' },
+      { key:'procurement',  icon:'pi-box',         label:'Procurement', groups:[
+        { label:'Procurement', items:[
+          { label:'Purchase orders',    href:'procurement/lns-procure-purchase-orders.html' },
+          { label:'Instructed changes', href:'procurement/lns-procure-instructed-changes.html' },
+          { label:'Executed changes',   href:'procurement/lns-procure-executed-changes.html' },
+          { label:'Shipments',          href:'procurement/lns-procure-shipments.html' },
+          { label:'Definitions',        href:'procurement/lns-procure-definitions.html' },
+          { label:'Settings',           href:'procurement/lns-procure-settings.html' },
+          { label:'Calculate totals',   href:'procurement/lns-procure-calculate-totals.html' },
+          { label:'Reports',            href:'procurement/lns-procure-reports.html' },
+          { label:'Lists',              href:'procurement/lns-procure-lists.html' },
+          { label:'Excel reports',      href:'procurement/lns-procure-excel-reports.html' },
+          { label:'Report writer',      href:'procurement/lns-procure-report-writer.html' },
+          { label:'Import / export',    href:'procurement/lns-procure-import-export.html' },
+          { label:'Validate data',      href:'procurement/lns-procure-validate-data.html' },
+          { label:'Other utilities',    href:'procurement/lns-procure-other-utilities.html' } ] } ] },
       { key:'contracts',    icon:'pi-file',        label:'Contracts', groups:[
         { label:'Contract', items:[
           { label:'Contracts',          href:'lift-shift_contract.html' },
@@ -7401,41 +7575,144 @@ function applyProjectContext() {
           { label:'Quotations',            href:'liftandshift-contract-quotations.html' },
           { label:'Implemented changes',   href:'liftandshift-contract-implemented-changes.html' } ] }
       ] },
-      { key:'invoices',     icon:'pi-book',        label:'Invoices' },
-      { key:'change',       icon:'pi-sync',        label:'Change' },
+      { key:'prime', icon:'pi-verified', label:'Prime contract', groups:[
+        { label:'Prime contract', items:[
+          { label:'Prime contracts', href:'prime-contract/lns-prime-prime-contracts.html' },
+          { label:'Instructed changes', href:'prime-contract/lns-prime-instructed-changes.html' },
+          { label:'Executed changes', href:'prime-contract/lns-prime-executed-changes.html' },
+          { label:'Settings', href:'prime-contract/lns-prime-settings.html' },
+          { label:'Calculate totals', href:'prime-contract/lns-prime-calculate-totals.html' },
+          { label:'Update PO / contract data', href:'prime-contract/lns-prime-update-po-contract-data.html' },
+          { label:'Reports', href:'prime-contract/lns-prime-reports.html' },
+          { label:'Lists', href:'prime-contract/lns-prime-lists.html' },
+          { label:'Excel reports', href:'prime-contract/lns-prime-excel-reports.html' },
+          { label:'Report writer', href:'prime-contract/lns-prime-report-writer.html' },
+          { label:'Import / export', href:'prime-contract/lns-prime-import-export.html' },
+          { label:'Validate data', href:'prime-contract/lns-prime-validate-data.html' },
+          { label:'Other utilities', href:'prime-contract/lns-prime-other-utilities.html' } ] } ] },
+            { key:'invoices', icon:'pi-book', label:'Invoices', groups:[
+        { label:'Invoice', items:[
+          { label:'Invoices', href:'invoice/lns-invoice-invoices.html' },
+          { label:'Payment requests', href:'invoice/lns-invoice-payment-requests.html' },
+          { label:'Definitions', href:'invoice/lns-invoice-definitions.html' },
+          { label:'Settings', href:'invoice/lns-invoice-settings.html' },
+          { label:'Calculate totals', href:'invoice/lns-invoice-calculate-totals.html' },
+          { label:'Reports', href:'invoice/lns-invoice-reports.html' },
+          { label:'Excel reports', href:'invoice/lns-invoice-excel-reports.html' },
+          { label:'Report writer', href:'invoice/lns-invoice-report-writer.html' },
+          { label:'Import / export', href:'invoice/lns-invoice-import-export.html' },
+          { label:'Validate data', href:'invoice/lns-invoice-validate-data.html' },
+          { label:'Replace IDs', href:'invoice/lns-invoice-replace-ids.html' } ] } ] },
+            { key:'change', icon:'pi-sync', label:'Change', groups:[
+        { label:'Change', items:[
+          { label:'Change orders', href:'change-management/lns-change-change-orders.html' },
+          { label:'Change summary', href:'change-management/lns-change-change-summary.html' },
+          { label:'Change requests', href:'change-management/lns-change-change-requests.html' },
+          { label:'Change board meetings', href:'change-management/lns-change-change-board-meetings.html' },
+          { label:'Trends', href:'change-management/lns-change-trends.html' },
+          { label:'Risks', href:'change-management/lns-change-risks.html' },
+          { label:'Definitions', href:'change-management/lns-change-definitions.html' },
+          { label:'Settings', href:'change-management/lns-change-settings.html' },
+          { label:'Reports', href:'change-management/lns-change-reports.html' },
+          { label:'Lists', href:'change-management/lns-change-lists.html' },
+          { label:'Excel reports', href:'change-management/lns-change-excel-reports.html' },
+          { label:'Report writer', href:'change-management/lns-change-report-writer.html' },
+          { label:'Import / export', href:'change-management/lns-change-import-export.html' },
+          { label:'Copy dates to change orders', href:'change-management/lns-change-copy-dates-to-change-orders.html' },
+          { label:'Validate data', href:'change-management/lns-change-validate-data.html' },
+          { label:'Replace IDs', href:'change-management/lns-change-replace-ids.html' },
+          { label:'Combine change orders', href:'change-management/lns-change-combine-change-orders.html' },
+          { label:'Copy risks to change orders', href:'change-management/lns-change-copy-risks-to-change-orders.html' } ] } ] },
       { key:'reports',      icon:'pi-chart-bar',   label:'Reports' },
       { key:'drive',        icon:'pi-folder',      label:'Drive' }
     ];
-    (function renderRail(){
-      var mount = document.getElementById('left-nav-mount');
-      if (!mount) return;
-      var here = location.pathname.split('/').pop();
-      var activeKey = 'contracts';
-      LS_SECTIONS.forEach(function(s){ (s.groups||[]).forEach(function(g){ g.items.forEach(function(it){ if(it.href===here) activeKey=s.key; }); }); });
-      function panelFor(key){
-        var sec = LS_SECTIONS.filter(function(s){return s.key===key;})[0];
-        if (!sec || !sec.groups) return '<div style="padding:14px 20px;font-size:12px;color:var(--surface-500,#737373)">No items in this section.</div>';
-        return sec.groups.map(function(g){
-          var open = g.items.some(function(it){return it.href===here;});
-          var links = g.items.map(function(it){
-            var cur = it.href===here;
-            return '<a class="lnavc-link'+(cur?' is-active':'')+'" href="'+it.href+'"><span>'+it.label+'</span></a>';
-          }).join('');
-          return '<div class="lnavc-group'+(open?' is-open':'')+'"><button class="lnavc-grouphead" data-toggle="1" type="button"><span>'+g.label+'</span><i class="pi pi-angle-down lnavc-chev"></i></button><div class="lnavc-items">'+links+'</div></div>';
-        }).join('');
+    (function(){
+      'use strict';
+      var host=document.getElementById('left-nav-mount'); if(!host) return;
+      var here=location.pathname.split('/').pop();
+      function fileOf(h){ return (h||'').split('#')[0].split('?')[0].split('/').pop(); }
+      function gd(){ try{ return localStorage.getItem('ls-nav-design')||'nested'; }catch(e){ return 'nested'; } }
+      function sd(d){ try{ localStorage.setItem('ls-nav-design',d); }catch(e){} }
+      function gcm(){ try{ return localStorage.getItem('ls-nav-cmode')==='collapsed'?'collapsed':'expanded'; }catch(e){ return 'expanded'; } }
+      function scm(v){ try{ localStorage.setItem('ls-nav-cmode',v); }catch(e){} }
+      function gnc(){ try{ return localStorage.getItem('ls-nested-cmode')==='collapsed'; }catch(e){ return false; } }
+      function snc(v){ try{ localStorage.setItem('ls-nested-cmode', v?'collapsed':'expanded'); }catch(e){} }
+      function activeKey(){ var k=null; LS_SECTIONS.forEach(function(s){(s.groups||[]).forEach(function(g){g.items.forEach(function(it){ if(fileOf(it.href)===here) k=s.key; });});}); if(!k){ var fb=LS_SECTIONS.filter(function(s){return s.groups;})[0]; k=fb?fb.key:(LS_SECTIONS[0]||{}).key; } return k; }
+      var railSel=activeKey(), ribSel=activeKey();
+
+      /* ---- RAIL (icon rail + panel) ---- */
+      function panelFor(key){ var sec=LS_SECTIONS.filter(function(s){return s.key===key;})[0];
+        if(!sec||!sec.groups) return '<div style="padding:14px 20px;font-size:12px;color:var(--surface-500,#737373)">No items in this section.</div>';
+        var cur=sec.groups.some(function(g){return g.items.some(function(it){return fileOf(it.href)===here;});});
+        return sec.groups.map(function(g,gi){ var o=g.items.some(function(it){return fileOf(it.href)===here;})||(!cur&&gi===0);
+          var links=g.items.map(function(it){var a=fileOf(it.href)===here; return '<a class="lnavc-link'+(a?' is-active':'')+'" href="'+it.href+'"><span>'+it.label+'</span></a>';}).join('');
+          return '<div class="lnavc-group'+(o?' is-open':'')+'"><button class="lnavc-grouphead" data-toggle="1" type="button"><span>'+g.label+'</span><i class="pi pi-angle-down lnavc-chev"></i></button><div class="lnavc-items">'+links+'</div></div>';}).join('');
       }
-      var rail = LS_SECTIONS.map(function(s){
-        return '<button class="lnavc-railitem'+(s.key===activeKey?' is-active':'')+'" data-key="'+s.key+'" title="'+s.label+'" type="button"><span class="lnavc-railicon"><i class="pi '+s.icon+'"></i></span><span class="lnavc-raillabel">'+s.label+'</span></button>';
-      }).join('');
-      mount.outerHTML = '<aside class="lnav lnavc" id="leftNavC" aria-label="Project navigation"><div class="lnavc-rail" id="lnavcRail">'+rail+'</div><div class="lnavc-panel" id="lnavcPanel">'+panelFor(activeKey)+'</div></aside>';
-      var railEl=document.getElementById('lnavcRail'), panelEl=document.getElementById('lnavcPanel');
-      railEl.addEventListener('click', function(e){ var b=e.target.closest('.lnavc-railitem'); if(!b)return; railEl.querySelectorAll('.lnavc-railitem').forEach(function(x){x.classList.remove('is-active');}); b.classList.add('is-active'); panelEl.innerHTML=panelFor(b.dataset.key); });
-      panelEl.addEventListener('click', function(e){ var t=e.target.closest('[data-toggle]'); if(t){ t.closest('.lnavc-group').classList.toggle('is-open'); } });
-    })();
-    (function scopeNav(){
-      var self=location.pathname.split('/').pop();
-      function lf(h){ var s=(h||'').split('#')[0].split('?')[0].split('/').pop(); return /^(liftandshift-contract-.+\.html|lift-shift_contract\.html)$/.test(s)?s:null; }
-      Array.prototype.forEach.call(document.querySelectorAll('a[href]'), function(a){ var t=lf(a.getAttribute('href')); if(t&&t!==self){ a.setAttribute('href',t); } else { a.removeAttribute('href'); a.style.cursor='default'; } });
+      function railHTML(){ var cm=gcm();
+        var rail=LS_SECTIONS.map(function(s){return '<button class="lnavc-railitem'+(s.key===railSel?' is-active':'')+'" data-rk="'+s.key+'" title="'+s.label+'" type="button"><span class="lnavc-railicon"><i class="pi '+s.icon+'"></i></span><span class="lnavc-raillabel">'+s.label+'</span></button>';}).join('');
+        return '<aside class="lnav lnavc" id="leftNavC" data-cmode="'+cm+'"><button class="lnavc-collapse'+(cm==='collapsed'?' is-collapsed':'')+'" data-railcollapse title="Toggle menu" type="button"><i class="pi pi-angle-left"></i></button><div class="lnavc-rail" id="lnavcRail">'+rail+'</div><div class="lnavc-panel" id="lnavcPanel">'+panelFor(railSel)+'</div></aside>';
+      }
+      /* ---- NESTED (sidebar) ---- */
+      function nestedHTML(){
+        function sub(items){ return items.map(function(it){ var a=fileOf(it.href)===here; return '<li><a class="lnav-sublink'+(a?' lnav-sublink-active':'')+'" href="'+it.href+'">'+it.label+'</a></li>'; }).join(''); }
+        var nc=gnc();
+        return '<aside class="lnav" id="leftNav" data-context="project" data-collapsed="'+(nc?'true':'false')+'"><button class="lnav-collapse-btn'+(nc?' is-collapsed':'')+'" data-nestedcollapse title="Toggle menu" type="button"><i class="pi pi-angle-left"></i></button><div class="lnav-scroll"><nav class="lnav-menu">'+LS_SECTIONS.map(function(s){
+          if(!s.groups){ return '<div class="lnav-item"><a class="lnav-link" href="#"><i class="pi '+s.icon+' lnav-icon"></i><span class="lnav-label">'+s.label+'</span></a></div>'; }
+          var cur=s.groups.some(function(g){return g.items.some(function(it){return fileOf(it.href)===here;});});
+          var groups=s.groups.map(function(g){ var go=g.items.some(function(it){return fileOf(it.href)===here;});
+            return '<li class="lnav-subgroup'+(go?' lnav-subgroup-open':'')+'"><button class="lnav-sublink lnav-subgroup-btn" onclick="toggleLnavSubGroup(this)" aria-expanded="'+(go?'true':'false')+'"><span class="lnav-sublabel">'+g.label+'</span><i class="pi pi-angle-down lnav-subchevron"></i></button><ul class="lnav-subsub" aria-hidden="'+(go?'false':'true')+'">'+sub(g.items)+'</ul></li>';
+          }).join('');
+          return '<div class="lnav-item lnav-has-children'+(cur?' lnav-expanded':'')+'"><button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="'+(cur?'true':'false')+'"><i class="pi '+s.icon+' lnav-icon"></i><span class="lnav-label">'+s.label+'</span><i class="pi '+(cur?'pi-angle-up':'pi-angle-down')+' lnav-chevron"></i></button><ul class="lnav-sub'+(cur?' lnav-sub-open':'')+'" aria-hidden="'+(cur?'false':'true')+'">'+groups+'</ul></div>';
+        }).join('')+'</nav></div></aside>';
+      }
+      /* ---- RIBBON (tabs) ---- */
+      function ribbonHTML(){
+        var tabs=LS_SECTIONS.map(function(s){return '<button class="lsrib-tab'+(s.key===ribSel?' is-active':'')+'" data-rib="'+s.key+'" type="button"><i class="pi '+s.icon+'"></i><span>'+s.label+'</span></button>';}).join('');
+        var sec=LS_SECTIONS.filter(function(s){return s.key===ribSel;})[0];
+        var groups = (sec&&sec.groups) ? sec.groups.map(function(g){
+          var links=g.items.map(function(it){var a=fileOf(it.href)===here; return '<a class="lsrib-link'+(a?' is-active':'')+'" href="'+it.href+'">'+it.label+'</a>';}).join('');
+          return '<div class="lsrib-group"><div class="lsrib-glabel">'+g.label+'</div><div class="lsrib-links">'+links+'</div></div>';
+        }).join('') : '<div class="lsrib-group"><div class="lsrib-links" style="color:var(--surface-500,#737373);font-size:12px">No items in this section.</div></div>';
+        return '<div class="lsrib"><div class="lsrib-tabs">'+tabs+'</div><div class="lsrib-groups">'+groups+'</div></div>';
+      }
+
+      function scope(){ var hh=location.href, re=/^(liftandshift-contract-.+\.html|lift-shift_contract\.html|lns-procure-.+\.html|lns-prime-.+\.html|lns-change-.+\.html|lns-invoice-.+\.html|lns-cost-.+\.html)$/;
+        Array.prototype.forEach.call(host.querySelectorAll('a[href]'),function(a){ var f=fileOf(a.getAttribute('href')); if(!re.test(f)||a.href===hh){ a.removeAttribute('href'); a.style.cursor='default'; } });
+      }
+      function apply(d){ document.body.setAttribute('data-lsnav',d);
+        host.innerHTML = d==='ribbon'?ribbonHTML(): d==='rail'?railHTML(): nestedHTML();
+        document.body.classList.toggle('lnav-collapsed', d==='nested' && gnc());
+        scope();
+        var _pc=document.querySelector('.proj-content'); if(_pc){ if(d==='ribbon'){ var _rb=host.querySelector('.lsrib'); _pc.style.marginTop=(56+(_rb?_rb.offsetHeight:94))+'px'; } else { _pc.style.marginTop=''; } }
+        if(d==='nested'){ var asd=host.querySelector('#leftNav'); if(asd){ asd.addEventListener('mouseenter',function(){ if(gnc()) asd.setAttribute('data-collapsed','false'); }); asd.addEventListener('mouseleave',function(){ if(gnc()) asd.setAttribute('data-collapsed','true'); }); } }
+      }
+
+      host.addEventListener('click',function(e){
+        var d=gd();
+        if(d==='nested' && gnc()){ var lk=e.target.closest('a.lnav-sublink'); var asdc=host.querySelector('#leftNav'); if(lk && asdc) asdc.setAttribute('data-collapsed','true'); }
+        var nco=e.target.closest('[data-nestedcollapse]'); if(nco){ snc(!gnc()); apply('nested'); return; }
+        var col=e.target.closest('[data-railcollapse]'); if(col){ scm(gcm()==='collapsed'?'expanded':'collapsed'); apply('rail'); return; }
+        var ri=e.target.closest('.lnavc-railitem'); if(ri){ railSel=ri.dataset.rk; apply('rail'); return; }
+        var tg=e.target.closest('.lnavc-grouphead'); if(tg){ tg.closest('.lnavc-group').classList.toggle('is-open'); return; }
+        var rb=e.target.closest('.lsrib-tab'); if(rb){ ribSel=rb.dataset.rib; apply('ribbon'); return; }
+      });
+
+      /* settings gear + modal */
+      var gear=document.createElement('button'); gear.className='lsnav-gear'; gear.type='button'; gear.title='Navigation style'; gear.innerHTML='<i class="pi pi-cog"></i>';
+      document.body.appendChild(gear);
+      function opt(d,icon,title,desc){ return '<button class="lsnav-opt'+(gd()===d?' is-active':'')+'" data-design="'+d+'" type="button"><i class="pi '+icon+'"></i><span><b>'+title+'</b><small>'+desc+'</small></span></button>'; }
+      gear.addEventListener('click',function(){
+        var ov=document.createElement('div'); ov.className='lsnav-ov';
+        ov.innerHTML='<div class="lsnav-modal"><div class="lsnav-modal-h"><b>Navigation style</b><button class="lsnav-x" type="button">&times;</button></div><div class="lsnav-opts">'
+          +opt('nested','pi-list','Nested sidebar','Expandable vertical menu (default)')
+          +opt('ribbon','pi-table','Ribbon tabs','Horizontal tabs with grouped commands')
+          +opt('rail','pi-th-large','Icon rail + panel','Icon rail with a slide-out panel')
+          +'</div></div>';
+        document.body.appendChild(ov);
+        ov.addEventListener('click',function(ev){ if(ev.target===ov||ev.target.closest('.lsnav-x')){ ov.remove(); return; } var o=ev.target.closest('[data-design]'); if(o){ var d=o.dataset.design; sd(d); railSel=activeKey(); ribSel=activeKey(); apply(d); ov.remove(); } });
+      });
+
+      apply(gd());
     })();
   </script>
 
@@ -7450,13 +7727,13 @@ function applyProjectContext() {
       'Percent\ninvoiced','Paid\ninvoices'];
 
     // Bottom tab strip
-    var TABS = ['Detailed description','Pay items','Pay item changes','Events','Correspondence','Clauses',
-      'Bidders','Contractor','Payment/work','Risks','Bonds','Insurance','Addendums','Attachments',
-      'Engineering documents','Submissions','Workflow','Action items','Comments','Notes'];
+    var TABS = ['Groups / breakdown structures','Detailed description','Pay items','Pay item changes','Events','Correspondence','Clauses',
+      'Bidders','Contractor','Payment/work','Communication','Risks','Bonds','Insurance','Addendums','Attachments',
+      'Engineering documents','Submissions','Evaluation','Workflow','Action items','Comments','Notes'];
 
     // ── Demo contracts (Cisco Systems project). C001 mirrors the source screen. ──
     // totals: [hoursRow, costRow] each aligned to TOTAL_COLS
-    var CONTRACTS = [
+    var CONTRACTS = (window.LS ? LS.get('contracts') : [
       { id:'C001', desc:'Engineering, Procurement & Construction Mgmt Contract', rfp:'C001',
         currency:'CAD', fx:'0.750000',
         totals:[
@@ -7522,9 +7799,10 @@ function applyProjectContext() {
                  contractorId:'', contractorName:'' },
         refs:{ agreement:'', option:'', commit:false, control:'', prime:'', alt:'' },
         detail:'' }
-    ];
+    ]);
 
-    var state = { sel: 0, tab: 'Detailed description' };
+    var state = { sel: 0, tab: 'Groups / breakdown structures' };
+    function lscPersist(){ if(window.LS) LS.set('contracts', CONTRACTS); }
     window.contractState = state;
 
     function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -7586,11 +7864,71 @@ function applyProjectContext() {
         '</div></fieldset>';
     }
 
+    function coGrid(cols, rows){
+      var head='<th class="ls-gutter"></th>'+cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('');
+      var body=rows.map(function(r){return '<tr><td class="ls-gutter"></td>'+r.map(function(v){return '<td>'+esc(v)+'</td>';}).join('')+'</tr>';}).join('');
+      return '<div class="table-wrap"><table class="proj-table"><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table></div>';
+    }
+    function coTotals(cols, map){
+      return '<tr><td class="ls-gutter"></td>'+cols.map(function(c,i){return '<td style="text-align:right;color:var(--surface-500,#737373)">'+(map[i]||'')+'</td>';}).join('')+'</tr>';
+    }
+    function coMiniTb(count, extra){
+      return '<div class="toolbar" style="box-shadow:none;border:none;border-radius:0;padding:4px 0;background:transparent"><div class="toolbar-start">'
+        +'<div class="btn-group"><button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" title="First" type="button" disabled><i class="pi pi-angle-double-left"></i></button><button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" title="Previous" type="button" disabled><i class="pi pi-angle-left"></i></button></div>'
+        +'<span class="ls-toolbar-info">'+count+'</span>'
+        +'<div class="btn-group"><button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" title="Next" type="button"><i class="pi pi-angle-right"></i></button><button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" title="Last" type="button"><i class="pi pi-angle-double-right"></i></button></div>'
+        +'<span class="ls-toolbar-sep"></span><button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-plus btn-icon-left"></i>Add</button><button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-times btn-icon-left"></i>Delete</button>'
+        +'<button class="btn btn-sm btn-secondary btn-icon-only" title="Undo" type="button"><i class="pi pi-undo"></i></button><button class="btn btn-sm btn-secondary btn-icon-only" title="Refresh" type="button"><i class="pi pi-refresh"></i></button>'
+        +'<span class="ls-toolbar-sep"></span><button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-filter btn-icon-left"></i>Filter</button><button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-cog btn-icon-left"></i>Tools<i class="pi pi-angle-down btn-icon-right"></i></button>'
+        +(extra||'')
+        +'</div><div class="toolbar-end"><div class="toolbar-search-wrap"><input type="text" class="toolbar-search" placeholder="Search"><i class="pi pi-search toolbar-search-icon"></i></div></div></div>';
+    }
     function tabBodyHtml(c){
-      if (state.tab === 'Detailed description'){
+      var t = state.tab;
+      if (t === 'Detailed description'){
         return '<div class="ls-tabbody">' + (c.detail ? esc(c.detail) : '<span class="ls-empty">No detailed description entered.</span>') + '</div>';
       }
-      return '<div class="ls-tabbody"><span class="ls-empty">' + esc(state.tab) + ' — no data to display.</span></div>';
+      if (t === 'Groups / breakdown structures'){
+        var g=[['Organization breakdown structure','OBS','',''],['Cost breakdown structure','CBS','',''],['Contract type','Enterprise','90',''],['Awarded value','Enterprise','9010',''],['Watch status','Enterprise','901000',''],['SSJ','Enterprise','',''],['Retention','Enterprise','',''],['MSA#','Enterprise','',''],['ABN','Enterprise','',''],['Web page development','Enterprise','',''],['P-Code','Standard','',''],['X','Module','','']];
+        return '<div class="ls-tabbody">'+coGrid(['Title','Type','ID','Description'],g)+'</div>';
+      }
+      if (t === 'Pay items'){
+        var cols=['Pay item','Pay item description','Quantity unit','Quantity element ID','Original quantity','Approved quantity change','Approved quantity','Pending quantities','Quantity to date','Hours element ID','Hours rate','Original hours','Approved hours change','Approved hours','Pending hours','Hours worked','Cost element ID','Unit price'];
+        var pi=[['001','General project mgmt and services','LOT','QTY','1.0000','','1.0000','','','EHRS','896.0000','896.00','','896.00','','','1L',''],
+          ['002','General drawing services','LOT','QTY','1.0000','','1.0000','','','EHRS','1,040.0000','1,040.00','','1,040.00','','','1L',''],
+          ['003','General construction mgmt services','LOT','QTY','1.0000','','1.0000','','','EHRS','540.0000','540.00','','540.00','','','1L',''],
+          ['004','General procurement services','LOT','QTY','1.0000','','1.0000','','','EHRS','316.0000','316.00','','316.00','','','1L',''],
+          ['005','Potable water, project mgmt','LOT','QTY','1.0000','','1.0000','','','EHRS','1,008.0000','1,008.00','','1,008.00','','','1L',''],
+          ['006','Potable water, drawing services','LOT','QTY','1.0000','','1.0000','','','EHRS','2,440.0000','2,440.00','','2,440.00','','','1L',''],
+          ['007','Potable water, procurement services','LOT','QTY','1.0000','','1.0000','','','EHRS','312.0000','312.00','','312.00','','','1L',''],
+          ['008','Fuel storage, project mgmt services','LOT','QTY','1.0000','','1.0000','','','EHRS','936.0000','936.00','','936.00','','','1L',''],
+          ['009','Fuel storage, drawing services','LOT','QTY','1.0000','','1.0000','','','EHRS','2,480.0000','2,480.00','','2,480.00','','','1L',''],
+          ['010','Fuel storage, procurement services','LOT','QTY','1.0000','','1.0000','','','EHRS','435.0000','435.00','','435.00','','','1L','']];
+        var grid=coGrid(cols,pi).replace('</tbody>', coTotals(cols,{11:'10,403.00',12:'0.00',13:'10,403.00',14:'0.00',15:'0.00'})+'</tbody>');
+        return '<div class="ls-tabbody">'+coMiniTb('1 of 10','')+grid+'</div>';
+      }
+      if (t === 'Pay item changes'){
+        var cc=['Pay item','Pay item description','Instructed change ID','Executed change ID','Change description','Status ID','Change item','Change item description','Quantity unit','Quantity','Hours rate','Hours','Unit price','Price unit','Cost','Provisional sum'];
+        var pic=[['001','General project mgmt and services','IC-001','','','','','','','','','','','Hour','','']];
+        var grid=coGrid(cc,pic).replace('</tbody>', coTotals(cc,{9:'0.00',14:'0.00'})+'</tbody>');
+        return '<div class="ls-tabbody">'+coMiniTb('1 of 1','')+grid+'</div>';
+      }
+      if (t === 'Events'){
+        var ec=['Workflow ID','Event description','Standard event','Workflow template ID','Planned duration','Planned date','Forecast duration','Forecast date','Actual duration','Activity ID','Actual date','Use start','Activity description','Weight','Sort code'];
+        var ev=[['A1','','','','','9/24/2017','','9/24/2017','','','9/24/2017','','','8.00',''],
+          ['B2','','','','28','10/22/2017','28','10/22/2017','28','','10/22/2017','','','224.00',''],
+          ['C1','','','','28','11/19/2017','28','11/19/2017','28','','11/19/2017','','','224.00',''],
+          ['E2','','','','14','12/3/2017','14','12/3/2017','14','','12/3/2017','','','112.00',''],
+          ['F1','','','','7','12/10/2017','7','12/10/2017','7','','12/10/2017','','','56.00',''],
+          ['G1','','','','7','12/17/2017','7','12/17/2017','7','','12/17/2017','','','56.00',''],
+          ['H1','','','','2','12/19/2017','2','12/19/2017','2','','12/19/2017','','','16.00',''],
+          ['U','','','','7','12/26/2017','7','12/26/2017','7','','12/26/2017','','','56.00',''],
+          ['V','','','','7','1/2/2018','7','1/2/2018','7','','1/2/2018','','','56.00',''],
+          ['Z0','','','','','1/2/2018','','1/2/2018','','','1/2/2018','','','','']];
+        var extra='<span class="ls-toolbar-sep"></span><button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-copy btn-icon-left"></i>Copy workflow template</button><button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-copy btn-icon-left"></i>Copy planned to forecast</button><button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-copy btn-icon-left"></i>Copy actual to forecast</button><button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-calendar btn-icon-left"></i>Copy activity dates</button>';
+        return '<div class="ls-tabbody">'+coMiniTb('1 of 10',extra)+coGrid(ec,ev)+'</div>';
+      }
+      return '<div class="ls-tabbody"><span class="ls-empty">' + esc(t) + ' — no data to display.</span></div>';
     }
 
     function tabStripHtml(){
@@ -7632,9 +7970,9 @@ function applyProjectContext() {
               '<button class="btn btn-sm btn-secondary btn-icon-only btn-group-item" data-act="last" title="Last"' + atEnd + '><i class="pi pi-angle-double-right"></i></button>' +
             '</div>' +
             '<span class="ls-toolbar-sep"></span>' +
-            '<button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-plus btn-icon-left"></i>Add</button>' +
-            '<button class="btn btn-sm btn-secondary" type="button"><i class="pi pi-times btn-icon-left"></i>Delete</button>' +
-            '<button class="btn btn-sm btn-secondary btn-icon-only" title="Save" type="button"><i class="pi pi-save"></i></button>' +
+            '<button class="btn btn-sm btn-secondary" data-act="add" type="button"><i class="pi pi-plus btn-icon-left"></i>Add</button>' +
+            '<button class="btn btn-sm btn-secondary" data-act="delete" type="button"><i class="pi pi-times btn-icon-left"></i>Delete</button>' +
+            '<button class="btn btn-sm btn-secondary btn-icon-only" data-act="save" title="Save" type="button"><i class="pi pi-save"></i></button>' +
             '<button class="btn btn-sm btn-secondary btn-icon-only" title="Undo" type="button"><i class="pi pi-undo"></i></button>' +
             '<button class="btn btn-sm btn-secondary btn-icon-only" title="Refresh" type="button"><i class="pi pi-refresh"></i></button>' +
             '<span class="ls-toolbar-sep"></span>' +
@@ -7659,12 +7997,12 @@ function applyProjectContext() {
               '<div class="panel-header ls-head"><span class="panel-title">Contracts - data</span></div>' +
               '<div class="panel-content">' +
                 '<div class="ls-form">' +
-                  '<div class="ls-frow"><label>Contract ID</label><input class="input-text ls-sm" type="text" value="' + esc(c.id) + '"></div>' +
+                  '<div class="ls-frow"><label>Contract ID</label><input id="lsc-id" class="input-text ls-sm" type="text" value="' + esc(c.id) + '"></div>' +
                   '<div class="ls-frow ls-frow-inline" style="margin-left:auto">' +
                     '<label>Currency ID</label>' + dd('ls-curr', c.currency, ['CAD','USD','EUR','GBP']) +
                     '<label style="margin-left:16px">Exchange rate</label><input class="input-text ls-sm" type="text" value="' + esc(c.fx) + '">' +
                   '</div>' +
-                  '<div class="ls-frow ls-frow-fill"><label>Description</label><input class="input-text ls-grow" type="text" value="' + esc(c.desc) + '"></div>' +
+                  '<div class="ls-frow ls-frow-fill"><label>Description</label><input id="lsc-desc" class="input-text ls-grow" type="text" value="' + esc(c.desc) + '"></div>' +
                   '<div class="ls-frow ls-frow-fill"><label>RFP ID</label><input class="input-text ls-sm" type="text" value="' + esc(c.rfp) + '"></div>' +
                 '</div>' +
                 '<fieldset class="ls-fieldset" style="margin-top:10px"><legend>Contract totals</legend>' + totalsHtml(c) + '</fieldset>' +
@@ -7697,7 +8035,7 @@ function applyProjectContext() {
       if (tab){ state.tab = tab.dataset.lstab; render(); return; }
 
       var tr = e.target.closest('.ls-nav .proj-table tbody tr');
-      if (tr && tr.dataset.idx != null){ state.sel = +tr.dataset.idx; render(); return; }
+      if (tr && tr.dataset.idx != null){ state.sel = +tr.dataset.idx; if(window.LS) LS.set('ui:contract', CONTRACTS[state.sel]&&CONTRACTS[state.sel].id); render(); return; }
 
       var pg = e.target.closest('[data-act]');
       if (pg){
@@ -7706,6 +8044,9 @@ function applyProjectContext() {
         else if (act === 'prev')  s = Math.max(0, s - 1);
         else if (act === 'next')  s = Math.min(n - 1, s + 1);
         else if (act === 'last')  s = n - 1;
+        else if (act === 'add'){ var nid='C'+('000'+(CONTRACTS.length+1)).slice(-3); CONTRACTS.push({id:nid,desc:'New contract',rfp:'',currency:'USD',fx:'1.000000',totals:[['','','','','','','','','','','',''],['','','','','','','','','','','','']],status:{id:'Draft',event:'',award:'',mob:'',contractorId:'',contractorName:''},refs:{agreement:'',option:'',commit:false,control:'',prime:'',alt:''},detail:''}); s=CONTRACTS.length-1; lscPersist(); if(window.showToast) showToast('success','Added','New contract '+nid+' added.'); }
+        else if (act === 'delete'){ if(CONTRACTS.length>1){ CONTRACTS.splice(s,1); s=Math.min(s,CONTRACTS.length-1); lscPersist(); if(window.showToast) showToast('info','Deleted','Contract removed.'); } }
+        else if (act === 'save'){ var idi=document.getElementById('lsc-id'), di=document.getElementById('lsc-desc'); if(idi) CONTRACTS[s].id=idi.value; if(di) CONTRACTS[s].desc=di.value; lscPersist(); if(window.showToast) showToast('success','Saved','Contract saved.'); }
         state.sel = s;
         render();
       }
@@ -7715,6 +8056,16 @@ function applyProjectContext() {
   })();
   
   
+  </script>
+  <script>
+  /* ls-dropdown-escape: keep DS dropdown menus from being clipped by card overflow:hidden */
+  (function(){ if(window.__lsDDEsc) return; window.__lsDDEsc=1;
+    function place(){ Array.prototype.forEach.call(document.querySelectorAll('.ls-screen .dropdown.open'),function(dd){
+      var m=dd.querySelector('.dropdown-menu'); if(!m) return;
+      var r=dd.getBoundingClientRect();
+      m.style.position='fixed'; m.style.top=(r.bottom+2)+'px'; m.style.left=r.left+'px'; m.style.right='auto'; m.style.minWidth=r.width+'px'; m.style.maxHeight='300px'; m.style.overflowY='auto'; }); }
+    document.addEventListener('click', function(){ setTimeout(place,0); }, false);
+  })();
   </script>
 </body>
 </html>

@@ -107,7 +107,7 @@
 })();
 
 </script>
-  <title>Cisco Systems - Implemented changes - Contruent</title>
+  <title>Cisco Systems — Build descriptions for contracts — Contruent</title>
   <style>
 @font-face {
     font-family: 'primeicons';
@@ -5863,49 +5863,25 @@ body[data-lsnav="nested"].lnav-collapsed .proj-content{ margin-left:var(--lnav-w
 
 </script>
   <script>renderTopNav({ activeItem: 'projects' });</script>
+
   <div id="left-nav-mount"></div>
+
   <div class="proj-content">
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a class="breadcrumb-item">Project Home</a>
       <i class="pi pi-angle-right breadcrumb-sep"></i>
       <span class="breadcrumb-item">Contracts</span>
       <i class="pi pi-angle-right breadcrumb-sep"></i>
-      <span class="breadcrumb-item breadcrumb-current">Implemented Changes</span>
+      <span class="breadcrumb-item breadcrumb-current">Build descriptions for contracts</span>
     </nav>
-    <div class="section-header">
-      <h1 class="section-title">Implemented changes</h1>
-      <p class="section-desc">Register of implemented changes.</p>
-    </div>
-    <div class="ls-screen">
-      <div class="toolbar"><div class="toolbar-start">
-        <div class="ls-menuwrap">
-          <button class="btn btn-sm btn-secondary" onclick="lsToggleMenu(this)" type="button"><i class="pi pi-cog btn-icon-left"></i>Actions<i class="pi pi-angle-down btn-icon-right"></i></button>
-          <div class="ls-menu">
-            <button class="ls-menu-item" onclick="regAdd()" type="button"><i class="pi pi-plus"></i>Add</button>
-            <button class="ls-menu-item" onclick="regDelete()" type="button"><i class="pi pi-trash"></i>Delete</button>
-            <button class="ls-menu-item" onclick="regCancel()" type="button"><i class="pi pi-ban"></i>Cancel</button>
-          </div>
-        </div>
-        <span class="ls-toolbar-sep"></span>
-        <span class="ls-toolbar-info">Status</span>
-        <div class="dropdown" id="reg-filter" onclick="regFilterToggle(this)" style="width:150px"><span class="dropdown-value">All statuses</span><i class="pi pi-chevron-down dropdown-arrow"></i><ul class="dropdown-menu"><li class="dropdown-item dropdown-item-active" onclick="selectOption('reg-filter','All statuses');regFilter('All')">All statuses</li><li class="dropdown-item" onclick="selectOption('reg-filter','Implemented');regFilter('Implemented')">Implemented</li></ul></div>
-      </div><div class="toolbar-end"><div class="toolbar-search-wrap">
-        <input type="text" class="toolbar-search" placeholder="Search" oninput="regSearch(this.value)"><i class="pi pi-search toolbar-search-icon"></i>
-      </div></div></div>
 
-      <section class="panel ls-data ls-reg">
-        <header class="ls-head"><span class="panel-title">Implemented changes - register</span></header>
-        <div class="table-wrap"><table class="proj-table">
-          <thead><tr><th><span class="checkbox-box" id="regSelectAll" onclick="regSelectAll(this)"></span></th><th>Change ID</th><th>Description</th><th>Implemented</th><th>Amount</th><th>Status</th></tr></thead>
-          <tbody id="regBody" data-cols="6">
-                <tr data-status="Implemented"><td><span class="checkbox-box" onclick="toggleCheck(this)"></span></td><td>IMP-001</td><td>Change to scope - additional works</td><td>01/02/2018</td><td>12,500</td><td>Implemented</td></tr>
-                <tr data-status="Implemented"><td><span class="checkbox-box" onclick="toggleCheck(this)"></span></td><td>IMP-002</td><td>Access restriction</td><td>20/02/2018</td><td>3,000</td><td>Implemented</td></tr>
-                </tbody>
-        </table></div>
-      </section>
+    <div class="section-header">
+      <h1 class="section-title">Build descriptions for contracts</h1>
     </div>
   </div>
+
   <div id="toastContainer" class="toast-container"></div>
+
   <script>
 /* ===== AI PANEL COMPONENT =====
  * Full-action AI assistant. Covers every workflow on the contracts page:
@@ -7648,26 +7624,6 @@ function applyProjectContext() {
 
       apply(gd());
     })();
-  </script>
-  <script>
-  (function(){ 'use strict';
-    window.__q=''; window.__f='All';
-    window.applyReg=function(){ var q=window.__q,f=window.__f;
-      Array.prototype.forEach.call(document.querySelectorAll('#regBody tr'),function(tr){
-        var okQ=tr.textContent.toLowerCase().indexOf(q)>=0;
-        var okF=(f==='All')||(tr.getAttribute('data-status')===f);
-        tr.style.display=(okQ&&okF)?'':'none'; }); };
-    window.regSearch=function(v){ window.__q=(v||'').toLowerCase(); applyReg(); };
-    window.regFilter=function(s){ window.__f=s; applyReg(); };
-    function setCheck(b,on){ if(!b)return; b.classList.toggle('checked',on); b.innerHTML=on?'<i class="pi pi-check checkbox-check-icon"></i>':''; }
-    window.regSelectAll=function(el){ var on=!el.classList.contains('checked'); setCheck(el,on); Array.prototype.forEach.call(document.querySelectorAll('#regBody tr'),function(tr){ if(tr.style.display!=='none') setCheck(tr.querySelector('.checkbox-box'),on); }); };
-    window.regAdd=function(){ var tb=document.getElementById('regBody'); var cols=+tb.getAttribute('data-cols'); var h='<td><span class="checkbox-box" onclick="toggleCheck(this)"></span></td>'; for(var i=1;i<cols;i++) h+='<td></td>'; var tr=document.createElement('tr'); tr.innerHTML=h; tb.appendChild(tr); lsCloseMenus(); };
-    window.regDelete=function(){ Array.prototype.forEach.call(document.querySelectorAll('#regBody tr'),function(tr){ var b=tr.querySelector('.checkbox-box'); if(b&&b.classList.contains('checked')) tr.parentNode.removeChild(tr); }); lsCloseMenus(); };
-    window.regCancel=function(){ Array.prototype.forEach.call(document.querySelectorAll('#regBody .checkbox-box, #regSelectAll'),function(b){ setCheck(b,false); }); lsCloseMenus(); };
-    window.lsToggleMenu=function(btn){ var m=btn.parentNode.querySelector('.ls-menu'); var open=m.classList.contains('open'); lsCloseMenus(); if(!open){ var r=btn.getBoundingClientRect(); m.style.position='fixed'; m.style.top=(r.bottom+4)+'px'; m.style.left=r.left+'px'; m.classList.add('open'); } }; window.regFilterToggle=function(dd){ toggleDropdown('reg-filter'); var menu=dd.querySelector('.dropdown-menu'); if(dd.classList.contains('open')){ var r=dd.getBoundingClientRect(); menu.style.position='fixed'; menu.style.top=(r.bottom+2)+'px'; menu.style.left=r.left+'px'; menu.style.right='auto'; menu.style.width=r.width+'px'; } };
-    window.lsCloseMenus=function(){ Array.prototype.forEach.call(document.querySelectorAll('.ls-menu.open'),function(m){m.classList.remove('open');}); };
-    document.addEventListener('click', function(e){ if(!e.target.closest('.ls-menuwrap')) lsCloseMenus(); });
-  })();
   </script>
   <script>
   /* ls-dropdown-escape: keep DS dropdown menus from being clipped by card overflow:hidden */

@@ -43,9 +43,12 @@
   background:var(--surface-0,#fff);
   border:var(--border-1,1px) solid var(--surface-200,#e5e5e5);
   border-radius:10px;
-  box-shadow:0 1px 2px rgba(16,24,40,.05);
+  box-shadow:none;
   overflow:hidden;
 }
+/* flat look — no elevation shadows on any dropdown/menu in lift & shift */
+.ls-screen .dropdown-menu,
+.dropdown-menu{ box-shadow:none; }
 
 /* PAGE HEADER — DS .section-header tuned for lift & shift screens:
    weight 600 (not extrabold), no bottom border, 16px gap below */
@@ -292,11 +295,21 @@
 .lnavc-link:hover{ background:var(--surface-50,#fafafa); color:var(--surface-900,#262626); }
 .lnavc-link.is-active{ color:var(--primary-500,#326fd1); font-weight:500; }
 
+/* ── Collapse / expand toggle + collapsed hover-flyout (icon rail + panel, from navigation.html Design C) ── */
+.lnavc-collapse{ position:absolute; right:-11px; top:14px; z-index:130; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; padding:0; line-height:1; border:1px solid var(--surface-200,#e5e5e5); border-radius:50%; background:var(--surface-0,#fff); box-shadow:none; cursor:pointer; color:var(--surface-500,#737373); font-size:12px; }
+.lnavc-collapse:hover{ color:var(--surface-900,#262626); border-color:var(--surface-300,#d4d4d4); }
+.lnavc-collapse .pi{ display:block; line-height:1; transition:transform .2s; }
+.lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
+.lnavc[data-cmode="collapsed"]{ width:88px; }
+.lnavc[data-cmode="collapsed"] ~ .proj-content{ margin-left:88px; }
+.lnavc[data-cmode="collapsed"] .lnavc-panel{ position:absolute; left:88px; top:0; bottom:0; width:256px; background:var(--surface-0,#fff); border-right:1px solid var(--surface-200,#e5e5e5); box-shadow:none; z-index:120; overflow-y:auto; transform:translateX(-10px); opacity:0; pointer-events:none; transition:transform .18s ease, opacity .18s ease; }
+.lnavc[data-cmode="collapsed"].flyout-open .lnavc-panel{ transform:translateX(0); opacity:1; pointer-events:auto; }
+
 /* ─────────────────────────────────────────────────────────────
    ACTION MENU (dropdown button) + REGISTER grid
    ───────────────────────────────────────────────────────────── */
 .ls-menuwrap{ position:relative; display:inline-block; }
-.ls-menu{ position:absolute; top:100%; left:0; margin-top:4px; min-width:150px; background:var(--surface-0,#fff); border:1px solid var(--surface-200,#e5e5e5); border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,.12); padding:4px; z-index:50; display:none; }
+.ls-menu{ position:absolute; top:100%; left:0; margin-top:4px; min-width:150px; background:var(--surface-0,#fff); border:1px solid var(--surface-200,#e5e5e5); border-radius:8px; box-shadow:none; padding:4px; z-index:50; display:none; }
 .ls-menu.open{ display:block; }
 .ls-menu-item{ display:flex; align-items:center; gap:9px; width:100%; padding:7px 10px; border:none; background:none; border-radius:6px; font-family:inherit; font-size:12.5px; color:var(--surface-800,#3d3d3d); text-align:left; cursor:pointer; }
 .ls-menu-item:hover{ background:var(--surface-100,#f5f5f5); }
@@ -304,3 +317,64 @@
 /* register: narrow checkbox column, selected-row tint */
 .ls-reg .proj-table th:first-child, .ls-reg .proj-table td:first-child{ width:34px; text-align:center; padding-left:8px; padding-right:8px; }
 .ls-reg .proj-table tbody tr:hover td{ background:var(--surface-50,#fafafa); }
+
+
+/* ===== LAUNCHER CARDS (grid of clickable action cards) ===== */
+.ls-cards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+.ls-card{ display:flex; gap:12px; align-items:flex-start; padding:16px; background:var(--surface-0,#fff); border:1px solid var(--surface-200,#e5e5e5); border-radius:10px; text-decoration:none; color:inherit; cursor:pointer; transition:border-color .12s ease, background .12s ease; }
+.ls-card:hover{ border-color:var(--primary-400,#5b8def); background:var(--blue-50,#eef3fb); }
+.ls-card-icon{ flex:0 0 auto; width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; background:var(--blue-50,#eef3fb); color:var(--primary-600,#2b5cb0); }
+.ls-card-icon .pi{ font-size:18px; }
+.ls-card-body{ min-width:0; }
+.ls-card-title{ display:block; font-size:13.5px; font-weight:600; color:var(--surface-900,#1f1f1f); margin:0 0 3px; }
+.ls-card-desc{ display:block; font-size:12px; color:var(--surface-500,#737373); margin:0; line-height:1.4; }
+
+
+/* ===== NAV DESIGN SWITCHER (nested / ribbon / rail) ===== */
+body[data-lsnav="nested"] .proj-content{ margin-left:var(--lnav-width-open,256px); }
+body[data-lsnav="rail"] .proj-content{ margin-left:344px; }
+body[data-lsnav="ribbon"] .proj-content{ margin-left:0; margin-top:150px; }
+body[data-lsnav="ribbon"] #leftNavC[data-cmode]{ display:none; }
+body[data-lsnav="nested"].lnav-collapsed .proj-content{ margin-left:var(--lnav-width-collapsed,56px); }
+.lnav-collapse-btn{ position:absolute; right:-11px; top:14px; z-index:130; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; padding:0; line-height:1; border:1px solid var(--surface-200,#e5e5e5); border-radius:50%; background:var(--surface-0,#fff); cursor:pointer; color:var(--surface-500,#737373); font-size:12px; }
+.lnav-collapse-btn:hover{ color:var(--surface-900,#262626); border-color:var(--surface-300,#d4d4d4); }
+.lnav-collapse-btn .pi{ display:block; line-height:1; transition:transform .2s; }
+.lnav-collapse-btn.is-collapsed .pi{ transform:rotate(180deg); }
+/* Ribbon */
+.lsrib{ position:fixed; top:56px; left:0; right:0; z-index:80; background:var(--surface-0,#fff); border-bottom:1px solid var(--surface-200,#e5e5e5); }
+.lsrib-tabs{ display:flex; gap:2px; padding:4px 12px 0; overflow-x:auto; border-bottom:1px solid var(--surface-200,#e5e5e5); scrollbar-width:none; }
+.lsrib-tabs::-webkit-scrollbar{ height:0; }
+.lsrib-tab{ display:flex; align-items:center; gap:7px; padding:8px 14px; background:none; border:none; border-bottom:3px solid transparent; cursor:pointer; font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; color:var(--surface-700,#4f4f4f); white-space:nowrap; }
+.lsrib-tab .pi{ font-size:15px; color:var(--primary-600,#2859a7); }
+.lsrib-tab:hover{ background:var(--surface-100,#f5f5f5); }
+.lsrib-tab.is-active{ border-bottom-color:var(--primary-500,#326fd1); color:var(--primary-700,#1e437d); }
+.lsrib-groups{ display:flex; gap:0; padding:8px 12px; overflow-x:auto; align-items:flex-start; }
+.lsrib-group{ display:flex; flex-direction:column; padding:0 14px; border-right:1px solid var(--surface-200,#e5e5e5); }
+.lsrib-group:last-child{ border-right:none; }
+.lsrib-glabel{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--surface-500,#737373); font-weight:700; margin-bottom:5px; white-space:nowrap; }
+.lsrib-links{ display:flex; flex-direction:column; flex-wrap:wrap; align-content:flex-start; gap:2px 20px; max-height:158px; }
+.lsrib-link{ font-size:12px; color:var(--surface-700,#525252); text-decoration:none; white-space:nowrap; padding:2px 3px; border-radius:4px; }
+.lsrib-link:hover{ background:var(--blue-50,#eef3fb); color:var(--primary-700,#1e437d); }
+.lsrib-link.is-active{ color:var(--primary-600,#2859a7); font-weight:600; }
+/* Settings gear + modal */
+.lsnav-gear{ position:fixed; top:64px; right:18px; z-index:95; width:34px; height:34px; border-radius:50%; border:1px solid var(--surface-200,#e5e5e5); background:var(--surface-0,#fff); color:var(--surface-600,#616161); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.lsnav-gear:hover{ color:var(--primary-600,#2859a7); border-color:var(--surface-300,#d4d4d4); }
+.lsnav-gear .pi{ font-size:15px; }
+.lsnav-ov{ position:fixed; inset:0; z-index:200; background:rgba(16,24,40,.35); display:flex; align-items:center; justify-content:center; }
+.lsnav-modal{ width:420px; max-width:92vw; background:var(--surface-0,#fff); border-radius:14px; padding:18px 20px 20px; }
+.lsnav-modal-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.lsnav-modal-h b{ font-size:15px; color:var(--surface-900,#1f1f1f); }
+.lsnav-x{ border:none; background:none; font-size:20px; line-height:1; color:var(--surface-500,#737373); cursor:pointer; }
+.lsnav-opt{ display:flex; align-items:center; gap:12px; width:100%; padding:12px 14px; border:1px solid var(--surface-200,#e5e5e5); border-radius:10px; background:var(--surface-0,#fff); cursor:pointer; text-align:left; font-family:'Inter',sans-serif; margin-bottom:10px; }
+.lsnav-opt:hover{ border-color:var(--primary-400,#5b8def); }
+.lsnav-opt.is-active{ border-color:var(--primary-500,#326fd1); background:var(--blue-50,#eef3fb); }
+.lsnav-opt .pi{ font-size:20px; color:var(--primary-600,#2859a7); width:22px; text-align:center; }
+.lsnav-opt b{ display:block; font-size:13.5px; color:var(--surface-900,#1f1f1f); }
+.lsnav-opt small{ color:var(--surface-500,#737373); font-size:12px; }
+
+/* ===== TOP-NAV "PROJECTS" DROPDOWN — dark pill trigger (per design) ===== */
+#tnd-projects > .tnav-link-dropdown{ height:34px; align-self:center; margin:0 4px 0 0; padding:0 14px; border-radius:8px; background:#4b4b4b; color:#fff; font-weight:600; font-size:14px; border-bottom:none; }
+#tnd-projects > .tnav-link-dropdown:hover{ background:#5a5a5a; color:#fff; }
+#tnd-projects.open > .tnav-link-dropdown{ background:#3f3f3f; color:#fff; }
+#tnd-projects > .tnav-link-dropdown .tnav-chevron{ color:#fff; font-size:11px; }
+.tnav-proj-item{ cursor:pointer; }
