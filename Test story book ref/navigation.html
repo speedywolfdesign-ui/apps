@@ -6096,5 +6096,33 @@ function applyProjectContext() {
     }
     switchDesign(document.body.dataset.design || 'c');   // initial state (Icon rail + panel on load)
   </script>
+  <script>
+  /* Showcase page: the left-nav menu items are for demoing nav styles only —
+     unlink them so clicking never navigates away from navigation.html. */
+  (function(){
+    function strip(){
+      document.querySelectorAll('a[href]').forEach(function(a){
+        var h = a.getAttribute('href') || '';
+        if (h.indexOf('lift-and-shift/') !== -1 || a.closest('#leftNav, #leftNavB, #leftNavC')){
+          a.removeAttribute('href');
+          a.style.cursor = 'pointer';
+        }
+      });
+    }
+    strip();
+    var mo = new MutationObserver(function(){ strip(); });
+    ['leftNav','leftNavB','leftNavC'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) mo.observe(el, { childList:true, subtree:true });
+    });
+    /* Guarantee no navigation even in the instant after a re-render, before strip() runs */
+    document.addEventListener('click', function(e){
+      var a = e.target.closest('a');
+      if (a && (a.closest('#leftNav, #leftNavB, #leftNavC') || ((a.getAttribute('href')||'').indexOf('lift-and-shift/') !== -1))){
+        e.preventDefault();
+      }
+    }, true);
+  })();
+  </script>
 </body>
 </html>
