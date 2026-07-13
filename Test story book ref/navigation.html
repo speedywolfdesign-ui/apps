@@ -4306,7 +4306,7 @@ body.ai-panel-open .proj-content {
     }
   </style>
 </head>
-<body data-design="a">
+<body data-design="c">
 
   <!-- Top navigation (shared component) -->
   <div id="top-nav-mount"></div>
@@ -4537,9 +4537,9 @@ body.ai-panel-open .proj-content {
         <span>Navigation</span>
       </nav>
       <div class="navdesign-toggle" role="group" aria-label="Navigation design">
-        <button class="ndt-btn is-active" data-design="a" onclick="switchDesign('a')"><i class="pi pi-list"></i> Nested sidebar</button>
+        <button class="ndt-btn" data-design="a" onclick="switchDesign('a')"><i class="pi pi-list"></i> Nested sidebar</button>
         <button class="ndt-btn" data-design="b" onclick="switchDesign('b')"><i class="pi pi-table"></i> Ribbon tabs</button>
-        <button class="ndt-btn" data-design="c" onclick="switchDesign('c')"><i class="pi pi-th-large"></i> Icon rail + panel</button>
+        <button class="ndt-btn is-active" data-design="c" onclick="switchDesign('c')"><i class="pi pi-th-large"></i> Icon rail + panel</button>
       </div>
     </div>
 
@@ -4634,28 +4634,93 @@ body.ai-panel-open .proj-content {
       { key: 'ai-forecasting', label: 'AI Forecasting', href: '#' },
     ]},
     { key: 'field',        icon: 'pi-map',       label: 'Field Management',  href: '#' },
-    { key: 'procurement',  icon: 'pi-box',       label: 'Procurement',       children: [
-      { key: 'purchase-orders', label: 'Purchase Orders', href: '#' },
-      { key: 'bid-packages',    label: 'Bid Packages',    href: '#' },
-      { key: 'vendors',         label: 'Vendors',         href: '#' },
+    { key: 'procurement', icon: 'pi-box', label: 'Procurement', children: [
+      { key: 'proc-purchase-orders', label: 'Purchase orders', href: 'lift-and-shift/procurement/lns-procure-purchase-orders.html' },
+      { key: 'proc-instructed-changes', label: 'Instructed changes', href: 'lift-and-shift/procurement/lns-procure-instructed-changes.html' },
+      { key: 'proc-executed-changes', label: 'Executed changes', href: 'lift-and-shift/procurement/lns-procure-executed-changes.html' },
+      { key: 'proc-shipments', label: 'Shipments', href: 'lift-and-shift/procurement/lns-procure-shipments.html' },
+      { key: 'proc-definitions', label: 'Definitions', href: 'lift-and-shift/procurement/lns-procure-definitions.html' },
+      { key: 'proc-settings', label: 'Settings', href: 'lift-and-shift/procurement/lns-procure-settings.html' },
+      { key: 'proc-calculate-totals', label: 'Calculate totals', href: 'lift-and-shift/procurement/lns-procure-calculate-totals.html' },
+      { key: 'proc-reports', label: 'Reports', href: 'lift-and-shift/procurement/lns-procure-reports.html' },
+      { key: 'proc-lists', label: 'Lists', href: 'lift-and-shift/procurement/lns-procure-lists.html' },
+      { key: 'proc-excel-reports', label: 'Excel reports', href: 'lift-and-shift/procurement/lns-procure-excel-reports.html' },
+      { key: 'proc-report-writer', label: 'Report writer', href: 'lift-and-shift/procurement/lns-procure-report-writer.html' },
+      { key: 'proc-import-export', label: 'Import / export', href: 'lift-and-shift/procurement/lns-procure-import-export.html' },
+      { key: 'proc-validate-data', label: 'Validate data', href: 'lift-and-shift/procurement/lns-procure-validate-data.html' },
+      { key: 'proc-other-utilities', label: 'Other utilities', href: 'lift-and-shift/procurement/lns-procure-other-utilities.html' },
     ]},
-    { key: 'contracts',    icon: 'pi-file',      label: 'Contracts',         children: [
-      { key: 'contracts-list',    label: 'Contracts', href: '#' },
-      { key: 'contracts-reports', label: 'Reports',   href: '#' },
+    { key: 'contracts', icon: 'pi-file', label: 'Contracts', children: [
+      { key: 'ctr-group', label: 'Contract', children: [
+        { key: 'ctr-0', label: 'Contracts', href: 'lift-and-shift/lift-shift_contract.html' },
+        { key: 'ctr-1', label: 'Instructed changes', href: 'lift-and-shift/liftandshift-contract-instruction-change.html' },
+        { key: 'ctr-2', label: 'Executed changes', href: 'lift-and-shift/liftandshift-contract-executed-changes.html' },
+        { key: 'ctr-3', label: 'Settings', href: 'lift-and-shift/liftandshift-contract-setting.html' },
+        { key: 'ctr-4', label: 'Calculate totals', href: 'lift-and-shift/liftandshift-contract-calculate-totals.html' },
+        { key: 'ctr-5', label: 'Reports', href: 'lift-and-shift/liftandshift-contract-reports.html' },
+        { key: 'ctr-6', label: 'Lists', href: 'lift-and-shift/liftandshift-contract-lists.html' },
+        { key: 'ctr-7', label: 'Excel reports', href: 'lift-and-shift/liftandshift-contract-excel-reports.html' },
+        { key: 'ctr-8', label: 'Report writer', href: 'lift-and-shift/liftandshift-contract-report-writer.html' },
+        { key: 'ctr-9', label: 'Import / export', href: 'lift-and-shift/liftandshift-contract-import-export.html' },
+        { key: 'ctr-10', label: 'Import contracts', href: 'lift-and-shift/liftandshift-contract-import-contracts.html' },
+        { key: 'ctr-11', label: 'Validate data', href: 'lift-and-shift/liftandshift-contract-validate-data.html' },
+        { key: 'ctr-12', label: 'Other utilities', href: 'lift-and-shift/liftandshift-contract-other-utilities.html' },
+      ]},
+      { key: 'ctr-changes-group', label: 'Changes', children: [
+        { key: 'ctrc-0', label: 'Compensation events', href: 'lift-and-shift/liftandshift-contract-compensation-events.html' },
+        { key: 'ctrc-1', label: 'Early warnings', href: 'lift-and-shift/liftandshift-contract-early-warnings.html' },
+        { key: 'ctrc-2', label: 'Instructions', href: 'lift-and-shift/liftandshift-contract-instructions.html' },
+        { key: 'ctrc-3', label: 'Quotations', href: 'lift-and-shift/liftandshift-contract-quotations.html' },
+        { key: 'ctrc-4', label: 'Implemented changes', href: 'lift-and-shift/liftandshift-contract-implemented-changes.html' },
+      ]},
     ]},
-    { key: 'invoices',     icon: 'pi-book',      label: 'Invoices',          children: [
-      { key: 'owner-invoices',         label: 'Owner Invoices',         href: '#' },
-      { key: 'subcontractor-invoices', label: 'Subcontractor Invoices', href: '#' },
+    { key: 'prime', icon: 'pi-verified', label: 'Prime contract', children: [
+      { key: 'prime-prime-contracts', label: 'Prime contracts', href: 'lift-and-shift/prime-contract/lns-prime-prime-contracts.html' },
+      { key: 'prime-instructed-changes', label: 'Instructed changes', href: 'lift-and-shift/prime-contract/lns-prime-instructed-changes.html' },
+      { key: 'prime-executed-changes', label: 'Executed changes', href: 'lift-and-shift/prime-contract/lns-prime-executed-changes.html' },
+      { key: 'prime-settings', label: 'Settings', href: 'lift-and-shift/prime-contract/lns-prime-settings.html' },
+      { key: 'prime-calculate-totals', label: 'Calculate totals', href: 'lift-and-shift/prime-contract/lns-prime-calculate-totals.html' },
+      { key: 'prime-update-po-contract-data', label: 'Update PO / contract data', href: 'lift-and-shift/prime-contract/lns-prime-update-po-contract-data.html' },
+      { key: 'prime-reports', label: 'Reports', href: 'lift-and-shift/prime-contract/lns-prime-reports.html' },
+      { key: 'prime-lists', label: 'Lists', href: 'lift-and-shift/prime-contract/lns-prime-lists.html' },
+      { key: 'prime-excel-reports', label: 'Excel reports', href: 'lift-and-shift/prime-contract/lns-prime-excel-reports.html' },
+      { key: 'prime-report-writer', label: 'Report writer', href: 'lift-and-shift/prime-contract/lns-prime-report-writer.html' },
+      { key: 'prime-import-export', label: 'Import / export', href: 'lift-and-shift/prime-contract/lns-prime-import-export.html' },
+      { key: 'prime-validate-data', label: 'Validate data', href: 'lift-and-shift/prime-contract/lns-prime-validate-data.html' },
+      { key: 'prime-other-utilities', label: 'Other utilities', href: 'lift-and-shift/prime-contract/lns-prime-other-utilities.html' },
     ]},
-    { key: 'change-mgmt',  icon: 'pi-refresh',   label: 'Change Management', children: [
-      { key: 'trends',            label: 'Trends',            href: '#' },
-      { key: 'change-orders',     label: 'Change Orders',     href: '#' },
-      { key: 'potential-changes', label: 'Potential Changes', href: '#' },
-      { key: 'form-1',            label: 'Form 1',            href: '#' },
-      { key: 'form-2',            label: 'Form 2',            href: '#' },
-      { key: 'form-3',            label: 'Form 3',            href: '#' },
-      { key: 'form-4',            label: 'Form 4',            href: '#' },
-      { key: 'form-5',            label: 'Form 5',            href: '#' },
+    { key: 'invoices', icon: 'pi-book', label: 'Invoices', children: [
+      { key: 'inv-invoices', label: 'Invoices', href: 'lift-and-shift/invoice/lns-invoice-invoices.html' },
+      { key: 'inv-payment-requests', label: 'Payment requests', href: 'lift-and-shift/invoice/lns-invoice-payment-requests.html' },
+      { key: 'inv-definitions', label: 'Definitions', href: 'lift-and-shift/invoice/lns-invoice-definitions.html' },
+      { key: 'inv-settings', label: 'Settings', href: 'lift-and-shift/invoice/lns-invoice-settings.html' },
+      { key: 'inv-calculate-totals', label: 'Calculate totals', href: 'lift-and-shift/invoice/lns-invoice-calculate-totals.html' },
+      { key: 'inv-reports', label: 'Reports', href: 'lift-and-shift/invoice/lns-invoice-reports.html' },
+      { key: 'inv-excel-reports', label: 'Excel reports', href: 'lift-and-shift/invoice/lns-invoice-excel-reports.html' },
+      { key: 'inv-report-writer', label: 'Report writer', href: 'lift-and-shift/invoice/lns-invoice-report-writer.html' },
+      { key: 'inv-import-export', label: 'Import / export', href: 'lift-and-shift/invoice/lns-invoice-import-export.html' },
+      { key: 'inv-validate-data', label: 'Validate data', href: 'lift-and-shift/invoice/lns-invoice-validate-data.html' },
+      { key: 'inv-replace-ids', label: 'Replace IDs', href: 'lift-and-shift/invoice/lns-invoice-replace-ids.html' },
+    ]},
+    { key: 'change-mgmt', icon: 'pi-refresh', label: 'Change management', children: [
+      { key: 'chg-change-orders', label: 'Change orders', href: 'lift-and-shift/change-management/lns-change-change-orders.html' },
+      { key: 'chg-change-summary', label: 'Change summary', href: 'lift-and-shift/change-management/lns-change-change-summary.html' },
+      { key: 'chg-change-requests', label: 'Change requests', href: 'lift-and-shift/change-management/lns-change-change-requests.html' },
+      { key: 'chg-change-board-meetings', label: 'Change board meetings', href: 'lift-and-shift/change-management/lns-change-change-board-meetings.html' },
+      { key: 'chg-trends', label: 'Trends', href: 'lift-and-shift/change-management/lns-change-trends.html' },
+      { key: 'chg-risks', label: 'Risks', href: 'lift-and-shift/change-management/lns-change-risks.html' },
+      { key: 'chg-definitions', label: 'Definitions', href: 'lift-and-shift/change-management/lns-change-definitions.html' },
+      { key: 'chg-settings', label: 'Settings', href: 'lift-and-shift/change-management/lns-change-settings.html' },
+      { key: 'chg-reports', label: 'Reports', href: 'lift-and-shift/change-management/lns-change-reports.html' },
+      { key: 'chg-lists', label: 'Lists', href: 'lift-and-shift/change-management/lns-change-lists.html' },
+      { key: 'chg-excel-reports', label: 'Excel reports', href: 'lift-and-shift/change-management/lns-change-excel-reports.html' },
+      { key: 'chg-report-writer', label: 'Report writer', href: 'lift-and-shift/change-management/lns-change-report-writer.html' },
+      { key: 'chg-import-export', label: 'Import / export', href: 'lift-and-shift/change-management/lns-change-import-export.html' },
+      { key: 'chg-copy-dates-to-change-orders', label: 'Copy dates to change orders', href: 'lift-and-shift/change-management/lns-change-copy-dates-to-change-orders.html' },
+      { key: 'chg-validate-data', label: 'Validate data', href: 'lift-and-shift/change-management/lns-change-validate-data.html' },
+      { key: 'chg-replace-ids', label: 'Replace IDs', href: 'lift-and-shift/change-management/lns-change-replace-ids.html' },
+      { key: 'chg-combine-change-orders', label: 'Combine change orders', href: 'lift-and-shift/change-management/lns-change-combine-change-orders.html' },
+      { key: 'chg-copy-risks-to-change-orders', label: 'Copy risks to change orders', href: 'lift-and-shift/change-management/lns-change-copy-risks-to-change-orders.html' },
     ]},
     { key: 'reports',      icon: 'pi-chart-bar', label: 'Reports',           children: [
       { key: 'reports-overview', label: 'Overview',       href: '#' },
@@ -5172,6 +5237,8 @@ function applyProjectContext() {
       if(document.body.dataset.design !== 'a') return;
       var link = e.target.closest('a.lnav-link, a.lnav-sublink');
       if(!link) return;
+      var hrefA = link.getAttribute('href');
+      if(hrefA && hrefA !== '#') return;   // real link → navigate to the page
       e.preventDefault();
       var labelEl = link.querySelector('.lnav-label');
       var name = (labelEl ? labelEl.textContent : link.textContent).trim();
@@ -5485,6 +5552,8 @@ function applyProjectContext() {
     document.getElementById('leftNavB').addEventListener('click', function(e){
       var link = e.target.closest('a.lnav-link, a.lnav-sublink');
       if(!link) return;
+      var hrefB = link.getAttribute('href');
+      if(hrefB && hrefB !== '#' && !link.dataset.cat) return;   // real link → navigate to the page
       e.preventDefault();
       setLnavActive(link);
       if(link.dataset.cat){
@@ -6025,7 +6094,7 @@ function applyProjectContext() {
       }
       syncCollapseArrow();
     }
-    syncCollapseArrow();   // initial state (Design A on load)
+    switchDesign(document.body.dataset.design || 'c');   // initial state (Icon rail + panel on load)
   </script>
 </body>
 </html>
