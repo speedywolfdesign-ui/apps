@@ -5590,7 +5590,7 @@ body.ai-panel-open .proj-content {
 .lnavc-collapse .pi{ display:block; line-height:1; transition:transform .2s; }
 .lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
 .lnavc[data-cmode="collapsed"]{ width:88px; }
-.lnavc[data-cmode="collapsed"] ~ .proj-content{ margin-left:88px; }
+body[data-lsnav="rail"][data-railcm="collapsed"] .proj-content{ margin-left:88px; }
 .lnavc[data-cmode="collapsed"] .lnavc-panel{ position:absolute; left:88px; top:0; bottom:0; width:256px; background:var(--surface-0,#fff); border-right:1px solid var(--surface-200,#e5e5e5); box-shadow:none; z-index:120; overflow-y:auto; transform:translateX(-10px); opacity:0; pointer-events:none; transition:transform .18s ease, opacity .18s ease; }
 .lnavc[data-cmode="collapsed"].flyout-open .lnavc-panel{ transform:translateX(0); opacity:1; pointer-events:auto; }
 
@@ -7575,12 +7575,14 @@ function applyProjectContext() {
       var host=document.getElementById('left-nav-mount'); if(!host) return;
       var here=location.pathname.split('/').pop();
       function fileOf(h){ return (h||'').split('#')[0].split('?')[0].split('/').pop(); }
-      function gd(){ try{ return localStorage.getItem('ls-nav-design')||'nested'; }catch(e){ return 'nested'; } }
+      function gd(){ try{ return localStorage.getItem('ls-nav-design')||'rail'; }catch(e){ return 'rail'; } }
       function sd(d){ try{ localStorage.setItem('ls-nav-design',d); }catch(e){} }
       function gcm(){ try{ return localStorage.getItem('ls-nav-cmode')==='collapsed'?'collapsed':'expanded'; }catch(e){ return 'expanded'; } }
       function scm(v){ try{ localStorage.setItem('ls-nav-cmode',v); }catch(e){} }
       function gnc(){ try{ return localStorage.getItem('ls-nested-cmode')==='collapsed'; }catch(e){ return false; } }
       function snc(v){ try{ localStorage.setItem('ls-nested-cmode', v?'collapsed':'expanded'); }catch(e){} }
+      function gog(){ try{ return JSON.parse(localStorage.getItem('ls-rail-groups')||'[]'); }catch(e){ return []; } }
+      function sog(a){ try{ localStorage.setItem('ls-rail-groups', JSON.stringify(a)); }catch(e){} }
       function activeKey(){ var k=null; LS_SECTIONS.forEach(function(s){(s.groups||[]).forEach(function(g){g.items.forEach(function(it){ if(fileOf(it.href)===here) k=s.key; });});}); if(!k){ var fb=LS_SECTIONS.filter(function(s){return s.groups;})[0]; k=fb?fb.key:(LS_SECTIONS[0]||{}).key; } return k; }
       var railSel=activeKey(), ribSel=activeKey();
 
@@ -7588,9 +7590,11 @@ function applyProjectContext() {
       function panelFor(key){ var sec=LS_SECTIONS.filter(function(s){return s.key===key;})[0];
         if(!sec||!sec.groups) return '<div style="padding:14px 20px;font-size:12px;color:var(--surface-500,#737373)">No items in this section.</div>';
         var cur=sec.groups.some(function(g){return g.items.some(function(it){return fileOf(it.href)===here;});});
-        return sec.groups.map(function(g,gi){ var o=g.items.some(function(it){return fileOf(it.href)===here;})||(!cur&&gi===0);
+        var _og=gog();
+        var _any=sec.groups.some(function(g){ return g.items.some(function(it){return fileOf(it.href)===here;})||_og.indexOf(key+'::'+g.label)>=0; });
+        return sec.groups.map(function(g,gi){ var gk=key+'::'+g.label; var o=g.items.some(function(it){return fileOf(it.href)===here;})||_og.indexOf(gk)>=0||(!_any&&gi===0);
           var links=g.items.map(function(it){var a=fileOf(it.href)===here; return '<a class="lnavc-link'+(a?' is-active':'')+'" href="'+it.href+'"><span>'+it.label+'</span></a>';}).join('');
-          return '<div class="lnavc-group'+(o?' is-open':'')+'"><button class="lnavc-grouphead" data-toggle="1" type="button"><span>'+g.label+'</span><i class="pi pi-angle-down lnavc-chev"></i></button><div class="lnavc-items">'+links+'</div></div>';}).join('');
+          return '<div class="lnavc-group'+(o?' is-open':'')+'" data-gk="'+gk+'"><button class="lnavc-grouphead" data-toggle="1" type="button"><span>'+g.label+'</span><i class="pi pi-angle-down lnavc-chev"></i></button><div class="lnavc-items">'+links+'</div></div>';}).join('');
       }
       function railHTML(){ var cm=gcm();
         var rail=LS_SECTIONS.map(function(s){return '<button class="lnavc-railitem'+(s.key===railSel?' is-active':'')+'" data-rk="'+s.key+'" title="'+s.label+'" type="button"><span class="lnavc-railicon"><i class="pi '+s.icon+'"></i></span><span class="lnavc-raillabel">'+s.label+'</span></button>';}).join('');
@@ -7623,12 +7627,13 @@ function applyProjectContext() {
       function scope(){ var hh=location.href, re=/^(liftandshift-contract-.+\.html|lift-shift_contract\.html|lns-procure-.+\.html|lns-prime-.+\.html|lns-change-.+\.html|lns-invoice-.+\.html|lns-cost-.+\.html)$/;
         Array.prototype.forEach.call(host.querySelectorAll('a[href]'),function(a){ var f=fileOf(a.getAttribute('href')); if(!re.test(f)||a.href===hh){ a.removeAttribute('href'); a.style.cursor='default'; } });
       }
-      function apply(d){ document.body.setAttribute('data-lsnav',d);
+      function apply(d){ document.body.setAttribute('data-lsnav',d); if(d==='rail'){ document.body.setAttribute('data-railcm',gcm()); } else { document.body.removeAttribute('data-railcm'); }
         host.innerHTML = d==='ribbon'?ribbonHTML(): d==='rail'?railHTML(): nestedHTML();
         document.body.classList.toggle('lnav-collapsed', d==='nested' && gnc());
         scope();
         var _pc=document.querySelector('.proj-content'); if(_pc){ if(d==='ribbon'){ var _rb=host.querySelector('.lsrib'); _pc.style.marginTop=(56+(_rb?_rb.offsetHeight:94))+'px'; } else { _pc.style.marginTop=''; } }
         if(d==='nested'){ var asd=host.querySelector('#leftNav'); if(asd){ asd.addEventListener('mouseenter',function(){ if(gnc()) asd.setAttribute('data-collapsed','false'); }); asd.addEventListener('mouseleave',function(){ if(gnc()) asd.setAttribute('data-collapsed','true'); }); } }
+        if(d==='rail'){ var _rc=host.querySelector('#leftNavC'); if(_rc){ _rc.addEventListener('mouseenter',function(){ if(gcm()==='collapsed') _rc.classList.add('flyout-open'); }); _rc.addEventListener('mouseleave',function(){ _rc.classList.remove('flyout-open'); }); } }
       }
 
       host.addEventListener('click',function(e){
@@ -7637,7 +7642,7 @@ function applyProjectContext() {
         var nco=e.target.closest('[data-nestedcollapse]'); if(nco){ snc(!gnc()); apply('nested'); return; }
         var col=e.target.closest('[data-railcollapse]'); if(col){ scm(gcm()==='collapsed'?'expanded':'collapsed'); apply('rail'); return; }
         var ri=e.target.closest('.lnavc-railitem'); if(ri){ railSel=ri.dataset.rk; apply('rail'); return; }
-        var tg=e.target.closest('.lnavc-grouphead'); if(tg){ tg.closest('.lnavc-group').classList.toggle('is-open'); return; }
+        var tg=e.target.closest('.lnavc-grouphead'); if(tg){ var grp=tg.closest('.lnavc-group'); var _pnl=grp.closest('.lnavc-panel'); if(grp.classList.contains('is-open') && _pnl && _pnl.querySelectorAll('.lnavc-group.is-open').length<=1){ return; } var op=grp.classList.toggle('is-open'); var gk2=grp.getAttribute('data-gk'); if(gk2){ var arr=gog(); var ix=arr.indexOf(gk2); if(op&&ix<0)arr.push(gk2); if(!op&&ix>=0)arr.splice(ix,1); sog(arr); } return; }
         var rb=e.target.closest('.lsrib-tab'); if(rb){ ribSel=rb.dataset.rib; apply('ribbon'); return; }
       });
 
@@ -7648,9 +7653,9 @@ function applyProjectContext() {
       gear.addEventListener('click',function(){
         var ov=document.createElement('div'); ov.className='lsnav-ov';
         ov.innerHTML='<div class="lsnav-modal"><div class="lsnav-modal-h"><b>Navigation style</b><button class="lsnav-x" type="button">&times;</button></div><div class="lsnav-opts">'
-          +opt('nested','pi-list','Nested sidebar','Expandable vertical menu (default)')
+          +opt('nested','pi-list','Nested sidebar','Expandable vertical menu')
           +opt('ribbon','pi-table','Ribbon tabs','Horizontal tabs with grouped commands')
-          +opt('rail','pi-th-large','Icon rail + panel','Icon rail with a slide-out panel')
+          +opt('rail','pi-th-large','Icon rail + panel','Icon rail with a slide-out panel (default)')
           +'</div></div>';
         document.body.appendChild(ov);
         ov.addEventListener('click',function(ev){ if(ev.target===ov||ev.target.closest('.lsnav-x')){ ov.remove(); return; } var o=ev.target.closest('[data-design]'); if(o){ var d=o.dataset.design; sd(d); railSel=activeKey(); ribSel=activeKey(); apply(d); ov.remove(); } });
