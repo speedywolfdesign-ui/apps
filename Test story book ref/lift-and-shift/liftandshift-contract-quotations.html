@@ -5907,6 +5907,113 @@ body[data-lsnav="nested"].lnav-collapsed .proj-content{ margin-left:var(--lnav-w
     </div>
   </div>
   <div id="toastContainer" class="toast-container"></div>
+
+  <style id="ewModalCss">
+  #regBody tr{ cursor:pointer; }
+  .cc-status-tag.open{ background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+  .cc-status-tag.closed{ background:#eef2f5; color:#4b5563; border:1px solid #d0d7de; }
+  .ew-info{ display:flex; gap:10px; background:#eff4fb; border:1px solid #d5e2f5; border-radius:8px; padding:12px 14px; margin-bottom:18px; }
+  .ew-info > .pi{ color:var(--primary-600,#2859a7); font-size:16px; flex-shrink:0; margin-top:1px; }
+  .ew-info-title{ font-size:13px; font-weight:600; color:var(--default-text); margin-bottom:3px; }
+  .ew-info-text{ font-size:12px; color:var(--default-text-secondary); line-height:1.5; }
+  .ew-info-x{ margin-left:auto; border:none; background:none; cursor:pointer; color:var(--default-text-secondary); font-size:13px; align-self:flex-start; }
+  .ew-value{ font-size:13px; color:var(--default-text); line-height:1.5; }
+  .ew-value.muted{ color:var(--default-text-secondary); }
+  .ew-toprow{ margin-bottom:6px; }
+  .ew-section{ border-top:1px solid var(--default-surface-border); margin-top:2px; }
+  .ew-sec-head{ display:flex; align-items:center; gap:8px; width:100%; padding:14px 0 10px; border:none; background:none; cursor:pointer; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--default-text-secondary); text-align:left; }
+  .ew-sec-chev{ font-size:11px; transition:transform .2s; }
+  .ew-section:not(.is-open) .ew-sec-chev{ transform:rotate(-90deg); }
+  .ew-sec-body{ padding-bottom:12px; }
+  .ew-section:not(.is-open) .ew-sec-body{ display:none; }
+  .ew-radio-group{ display:flex; align-items:center; gap:18px; margin-top:4px; }
+  .ew-radio{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--default-text); }
+  .ew-radio input{ accent-color:var(--primary-500,#326fd1); }
+  .ew-att-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .ew-att-table th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--default-text-secondary); font-weight:600; padding:6px 0; border-bottom:1px solid var(--default-surface-border); }
+  .ew-att-table td{ padding:9px 0; border-bottom:1px solid var(--default-surface-border); }
+  .ew-att-table tr:last-child td{ border-bottom:none; }
+  .ew-att-link{ color:var(--primary-600,#2859a7); text-decoration:none; cursor:pointer; }
+  .ew-att-link:hover{ text-decoration:underline; }
+  .ew-tabs{ display:flex; gap:8px; margin:6px 0 14px; }
+  .ew-tab{ font-size:12px; font-weight:500; padding:6px 12px; border:1px solid var(--default-surface-border); border-radius:6px; background:var(--surface-0); cursor:pointer; color:var(--default-text); }
+  .ew-tab.is-active{ background:var(--default-surface-secondary); }
+  .ew-comment{ display:flex; gap:10px; margin-bottom:14px; }
+  .ew-avatar{ width:30px; height:30px; border-radius:50%; background:var(--primary-500,#326fd1); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; flex-shrink:0; }
+  .ew-comment-name{ font-size:13px; font-weight:600; color:var(--default-text); }
+  .ew-comment-time{ font-size:11px; color:var(--default-text-secondary); margin-left:8px; font-weight:400; }
+  .ew-comment-text{ font-size:13px; color:var(--default-text); line-height:1.5; margin-top:4px; }
+  .ew-msg-input{ width:100%; height:38px; padding:0 12px; border:1px solid var(--default-surface-border); border-radius:6px; font-size:13px; font-family:inherit; box-sizing:border-box; }
+  .ew-activities-title{ font-size:13px; font-weight:600; color:var(--default-text); margin:12px 0 8px; }
+  .ew-stub{ text-align:center; padding:56px 20px; }
+  .ew-stub-icon{ font-size:34px; color:var(--default-text-secondary); opacity:.5; margin-bottom:14px; display:block; }
+  .ew-stub-type{ font-size:16px; font-weight:600; color:var(--default-text); margin-bottom:6px; }
+  .ew-stub-msg{ font-size:13px; color:var(--default-text-secondary); line-height:1.5; max-width:380px; margin:0 auto; }
+  .ew-close-link{ font-size:13px; color:var(--primary-600,#2859a7); background:none; border:none; cursor:pointer; padding:4px 6px; }
+  .ew-close-link:hover{ text-decoration:underline; }
+  </style>
+
+  <div class="dialog-overlay" id="ewModal">
+    <div class="dialog-panel dialog-panel-lg">
+      <div class="dialog-header dialog-header-lg">
+        <div class="dialog-header-text"><span class="dialog-title" id="ewModalTitle">Quotation</span><span class="cc-status-tag open" id="ewModalBadge">OPEN</span></div>
+        <div class="dialog-header-actions">
+          <button class="dialog-action-btn" title="Minimize" type="button"><i class="pi pi-minus"></i></button>
+          <button class="dialog-action-btn" title="Expand" type="button"><i class="pi pi-window-maximize"></i></button>
+          <button class="dialog-action-btn dialog-close" title="Close" type="button" onclick="ewClose()"><i class="pi pi-times"></i></button>
+        </div>
+      </div>
+      <div class="dialog-body view-mode" id="ewModalBody"></div>
+      <div class="dialog-footer">
+        <button class="ew-close-link" type="button" onclick="ewClose()">Close</button>
+        <div class="dialog-footer-right">
+          <button class="btn btn-sm btn-secondary" type="button" onclick="ewAck('reject')">Reject</button>
+          <button class="btn btn-sm btn-primary" type="button" onclick="ewAck('acknowledge')">Acknowledge</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    function ewClose(){ var m=document.getElementById('ewModal'); if(m) m.classList.remove('is-open'); }
+    window.ewClose=ewClose;
+    window.ewToggleSec=function(btn){ var s=btn.closest('.ew-section'); if(s) s.classList.toggle('is-open'); };
+    window.ewAck=function(k){ if(window.showToast) showToast('success', k==='reject'?'Rejected':'Acknowledged', EW_TITLE+' '+(k==='reject'?'rejected':'acknowledged')+'.'); ewClose(); };
+    var overlay=document.getElementById('ewModal');
+    if(overlay){ overlay.addEventListener('click',function(e){ if(e.target===overlay) ewClose(); }); }
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') ewClose(); });
+    var rb=document.getElementById('regBody');
+    if(rb){ rb.addEventListener('click',function(e){
+      if(e.target.closest('.checkbox-box')) return;
+      var tr=e.target.closest('tr'); if(!tr) return;
+      var tds=tr.querySelectorAll('td');
+      var id=tds[1]?tds[1].textContent.trim():'';
+      var desc=tds[2]?tds[2].textContent.trim():'';
+      var status=tr.getAttribute('data-status')||'Open';
+      ewOpen(id,status,desc);
+    }); }
+    function ewSetHead(status){
+      var badge=document.getElementById('ewModalBadge');
+      var st=String(status||'Open');
+      badge.textContent=st.toUpperCase();
+      badge.className='cc-status-tag '+(st.toLowerCase()==='closed'?'closed':'open');
+      document.getElementById('ewModalTitle').textContent=EW_TITLE;
+    }
+    window.__ewSetHead=ewSetHead;
+    window.__ewShow=function(){ document.getElementById('ewModal').classList.add('is-open'); document.getElementById('ewModalBody').scrollTop=0; };
+  })();
+  </script>
+
+  <script>
+  var EW_TITLE='Quotation';
+  function ewOpen(id,status,desc){
+    __ewSetHead(status);
+    document.getElementById('ewModalBody').innerHTML='<div class="ew-stub"><i class="pi pi-info-circle ew-stub-icon"></i><div class="ew-stub-type">'+EW_TITLE+'</div><div class="ew-stub-msg">'+(id?('Record '+id+' \u2014 '):'')+'This is a '+EW_TITLE.toLowerCase()+' change record. Detailed information for this record is not available yet.</div></div>';
+    __ewShow();
+  }
+  </script>
+
   <script>
 /* ===== AI PANEL COMPONENT =====
  * Full-action AI assistant. Covers every workflow on the contracts page:

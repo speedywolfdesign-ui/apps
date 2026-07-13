@@ -5907,6 +5907,230 @@ body[data-lsnav="nested"].lnav-collapsed .proj-content{ margin-left:var(--lnav-w
     </div>
   </div>
   <div id="toastContainer" class="toast-container"></div>
+
+  <style id="ewModalCss">
+  #regBody tr{ cursor:pointer; }
+  .cc-status-tag.open{ background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+  .cc-status-tag.closed{ background:#eef2f5; color:#4b5563; border:1px solid #d0d7de; }
+  .ew-info{ display:flex; gap:10px; background:#eff4fb; border:1px solid #d5e2f5; border-radius:8px; padding:12px 14px; margin-bottom:18px; }
+  .ew-info > .pi{ color:var(--primary-600,#2859a7); font-size:16px; flex-shrink:0; margin-top:1px; }
+  .ew-info-title{ font-size:13px; font-weight:600; color:var(--default-text); margin-bottom:3px; }
+  .ew-info-text{ font-size:12px; color:var(--default-text-secondary); line-height:1.5; }
+  .ew-info-x{ margin-left:auto; border:none; background:none; cursor:pointer; color:var(--default-text-secondary); font-size:13px; align-self:flex-start; }
+  .ew-value{ font-size:13px; color:var(--default-text); line-height:1.5; }
+  .ew-value.muted{ color:var(--default-text-secondary); }
+  .ew-toprow{ margin-bottom:6px; }
+  .ew-section{ border-top:1px solid var(--default-surface-border); margin-top:2px; }
+  .ew-sec-head{ display:flex; align-items:center; gap:8px; width:100%; padding:14px 0 10px; border:none; background:none; cursor:pointer; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--default-text-secondary); text-align:left; }
+  .ew-sec-chev{ font-size:11px; transition:transform .2s; }
+  .ew-section:not(.is-open) .ew-sec-chev{ transform:rotate(-90deg); }
+  .ew-sec-body{ padding-bottom:12px; }
+  .ew-section:not(.is-open) .ew-sec-body{ display:none; }
+  .ew-radio-group{ display:flex; align-items:center; gap:18px; margin-top:4px; }
+  .ew-radio{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--default-text); }
+  .ew-radio input{ accent-color:var(--primary-500,#326fd1); }
+  .ew-att-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .ew-att-table th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--default-text-secondary); font-weight:600; padding:6px 0; border-bottom:1px solid var(--default-surface-border); }
+  .ew-att-table td{ padding:9px 0; border-bottom:1px solid var(--default-surface-border); }
+  .ew-att-table tr:last-child td{ border-bottom:none; }
+  .ew-att-link{ color:var(--primary-600,#2859a7); text-decoration:none; cursor:pointer; }
+  .ew-att-link:hover{ text-decoration:underline; }
+  .ew-tabs{ display:flex; gap:8px; margin:6px 0 14px; }
+  .ew-tab{ font-size:12px; font-weight:500; padding:6px 12px; border:1px solid var(--default-surface-border); border-radius:6px; background:var(--surface-0); cursor:pointer; color:var(--default-text); }
+  .ew-tab.is-active{ background:var(--default-surface-secondary); }
+  .ew-comment{ display:flex; gap:10px; margin-bottom:14px; }
+  .ew-avatar{ width:30px; height:30px; border-radius:50%; background:var(--primary-500,#326fd1); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; flex-shrink:0; }
+  .ew-comment-name{ font-size:13px; font-weight:600; color:var(--default-text); }
+  .ew-comment-time{ font-size:11px; color:var(--default-text-secondary); margin-left:8px; font-weight:400; }
+  .ew-comment-text{ font-size:13px; color:var(--default-text); line-height:1.5; margin-top:4px; }
+  .ew-msg-input{ width:100%; height:38px; padding:0 12px; border:1px solid var(--default-surface-border); border-radius:6px; font-size:13px; font-family:inherit; box-sizing:border-box; }
+  .ew-activities-title{ font-size:13px; font-weight:600; color:var(--default-text); margin:12px 0 8px; }
+  .ew-stub{ text-align:center; padding:56px 20px; }
+  .ew-stub-icon{ font-size:34px; color:var(--default-text-secondary); opacity:.5; margin-bottom:14px; display:block; }
+  .ew-stub-type{ font-size:16px; font-weight:600; color:var(--default-text); margin-bottom:6px; }
+  .ew-stub-msg{ font-size:13px; color:var(--default-text-secondary); line-height:1.5; max-width:380px; margin:0 auto; }
+  .ew-close-link{ font-size:13px; color:var(--primary-600,#2859a7); background:none; border:none; cursor:pointer; padding:4px 6px; }
+  .ew-close-link:hover{ text-decoration:underline; }
+  </style>
+
+  <div class="dialog-overlay" id="ewModal">
+    <div class="dialog-panel dialog-panel-lg">
+      <div class="dialog-header dialog-header-lg">
+        <div class="dialog-header-text"><span class="dialog-title" id="ewModalTitle">Early warning</span><span class="cc-status-tag open" id="ewModalBadge">OPEN</span></div>
+        <div class="dialog-header-actions">
+          <button class="dialog-action-btn" title="Minimize" type="button"><i class="pi pi-minus"></i></button>
+          <button class="dialog-action-btn" title="Expand" type="button"><i class="pi pi-window-maximize"></i></button>
+          <button class="dialog-action-btn dialog-close" title="Close" type="button" onclick="ewClose()"><i class="pi pi-times"></i></button>
+        </div>
+      </div>
+      <div class="dialog-body view-mode" id="ewModalBody"></div>
+      <div class="dialog-footer">
+        <button class="ew-close-link" type="button" onclick="ewClose()">Close</button>
+        <div class="dialog-footer-right">
+          <button class="btn btn-sm btn-secondary" type="button" onclick="ewAck('reject')">Reject</button>
+          <button class="btn btn-sm btn-primary" type="button" onclick="ewAck('acknowledge')">Acknowledge</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    function ewClose(){ var m=document.getElementById('ewModal'); if(m) m.classList.remove('is-open'); }
+    window.ewClose=ewClose;
+    window.ewToggleSec=function(btn){ var s=btn.closest('.ew-section'); if(s) s.classList.toggle('is-open'); };
+    window.ewAck=function(k){ if(window.showToast) showToast('success', k==='reject'?'Rejected':'Acknowledged', EW_TITLE+' '+(k==='reject'?'rejected':'acknowledged')+'.'); ewClose(); };
+    var overlay=document.getElementById('ewModal');
+    if(overlay){ overlay.addEventListener('click',function(e){ if(e.target===overlay) ewClose(); }); }
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') ewClose(); });
+    var rb=document.getElementById('regBody');
+    if(rb){ rb.addEventListener('click',function(e){
+      if(e.target.closest('.checkbox-box')) return;
+      var tr=e.target.closest('tr'); if(!tr) return;
+      var tds=tr.querySelectorAll('td');
+      var id=tds[1]?tds[1].textContent.trim():'';
+      var desc=tds[2]?tds[2].textContent.trim():'';
+      var status=tr.getAttribute('data-status')||'Open';
+      ewOpen(id,status,desc);
+    }); }
+    function ewSetHead(status){
+      var badge=document.getElementById('ewModalBadge');
+      var st=String(status||'Open');
+      badge.textContent=st.toUpperCase();
+      badge.className='cc-status-tag '+(st.toLowerCase()==='closed'?'closed':'open');
+      document.getElementById('ewModalTitle').textContent=EW_TITLE;
+    }
+    window.__ewSetHead=ewSetHead;
+    window.__ewShow=function(){ document.getElementById('ewModal').classList.add('is-open'); document.getElementById('ewModalBody').scrollTop=0; };
+  })();
+  </script>
+
+  <script>
+  var EW_TITLE='Early warning';
+  function ewDetail(){ return `
+  <div class="ew-info">
+    <i class="pi pi-info-circle"></i>
+    <div>
+      <div class="ew-info-title">NEC4 Early Warning Obligation</div>
+      <div class="ew-info-text">Either the Contractor or the Project Manager must notify the other as soon as either becomes aware of any matter which could increase total Prices, delay Completion or a Key Date, delay meeting a Condition for a Key Date, or impair the performance of the works in use. Failure to notify may reduce the value of any related Compensation Event.<br>NEC4 ECC Clause 15.1</div>
+    </div>
+    <button class="ew-info-x" type="button" onclick="this.closest('.ew-info').style.display='none'"><i class="pi pi-times"></i></button>
+  </div>
+  <div class="cc-field ew-toprow"><span class="cc-label">Event type</span><div class="ew-value">Early event</div></div>
+  <div class="cc-row-2">
+    <div class="cc-field"><span class="cc-label">CE Reference Number <span class="cc-req">*</span></span><div class="ew-value">CE001</div></div>
+    <div class="cc-field"><span class="cc-label">Project / Contract Reference <span class="cc-req">*</span></span><div class="ew-value">C001 — Cisco Systems</div></div>
+  </div>
+  <div class="cc-row-2">
+    <div class="cc-field"><span class="cc-label">Date of Notification <span class="cc-req">*</span></span><div class="ew-value">29/04/2026</div></div>
+    <div class="cc-field"><span class="cc-label">Notified By (Name, Role)</span><div class="ew-value">J. Smith, Project Manager</div></div>
+  </div>
+  <div class="cc-row-2">
+    <div class="cc-field"><span class="cc-label">Notified To</span><div class="ew-value">Ownername</div></div>
+    <div class="cc-field"><span class="cc-label">Email</span><div class="ew-value">jsmit@domainname.com</div></div>
+  </div>
+  <div class="ew-section is-open"><button class="ew-sec-head" type="button" onclick="ewToggleSec(this)"><i class="pi pi-chevron-down ew-sec-chev"></i><span>Event details</span></button><div class="ew-sec-body">
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Clause Reference</span><div class="ew-value">60.1(1)</div></div>
+      <div class="cc-field"><span class="cc-label">Date Event Occurred / Instruction Issued</span><div class="ew-value">29/04/2026</div></div>
+    </div>
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Event Title / Short Description <span class="cc-req">*</span></span><div class="ew-value">Change to Scope — Engineering, Procurement & Construction Management Contract</div></div>
+      <div class="cc-field"><span class="cc-label">Originating Instruction / PMI Reference</span><div class="ew-value">PMI-018</div></div>
+    </div>
+    <div class="cc-field"><span class="cc-label">Originator of Change</span><div class="ew-value">Project Manager</div></div>
+    <div class="cc-field"><span class="cc-label">Description of the Change to Scope <span class="cc-req">*</span></span><div class="ew-value">Instruction issued to change the scope of works under the Engineering, Procurement & Construction Management Contract. The change affects the scope of General Project Management and Services pay item (Pay Item 001) requiring extension of coordination activities to cover additional site requirements during Phase 2 mobilization.</div></div>
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Affected Section / Work Package</span><div class="ew-value">General Project Mgmt and Services — Pay Item 001</div></div>
+      <div class="cc-field"><span class="cc-label">Location</span><div class="ew-value">Cisco Systems Project</div></div>
+    </div>
+  </div></div>
+  <div class="ew-section is-open"><button class="ew-sec-head" type="button" onclick="ewToggleSec(this)"><i class="pi pi-chevron-down ew-sec-chev"></i><span>Scope change specifics</span></button><div class="ew-sec-body">
+    <div class="cc-field"><span class="cc-label">Original Scope Reference</span><div class="ew-value">Pay Item 001 — General Project Mgmt and Services — Original Quantity 1.0000 LOT — Hours Rate 896.00 EHRS</div></div>
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Revised Scope Description</span><div class="ew-value">Instruction issued to change the scope of works under the Engineering, Procurement & Construction Management Contract. The change affects the scope of General Project Management and Services pay item (Pay Item 001) requiring extension of coordination activities to cover additional site requirements during Phase 2 mobilization.</div></div>
+      <div class="cc-field"><span class="cc-label">Reason for Change</span><div class="ew-value">Phase 2 mobilization revealed additional coordination requirements beyond the original scope. The Employer's programme changes necessitated additional project management activities to maintain programme compliance.</div></div>
+    </div>
+  </div></div>
+  <div class="ew-section is-open"><button class="ew-sec-head" type="button" onclick="ewToggleSec(this)"><i class="pi pi-chevron-down ew-sec-chev"></i><span>Time impact</span></button><div class="ew-sec-body">
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Affects Completion Date?</span><div class="ew-radio-group"><label class="ew-radio"><input type="radio" name="ewCompl" checked disabled> Yes</label><label class="ew-radio"><input type="radio" name="ewCompl" disabled> No</label></div></div>
+      <div class="cc-field"><span class="cc-label">Affects a Key Date?</span><div class="ew-radio-group"><label class="ew-radio"><input type="radio" name="ewKey" checked disabled> Yes</label><label class="ew-radio"><input type="radio" name="ewKey" disabled> No</label></div></div>
+    </div>
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Key Date (if applicable)</span><div class="ew-value muted">--</div></div>
+      <div class="cc-field"><span class="cc-label">Estimated Delay (days)</span><div class="ew-value">21</div></div>
+    </div>
+    <div class="cc-field"><span class="cc-label">Impact on Accepted Programme (activity refs / fragnet)</span><div class="ew-value">Activity refs linked to Pay Item 001 mobilization activities. Float consumed by additional coordination activities. Programme fragnet to be submitted with quotation.</div></div>
+  </div></div>
+  <div class="ew-section is-open"><button class="ew-sec-head" type="button" onclick="ewToggleSec(this)"><i class="pi pi-chevron-down ew-sec-chev"></i><span>Cost impact</span></button><div class="ew-sec-body">
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Estimated Cost Effect</span><div class="ew-value">0.00 (scope only at notification stage — quotation to follow)</div></div>
+      <div class="cc-field"><span class="cc-label">Currency</span><div class="ew-value">USA</div></div>
+    </div>
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Basis of Estimate</span><div class="ew-value">To be confirmed in Quotation</div></div>
+      <div class="cc-field"><span class="cc-label">Main Option</span><div class="ew-value muted">--</div></div>
+    </div>
+    <div class="cc-field"><span class="cc-label">Activity Schedule / BoQ Items Affected</span><div class="ew-value">Pay Item 001 — General Project Mgmt and Services — Instructed Change IC-001</div></div>
+  </div></div>
+  <div class="ew-section is-open"><button class="ew-sec-head" type="button" onclick="ewToggleSec(this)"><i class="pi pi-chevron-down ew-sec-chev"></i><span>Quotation</span></button><div class="ew-sec-body">
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Key Date (if applicable)</span><div class="ew-value">15 May, 2026</div></div>
+      <div class="cc-field"><span class="cc-label">Quotation Submitted Date</span><div class="ew-value muted">--</div></div>
+    </div>
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Quotation Amount</span><div class="ew-value muted">--</div></div>
+      <div class="cc-field"><span class="cc-label">Quotation Status</span><div class="ew-value">Not submitted</div></div>
+    </div>
+    <div class="cc-field"><span class="cc-label">Assumptions Made</span><div class="ew-value">Assessment based on scope extension only. No unforeseen physical conditions involved. Programme impact subject to detailed fragnet review. Quotation to be submitted within NEC4 required timeframe.</div></div>
+  </div></div>
+  <div class="ew-section is-open"><button class="ew-sec-head" type="button" onclick="ewToggleSec(this)"><i class="pi pi-chevron-down ew-sec-chev"></i><span>Assessment &amp; decision</span></button><div class="ew-sec-body">
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">PM Assessment Required?</span><div class="ew-radio-group"><label class="ew-radio"><input type="radio" name="ewPm" checked disabled> Yes</label><label class="ew-radio"><input type="radio" name="ewPm" disabled> No</label></div></div>
+      <div class="cc-field"><span class="cc-label">PM Decision</span><div class="ew-value muted">--</div></div>
+    </div>
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Decision Date</span><div class="ew-value muted">--</div></div>
+      <div class="cc-field"><span class="cc-label">Implemented Date</span><div class="ew-value muted">--</div></div>
+    </div>
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Agreed Time Effect (days)</span><div class="ew-value muted">--</div></div>
+      <div class="cc-field"><span class="cc-label">Agreed Cost Effect</span><div class="ew-value muted">--</div></div>
+    </div>
+  </div></div>
+  <div class="ew-section is-open"><button class="ew-sec-head" type="button" onclick="ewToggleSec(this)"><i class="pi pi-chevron-down ew-sec-chev"></i><span>Supporting information</span></button><div class="ew-sec-body">
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Related Early Warning Reference</span><div class="ew-value">EW-001</div></div>
+      <div class="cc-field"><span class="cc-label">Related Risk Register Item</span><div class="ew-value">Placeholder text</div></div>
+    </div>
+    <div class="cc-field"><span class="cc-label">Comments / Notes</span><div class="ew-value">This compensation event is linked to Early Warning EW-001 raised on Feb 3, 2018 regarding delayed delivery and extended coordination requirements. The Contractor failed to give early warning under Clause 15.1 — PM assessment to consider impact on quotation value per NEC4 61.5.</div></div>
+  </div></div>
+  <div class="ew-section is-open"><button class="ew-sec-head" type="button" onclick="ewToggleSec(this)"><i class="pi pi-chevron-down ew-sec-chev"></i><span>Attachments</span></button><div class="ew-sec-body">
+    <table class="ew-att-table"><thead><tr><th>File name</th><th style="text-align:right">Size</th></tr></thead><tbody>
+      <tr><td><a class="ew-att-link">DocumentName.docx</a></td><td style="text-align:right">50.50 KB</td></tr>
+      <tr><td><a class="ew-att-link">DocumentName.docx</a></td><td style="text-align:right">50.50 KB</td></tr>
+      <tr><td><a class="ew-att-link">DocumentName.docx</a></td><td style="text-align:right">50.50 KB</td></tr>
+    </tbody></table>
+  </div></div>
+  <div class="ew-section is-open"><button class="ew-sec-head" type="button" onclick="ewToggleSec(this)"><i class="pi pi-chevron-down ew-sec-chev"></i><span>Workflow &amp; status</span></button><div class="ew-sec-body">
+    <div class="cc-row-2">
+      <div class="cc-field"><span class="cc-label">Current Status</span><div class="ew-value">Notified</div></div>
+      <div class="cc-field"><span class="cc-label">Assigned To</span><div class="ew-value">J. Smith, Project Manager</div></div>
+    </div>
+    <div class="cc-field"><span class="cc-label">Due Date for Next Action</span><div class="ew-value">13 May, 2026</div></div>
+  </div></div>
+  <div class="ew-activities-title">Activities</div>
+  <div class="ew-tabs"><button class="ew-tab is-active" type="button">Comments</button><button class="ew-tab" type="button">History</button></div>
+  <div class="ew-comment">
+    <div class="ew-avatar">LM</div>
+    <div><div><span class="ew-comment-name">Lara Moran</span><span class="ew-comment-time">January 13, 2025 at 9:47 AM</span></div><div class="ew-comment-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam eu varius felis. Maecenas accumsan pharetra pretium. Pellentesque pharetra pharetra.</div></div>
+  </div>
+  <input class="ew-msg-input" type="text" placeholder="Type new message here">
+  `; }
+  function ewOpen(id,status,desc){ __ewSetHead(status); document.getElementById('ewModalBody').innerHTML=ewDetail(); __ewShow(); }
+  </script>
+
   <script>
 /* ===== AI PANEL COMPONENT =====
  * Full-action AI assistant. Covers every workflow on the contracts page:
