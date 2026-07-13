@@ -301,7 +301,7 @@
 .lnavc-collapse .pi{ display:block; line-height:1; transition:transform .2s; }
 .lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
 .lnavc[data-cmode="collapsed"]{ width:88px; }
-.lnavc[data-cmode="collapsed"] ~ .proj-content{ margin-left:88px; }
+body[data-lsnav="rail"][data-railcm="collapsed"] .proj-content{ margin-left:88px; }
 .lnavc[data-cmode="collapsed"] .lnavc-panel{ position:absolute; left:88px; top:0; bottom:0; width:256px; background:var(--surface-0,#fff); border-right:1px solid var(--surface-200,#e5e5e5); box-shadow:none; z-index:120; overflow-y:auto; transform:translateX(-10px); opacity:0; pointer-events:none; transition:transform .18s ease, opacity .18s ease; }
 .lnavc[data-cmode="collapsed"].flyout-open .lnavc-panel{ transform:translateX(0); opacity:1; pointer-events:auto; }
 
