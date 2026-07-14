@@ -5994,8 +5994,8 @@ body.ai-panel-open .proj-content {
           </div>
         </div>
 
-        <!-- Time scrubber -->
-        <div class="sc-time-scrubber">
+        <!-- Time scrubber (hidden by default; enable via kebab → Settings → Show time scrubber) -->
+        <div class="sc-time-scrubber" id="scTimeScrubber" style="display:none">
           <div class="sc-ts-left">
             <i class="pi pi-history sc-ts-icon"></i>
             <span class="sc-ts-sim-label">Simulate:</span>
@@ -6006,9 +6006,6 @@ body.ai-panel-open .proj-content {
                  min="2" max="22" value="6"
                  oninput="updateChartTime(+this.value); this.style.setProperty('--fill-pct', ((this.value-this.min)/(this.max-this.min)*100)+'%')"
                  style="--fill-pct:20%" />
-          <button class="sc-ts-reset" onclick="resetToRealToday()" title="Reset to current date">
-            <i class="pi pi-refresh"></i> Today
-          </button>
         </div>
 
         <!-- Chart area -->
@@ -6021,6 +6018,7 @@ body.ai-panel-open .proj-content {
               <button type="button" class="ait-compare-btn" id="aiCompareBtn" onclick="toggleAiCompare()" aria-pressed="false" title="Compare the AI forecast against the human-entered forecast">
                 <span id="aiCompareBtnTxt">Compare</span>
               </button>
+              <button class="sc-ts-reset" id="scTodayBtn" onclick="resetToRealToday()" title="Reset to current date"><i class="pi pi-refresh"></i> Today</button>
             </span>
           </div>
           <div class="sc-chart-wrap" style="height:320px">
@@ -12597,6 +12595,8 @@ document.addEventListener('DOMContentLoaded', () => {
             '<div class="ds-group">' +
               '<label class="ds-check"><input type="checkbox" id="dsLoadModal"><span>Show loading modal</span></label>' +
               '<div class="ds-hint">Show the AI-analysis modal while a forecast runs.</div>' +
+              '<label class="ds-check"><input type="checkbox" id="dsTimeScrubber"><span>Show time scrubber</span></label>' +
+              '<div class="ds-hint">Show the time-simulation slider above the chart.</div>' +
             '</div>' +
             '<div class="ds-group"><div class="ds-group-title">View</div>' +
               '<label class="ds-radio"><input type="radio" name="dsView" value="tabs"><span>Tab view</span></label>' +
@@ -12617,6 +12617,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _dsModal = ov;
 
       ov.querySelector('#dsLoadModal').addEventListener('change', function(){ _showLoadModal = this.checked; });
+      ov.querySelector('#dsTimeScrubber').addEventListener('change', function(){ var sc=document.getElementById('scTimeScrubber'); if(sc) sc.style.display = this.checked ? '' : 'none'; });
       ov.querySelectorAll('input[name="dsView"]').forEach(function(r){
         r.addEventListener('change', function(){ if(this.checked && typeof setSectionsView === 'function') setSectionsView(this.value); });
       });
@@ -12636,6 +12637,7 @@ document.addEventListener('DOMContentLoaded', () => {
       var ov = buildDisplaySettings();
       // sync controls to current state
       ov.querySelector('#dsLoadModal').checked = _showLoadModal;
+      ov.querySelector('#dsTimeScrubber').checked = (function(){ var sc=document.getElementById('scTimeScrubber'); return !!sc && getComputedStyle(sc).display !== 'none'; })();
       var view = (document.getElementById('scSections') || {}).dataset ? document.getElementById('scSections').dataset.view : 'accordion';
       ov.querySelectorAll('input[name="dsView"]').forEach(function(r){ r.checked = (r.value === view); });
       var tip = 'synced';
