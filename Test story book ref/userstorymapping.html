@@ -1302,8 +1302,8 @@
     { id:'reset-weights',epic:'settings',title:'Reset weights to default', icon:'pi-refresh' },
     { id:'settings-locks',epic:'settings',title:'Permission locks', icon:'pi-lock' },
     // sim
-    { id:'scrubber',    epic:'sim', title:'Time scrubber', icon:'pi-history' },
-    { id:'sim-badge',   epic:'sim', title:'Simulated badge', icon:'pi-flag' },
+    { id:'scrubber',    epic:'sim', title:'Time scrubber', icon:'pi-history', hidden:true },
+    { id:'sim-badge',   epic:'sim', title:'Simulated badge', icon:'pi-flag', hidden:true },
     { id:'reset-today', epic:'sim', title:'Reset to today', icon:'pi-refresh' },
     { id:'drag',        epic:'sim', title:'Drag-to-scrub on chart', icon:'pi-arrows-h' },
     { id:'whatif',      epic:'sim', title:'What-if SPI / CPI', icon:'pi-sync' },
@@ -7342,7 +7342,7 @@ body.ai-panel-open .proj-content {
     let visibleStories = 0;
 
     EPICS.forEach(epic=>{
-      const epicFeatures = FEATURES.filter(f=>f.epic===epic.id);
+      const epicFeatures = FEATURES.filter(f=>f.epic===epic.id && !f.hidden);
       const featureBlocks = [];
       let epicStoryCount = 0;
 
@@ -7404,7 +7404,7 @@ body.ai-panel-open .proj-content {
     });
 
     document.getElementById('emptyState').style.display = visibleStories ? 'none' : 'block';
-    const total = STORIES.length;
+    const total = STORIES.filter(s=>{ const f=FEATURES.find(ff=>ff.id===s.f); return f && !f.hidden; }).length;
     document.getElementById('storyCount').innerHTML =
       `<b>${visibleStories}</b> of ${total} stories${visibleStories<total?' (filtered)':''}`;
   }
