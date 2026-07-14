@@ -1185,6 +1185,10 @@
       <div class="usm-chips" id="personaChips"></div>
     </div>
     <div class="usm-filter-group">
+      <span class="usm-filter-label"><i class="pi pi-flag"></i> Release</span>
+      <div class="usm-chips" id="releaseChips"></div>
+    </div>
+    <div class="usm-filter-group">
       <span class="usm-filter-label"><i class="pi pi-search"></i> Search</span>
       <div class="usm-search-wrap">
         <i class="pi pi-search usm-search-icon"></i>
@@ -1245,10 +1249,10 @@
   const P = Object.fromEntries(PERSONAS.map(p=>[p.id,p]));
 
   const RELEASES = [
-    { id:'mvp', name:'MVP' },
-    { id:'r1',  name:'Release 1' },
-    { id:'r2',  name:'Release 2' },
-    { id:'future', name:'Future' },
+    { id:'mvp',    name:'MVP',       color:'#16a34a' },
+    { id:'r1',     name:'Release 1', color:'#2859a7' },
+    { id:'r2',     name:'Release 2', color:'#7c3aed' },
+    { id:'future', name:'Future',    color:'#64748b' },
   ];
 
   const EPICS = [
@@ -1267,7 +1271,7 @@
 
   const FEATURES = [
     // nav
-    { id:'acct-select', epic:'nav', title:'Control account selector', icon:'pi-list' },
+    { id:'acct-select', epic:'nav', title:'Forecast selector (group + item)', icon:'pi-sitemap' },
     { id:'acct-search', epic:'nav', title:'Account search', icon:'pi-search' },
     { id:'section-view',epic:'nav', title:'Section views (A/B)', icon:'pi-window-maximize' },
     // viz
@@ -1291,9 +1295,9 @@
     { id:'point-alloc', epic:'settings', title:'Driver point allocation', icon:'pi-percentage' },
     { id:'cls-groups',  epic:'settings', title:'Classification groups', icon:'pi-tags' },
     { id:'num-features',epic:'settings', title:'Numerical features', icon:'pi-hashtag' },
-    { id:'shape-weights',epic:'settings',title:'Curve-shape weights', icon:'pi-chart-line' },
+    { id:'shape-weights',epic:'settings',title:'Curve-shape signals (auto, hidden)', icon:'pi-chart-line' },
     { id:'spicpi-weight',epic:'settings',title:'SPI / CPI integration weight', icon:'pi-sync' },
-    { id:'cost-breakdown',epic:'settings',title:'Cost breakdown toggle', icon:'pi-list' },
+    { id:'cost-breakdown',epic:'settings',title:'Control-element breakdown', icon:'pi-list' },
     { id:'inline-drivers',epic:'settings',title:'Inline driver sliders', icon:'pi-sliders-h' },
     { id:'reset-weights',epic:'settings',title:'Reset weights to default', icon:'pi-refresh' },
     { id:'settings-locks',epic:'settings',title:'Permission locks', icon:'pi-lock' },
@@ -1351,20 +1355,26 @@
     { id:'pendo-tour',      epic:'onboard', title:'Product tour (balloons)', icon:'pi-map-marker' },
     { id:'tour-replay',     epic:'onboard', title:'Help & replay tour', icon:'pi-question-circle' },
     { id:'tour-style',      epic:'onboard', title:'Tour style switch', icon:'pi-sync' },
+    // ===== latest — forecast engine refresh =====
+    { id:'adopt-forecast',  epic:'ai', title:'Adopt / revert AI forecast', icon:'pi-check-circle' },
   ];
 
   /* Each story: feature, who (persona), title (task), benefit, priority, release, ac[] */
   const STORIES = [
     // ===== nav =====
-    { f:'acct-select', who:'pm', t:'Switch control account from the dropdown', b:'view any CA forecast without leaving the page', pri:'high', rel:'mvp',
-      ac:['Dropdown lists all available control accounts','Selecting a CA closes the dropdown and updates the title','Only roles with changeAccount permission can switch'] },
-    { f:'acct-select', who:'ce', t:'Rebuild chart, KPIs & banner on switch', b:'every panel stays consistent with the selected CA', pri:'high', rel:'mvp',
-      ac:['Chart datasets reload for the chosen CA','KPI tiles, AI banner and explanation all refresh','realToday index & BAC update to the new CA'] },
-    { f:'acct-select', who:'cd', t:'See the active CA name in the page subtitle', b:'always know which account I am reviewing', pri:'med', rel:'mvp',
-      ac:['Subtitle shows "Control account: CA-#### · Name"','Subtitle updates immediately on selection'] },
-    { f:'acct-search', who:'ce', t:'Type-ahead search across accounts', b:'jump to a CA fast on large projects', pri:'med', rel:'r1',
-      ac:['Typing filters the list case-insensitively','Search matches CA code and name','List restores when the query is cleared'] },
-    { f:'acct-search', who:'pm', t:'See a "No accounts found" empty state', b:'know my search matched nothing', pri:'low', rel:'r1',
+    { f:'acct-select', who:'pm', t:'Pick a forecast group level', b:'forecast at the level I need — whole project or a specific grouping', pri:'high', rel:'mvp',
+      ac:['First dropdown lists four levels: Project summary, Enterprise group, Standard groups, Control accounts','Choosing a level sets the second (sub-item) dropdown to that group’s items','Only roles with changeAccount permission can change the selection'] },
+    { f:'acct-select', who:'ce', t:'Pick a sub-item that cascades from the group', b:'drill into the exact account or grouping to forecast', pri:'high', rel:'mvp',
+      ac:['Second dropdown cascades to the chosen group’s items — e.g. Enterprise group → Civil Foundations, Structural Steel, MEP Systems, Site Preparation','Selecting a sub-item loads that target’s forecast and closes the dropdown','Each group maps its items to the underlying control accounts (ca-1042…ca-1045)'] },
+    { f:'acct-select', who:'pm', t:'Select Project summary for a whole-project roll-up', b:'see the project-level forecast in one place', pri:'high', rel:'mvp',
+      ac:['Project summary has no sub-items — the second dropdown is disabled','It loads the rolled-up curve across all control accounts','The Run button relabels to “Run project forecast”'] },
+    { f:'acct-select', who:'ce', t:'Rebuild chart, KPIs & banner on selection', b:'every panel stays consistent with the selected target', pri:'high', rel:'mvp',
+      ac:['Chart datasets reload for the chosen target','KPI tiles, AI banner and explanation all refresh','realToday index & BAC update to the new target'] },
+    { f:'acct-select', who:'cd', t:'See the active target in the page subtitle', b:'always know which forecast I am reviewing', pri:'med', rel:'mvp',
+      ac:['Subtitle reflects the selected group and item','Subtitle updates immediately on selection'] },
+    { f:'acct-search', who:'ce', t:'Type-ahead search within the sub-item dropdown', b:'jump to an item fast on large groupings', pri:'med', rel:'r1',
+      ac:['A search box sits at the top of the sub-item dropdown','Typing filters the items case-insensitively','List restores when the query is cleared'] },
+    { f:'acct-search', who:'pm', t:'See a "No items found" empty state', b:'know my search matched nothing', pri:'low', rel:'r1',
       ac:['Empty-state message shows when no items match','Message hides as soon as a match exists'] },
     { f:'section-view', who:'pm', t:'Toggle accordion vs tab layout', b:'read the page the way that suits me', pri:'low', rel:'r2',
       ac:['Kebab menu offers Accordion and Tab view (radio)','Switching re-flows the sections without reload','Active choice shows a check mark'] },
@@ -1409,7 +1419,7 @@
     { f:'eac-anchor', who:'pm', t:'See the AI EAC re-anchor the curve', b:'trust the forecast reflects the latest actuals', pri:'high', rel:'mvp',
       ac:['Forecast re-anchors to current actuals','Implied EAC is reflected in the curve & KPIs'] },
     { f:'confidence', who:'ce', t:'See the P10–P90 confidence band', b:'visualise the range of likely outcomes', pri:'med', rel:'r1',
-      ac:['Band is drawn between P10 and P90 datasets','Band can be toggled from chart controls'] },
+      ac:['Band is drawn between P10 and P90 datasets','Band can be toggled from chart controls','Band widens to P5–P95 for early-lifecycle accounts (< 33% complete) and tightens to P10–P90 as the account matures'] },
     { f:'confidence', who:'ce', t:'Watch the band re-anchor as I scrub time', b:'see uncertainty update with the simulation', pri:'low', rel:'r2',
       ac:['Band recomputes around the stored AI projection as Today moves'] },
     { f:'driver-banner', who:'pm', t:'See driver-weight pills summing to 100%', b:'understand what drives the forecast', pri:'med', rel:'r1',
@@ -1426,16 +1436,16 @@
       ac:['Cog button opens the settings modal','Esc and Cancel close it','Read-only roles see a lock notice'] },
     { f:'point-alloc', who:'ce', t:'Allocate points across driver groups', b:'control which signals influence the model', pri:'high', rel:'r1',
       ac:['Each group shows its share as a % of total points','Group percentages re-sum to 100% on change','Banner pills update to match'] },
-    { f:'cls-groups', who:'ad', t:'Enable / disable classification groups', b:'choose which categorical matchers apply', pri:'med', rel:'r1',
-      ac:['Each classification group can be toggled','Disabling a group removes it from matching','Only roles with configureGroups can toggle'] },
-    { f:'num-features', who:'ad', t:'Enable / disable numerical features', b:'choose which numeric matchers apply', pri:'med', rel:'r1',
-      ac:['Each numerical feature can be toggled','Disabled features are excluded from Gower distance'] },
-    { f:'shape-weights', who:'ce', t:'Weight curve-shape statistics', b:'emphasise shape signals in matching', pri:'med', rel:'r2',
-      ac:['Skewness, front-load, Gini, peak-period weights are adjustable','Sliders disabled without modifyWeights permission'] },
+    { f:'cls-groups', who:'ad', t:'Weight the classification groups', b:'choose which categorical matchers apply and how strongly', pri:'med', rel:'r1',
+      ac:['Classification sub-sources (Project, Enterprise, Standard, Module) each expose per-group weight sliders (0–5)','Setting a group’s weight to 0 excludes it from matching','Only roles with configureGroups can change them'] },
+    { f:'num-features', who:'ad', t:'Weight the numerical features', b:'choose which numeric matchers apply and how strongly', pri:'med', rel:'r1',
+      ac:['Numerical features (duration, budget, element-mix breakdowns) expose weight sliders (0–5)','A feature weighted 0 is excluded from the Gower distance','Element-mix features are specific to the selected data type (Cost / Hours / Company)'] },
+    { f:'shape-weights', who:'ce', t:'Rely on curve-shape signals applied automatically', b:'benefit from shape matching without hand-tuning it', pri:'low', rel:'r2',
+      ac:['Curve-shape statistics (skewness, front-load, Gini, peak period, kurtosis, plan-vs-actual) are computed and used in matching','These signals are applied automatically and are hidden from the settings UI (no user weight)','Curve-shape contributes 0 points to the driver mix and is excluded from the “Driven by” pills'] },
     { f:'spicpi-weight', who:'ce', t:'Set the SPI / CPI integration weight', b:'weight peers by earned-value performance', pri:'med', rel:'r1',
-      ac:['Stepper / slider adjusts the SPI-CPI weight','Typed value and stepper stay in sync','Change reflects in the driver pills'] },
-    { f:'cost-breakdown', who:'ce', t:'Toggle the cost breakdown view', b:'see contributing cost elements', pri:'low', rel:'r2',
-      ac:['Toggle expands/collapses the cost breakdown'] },
+      ac:['A single weight slider (0–5, default 3.0) sets SPI/CPI influence — this replaced the old on/off toggle','Setting the weight to 0 disables SPI/CPI as a matching factor','Change reflects in the driver pills and the section % badge'] },
+    { f:'cost-breakdown', who:'ce', t:'Toggle the control-element breakdown', b:'include or exclude element-level cost signals in matching', pri:'low', rel:'r2',
+      ac:['ON applies all 6 numerical features; OFF drops the 4 element-mix features (2 of 6 applied)','The breakdown is metric-specific: Cost = labour / material / equipment / subcontract mix, Hours = craft / supervision, Company = internal cost','A “Detected: N of 7 control elements active” counter reflects the current state'] },
     { f:'inline-drivers', who:'ce', t:'Adjust driver weights from the inline Settings accordion', b:'tune weights without opening the modal', pri:'med', rel:'r2',
       ac:['Settings accordion renders driver sliders inline','Inline sliders stay in sync with the modal'] },
     { f:'reset-weights', who:'ce', t:'Reset weights to default', b:'revert experiments to the baseline state', pri:'med', rel:'r1',
@@ -1575,6 +1585,12 @@
       ac:['A "Help & tour" item in the kebab menu launches the tour','The completion card offers Replay tour'] },
     { f:'tour-style', who:'ce', t:'Switch between guided and product-tour styles', b:'use the onboarding style I prefer', pri:'low', rel:'r2',
       ac:['Settings offers Guided (spotlight) and Product tour styles','The choice persists','Help launches the selected style (Pendo-style by default)'] },
+
+    // ===== latest — forecast engine refresh =====
+    { f:'adopt-forecast', who:'pm', t:'Adopt the AI forecast as the current forecast', b:'commit the AI projection as the team baseline', pri:'high', rel:'r1',
+      ac:['“Adopt AI forecast” flips the account’s curve ID from Manual to AI','The banner tag changes from “AI forecast active” to “AI forecast accepted”','A toast confirms adoption and the choice is remembered per account'] },
+    { f:'adopt-forecast', who:'ce', t:'Revert to the current (manual) forecast', b:'back out of an AI forecast I do not want to keep', pri:'med', rel:'r1',
+      ac:['Reverting restores the previously current forecast for the account','The banner tag returns to “AI forecast active”','A toast confirms the revert'] },
   ];
 
   /* =====================================================================
@@ -1609,14 +1625,40 @@
   }
 
   const acctSnippet = `
-    <div class="sc-acct-selector-wrap" style="position:static">
-      <button class="sc-acct-selector" aria-expanded="true">CA-1042 · Civil Foundations — P2 <i class="pi pi-chevron-down sc-acct-chevron"></i></button>
-      <div class="sc-acct-dropdown" style="position:static;display:block;margin-top:8px;max-width:340px">
-        <div class="sc-acct-search-wrap"><i class="pi pi-search sc-acct-search-icon"></i><input class="sc-acct-search" type="text" placeholder="Search accounts…"/></div>
-        <div class="sc-acct-drop-item sc-acct-drop-item--active">CA-1042 · Civil Foundations — P2</div>
-        <div class="sc-acct-drop-item">CA-1043 · Structural Steel — P1</div>
-        <div class="sc-acct-drop-item">CA-1044 · MEP Systems</div>
-        <div class="sc-acct-drop-item">CA-1045 · Site Preparation</div>
+    <div style="font-family:Inter,sans-serif">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#64748b;margin:0 0 10px">Forecast selector — group + cascading sub-item</div>
+      <div class="sc-fc-selectors" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+        <!-- 1st dropdown: group / level -->
+        <div class="sc-acct-selector-wrap" id="fcGroupWrap" style="position:static">
+          <button class="sc-acct-selector" aria-expanded="true" id="fcGroupBtn"><span class="sc-acct-selector-label">Enterprise group</span> <i class="pi pi-chevron-down sc-acct-chevron"></i></button>
+          <div class="sc-acct-dropdown" style="position:static;display:block;margin-top:8px">
+            <div class="sc-acct-drop-item" data-group="project-summary">Project summary</div>
+            <div class="sc-acct-drop-item sc-acct-drop-item--active" data-group="group-title">Enterprise group</div>
+            <div class="sc-acct-drop-item" data-group="standard-group-title">Standard groups</div>
+            <div class="sc-acct-drop-item" data-group="control-accounts">Control accounts</div>
+          </div>
+        </div>
+        <!-- 2nd dropdown: sub-item (cascades from the group) -->
+        <div class="sc-acct-selector-wrap" id="fcItemWrap" style="position:static">
+          <button class="sc-acct-selector" aria-expanded="true" id="fcItemBtn"><span class="sc-acct-selector-label">Civil Foundations</span> <i class="pi pi-chevron-down sc-acct-chevron"></i></button>
+          <div class="sc-acct-dropdown" style="position:static;display:block;margin-top:8px">
+            <div class="sc-acct-search-wrap"><i class="pi pi-search sc-acct-search-icon"></i><input class="sc-acct-search" type="text" placeholder="Search…"/></div>
+            <div>
+              <div class="sc-acct-drop-item sc-acct-drop-item--active" data-id="gt-civil">Civil Foundations</div>
+              <div class="sc-acct-drop-item" data-id="gt-steel">Structural Steel</div>
+              <div class="sc-acct-drop-item" data-id="gt-mep">MEP Systems</div>
+              <div class="sc-acct-drop-item" data-id="gt-site">Site Preparation</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:#475569;margin-top:14px;line-height:1.55;max-width:520px">
+        The <b>group</b> dropdown picks the level — <b>Project summary</b> (whole-project roll-up, sub-item disabled), <b>Enterprise group</b>, <b>Standard groups</b> or <b>Control accounts</b>. The <b>sub-item</b> dropdown cascades to that group’s items and is searchable. Example levels &amp; items:
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Enterprise group</b> → Civil Foundations · Structural Steel · MEP Systems · Site Preparation</li>
+          <li><b>Standard groups</b> → Foundations — Phase 2 · Steel Erection — Phase 1 · Mechanical &amp; Electrical · Sitework &amp; Earthworks</li>
+          <li><b>Control accounts</b> → CA-1042 · CA-1043 · CA-1044 · CA-1045</li>
+        </ul>
       </div>
     </div>`;
 
@@ -1829,8 +1871,8 @@
 
   const FEATURE_DETAIL = {
     // nav
-    'acct-select':{ desc:'Toolbar dropdown to switch the active control account; selecting one rebuilds the chart, KPIs and banner.', html:acctSnippet },
-    'acct-search':{ desc:'Type-ahead search inside the account dropdown with a no-results empty state.', html:acctSnippet },
+    'acct-select':{ desc:'Two-level Forecast selector — a group dropdown (Project summary · Enterprise group · Standard groups · Control accounts) and a cascading, searchable sub-item dropdown. Selecting a target rebuilds the chart, KPIs and banner.', html:acctSnippet },
+    'acct-search':{ desc:'Type-ahead search inside the sub-item dropdown, with a no-results empty state.', html:acctSnippet },
     'section-view':{ desc:'A/B-tested layout — read the page as stacked accordions or as tabs.', html:`
       <div class="sc-tabs-bar" role="tablist" style="margin-bottom:16px">
         <button class="sc-tab-btn is-active">Cumulative spend forecast</button>
@@ -7211,6 +7253,7 @@ body.ai-panel-open .proj-content {
   const state = {
     epics: new Set(),      // empty => all
     personas: new Set(),
+    releases: new Set(),
     q: '',
   };
 
@@ -7241,6 +7284,13 @@ body.ai-panel-open .proj-content {
       c.onclick = ()=>toggle(state.personas, p.id, c);
       pc.appendChild(c);
     });
+    // Releases
+    const rc = document.getElementById('releaseChips');
+    if(rc){ RELEASES.forEach(r=>{
+      const c = chip(r.name, false, r.color);
+      c.onclick = ()=>toggle(state.releases, r.id, c);
+      rc.appendChild(c);
+    }); }
     document.getElementById('searchInput').addEventListener('input', e=>{
       state.q = e.target.value.trim().toLowerCase();
       render();
@@ -7261,7 +7311,7 @@ body.ai-panel-open .proj-content {
   }
 
   function resetFilters(){
-    state.epics.clear(); state.personas.clear();
+    state.epics.clear(); state.personas.clear(); state.releases.clear();
     state.q = '';
     document.getElementById('searchInput').value = '';
     document.querySelectorAll('.usm-chip.is-active').forEach(c=>c.classList.remove('is-active'));
@@ -7275,6 +7325,7 @@ body.ai-panel-open .proj-content {
     const feat = FEATURES.find(f=>f.id===s.f);
     if(state.epics.size && !state.epics.has(feat.epic)) return false;
     if(state.personas.size && !state.personas.has(s.who)) return false;
+    if(state.releases.size && !state.releases.has(s.rel)) return false;
     if(state.q){
       const hay = (s.t + ' ' + s.b + ' ' + feat.title + ' ' + P[s.who].name).toLowerCase();
       if(!hay.includes(state.q)) return false;
