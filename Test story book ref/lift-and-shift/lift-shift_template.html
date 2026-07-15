@@ -7208,6 +7208,23 @@ function applyProjectContext() {
           { label:'Import / export', href:'invoice/lns-invoice-import-export.html' },
           { label:'Validate data', href:'invoice/lns-invoice-validate-data.html' },
           { label:'Replace IDs', href:'invoice/lns-invoice-replace-ids.html' } ] } ] },
+        { key:'schedule', icon:'pi-calendar', label:'Schedule', groups:[
+        { label:'Data entry', items:[
+          { label:'Activities', href:'schedule/lns-schedule-activities.html' },
+          { label:'Resources', href:'schedule/lns-schedule-resources.html' },
+          { label:'Settings', href:'schedule/lns-schedule-settings.html' } ] },
+        { label:'Reports', items:[
+          { label:'Reports', href:'schedule/lns-schedule-reports.html' },
+          { label:'Lists', href:'schedule/lns-schedule-lists.html' },
+          { label:'Excel reports', href:'schedule/lns-schedule-excel-reports.html' },
+          { label:'Report writer', href:'schedule/lns-schedule-report-writer.html' } ] },
+        { label:'Import / export', items:[
+          { label:'Import / export', href:'schedule/lns-schedule-import-export.html' },
+          { label:'Special import / export', href:'schedule/lns-schedule-special-import-export.html' } ] },
+        { label:'Utilities', items:[
+          { label:'Copy dates to activities', href:'schedule/lns-schedule-copy-dates-to-activities.html' },
+          { label:'Validate data', href:'schedule/lns-schedule-validate-data.html' },
+          { label:'Other utilities', href:'schedule/lns-schedule-other-utilities.html' } ] } ] },
             { key:'change', icon:'pi-sync', label:'Change', groups:[
         { label:'Change', items:[
           { label:'Trend', href:'change-management/lns-change-trends.html' },
@@ -7276,7 +7293,7 @@ function applyProjectContext() {
         return '<div class="lsrib"><div class="lsrib-tabs">'+tabs+'</div><div class="lsrib-groups">'+groups+'</div></div>';
       }
 
-      function scope(){ var hh=location.href, re=/^(liftandshift-contract-.+\.html|lift-shift_contract\.html|lns-procure-.+\.html|lns-prime-.+\.html|lns-change-.+\.html|lns-invoice-.+\.html|lns-cost-.+\.html)$/;
+      function scope(){ var hh=location.href, re=/^(liftandshift-contract-.+\.html|lift-shift_contract\.html|lns-procure-.+\.html|lns-prime-.+\.html|lns-change-.+\.html|lns-invoice-.+\.html|lns-cost-.+\.html|lns-schedule-.+\.html)$/;
         Array.prototype.forEach.call(host.querySelectorAll('a[href]'),function(a){ var f=fileOf(a.getAttribute('href')); if(!re.test(f)||a.href===hh){ a.removeAttribute('href'); a.style.cursor='default'; } });
       }
       function apply(d){ document.body.setAttribute('data-lsnav',d); if(d==='rail'){ document.body.setAttribute('data-railcm',gcm()); } else { document.body.removeAttribute('data-railcm'); }

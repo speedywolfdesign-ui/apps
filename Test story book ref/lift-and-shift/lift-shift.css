@@ -118,7 +118,7 @@
   border:none; border-bottom:var(--border-1,1px) solid var(--surface-200,#e5e5e5); border-radius:0;
 }
 .ls-head .panel-title,
-.ls-head .ls-title{ color:var(--surface-500,#737373); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; text-shadow:none; }
+.ls-head .ls-title{ color:var(--surface-500,#737373); font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:none; text-shadow:none; }
 .ls-head .pi{ font-size:12px; color:var(--surface-400,#bdbdbd); cursor:pointer; margin-left:10px; }
 .ls-head .pi:hover{ color:var(--primary-500,#326fd1); }
 

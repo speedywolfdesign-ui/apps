@@ -5858,132 +5858,14 @@ body[data-lsnav="nested"].lnav-collapsed .proj-content{ margin-left:var(--lnav-w
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a class="breadcrumb-item">Project Home</a>
       <i class="pi pi-angle-right breadcrumb-sep"></i>
-      <span class="breadcrumb-item">Procurement</span>
+      <span class="breadcrumb-item">Schedule</span>
       <i class="pi pi-angle-right breadcrumb-sep"></i>
       <span class="breadcrumb-item breadcrumb-current">Validate data</span>
     </nav>
     <div class="section-header">
       <h1 class="section-title">Validate data</h1>
-      <p class="section-desc">Check ID integrity across purchase order tables and fields.</p>
-    </div>
-
-    <div class="ls-screen">
-      <section class="panel">
-        <div class="panel-content" style="padding:14px 16px">
-          <div class="ls-form">
-            <div class="ls-frow ls-frow-fill">
-              <label>Table</label>
-              <div class="dropdown" id="vd-table" style="width:360px;max-width:60vw" onclick="lsVdToggle(this)">
-                <span class="dropdown-value">All</span><i class="pi pi-chevron-down dropdown-arrow"></i>
-                <ul class="dropdown-menu">
-            <li class="dropdown-item dropdown-item-active" onclick="event.stopPropagation();selectOption('vd-table','All');vdTable('All')">All</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Orders');vdTable('Purchase Orders')">Purchase Orders</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Line Items');vdTable('Purchase Order Line Items')">Purchase Order Line Items</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Line Item Changes');vdTable('Purchase Order Line Item Changes')">Purchase Order Line Item Changes</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Bidders');vdTable('Purchase Order Bidders')">Purchase Order Bidders</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Addendums');vdTable('Purchase Order Addendums')">Purchase Order Addendums</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Attachments');vdTable('Purchase Order Attachments')">Purchase Order Attachments</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Correspondence');vdTable('Purchase Order Correspondence')">Purchase Order Correspondence</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Clauses');vdTable('Purchase Order Clauses')">Purchase Order Clauses</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order / Engineering Document Cross-reference');vdTable('Purchase Order / Engineering Document Cross-reference')">Purchase Order / Engineering Document Cross-reference</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Events Schedule And Status');vdTable('Purchase Order Events Schedule And Status')">Purchase Order Events Schedule And Status</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Changes');vdTable('Purchase Order Changes')">Purchase Order Changes</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Change Event Schedule And Status');vdTable('Purchase Order Change Event Schedule And Status')">Purchase Order Change Event Schedule And Status</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Change Order Action Items');vdTable('Purchase Order Change Order Action Items')">Purchase Order Change Order Action Items</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Workflow Schedule And Status');vdTable('Purchase Order Workflow Schedule And Status')">Purchase Order Workflow Schedule And Status</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Workflow Action Items');vdTable('Purchase Order Workflow Action Items')">Purchase Order Workflow Action Items</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order / Progress Account Cross-reference');vdTable('Purchase Order / Progress Account Cross-reference')">Purchase Order / Progress Account Cross-reference</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Bonds');vdTable('Purchase Order Bonds')">Purchase Order Bonds</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Insurance Policies');vdTable('Purchase Order Insurance Policies')">Purchase Order Insurance Policies</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-table','Purchase Order Progress Claim Submissions');vdTable('Purchase Order Progress Claim Submissions')">Purchase Order Progress Claim Submissions</li>
-                </ul>
-              </div>
-            </div>
-            <div class="ls-frow ls-frow-fill">
-              <label>Field</label>
-              <div class="dropdown" id="vd-field" style="width:260px;max-width:60vw" onclick="lsVdToggle(this)">
-                <span class="dropdown-value">All</span><i class="pi pi-chevron-down dropdown-arrow"></i>
-                <ul class="dropdown-menu">
-            <li class="dropdown-item dropdown-item-active" onclick="event.stopPropagation();selectOption('vd-field','All');vdField('All')">All</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Requisition ID');vdField('Requisition ID')">Requisition ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','OBS ID');vdField('OBS ID')">OBS ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','CBS ID');vdField('CBS ID')">CBS ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','CSI Level 1 ID');vdField('CSI Level 1 ID')">CSI Level 1 ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','CSI Level 2 ID');vdField('CSI Level 2 ID')">CSI Level 2 ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','CSI Level 3 ID');vdField('CSI Level 3 ID')">CSI Level 3 ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Control Account Manager ID');vdField('Control Account Manager ID')">Control Account Manager ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Administrator ID');vdField('Administrator ID')">Administrator ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Contractor User ID');vdField('Contractor User ID')">Contractor User ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Event ID');vdField('Event ID')">Event ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Vendor ID');vdField('Vendor ID')">Vendor ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Communications Address ID');vdField('Communications Address ID')">Communications Address ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Invoice Address ID');vdField('Invoice Address ID')">Invoice Address ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Payment Terms ID');vdField('Payment Terms ID')">Payment Terms ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Currency ID');vdField('Currency ID')">Currency ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Agreement Type ID');vdField('Agreement Type ID')">Agreement Type ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Framework Agreement ID');vdField('Framework Agreement ID')">Framework Agreement ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Blanket Purchase Order ID');vdField('Blanket Purchase Order ID')">Blanket Purchase Order ID</li>
-            <li class="dropdown-item" onclick="event.stopPropagation();selectOption('vd-field','Prime Purchase Order ID');vdField('Prime Purchase Order ID')">Prime Purchase Order ID</li>
-                </ul>
-              </div>
-            </div>
-            <div class="ls-frow ls-frow-fill">
-              <label>&nbsp;</label>
-              <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--surface-800,#3d3d3d);cursor:pointer">
-                <span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span>Empty IDs are valid</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel ls-data ls-reg">
-        <header class="ls-head"><span class="panel-title">Fields</span></header>
-        <div class="table-wrap"><table class="proj-table">
-          <thead><tr>
-            <th style="width:96px;white-space:nowrap"><span class="checkbox-box" id="vdSelectAll" onclick="vdSelectAll(this)" style="vertical-align:middle;margin-right:7px"></span>Validate</th>
-            <th>Table description</th>
-            <th>Field description</th>
-          </tr></thead>
-          <tbody id="vdBody">
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Change Order Action Items" data-field="Action Item ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Change Order Action Items</td><td>Action Item ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Workflow Action Items" data-field="Action Item ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Workflow Action Items</td><td>Action Item ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Events Schedule And Status" data-field="Activity ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Events Schedule And Status</td><td>Activity ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Orders" data-field="Administrator ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Orders</td><td>Administrator ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Orders" data-field="Agreement Type ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Orders</td><td>Agreement Type ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Agreement Attachments" data-field="Agreement Type ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Agreement Attachments</td><td>Agreement Type ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Progress Claim Submissions" data-field="Approver User ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Progress Claim Submissions</td><td>Approver User ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Attachments" data-field="Attachment ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Attachments</td><td>Attachment ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Agreement Attachments" data-field="Attachment ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Agreement Attachments</td><td>Attachment ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Orders" data-field="Blanket Purchase Order ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Orders</td><td>Blanket Purchase Order ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Bonds" data-field="Bond Type ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Bonds</td><td>Bond Type ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Orders" data-field="CBS ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Orders</td><td>CBS ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Changes" data-field="Change Order ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Changes</td><td>Change Order ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Changes" data-field="Change Reason ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Changes</td><td>Change Reason ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Changes" data-field="Change Variety ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Changes</td><td>Change Variety ID</td></tr>
-              <tr class="vd-row" style="cursor:pointer" onclick="openDialog('vd-record-dialog')" data-table="Purchase Order Clause Documents" data-field="Change Variety ID"><td style="text-align:center"><span class="checkbox-box" onclick="event.stopPropagation();toggleCheck(this)"></span></td><td>Purchase Order Clause Documents</td><td>Change Variety ID</td></tr>
-              </tbody>
-        </table></div>
-      </section>
-
     </div>
   </div>
-
-    <div class="dialog-overlay" id="vd-record-dialog">
-    <div class="dialog-panel dialog-panel-lg">
-      <div class="dialog-header">
-        <div class="dialog-header-text"><h2 class="dialog-title">Select record</h2></div>
-        <div class="dialog-header-actions">
-          <button class="dialog-action-btn dialog-close" type="button" aria-label="Close" onclick="closeDialog('vd-record-dialog')"><i class="pi pi-times"></i></button>
-        </div>
-      </div>
-      <div class="dialog-body">
-        <div style="min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--surface-500,#737373);font-size:13px">
-          Record details will appear here.
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="toastContainer" class="toast-container"></div>
   <script>/* ===== AI PANEL COMPONENT =====
  * Full-action AI assistant. Covers every workflow on the contracts page:
@@ -7535,7 +7417,7 @@ function applyProjectContext() {
 </script>
   <script>
     var LS_SECTIONS = [
-      { key:'project-home', icon:'pi-home',       label:'Home' },
+      { key:'project-home', icon:'pi-home', label:'Home' },
       { key:'cost', icon:'pi-chart-line', label:'Cost', groups:[
         { label:'Data entry', items:[ { label:'Control accounts', href:'../cost/lns-cost-control-accounts.html' },{ label:'Staffing plans', href:'../cost/lns-cost-staffing-plans.html' },{ label:'Employee plans', href:'../cost/lns-cost-employee-plans.html' },{ label:'Budget details', href:'../cost/lns-cost-budget-details.html' },{ label:'Commitments', href:'../cost/lns-cost-commitments.html' },{ label:'Period actuals', href:'../cost/lns-cost-period-actuals.html' },{ label:'Variance analysis', href:'../cost/lns-cost-variance-analysis.html' },{ label:'Settings', href:'../cost/lns-cost-settings.html' } ] },
         { label:'Definitions', items:[ { label:'Default / cost reporting periods', href:'../cost/lns-cost-default-cost-reporting-periods.html' },{ label:'Funding sources', href:'../cost/lns-cost-funding-sources.html' },{ label:'Project staff', href:'../cost/lns-cost-project-staff.html' },{ label:'Ledger / control account mapping', href:'../cost/lns-cost-ledger-control-account-mapping.html' },{ label:'Ledger / control element mapping', href:'../cost/lns-cost-ledger-control-element-mapping.html' },{ label:'Escalations', href:'../cost/lns-cost-escalations.html' },{ label:'Multipliers', href:'../cost/lns-cost-multipliers.html' },{ label:'Indirect costs', href:'../cost/lns-cost-indirect-costs.html' },{ label:'Change order impact', href:'../cost/lns-cost-change-order-impact.html' },{ label:'Change order status', href:'../cost/lns-cost-change-order-status.html' },{ label:'Trend / risk steps', href:'../cost/lns-cost-trend-risk-steps.html' },{ label:'Change management explanation titles', href:'../cost/lns-cost-change-management-explanation-titles.html' } ] },
@@ -7543,44 +7425,44 @@ function applyProjectContext() {
         { label:'Reports', items:[ { label:'Reports', href:'../cost/lns-cost-reports.html' },{ label:'Lists', href:'../cost/lns-cost-lists.html' },{ label:'Summary', href:'../cost/lns-cost-summary.html' },{ label:'Excel reports', href:'../cost/lns-cost-excel-reports.html' },{ label:'Report writer', href:'../cost/lns-cost-report-writer.html' } ] },
         { label:'Import / export & utilities', items:[ { label:'Import / export', href:'../cost/lns-cost-import-export.html' },{ label:'Special import / export', href:'../cost/lns-cost-special-import-export.html' },{ label:'Copy dates to accounts', href:'../cost/lns-cost-copy-dates-to-accounts.html' },{ label:'Validate data', href:'../cost/lns-cost-validate-data.html' },{ label:'Other utilities', href:'../cost/lns-cost-other-utilities.html' } ] },
         { label:'AI forecasting', items:[ { label:'AI forecasting', href:'../cost/lns-cost-ai-forecasting.html' } ] } ] },
-      { key:'field',        icon:'pi-map',         label:'Field' },
-      { key:'procurement',  icon:'pi-box',         label:'Procurement', groups:[
+      { key:'field', icon:'pi-map', label:'Field' },
+      { key:'procurement', icon:'pi-box', label:'Procurement', groups:[
         { label:'Procurement', items:[
-          { label:'Purchase orders',    href:'lns-procure-purchase-orders.html' },
-          { label:'Instructed changes', href:'lns-procure-instructed-changes.html' },
-          { label:'Executed changes',   href:'lns-procure-executed-changes.html' },
-          { label:'Shipments',          href:'lns-procure-shipments.html' },
-          { label:'Definitions',        href:'lns-procure-definitions.html' },
-          { label:'Settings',           href:'lns-procure-settings.html' },
-          { label:'Calculate totals',   href:'lns-procure-calculate-totals.html' },
-          { label:'Reports',            href:'lns-procure-reports.html' },
-          { label:'Lists',              href:'lns-procure-lists.html' },
-          { label:'Excel reports',      href:'lns-procure-excel-reports.html' },
-          { label:'Report writer',      href:'lns-procure-report-writer.html' },
-          { label:'Import / export',    href:'lns-procure-import-export.html' },
-          { label:'Validate data',      href:'lns-procure-validate-data.html' },
-          { label:'Other utilities',    href:'lns-procure-other-utilities.html' } ] } ] },
-      { key:'contracts',    icon:'pi-file',        label:'Contracts', groups:[
+          { label:'Purchase orders', href:'../procurement/lns-procure-purchase-orders.html' },
+          { label:'Instructed changes', href:'../procurement/lns-procure-instructed-changes.html' },
+          { label:'Executed changes', href:'../procurement/lns-procure-executed-changes.html' },
+          { label:'Shipments', href:'../procurement/lns-procure-shipments.html' },
+          { label:'Definitions', href:'../procurement/lns-procure-definitions.html' },
+          { label:'Settings', href:'../procurement/lns-procure-settings.html' },
+          { label:'Calculate totals', href:'../procurement/lns-procure-calculate-totals.html' },
+          { label:'Reports', href:'../procurement/lns-procure-reports.html' },
+          { label:'Lists', href:'../procurement/lns-procure-lists.html' },
+          { label:'Excel reports', href:'../procurement/lns-procure-excel-reports.html' },
+          { label:'Report writer', href:'../procurement/lns-procure-report-writer.html' },
+          { label:'Import / export', href:'../procurement/lns-procure-import-export.html' },
+          { label:'Validate data', href:'../procurement/lns-procure-validate-data.html' },
+          { label:'Other utilities', href:'../procurement/lns-procure-other-utilities.html' } ] } ] },
+      { key:'contracts', icon:'pi-file', label:'Contracts', groups:[
         { label:'Contract', items:[
-          { label:'Contracts',          href:'../lift-shift_contract.html' },
+          { label:'Contracts', href:'../lift-shift_contract.html' },
           { label:'Instructed changes', href:'../liftandshift-contract-instruction-change.html' },
-          { label:'Executed changes',   href:'../liftandshift-contract-executed-changes.html' },
-          { label:'Settings',           href:'../liftandshift-contract-setting.html' },
-          { label:'Calculate totals',   href:'../liftandshift-contract-calculate-totals.html' },
-          { label:'Reports',            href:'../liftandshift-contract-reports.html' },
-          { label:'Lists',              href:'../liftandshift-contract-lists.html' },
-          { label:'Excel reports',      href:'../liftandshift-contract-excel-reports.html' },
-          { label:'Report writer',      href:'../liftandshift-contract-report-writer.html' },
-          { label:'Import / export',    href:'../liftandshift-contract-import-export.html' },
-          { label:'Import contracts',   href:'../liftandshift-contract-import-contracts.html' },
-          { label:'Validate data',      href:'../liftandshift-contract-validate-data.html' },
-          { label:'Other utilities',    href:'../liftandshift-contract-other-utilities.html' } ] },
+          { label:'Executed changes', href:'../liftandshift-contract-executed-changes.html' },
+          { label:'Settings', href:'../liftandshift-contract-setting.html' },
+          { label:'Calculate totals', href:'../liftandshift-contract-calculate-totals.html' },
+          { label:'Reports', href:'../liftandshift-contract-reports.html' },
+          { label:'Lists', href:'../liftandshift-contract-lists.html' },
+          { label:'Excel reports', href:'../liftandshift-contract-excel-reports.html' },
+          { label:'Report writer', href:'../liftandshift-contract-report-writer.html' },
+          { label:'Import / export', href:'../liftandshift-contract-import-export.html' },
+          { label:'Import contracts', href:'../liftandshift-contract-import-contracts.html' },
+          { label:'Validate data', href:'../liftandshift-contract-validate-data.html' },
+          { label:'Other utilities', href:'../liftandshift-contract-other-utilities.html' } ] },
         { label:'Changes', items:[
-          { label:'Compensation events',   href:'../liftandshift-contract-compensation-events.html' },
-          { label:'Early warnings',        href:'../liftandshift-contract-early-warnings.html' },
-          { label:'Instructions',          href:'../liftandshift-contract-instructions.html' },
-          { label:'Quotations',            href:'../liftandshift-contract-quotations.html' },
-          { label:'Implemented changes',   href:'../liftandshift-contract-implemented-changes.html' } ] } ] },
+          { label:'Compensation events', href:'../liftandshift-contract-compensation-events.html' },
+          { label:'Early warnings', href:'../liftandshift-contract-early-warnings.html' },
+          { label:'Instructions', href:'../liftandshift-contract-instructions.html' },
+          { label:'Quotations', href:'../liftandshift-contract-quotations.html' },
+          { label:'Implemented changes', href:'../liftandshift-contract-implemented-changes.html' } ] } ] },
       { key:'prime', icon:'pi-verified', label:'Prime contract', groups:[
         { label:'Prime contract', items:[
           { label:'Prime contracts', href:'../prime-contract/lns-prime-prime-contracts.html' },
@@ -7596,7 +7478,7 @@ function applyProjectContext() {
           { label:'Import / export', href:'../prime-contract/lns-prime-import-export.html' },
           { label:'Validate data', href:'../prime-contract/lns-prime-validate-data.html' },
           { label:'Other utilities', href:'../prime-contract/lns-prime-other-utilities.html' } ] } ] },
-            { key:'invoices', icon:'pi-book', label:'Invoices', groups:[
+      { key:'invoices', icon:'pi-book', label:'Invoices', groups:[
         { label:'Invoice', items:[
           { label:'Invoices', href:'../invoice/lns-invoice-invoices.html' },
           { label:'Payment requests', href:'../invoice/lns-invoice-payment-requests.html' },
@@ -7611,22 +7493,22 @@ function applyProjectContext() {
           { label:'Replace IDs', href:'../invoice/lns-invoice-replace-ids.html' } ] } ] },
         { key:'schedule', icon:'pi-calendar', label:'Schedule', groups:[
         { label:'Data entry', items:[
-          { label:'Activities', href:'../schedule/lns-schedule-activities.html' },
-          { label:'Resources', href:'../schedule/lns-schedule-resources.html' },
-          { label:'Settings', href:'../schedule/lns-schedule-settings.html' } ] },
+          { label:'Activities', href:'lns-schedule-activities.html' },
+          { label:'Resources', href:'lns-schedule-resources.html' },
+          { label:'Settings', href:'lns-schedule-settings.html' } ] },
         { label:'Reports', items:[
-          { label:'Reports', href:'../schedule/lns-schedule-reports.html' },
-          { label:'Lists', href:'../schedule/lns-schedule-lists.html' },
-          { label:'Excel reports', href:'../schedule/lns-schedule-excel-reports.html' },
-          { label:'Report writer', href:'../schedule/lns-schedule-report-writer.html' } ] },
+          { label:'Reports', href:'lns-schedule-reports.html' },
+          { label:'Lists', href:'lns-schedule-lists.html' },
+          { label:'Excel reports', href:'lns-schedule-excel-reports.html' },
+          { label:'Report writer', href:'lns-schedule-report-writer.html' } ] },
         { label:'Import / export', items:[
-          { label:'Import / export', href:'../schedule/lns-schedule-import-export.html' },
-          { label:'Special import / export', href:'../schedule/lns-schedule-special-import-export.html' } ] },
+          { label:'Import / export', href:'lns-schedule-import-export.html' },
+          { label:'Special import / export', href:'lns-schedule-special-import-export.html' } ] },
         { label:'Utilities', items:[
-          { label:'Copy dates to activities', href:'../schedule/lns-schedule-copy-dates-to-activities.html' },
-          { label:'Validate data', href:'../schedule/lns-schedule-validate-data.html' },
-          { label:'Other utilities', href:'../schedule/lns-schedule-other-utilities.html' } ] } ] },
-            { key:'change', icon:'pi-sync', label:'Change', groups:[
+          { label:'Copy dates to activities', href:'lns-schedule-copy-dates-to-activities.html' },
+          { label:'Validate data', href:'lns-schedule-validate-data.html' },
+          { label:'Other utilities', href:'lns-schedule-other-utilities.html' } ] } ] },
+      { key:'change', icon:'pi-sync', label:'Change', groups:[
         { label:'Change', items:[
           { label:'Trend', href:'../change-management/lns-change-trends.html' },
           { label:'Change order', href:'../change-management/lns-change-change-orders.html' },
@@ -7637,8 +7519,8 @@ function applyProjectContext() {
           { label:'Form 4', href:'../change-management/lns-change-form-4.html' },
           { label:'Form 5', href:'../change-management/lns-change-form-5.html' },
           { label:'Custom form', href:'../change-management/lns-change-custom-form.html' } ] } ] },
-      { key:'reports',      icon:'pi-chart-bar',   label:'Reports' },
-      { key:'drive',        icon:'pi-folder',      label:'Drive' }
+      { key:'reports', icon:'pi-chart-bar', label:'Reports' },
+      { key:'drive', icon:'pi-folder', label:'Drive' }
     ];
     (function(){
       'use strict';
@@ -7733,22 +7615,6 @@ function applyProjectContext() {
 
       apply(gd());
     })();
-  </script>
-  <script>
-  (function(){ 'use strict';
-    window.__vt='All'; window.__vf='All';
-    window.applyVd=function(){ Array.prototype.forEach.call(document.querySelectorAll('#vdBody tr'),function(tr){
-      var okT=(__vt==='All')||tr.getAttribute('data-table')===__vt;
-      var okF=(__vf==='All')||tr.getAttribute('data-field')===__vf;
-      tr.style.display=(okT&&okF)?'':'none'; }); };
-    window.vdTable=function(v){ window.__vt=v; applyVd(); };
-    window.vdField=function(v){ window.__vf=v; applyVd(); };
-    function setCk(b,on){ if(!b)return; b.classList.toggle('checked',on); b.innerHTML=on?'<i class="pi pi-check checkbox-check-icon"></i>':''; }
-    window.vdSelectAll=function(el){ var on=!el.classList.contains('checked'); setCk(el,on);
-      Array.prototype.forEach.call(document.querySelectorAll('#vdBody tr'),function(tr){ if(tr.style.display!=='none') setCk(tr.querySelector('.checkbox-box'),on); }); };
-    window.lsVdToggle=function(dd){ toggleDropdown(dd.id); var menu=dd.querySelector('.dropdown-menu');
-      if(dd.classList.contains('open')){ var r=dd.getBoundingClientRect(); menu.style.position='fixed'; menu.style.top=(r.bottom+2)+'px'; menu.style.left=r.left+'px'; menu.style.right='auto'; menu.style.width=r.width+'px'; menu.style.maxHeight='300px'; menu.style.overflowY='auto'; } };
-  })();
   </script>
   <script>
   /* ls-dropdown-escape: keep DS dropdown menus from being clipped by card overflow:hidden */
