@@ -978,6 +978,11 @@ ul { list-style: none; }
 /* Dropdown trigger */
 .tnav-link-dropdown { gap: 5px; }
 .tnav-chevron { font-size: 10px; color: var(--surface-500); transition: transform var(--transition-fast); }
+/* Top-nav "Projects" dropdown — dark pill trigger (per design) */
+#tnd-projects > .tnav-link-dropdown{ height:34px; align-self:center; margin:0 4px 0 0; padding:0 14px; border-radius:8px; background:#4b4b4b; color:#fff; font-weight:600; font-size:14px; border-bottom:none; }
+#tnd-projects > .tnav-link-dropdown:hover{ background:#5a5a5a; color:#fff; }
+#tnd-projects.open > .tnav-link-dropdown{ background:#3f3f3f; color:#fff; }
+#tnd-projects > .tnav-link-dropdown .tnav-chevron{ color:#fff; font-size:11px; }
 .tnav-item.open .tnav-chevron { transform: rotate(180deg); }
 .tnav-item.open > .tnav-link { color: var(--surface-900); background: var(--surface-50); }
 
@@ -1476,7 +1481,7 @@ body.lnav-collapsed .main-content {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   color: var(--surface-500);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: var(--letter-spacing-wider);
   margin-bottom: var(--space-3);
 }
@@ -2131,7 +2136,7 @@ img.avatar  { object-fit: cover; }
 .typo-body    { font-size: var(--font-size-base);  font-weight: var(--font-weight-regular); color: var(--surface-700); line-height: var(--line-height-relaxed); }
 .typo-body-sm { font-size: var(--font-size-sm);    font-weight: var(--font-weight-regular); color: var(--surface-700); line-height: var(--line-height-normal); }
 .typo-caption { font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--surface-500); }
-.typo-overline { font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); color: var(--surface-400); text-transform: uppercase; letter-spacing: var(--letter-spacing-widest); }
+.typo-overline { font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); color: var(--surface-400); text-transform: none; letter-spacing: var(--letter-spacing-widest); }
 .typo-muted   { font-size: var(--font-size-base); color: var(--surface-400); }
 .typo-link    { font-size: var(--font-size-base); color: var(--default-link); cursor: pointer; transition: color var(--transition-fast); }
 .typo-link:hover { color: var(--default-link-hover); text-decoration: underline; }
@@ -4239,7 +4244,7 @@ body.ai-panel-open .proj-content {
 }
 .sc-ai-dg-colhead {
   font-size: 9px; font-weight: 700; color: #94a3b8;
-  text-transform: uppercase; letter-spacing: .04em;
+  text-transform: none; letter-spacing: .04em;
   border-bottom: 1px solid #f1f5f9; background: #fafbfc;
 }
 .sc-ai-dg-colhead span:nth-child(2), .sc-ai-dg-colhead span:nth-child(3) { text-align: center; }
@@ -4249,7 +4254,7 @@ body.ai-panel-open .proj-content {
 .sc-ai-df-row.is-zero { opacity: .55; }
 .sc-ai-df-subhead {
   padding: 6px 12px 3px; font-size: 9.5px; font-weight: 700;
-  color: #64748b; text-transform: uppercase; letter-spacing: .04em;
+  color: #64748b; text-transform: none; letter-spacing: .04em;
   background: #fafbfc; border-bottom: 1px solid #f1f5f9;
 }
 .sc-ai-df-label { color: #374151; font-weight: 500; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -4791,7 +4796,7 @@ body.ai-panel-open .proj-content {
 }
 .sc-admin-card-title i { color: var(--primary); font-size: 16px; }
 .sc-admin-mode-badge {
-  font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: none;
   padding: 2px 9px; border-radius: 20px; margin-left: 4px;
   background: #f1f5f9; color: var(--text-muted);
 }
@@ -4856,7 +4861,7 @@ body.ai-panel-open .proj-content {
 /* ── BADGES / MISC ──────────────────────────────────────────────── */
 .sc-badge {
   font-size: 11px; font-weight: 700; padding: 2px 9px;
-  border-radius: 20px; letter-spacing: .04em; text-transform: uppercase;
+  border-radius: 20px; letter-spacing: .04em; text-transform: none;
 }
 .sc-badge--active { background: #dcfce7; color: #16a34a; }
 .sc-account-id { font-size: 12px; font-weight: 600; color: #475569; font-family: 'Courier New', monospace; }
@@ -4892,7 +4897,7 @@ body.ai-panel-open .proj-content {
 .sc-kebab-divider { height: 1px; background: var(--border); margin: 4px 0; }
 .sc-kebab-section-label {
   padding: 8px 16px 4px; font-size: 10px; font-weight: 700;
-  color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text-muted); text-transform: none; letter-spacing: .06em;
 }
 .sc-kebab-item--radio .sc-kebab-check {
   margin-left: auto; color: var(--primary); font-size: 12px;
@@ -4984,7 +4989,7 @@ body.ai-panel-open .proj-content {
 .sc-exp-left-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 18px 10px; font-size: 11px; font-weight: 700;
-  color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text-muted); text-transform: none; letter-spacing: .04em;
 }
 .sc-exp-selall {
   border: none; background: none; cursor: pointer; font-family: inherit;
@@ -5006,7 +5011,7 @@ body.ai-panel-open .proj-content {
 .sc-exp-item-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-top: 1px; }
 
 .sc-exp-right { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 14px 18px 18px; }
-.sc-exp-preview-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+.sc-exp-preview-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: none; letter-spacing: .04em; margin-bottom: 8px; }
 .sc-exp-preview-label span { font-weight: 500; text-transform: none; letter-spacing: 0; }
 .sc-exp-preview-frame, .sc-exp-final-frame {
   flex: 1; min-height: 0; border: 1px solid var(--border); border-radius: 8px;
@@ -5363,7 +5368,7 @@ body.ai-panel-open .proj-content {
       background:linear-gradient(135deg,var(--ait-primary-d),var(--ait-primary));
       color:#fff; display:flex; flex-direction:column; justify-content:center; gap:4px;
     }
-    .ait-strip-lead .k{font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; opacity:.9; display:flex; align-items:center; gap:6px}
+    .ait-strip-lead .k{font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:none; opacity:.9; display:flex; align-items:center; gap:6px}
     .ait-strip-lead .t{font-size:13.5px; font-weight:700; line-height:1.35}
     .ait-strip-lead .s{font-size:11.5px; opacity:.92; line-height:1.4}
     .ait-strip-stats{flex:3; display:flex; flex-wrap:wrap}
@@ -5390,7 +5395,7 @@ body.ai-panel-open .proj-content {
 
     .ait-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
     .ait-card{border:1px solid var(--ait-border); border-radius:10px; padding:13px 14px; background:#fff}
-    .ait-card .ch{font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ait-muted); display:flex; align-items:center; gap:6px; margin-bottom:8px}
+    .ait-card .ch{font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:none; color:var(--ait-muted); display:flex; align-items:center; gap:6px; margin-bottom:8px}
     .ait-bignum{font-size:26px; font-weight:800; letter-spacing:-.01em; color:var(--ait-text); line-height:1}
     .ait-bignum.good{color:var(--ait-good)}
     .ait-sub{font-size:11.5px; color:var(--ait-muted); margin-top:6px; line-height:1.45}
@@ -5416,7 +5421,7 @@ body.ai-panel-open .proj-content {
     .ait-method .nm{font-size:12px; font-weight:600; flex:1}
     .ait-method .nm small{display:block; color:var(--ait-muted); font-weight:500; font-size:10.5px}
     .ait-method .val{font-size:13.5px; font-weight:800; color:var(--ait-text); white-space:nowrap}
-    .ait-method .tag{font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--ait-primary-d); background:#fff; border:1px solid var(--ait-primary); border-radius:999px; padding:2px 7px}
+    .ait-method .tag{font-size:9.5px; font-weight:800; text-transform:none; letter-spacing:.04em; color:var(--ait-primary-d); background:#fff; border:1px solid var(--ait-primary); border-radius:999px; padding:2px 7px}
 
     /* learnings list */
     .ait-learn{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px}
@@ -5445,7 +5450,7 @@ body.ai-panel-open .proj-content {
     /* control-account match table */
     .aiscan-list{max-height:230px; overflow:auto; border:1px solid var(--ait-border); border-radius:8px}
     .aiscan-table{width:100%; border-collapse:collapse; font-size:14px}
-    .aiscan-table thead th{position:sticky; top:0; background:var(--ait-surface-2,#f8fafc); text-align:left; font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--ait-muted); padding:11px 16px; border-bottom:1px solid var(--ait-border)}
+    .aiscan-table thead th{position:sticky; top:0; background:var(--ait-surface-2,#f8fafc); text-align:left; font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:none; color:var(--ait-muted); padding:11px 16px; border-bottom:1px solid var(--ait-border)}
     .aiscan-table td{padding:13px 16px; border-bottom:1px solid #f1f3f6; color:var(--ait-text)}
     .aiscan-table tbody tr:last-child td{border-bottom:none}
     .aiscan-table td.code{font-weight:700; color:var(--ait-primary-d); white-space:nowrap}
@@ -5501,7 +5506,7 @@ body.ai-panel-open .proj-content {
       background:rgba(15,23,42,.96); color:#fff; border-radius:10px; padding:13px 15px;
       font-family:'Inter',sans-serif; font-size:12.5px; box-shadow:0 12px 30px rgba(0,0,0,.42); }
     .sc-combined-tip .ct-grid{ display:grid; grid-template-columns:1fr auto auto; gap:8px 22px; align-items:center; }
-    .sc-combined-tip .ct-head{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; }
+    .sc-combined-tip .ct-head{ font-size:10.5px; font-weight:700; text-transform:none; letter-spacing:.05em; color:#94a3b8; }
     .sc-combined-tip .ct-head-month{ font-size:14px; font-weight:700; text-transform:none; letter-spacing:0; color:#e5e7eb; }
     .sc-combined-tip .ct-head-ai, .sc-combined-tip .ct-head-ua{ display:inline-flex; align-items:center; justify-content:flex-end; gap:5px; white-space:nowrap; }
     .sc-combined-tip .ct-head-ai i{ color:#8ab4f0; }
@@ -5528,7 +5533,7 @@ body.ai-panel-open .proj-content {
     .sc-display-settings-modal{ width:min(420px, 94vw); }
     .ds-group{ padding:14px 0; border-bottom:1px solid #eef2f7; }
     .ds-group:last-child{ border-bottom:none; }
-    .ds-group-title{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#94a3b8; margin-bottom:10px; }
+    .ds-group-title{ font-size:11px; font-weight:700; text-transform:none; letter-spacing:.04em; color:#94a3b8; margin-bottom:10px; }
     .ds-check{ display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:#1e293b; cursor:pointer; }
     .ds-check input, .ds-radio input{ width:16px; height:16px; accent-color:var(--ait-primary,#326fd1); cursor:pointer; }
     .ds-hint{ font-size:12px; color:#94a3b8; margin:5px 0 0 26px; }
@@ -5772,7 +5777,7 @@ body.ai-panel-open .proj-content {
             </div>
           </div>
           <!-- 2nd dropdown: item (cascades from category; disabled for Project summary) -->
-          <div class="sc-acct-selector-wrap" id="fcItemWrap">
+          <div class="sc-acct-selector-wrap" id="fcItemWrap" style="display:none">
             <button class="sc-acct-selector" onclick="toggleFcItemDropdown()" aria-expanded="false" id="fcItemBtn" disabled>
               <span class="sc-acct-selector-label">All control accounts</span> <i class="pi pi-chevron-down sc-acct-chevron"></i>
             </button>
@@ -5790,7 +5795,7 @@ body.ai-panel-open .proj-content {
           </div>
         </div>
         <button class="btn btn-primary sc-run-btn" onclick="runAiForecast()" style="margin-left:16px">
-          <i class="pi pi-play btn-icon-left"></i> Run project forecast
+          <i class="pi pi-play btn-icon-left"></i> Run forecast
         </button>
       </div>
       <div class="sc-toolbar-right"></div>
@@ -5802,7 +5807,7 @@ body.ai-panel-open .proj-content {
     <!-- Tab bar (only shown in tab view) -->
     <div class="sc-tabs-bar" id="scTabsBar" role="tablist">
       <button class="sc-tab-btn is-active" type="button" role="tab" data-tab="acc-forecast" onclick="setActiveTab('acc-forecast')">Summary</button>
-      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-appendix" onclick="setActiveTab('acc-appendix')">Forecast Explanation</button>
+      <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-appendix" onclick="setActiveTab('acc-appendix')">Forecast explanation</button>
       <button class="sc-tab-btn" type="button" role="tab" data-tab="acc-warnings" onclick="setActiveTab('acc-warnings')">Warnings <span class="sc-tab-badge" id="scWarningsBadge">3</span></button>
     </div>
 
@@ -7767,7 +7772,7 @@ function setLnavActive(link) {
 const PROJ_KEY = 'currentProject';
 
 /* Default project shown until the user selects one */
-const DEFAULT_PROJECT = { name: 'Cisco Systems', id: '0128-0919-0001', initials: 'CS', color: '#1565c0' };
+const DEFAULT_PROJECT = { name: 'Project 005', id: '0128-0919-1231', initials: 'P5', color: '#00acc1' };
 
 function selectProject(el) {
   const proj = {
@@ -9303,7 +9308,7 @@ window.selectAccount = function(id) {
   // Run button label: "Run project forecast" for the rolled-up summary, "Run forecast" for a single CA
   const _runBtn = document.querySelector('.sc-run-btn');
   if (_runBtn) {
-    const _runLbl = (id === 'project-summary') ? 'Run project forecast' : 'Run forecast';
+    const _runLbl = 'Run forecast';
     const _ic = _runBtn.querySelector('.pi');
     _runBtn.innerHTML = (_ic ? _ic.outerHTML : '<i class="pi pi-play btn-icon-left"></i>') + ' ' + _runLbl;
   }
@@ -10331,6 +10336,7 @@ window.selectForecastGroup = function(groupId) {
 
 // ── 2nd dropdown: item selector (cascades from the category) ──────
 function _setFcItemDisabled(disabled, placeholderLabel) {
+  var _fcw=document.getElementById('fcItemWrap'); if(_fcw) _fcw.style.display = disabled ? 'none' : '';
   const btn = document.getElementById('fcItemBtn');
   const dd  = document.getElementById('fcItemDropdown');
   if (dd) dd.style.display = 'none';
@@ -10760,7 +10766,7 @@ const EXPORT_REPORT_CSS = `
   .section{margin-bottom:6px}
   .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
   .kpi-card{border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#f9fafb}
-  .kpi-label{font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+  .kpi-label{font-size:10px;color:#6b7280;font-weight:600;text-transform:none;letter-spacing:.04em;margin-bottom:3px}
   .kpi-value{font-size:20px;font-weight:800;color:#111827;margin-bottom:2px}
   .kpi-value.warn{color:#d97706}
   .kpi-sub{font-size:10px;color:#6b7280}
@@ -10776,7 +10782,7 @@ const EXPORT_REPORT_CSS = `
   .chart-box img{width:100%;height:auto;display:block}
   .exp-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:11px;line-height:1.6;color:#374151;margin-bottom:18px}
   table{width:100%;border-collapse:collapse;font-size:11px}
-  th{background:#1e3a8a;color:#fff;padding:5px 8px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+  th{background:#1e3a8a;color:#fff;padding:5px 8px;text-align:left;font-weight:600;font-size:10px;text-transform:none;letter-spacing:.04em}
   th.r{text-align:right}
   td{border-bottom:1px solid #f3f4f6;color:#374151;vertical-align:middle}
   .footer{margin-top:24px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af}
@@ -10820,7 +10826,7 @@ function _gatherExportData() {
         <td style="padding:4px 8px"><div style="height:6px;border-radius:3px;background:#e5e7eb;width:100%"><div style="height:6px;border-radius:3px;background:${v === 0 ? '#e5e7eb' : '#3b82f6'};width:${bar}%"></div></div></td>
       </tr>`;
     }).join('');
-    return `<tr><td colspan="4" style="padding:8px 8px 2px;font-weight:700;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;background:#f9fafb">${g.group}</td></tr>${rows}`;
+    return `<tr><td colspan="4" style="padding:8px 8px 2px;font-weight:700;font-size:11px;color:#6b7280;text-transform:none;letter-spacing:.05em;background:#f9fafb">${g.group}</td></tr>${rows}`;
   }).join('');
 
   const spendRows = CHART_LABELS.map((lbl, i) => {
@@ -10919,7 +10925,7 @@ const EXPORT_SECTIONS = [
 function _exportHeaderHtml(d) {
   return `<div class="header">
     <div class="header-left">
-      <div style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Contruent · Cisco Systems</div>
+      <div style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.08em;text-transform:none;margin-bottom:4px">Contruent · Cisco Systems</div>
       <h1>S-curve forecast report</h1>
       <div class="ca-label">${d.caLabel}</div>
       <div class="subtitle">${d.subtitle}</div>
@@ -11112,7 +11118,7 @@ function _buildAndMountSettings(container) {
   }
 
   function numGroupHeader(label, id, keys) {
-    return `<div onclick="toggleNumGroup('${id}')" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;user-select:none">
+    return `<div onclick="toggleNumGroup('${id}')" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;font-size:11px;font-weight:700;color:#64748b;text-transform:none;letter-spacing:.04em;user-select:none">
       <i class="pi pi-chevron-down" id="numgrp-chevron-${id}" style="font-size:10px;transition:transform .15s"></i>
       <span>${label}</span>
       <span data-pts-keys="${keys.join(',')}" style="margin-left:auto;font-size:10.5px;font-weight:600;color:#94a3b8;background:#eef2f7;border-radius:10px;padding:1px 8px">${groupPoints(keys).toFixed(1)} pts</span>
@@ -11179,11 +11185,11 @@ function _buildAndMountSettings(container) {
       <span class="sc-settings-section-desc">Enterprise/standard group codes from control account ID and top 3 project groups. Driven by the key groupings associated with a Contruent project ID and control account ID — configurable per client during setup.</span>
     </div>
     <div style="background:#fff">
-      <div style="display:grid;grid-template-columns:1fr 70px 160px;column-gap:10px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;padding:8px 14px;border-bottom:1px solid #f1f5f9;background:#fafbfc">
+      <div style="display:grid;grid-template-columns:1fr 70px 160px;column-gap:10px;font-size:11px;font-weight:700;color:#64748b;text-transform:none;letter-spacing:.04em;padding:8px 14px;border-bottom:1px solid #f1f5f9;background:#fafbfc">
         <span>Group title</span><span style="text-align:center">Wt</span><span>Adjust</span>
       </div>
       ${catGroups.map((g, gi) => `
-        <div onclick="toggleCatGroup(${gi})" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;user-select:none">
+        <div onclick="toggleCatGroup(${gi})" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px;background:#fafbfc;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;font-size:11px;font-weight:700;color:#64748b;text-transform:none;letter-spacing:.04em;user-select:none">
           <i class="pi pi-chevron-down" id="catgrp-chevron-${gi}" style="font-size:10px;transition:transform .15s"></i>
           <span>${g.source}</span>
           <span data-pts-keys="${g.items.map(f => f.key).join(',')}" style="margin-left:auto;font-size:10.5px;font-weight:600;color:#94a3b8;background:#eef2f7;border-radius:10px;padding:1px 8px">${groupPoints(g.items.map(f => f.key)).toFixed(1)} pts</span>
@@ -13568,6 +13574,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (document.readyState === 'complete') setTimeout(maybeAutoStart, 600);
     else window.addEventListener('load', function(){ setTimeout(maybeAutoStart, 600); });
+  })();
+  </script>
+  <script>
+  /* Show the selected project (top-nav) name everywhere instead of the hard-coded "Cisco Systems". */
+  (function(){
+    function projName(){ try{ var p=JSON.parse(localStorage.getItem('currentProject')||'null'); if(p&&p.name) return p.name; }catch(e){} return 'Project 005'; }
+    function swap(root){ var name=projName(); if(!name||name==='Cisco Systems') return; var w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n, list=[]; while(n=w.nextNode()){ if(n.nodeValue.indexOf('Cisco Systems')>=0) list.push(n); } list.forEach(function(t){ t.nodeValue=t.nodeValue.replace(/Cisco Systems/g, name); }); }
+    window.addEventListener('load', function(){ setTimeout(function(){ swap(document.body);
+      try{ var mo=new MutationObserver(function(muts){ for(var i=0;i<muts.length;i++){ var a=muts[i].addedNodes; for(var j=0;j<a.length;j++){ var nd=a[j]; if(nd.nodeType===1) swap(nd); else if(nd.nodeType===3 && nd.nodeValue.indexOf('Cisco Systems')>=0) nd.nodeValue=nd.nodeValue.replace(/Cisco Systems/g, projName()); } } });
+        mo.observe(document.body,{childList:true,subtree:true}); }catch(e){}
+    }, 250); });
   })();
   </script>
 </body>
