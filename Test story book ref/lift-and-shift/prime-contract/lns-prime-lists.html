@@ -5407,7 +5407,7 @@ body.ai-panel-open .proj-content {
   border:none; border-bottom:var(--border-1,1px) solid var(--surface-200,#e5e5e5); border-radius:0;
 }
 .ls-head .panel-title,
-.ls-head .ls-title{ color:var(--surface-500,#737373); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; text-shadow:none; }
+.ls-head .ls-title{ color:var(--surface-500,#737373); font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:none; text-shadow:none; }
 .ls-head .pi{ font-size:12px; color:var(--surface-400,#bdbdbd); cursor:pointer; margin-left:10px; }
 .ls-head .pi:hover{ color:var(--primary-500,#326fd1); }
 
@@ -7521,6 +7521,23 @@ function applyProjectContext() {
           { label:'Import / export', href:'../invoice/lns-invoice-import-export.html' },
           { label:'Validate data', href:'../invoice/lns-invoice-validate-data.html' },
           { label:'Replace IDs', href:'../invoice/lns-invoice-replace-ids.html' } ] } ] },
+        { key:'schedule', icon:'pi-calendar', label:'Schedule', groups:[
+        { label:'Data entry', items:[
+          { label:'Activities', href:'../schedule/lns-schedule-activities.html' },
+          { label:'Resources', href:'../schedule/lns-schedule-resources.html' },
+          { label:'Settings', href:'../schedule/lns-schedule-settings.html' } ] },
+        { label:'Reports', items:[
+          { label:'Reports', href:'../schedule/lns-schedule-reports.html' },
+          { label:'Lists', href:'../schedule/lns-schedule-lists.html' },
+          { label:'Excel reports', href:'../schedule/lns-schedule-excel-reports.html' },
+          { label:'Report writer', href:'../schedule/lns-schedule-report-writer.html' } ] },
+        { label:'Import / export', items:[
+          { label:'Import / export', href:'../schedule/lns-schedule-import-export.html' },
+          { label:'Special import / export', href:'../schedule/lns-schedule-special-import-export.html' } ] },
+        { label:'Utilities', items:[
+          { label:'Copy dates to activities', href:'../schedule/lns-schedule-copy-dates-to-activities.html' },
+          { label:'Validate data', href:'../schedule/lns-schedule-validate-data.html' },
+          { label:'Other utilities', href:'../schedule/lns-schedule-other-utilities.html' } ] } ] },
             { key:'change', icon:'pi-sync', label:'Change', groups:[
         { label:'Change', items:[
           { label:'Trend', href:'../change-management/lns-change-trends.html' },
@@ -7589,7 +7606,7 @@ function applyProjectContext() {
         return '<div class="lsrib"><div class="lsrib-tabs">'+tabs+'</div><div class="lsrib-groups">'+groups+'</div></div>';
       }
 
-      function scope(){ var hh=location.href, re=/^(liftandshift-contract-.+\.html|lift-shift_contract\.html|lns-procure-.+\.html|lns-prime-.+\.html|lns-change-.+\.html|lns-invoice-.+\.html|lns-cost-.+\.html)$/;
+      function scope(){ var hh=location.href, re=/^(liftandshift-contract-.+\.html|lift-shift_contract\.html|lns-procure-.+\.html|lns-prime-.+\.html|lns-change-.+\.html|lns-invoice-.+\.html|lns-cost-.+\.html|lns-schedule-.+\.html)$/;
         Array.prototype.forEach.call(host.querySelectorAll('a[href]'),function(a){ var f=fileOf(a.getAttribute('href')); if(!re.test(f)||a.href===hh){ a.removeAttribute('href'); a.style.cursor='default'; } });
       }
       function apply(d){ document.body.setAttribute('data-lsnav',d); if(d==='rail'){ document.body.setAttribute('data-railcm',gcm()); } else { document.body.removeAttribute('data-railcm'); }
