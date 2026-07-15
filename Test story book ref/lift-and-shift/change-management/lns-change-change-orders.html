@@ -7571,24 +7571,15 @@ function applyProjectContext() {
           { label:'Replace IDs', href:'../invoice/lns-invoice-replace-ids.html' } ] } ] },
       { key:'change', icon:'pi-sync', label:'Change', groups:[
         { label:'Change', items:[
-          { label:'Change orders', href:'lns-change-change-orders.html' },
-          { label:'Change summary', href:'lns-change-change-summary.html' },
-          { label:'Change requests', href:'lns-change-change-requests.html' },
-          { label:'Change board meetings', href:'lns-change-change-board-meetings.html' },
-          { label:'Trends', href:'lns-change-trends.html' },
-          { label:'Risks', href:'lns-change-risks.html' },
-          { label:'Definitions', href:'lns-change-definitions.html' },
-          { label:'Settings', href:'lns-change-settings.html' },
+          { label:'Trend', href:'lns-change-trends.html' },
+          { label:'Change order', href:'lns-change-change-orders.html' },
           { label:'Reports', href:'lns-change-reports.html' },
-          { label:'Lists', href:'lns-change-lists.html' },
-          { label:'Excel reports', href:'lns-change-excel-reports.html' },
-          { label:'Report writer', href:'lns-change-report-writer.html' },
-          { label:'Import / export', href:'lns-change-import-export.html' },
-          { label:'Copy dates to change orders', href:'lns-change-copy-dates-to-change-orders.html' },
-          { label:'Validate data', href:'lns-change-validate-data.html' },
-          { label:'Replace IDs', href:'lns-change-replace-ids.html' },
-          { label:'Combine change orders', href:'lns-change-combine-change-orders.html' },
-          { label:'Copy risks to change orders', href:'lns-change-copy-risks-to-change-orders.html' } ] } ] },
+          { label:'Form 1', href:'lns-change-form-1.html' },
+          { label:'Form 2', href:'lns-change-form-2.html' },
+          { label:'Form 3', href:'lns-change-form-3.html' },
+          { label:'Form 4', href:'lns-change-form-4.html' },
+          { label:'Form 5', href:'lns-change-form-5.html' },
+          { label:'Custom form', href:'lns-change-custom-form.html' } ] } ] },
       { key:'reports', icon:'pi-chart-bar', label:'Reports' },
       { key:'drive', icon:'pi-folder', label:'Drive' }
     ];
@@ -7655,7 +7646,7 @@ function applyProjectContext() {
         scope();
         var _pc=document.querySelector('.proj-content'); if(_pc){ if(d==='ribbon'){ var _rb=host.querySelector('.lsrib'); _pc.style.marginTop=(56+(_rb?_rb.offsetHeight:94))+'px'; } else { _pc.style.marginTop=''; } }
         if(d==='nested'){ var asd=host.querySelector('#leftNav'); if(asd){ asd.addEventListener('mouseenter',function(){ if(gnc()) asd.setAttribute('data-collapsed','false'); }); asd.addEventListener('mouseleave',function(){ if(gnc()) asd.setAttribute('data-collapsed','true'); }); } }
-        if(d==='rail'){ var _rc=host.querySelector('#leftNavC'); if(_rc){ _rc.addEventListener('mouseenter',function(){ if(gcm()==='collapsed') _rc.classList.add('flyout-open'); }); _rc.addEventListener('mouseleave',function(){ _rc.classList.remove('flyout-open'); }); } }
+        if(d==='rail'){ var _rc=host.querySelector('#leftNavC'); if(_rc){ var _rail=_rc.querySelector('#lnavcRail'), _pnl=_rc.querySelector('#lnavcPanel'), _shown=railSel; _rc.addEventListener('mouseenter',function(){ if(gcm()==='collapsed') _rc.classList.add('flyout-open'); }); if(_rail&&_pnl){ _rail.addEventListener('mouseover',function(e){ var ri=e.target.closest('.lnavc-railitem'); if(!ri||!ri.dataset.rk||ri.dataset.rk===_shown) return; _shown=ri.dataset.rk; _pnl.innerHTML=panelFor(_shown); _rail.querySelectorAll('.lnavc-railitem').forEach(function(x){ x.classList.toggle('is-active', x===ri); }); }); } _rc.addEventListener('mouseleave',function(){ _rc.classList.remove('flyout-open'); if(_shown!==railSel){ _shown=railSel; if(_pnl) _pnl.innerHTML=panelFor(railSel); if(_rail) _rail.querySelectorAll('.lnavc-railitem').forEach(function(x){ x.classList.toggle('is-active', x.dataset.rk===railSel); }); } }); } }
       }
 
       host.addEventListener('click',function(e){
