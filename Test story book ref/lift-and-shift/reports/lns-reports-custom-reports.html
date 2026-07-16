@@ -105,7 +105,7 @@
   else build();
 })();
 </script>
-  <title>Cisco Systems — Other utilities — Contruent</title>
+  <title>Cisco Systems — Custom reports — Contruent</title>
   <style>@font-face {
     font-family: 'primeicons';
     font-display: block;
@@ -5861,25 +5861,14 @@ body[data-lsnav="nested"].lnav-collapsed .proj-content{ margin-left:var(--lnav-w
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a class="breadcrumb-item">Project Home</a>
       <i class="pi pi-angle-right breadcrumb-sep"></i>
-      <span class="breadcrumb-item">Procurement</span>
+      <span class="breadcrumb-item">Reports</span>
       <i class="pi pi-angle-right breadcrumb-sep"></i>
-      <span class="breadcrumb-item breadcrumb-current">Other utilities</span>
+      <span class="breadcrumb-item breadcrumb-current">Custom reports</span>
     </nav>
     <div class="section-header">
-      <h1 class="section-title">Other utilities</h1>
-      <p class="section-desc">Maintenance utilities for purchase order data.</p>
-    </div>
-
-    <div class="ls-screen">
-      <div class="ls-cards">
-        <a class="ls-card" href="lns-procure-replace-ids.html"><span class="ls-card-icon"><i class="pi pi-sync"></i></span><span class="ls-card-body"><span class="ls-card-title">Replace IDs</span><span class="ls-card-desc">Replace identifier values across purchase order records.</span></span></a>
-        <a class="ls-card" href="lns-procure-build-descriptions.html"><span class="ls-card-icon"><i class="pi pi-align-left"></i></span><span class="ls-card-body"><span class="ls-card-title">Build descriptions for purchase orders</span><span class="ls-card-desc">Generate descriptions for purchase order records.</span></span></a>
-        <a class="ls-card" href="lns-procure-build-group-ids.html"><span class="ls-card-icon"><i class="pi pi-sitemap"></i></span><span class="ls-card-body"><span class="ls-card-title">Build group IDs for purchase orders</span><span class="ls-card-desc">Generate group IDs for purchase order records.</span></span></a>
-        <a class="ls-card" href="lns-procure-copy-po-items-rfp.html"><span class="ls-card-icon"><i class="pi pi-copy"></i></span><span class="ls-card-body"><span class="ls-card-title">Copy purchase order items to request for proposal</span><span class="ls-card-desc">Copy purchase order items into a request for proposal.</span></span></a>
-      </div>
+      <h1 class="section-title">Custom reports</h1>
     </div>
   </div>
-
   <div id="toastContainer" class="toast-container"></div>
   <script>/* ===== AI PANEL COMPONENT =====
  * Full-action AI assistant. Covers every workflow on the contracts page:
@@ -7431,7 +7420,7 @@ function applyProjectContext() {
 </script>
   <script>
     var LS_SECTIONS = [
-      { key:'project-home', icon:'pi-home',       label:'Home' },
+      { key:'project-home', icon:'pi-home', label:'Home' },
       { key:'cost', icon:'pi-chart-line', label:'Cost', groups:[
         { label:'Cost', items:[
           { label:'Control accounts', href:'../cost/lns-cost-control-accounts.html' },
@@ -7469,23 +7458,23 @@ function applyProjectContext() {
           { label:'Validate data', href:'../cost/lns-cost-validate-data.html' },
           { label:'Other utilities', href:'../cost/lns-cost-other-utilities.html' },
           { label:'AI forecasting', href:'../cost/lns-cost-ai-forecasting.html' } ] } ] },
-      { key:'field',        icon:'pi-map',         label:'Field' },
-      { key:'procurement',  icon:'pi-box',         label:'Procurement', groups:[
+      { key:'field', icon:'pi-map', label:'Field' },
+      { key:'procurement', icon:'pi-box', label:'Procurement', groups:[
         { label:'Procurement', items:[
-          { label:'Purchase orders',    href:'lns-procure-purchase-orders.html' },
-          { label:'Instructed changes', href:'lns-procure-instructed-changes.html' },
-          { label:'Executed changes',   href:'lns-procure-executed-changes.html' },
-          { label:'Shipments',          href:'lns-procure-shipments.html' },
-          { label:'Definitions',        href:'lns-procure-definitions.html' },
-          { label:'Settings',           href:'lns-procure-settings.html' },
-          { label:'Calculate totals',   href:'lns-procure-calculate-totals.html' },
-          { label:'Reports',            href:'lns-procure-reports.html' },
-          { label:'Lists',              href:'lns-procure-lists.html' },
-          { label:'Excel reports',      href:'lns-procure-excel-reports.html' },
-          { label:'Report writer',      href:'lns-procure-report-writer.html' },
-          { label:'Import / export',    href:'lns-procure-import-export.html' },
-          { label:'Validate data',      href:'lns-procure-validate-data.html' },
-          { label:'Other utilities',    href:'lns-procure-other-utilities.html' } ] } ] },
+          { label:'Purchase orders', href:'../procurement/lns-procure-purchase-orders.html' },
+          { label:'Instructed changes', href:'../procurement/lns-procure-instructed-changes.html' },
+          { label:'Executed changes', href:'../procurement/lns-procure-executed-changes.html' },
+          { label:'Shipments', href:'../procurement/lns-procure-shipments.html' },
+          { label:'Definitions', href:'../procurement/lns-procure-definitions.html' },
+          { label:'Settings', href:'../procurement/lns-procure-settings.html' },
+          { label:'Calculate totals', href:'../procurement/lns-procure-calculate-totals.html' },
+          { label:'Reports', href:'../procurement/lns-procure-reports.html' },
+          { label:'Lists', href:'../procurement/lns-procure-lists.html' },
+          { label:'Excel reports', href:'../procurement/lns-procure-excel-reports.html' },
+          { label:'Report writer', href:'../procurement/lns-procure-report-writer.html' },
+          { label:'Import / export', href:'../procurement/lns-procure-import-export.html' },
+          { label:'Validate data', href:'../procurement/lns-procure-validate-data.html' },
+          { label:'Other utilities', href:'../procurement/lns-procure-other-utilities.html' } ] } ] },
       { key:'contracts', icon:'pi-file', label:'Contracts', groups:[
         { label:'Contracts', items:[
           { label:'Contract', href:'../lift-shift_contract.html' },
@@ -7525,7 +7514,7 @@ function applyProjectContext() {
           { label:'Import / export', href:'../prime-contract/lns-prime-import-export.html' },
           { label:'Validate data', href:'../prime-contract/lns-prime-validate-data.html' },
           { label:'Other utilities', href:'../prime-contract/lns-prime-other-utilities.html' } ] } ] },
-            { key:'invoices', icon:'pi-book', label:'Invoices', groups:[
+      { key:'invoices', icon:'pi-book', label:'Invoices', groups:[
         { label:'Invoice', items:[
           { label:'Invoices', href:'../invoice/lns-invoice-invoices.html' },
           { label:'Payment requests', href:'../invoice/lns-invoice-payment-requests.html' },
@@ -7552,7 +7541,7 @@ function applyProjectContext() {
           { label:'Copy dates to activities', href:'../schedule/lns-schedule-copy-dates-to-activities.html' },
           { label:'Validate data', href:'../schedule/lns-schedule-validate-data.html' },
           { label:'Other utilities', href:'../schedule/lns-schedule-other-utilities.html' } ] } ] },
-            { key:'change', icon:'pi-sync', label:'Change', groups:[
+      { key:'change', icon:'pi-sync', label:'Change', groups:[
         { label:'Change', items:[
           { label:'Trend', href:'../change-management/lns-change-trends.html' },
           { label:'Change order', href:'../change-management/lns-change-change-orders.html' },
@@ -7565,9 +7554,9 @@ function applyProjectContext() {
           { label:'Custom form', href:'../change-management/lns-change-custom-form.html' } ] } ] },
       { key:'reports', icon:'pi-chart-bar', label:'Reports', groups:[
         { label:'Reports', items:[
-          { label:'Overview', href:'../reports/lns-reports-overview.html' },
-          { label:'Custom reports', href:'../reports/lns-reports-custom-reports.html' } ] } ] },
-      { key:'drive',        icon:'pi-folder',      label:'Drive' }
+          { label:'Overview', href:'lns-reports-overview.html' },
+          { label:'Custom reports', href:'lns-reports-custom-reports.html' } ] } ] },
+      { key:'drive', icon:'pi-folder', label:'Drive' }
     ];
     (function(){
       'use strict';

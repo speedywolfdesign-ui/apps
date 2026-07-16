@@ -2156,7 +2156,7 @@ ul { list-style: none; }
 .tnav-logo {
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  width: 56px; height: 56px;
+  width: 88px; height: 56px;
   border-right: var(--border-1) solid var(--surface-200);
 }
 .tnav-logo-svg { width: 36px; height: 36px; }
@@ -2176,27 +2176,27 @@ ul { list-style: none; }
 
 /* Base link / button style */
 .tnav-link {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 0 var(--space-3);
-  height: 100%;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 0 14px;
+  height: 34px;
+  align-self: center;
   font-family: var(--font-family);
   font-size: 13px; font-weight: var(--font-weight-medium);
   color: var(--surface-700);
   white-space: nowrap;
   background: transparent; border: none; cursor: pointer;
-  border-radius: 0;
+  border-radius: 8px;
   transition: color var(--transition-fast), background var(--transition-fast);
   text-decoration: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px; /* sit on top of nav border */
 }
-.tnav-link:hover { color: var(--surface-900); background: var(--surface-50); }
+.tnav-link:hover { color: var(--surface-900); background: var(--surface-200, #e5e5e5); }
 .tnav-link-active {
-  color: var(--primary-600);
+  color: #fff;
   font-weight: var(--font-weight-semibold);
-  border-bottom-color: var(--primary-500);
+  background: #4b4b4b;
 }
-.tnav-link-active:hover { color: var(--primary-600); background: var(--brand-surface); }
+.tnav-link-active:hover { color: #fff; background: #3f3f3f; }
+.tnav-link-active .tnav-chevron { color: #fff; }
 
 /* Dropdown trigger */
 .tnav-link-dropdown { gap: 5px; }
@@ -5211,6 +5211,8 @@ body.ai-panel-open .proj-content {
     .lsref-section code{ background:var(--surface-200,#e5e5e5); border-radius:4px; padding:1px 5px; font-size:12px; }
     .lsref-demo{ border:1px solid var(--surface-200,#e5e5e5); border-radius:10px; padding:16px; background:var(--surface-50,#fafafa); }
     .lsref-demo--flush{ padding:0; overflow:hidden; }
+    .lsref-lnav-demo{ display:flex; justify-content:flex-start; }
+    .lsref-lnav-demo .lnav{ box-shadow:0 1px 2px rgba(16,24,40,.05); }
     pre.lsref-code{ background:#0f2343; color:#dbe6f6; border-radius:10px; padding:16px 18px; font-size:12px; line-height:1.6; overflow-x:auto; margin:0; }
     pre.lsref-code .k{ color:#8fd3ff; }
   </style>
@@ -5230,6 +5232,7 @@ body.ai-panel-open .proj-content {
       <a href="#matrix">Numeric matrix</a>
       <a href="#cols">Side-by-side columns</a>
       <a href="#tabs">Bottom tabs</a>
+      <a href="#leftnav">Left navigation</a>
     </div>
   </div>
 
@@ -5465,6 +5468,228 @@ body.ai-panel-open .proj-content {
             <div class="ls-tabbody">To provided engineering, procurement and construction management services.</div>
           </section>
         </div>
+      </div>
+    </section>
+
+    <!-- LEFT NAVIGATION -->
+    <section class="lsref-section" id="leftnav">
+      <h2>11. Left navigation</h2>
+      <p>The project left navigation — a collapsible nested sidebar built from <code>.lnav-*</code> classes. Top-level sections use <code>.lnav-parent-btn</code> (toggles <code>.lnav-sub-open</code> via <code>toggleLnavGroup</code>); leaf sections and sub-items are <code>.lnav-link</code> / <code>.lnav-sublink</code> (<code>setLnavActive</code> marks the active one). The data below mirrors the live lift &amp; shift menu (Home, Cost, Field, Procurement, Contracts, Prime contract, Invoices, Schedule, Change, Reports, Drive).</p>
+      <div class="lsref-demo lsref-lnav-demo">
+        <aside class="lnav" aria-label="Project navigation" style="position:static;top:auto;left:auto;bottom:auto;height:520px;width:256px;border-radius:8px;">
+          <div class="lnav-scroll">
+            <nav class="lnav-menu">
+            <div class="lnav-item" data-key="project-home">
+              <a class="lnav-link" href="#" onclick="setLnavActive(this);return false;">
+                <i class="pi pi-home lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Home</span>
+              </a>
+            </div>
+            <div class="lnav-item lnav-has-children" data-key="cost">
+              <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+                <i class="pi pi-chart-line lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Cost</span>
+                <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+              </button>
+              <ul class="lnav-sub" aria-hidden="true">
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Control accounts</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Staffing plans</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Employee plans</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Budget details</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Commitments</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Period actuals</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Variance analysis</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Settings</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Default / cost reporting periods</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Funding sources</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Project staff</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Ledger / control account mapping</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Ledger / control element mapping</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Escalations</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Multipliers</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Indirect costs</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Change order impact</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Change order status</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Trend / risk steps</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Change management explanation titles</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Calculate totals</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Spread time phased data</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Close period</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Other calculations</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Lists</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Summary</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Excel reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Report writer</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Import / export</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Special import / export</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Copy dates to accounts</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Validate data</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Other utilities</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">AI forecasting</a></li>
+              </ul>
+            </div>
+            <div class="lnav-item" data-key="field">
+              <a class="lnav-link" href="#" onclick="setLnavActive(this);return false;">
+                <i class="pi pi-map lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Field</span>
+              </a>
+            </div>
+            <div class="lnav-item lnav-has-children" data-key="procurement">
+              <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+                <i class="pi pi-box lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Procurement</span>
+                <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+              </button>
+              <ul class="lnav-sub" aria-hidden="true">
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Purchase orders</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Instructed changes</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Executed changes</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Shipments</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Definitions</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Settings</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Calculate totals</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Lists</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Excel reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Report writer</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Import / export</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Validate data</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Other utilities</a></li>
+              </ul>
+            </div>
+            <div class="lnav-item lnav-has-children lnav-expanded" data-key="contracts">
+              <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="true">
+                <i class="pi pi-file lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Contracts</span>
+                <i class="pi pi-angle-up lnav-chevron" aria-hidden="true"></i>
+              </button>
+              <ul class="lnav-sub lnav-sub-open" aria-hidden="false">
+                <li><a class="lnav-sublink lnav-sublink-active" href="#" onclick="setLnavActive(this);return false;">Contract</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Instructed changes</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Executed changes</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Implemented changes</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Early warnings</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Compensation events</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Instructions</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Quotations</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Settings</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Calculate totals</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Build descriptions</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Build group IDs</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Replace IDs</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Lists</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Excel reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Report writer</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Import contracts</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Copy contract items from RFP</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Import / export</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Validate data</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Other utilities</a></li>
+              </ul>
+            </div>
+            <div class="lnav-item lnav-has-children" data-key="prime">
+              <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+                <i class="pi pi-verified lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Prime contract</span>
+                <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+              </button>
+              <ul class="lnav-sub" aria-hidden="true">
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Prime contracts</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Instructed changes</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Executed changes</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Settings</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Calculate totals</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Update PO / contract data</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Lists</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Excel reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Report writer</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Import / export</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Validate data</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Other utilities</a></li>
+              </ul>
+            </div>
+            <div class="lnav-item lnav-has-children" data-key="invoices">
+              <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+                <i class="pi pi-book lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Invoices</span>
+                <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+              </button>
+              <ul class="lnav-sub" aria-hidden="true">
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Invoices</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Payment requests</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Definitions</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Settings</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Calculate totals</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Excel reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Report writer</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Import / export</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Validate data</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Replace IDs</a></li>
+              </ul>
+            </div>
+            <div class="lnav-item lnav-has-children" data-key="schedule">
+              <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+                <i class="pi pi-calendar lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Schedule</span>
+                <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+              </button>
+              <ul class="lnav-sub" aria-hidden="true">
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Activities</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Resources</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Settings</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Lists</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Excel reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Report writer</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Import / export</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Special import / export</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Copy dates to activities</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Validate data</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Other utilities</a></li>
+              </ul>
+            </div>
+            <div class="lnav-item lnav-has-children" data-key="change">
+              <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+                <i class="pi pi-sync lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Change</span>
+                <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+              </button>
+              <ul class="lnav-sub" aria-hidden="true">
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Trend</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Change order</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Reports</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Form 1</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Form 2</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Form 3</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Form 4</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Form 5</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Custom form</a></li>
+              </ul>
+            </div>
+            <div class="lnav-item lnav-has-children" data-key="reports">
+              <button class="lnav-link lnav-parent-btn" onclick="toggleLnavGroup(this)" aria-expanded="false">
+                <i class="pi pi-chart-bar lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Reports</span>
+                <i class="pi pi-angle-down lnav-chevron" aria-hidden="true"></i>
+              </button>
+              <ul class="lnav-sub" aria-hidden="true">
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Overview</a></li>
+                <li><a class="lnav-sublink" href="#" onclick="setLnavActive(this);return false;">Custom reports</a></li>
+              </ul>
+            </div>
+            <div class="lnav-item" data-key="drive">
+              <a class="lnav-link" href="#" onclick="setLnavActive(this);return false;">
+                <i class="pi pi-folder lnav-icon" aria-hidden="true"></i>
+                <span class="lnav-label">Drive</span>
+              </a>
+            </div>
+            </nav>
+          </div>
+        </aside>
       </div>
     </section>
 

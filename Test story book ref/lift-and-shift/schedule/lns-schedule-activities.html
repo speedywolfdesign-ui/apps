@@ -2250,7 +2250,7 @@ ul { list-style: none; }
 .tnav-logo {
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  width: 56px; height: 56px;
+  width: 88px; height: 56px;
   border-right: var(--border-1) solid var(--surface-200);
 }
 .tnav-logo-svg { width: 36px; height: 36px; }
@@ -2270,27 +2270,27 @@ ul { list-style: none; }
 
 /* Base link / button style */
 .tnav-link {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 0 var(--space-3);
-  height: 100%;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 0 14px;
+  height: 34px;
+  align-self: center;
   font-family: var(--font-family);
   font-size: 13px; font-weight: var(--font-weight-medium);
   color: var(--surface-700);
   white-space: nowrap;
   background: transparent; border: none; cursor: pointer;
-  border-radius: 0;
+  border-radius: 8px;
   transition: color var(--transition-fast), background var(--transition-fast);
   text-decoration: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px; /* sit on top of nav border */
 }
-.tnav-link:hover { color: var(--surface-900); background: var(--surface-50); }
+.tnav-link:hover { color: var(--surface-900); background: var(--surface-200, #e5e5e5); }
 .tnav-link-active {
-  color: var(--primary-600);
+  color: #fff;
   font-weight: var(--font-weight-semibold);
-  border-bottom-color: var(--primary-500);
+  background: #4b4b4b;
 }
-.tnav-link-active:hover { color: var(--primary-600); background: var(--brand-surface); }
+.tnav-link-active:hover { color: #fff; background: #3f3f3f; }
+.tnav-link-active .tnav-chevron { color: #fff; }
 
 /* Dropdown trigger */
 .tnav-link-dropdown { gap: 5px; }
@@ -5566,13 +5566,13 @@ body.ai-panel-open .proj-content {
    ───────────────────────────────────────────────────────────── */
 .proj-content{ margin-left:344px; }                 /* rail (88) + panel (256) */
 .lnavc{ width:344px; flex-direction:row; padding:0; background:#fff; overflow:visible; }
-.lnavc-rail{ width:88px; flex-shrink:0; background:var(--surface-50,#fafafa); border-right:1px solid var(--surface-200,#e5e5e5); padding:12px 6px; overflow-y:auto; display:flex; flex-direction:column; gap:0; }
-.lnavc-railitem{ display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; padding:7px 4px; border:none; background:transparent; cursor:pointer; border-radius:8px; text-align:center; font-family:'Inter',sans-serif; font-size:10px; font-weight:500; line-height:1.2; color:var(--surface-800,#404040); }
+.lnavc-rail{ width:88px; flex-shrink:0; background:var(--surface-50,#fafafa); border-right:1px solid var(--surface-200,#e5e5e5); padding:12px 6px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+.lnavc-railitem{ display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; padding:7px 4px; border:none; background:transparent; cursor:pointer; border-radius:12px; text-align:center; font-family:'Inter',sans-serif; font-size:10px; font-weight:500; line-height:1.2; color:var(--surface-800,#404040); }
 .lnavc-railitem:hover{ background:var(--surface-200,#e5e5e5); }
 .lnavc-railicon{ display:flex; align-items:center; justify-content:center; width:46px; height:34px; border-radius:8px; font-size:16px; color:var(--surface-700,#525252); }
 .lnavc-raillabel{ max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.lnavc-railitem.is-active{ color:var(--primary-500,#326fd1); font-weight:600; }
-.lnavc-railitem.is-active .lnavc-railicon{ background:var(--blue-50,#eef3fb); color:var(--primary-500,#326fd1); }
+.lnavc-railitem.is-active{ background:var(--surface-200,#e5e5e5); }
+.lnavc-railitem.is-active .lnavc-railicon{ background:transparent; color:var(--surface-700,#525252); }
 .lnavc-panel{ flex:1; min-width:0; overflow-y:auto; padding:6px 0; background:#fff; }
 .lnavc-grouphead{ display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; padding:10px 20px; border:none; background:transparent; cursor:pointer; font-family:'Inter',sans-serif; font-size:12px; font-weight:600; color:var(--surface-900,#262626); text-align:left; }
 .lnavc-grouphead:hover{ background:var(--surface-50,#fafafa); }
@@ -5591,6 +5591,9 @@ body.ai-panel-open .proj-content {
 .lnavc-collapse.is-collapsed .pi{ transform:rotate(180deg); }
 .lnavc[data-cmode="collapsed"]{ width:88px; }
 body[data-lsnav="rail"][data-railcm="collapsed"] .proj-content{ margin-left:88px; }
+.lnavc.is-panelless{ width:88px; }
+.lnavc.is-panelless .lnavc-panel{ display:none; }
+body[data-lsnav="rail"].railpanelless .proj-content{ margin-left:88px; }
 .lnavc[data-cmode="collapsed"] .lnavc-panel{ position:absolute; left:88px; top:0; bottom:0; width:256px; background:var(--surface-0,#fff); border-right:1px solid var(--surface-200,#e5e5e5); box-shadow:none; z-index:120; overflow-y:auto; transform:translateX(-10px); opacity:0; pointer-events:none; transition:transform .18s ease, opacity .18s ease; }
 .lnavc[data-cmode="collapsed"].flyout-open .lnavc-panel{ transform:translateX(0); opacity:1; pointer-events:auto; }
 
@@ -7536,12 +7539,42 @@ function applyProjectContext() {
     var LS_SECTIONS = [
       { key:'project-home', icon:'pi-home', label:'Home' },
       { key:'cost', icon:'pi-chart-line', label:'Cost', groups:[
-        { label:'Data entry', items:[ { label:'Control accounts', href:'../cost/lns-cost-control-accounts.html' },{ label:'Staffing plans', href:'../cost/lns-cost-staffing-plans.html' },{ label:'Employee plans', href:'../cost/lns-cost-employee-plans.html' },{ label:'Budget details', href:'../cost/lns-cost-budget-details.html' },{ label:'Commitments', href:'../cost/lns-cost-commitments.html' },{ label:'Period actuals', href:'../cost/lns-cost-period-actuals.html' },{ label:'Variance analysis', href:'../cost/lns-cost-variance-analysis.html' },{ label:'Settings', href:'../cost/lns-cost-settings.html' } ] },
-        { label:'Definitions', items:[ { label:'Default / cost reporting periods', href:'../cost/lns-cost-default-cost-reporting-periods.html' },{ label:'Funding sources', href:'../cost/lns-cost-funding-sources.html' },{ label:'Project staff', href:'../cost/lns-cost-project-staff.html' },{ label:'Ledger / control account mapping', href:'../cost/lns-cost-ledger-control-account-mapping.html' },{ label:'Ledger / control element mapping', href:'../cost/lns-cost-ledger-control-element-mapping.html' },{ label:'Escalations', href:'../cost/lns-cost-escalations.html' },{ label:'Multipliers', href:'../cost/lns-cost-multipliers.html' },{ label:'Indirect costs', href:'../cost/lns-cost-indirect-costs.html' },{ label:'Change order impact', href:'../cost/lns-cost-change-order-impact.html' },{ label:'Change order status', href:'../cost/lns-cost-change-order-status.html' },{ label:'Trend / risk steps', href:'../cost/lns-cost-trend-risk-steps.html' },{ label:'Change management explanation titles', href:'../cost/lns-cost-change-management-explanation-titles.html' } ] },
-        { label:'Calculations', items:[ { label:'Calculate totals', href:'../cost/lns-cost-calculate-totals.html' },{ label:'Spread time phased data', href:'../cost/lns-cost-spread-time-phased-data.html' },{ label:'Close period', href:'../cost/lns-cost-close-period.html' },{ label:'Other calculations', href:'../cost/lns-cost-other-calculations.html' } ] },
-        { label:'Reports', items:[ { label:'Reports', href:'../cost/lns-cost-reports.html' },{ label:'Lists', href:'../cost/lns-cost-lists.html' },{ label:'Summary', href:'../cost/lns-cost-summary.html' },{ label:'Excel reports', href:'../cost/lns-cost-excel-reports.html' },{ label:'Report writer', href:'../cost/lns-cost-report-writer.html' } ] },
-        { label:'Import / export & utilities', items:[ { label:'Import / export', href:'../cost/lns-cost-import-export.html' },{ label:'Special import / export', href:'../cost/lns-cost-special-import-export.html' },{ label:'Copy dates to accounts', href:'../cost/lns-cost-copy-dates-to-accounts.html' },{ label:'Validate data', href:'../cost/lns-cost-validate-data.html' },{ label:'Other utilities', href:'../cost/lns-cost-other-utilities.html' } ] },
-        { label:'AI forecasting', items:[ { label:'AI forecasting', href:'../cost/lns-cost-ai-forecasting.html' } ] } ] },
+        { label:'Cost', items:[
+          { label:'Control accounts', href:'../cost/lns-cost-control-accounts.html' },
+          { label:'Staffing plans', href:'../cost/lns-cost-staffing-plans.html' },
+          { label:'Employee plans', href:'../cost/lns-cost-employee-plans.html' },
+          { label:'Budget details', href:'../cost/lns-cost-budget-details.html' },
+          { label:'Commitments', href:'../cost/lns-cost-commitments.html' },
+          { label:'Period actuals', href:'../cost/lns-cost-period-actuals.html' },
+          { label:'Variance analysis', href:'../cost/lns-cost-variance-analysis.html' },
+          { label:'Settings', href:'../cost/lns-cost-settings.html' },
+          { label:'Default / cost reporting periods', href:'../cost/lns-cost-default-cost-reporting-periods.html' },
+          { label:'Funding sources', href:'../cost/lns-cost-funding-sources.html' },
+          { label:'Project staff', href:'../cost/lns-cost-project-staff.html' },
+          { label:'Ledger / control account mapping', href:'../cost/lns-cost-ledger-control-account-mapping.html' },
+          { label:'Ledger / control element mapping', href:'../cost/lns-cost-ledger-control-element-mapping.html' },
+          { label:'Escalations', href:'../cost/lns-cost-escalations.html' },
+          { label:'Multipliers', href:'../cost/lns-cost-multipliers.html' },
+          { label:'Indirect costs', href:'../cost/lns-cost-indirect-costs.html' },
+          { label:'Change order impact', href:'../cost/lns-cost-change-order-impact.html' },
+          { label:'Change order status', href:'../cost/lns-cost-change-order-status.html' },
+          { label:'Trend / risk steps', href:'../cost/lns-cost-trend-risk-steps.html' },
+          { label:'Change management explanation titles', href:'../cost/lns-cost-change-management-explanation-titles.html' },
+          { label:'Calculate totals', href:'../cost/lns-cost-calculate-totals.html' },
+          { label:'Spread time phased data', href:'../cost/lns-cost-spread-time-phased-data.html' },
+          { label:'Close period', href:'../cost/lns-cost-close-period.html' },
+          { label:'Other calculations', href:'../cost/lns-cost-other-calculations.html' },
+          { label:'Reports', href:'../cost/lns-cost-reports.html' },
+          { label:'Lists', href:'../cost/lns-cost-lists.html' },
+          { label:'Summary', href:'../cost/lns-cost-summary.html' },
+          { label:'Excel reports', href:'../cost/lns-cost-excel-reports.html' },
+          { label:'Report writer', href:'../cost/lns-cost-report-writer.html' },
+          { label:'Import / export', href:'../cost/lns-cost-import-export.html' },
+          { label:'Special import / export', href:'../cost/lns-cost-special-import-export.html' },
+          { label:'Copy dates to accounts', href:'../cost/lns-cost-copy-dates-to-accounts.html' },
+          { label:'Validate data', href:'../cost/lns-cost-validate-data.html' },
+          { label:'Other utilities', href:'../cost/lns-cost-other-utilities.html' },
+          { label:'AI forecasting', href:'../cost/lns-cost-ai-forecasting.html' } ] } ] },
       { key:'field', icon:'pi-map', label:'Field' },
       { key:'procurement', icon:'pi-box', label:'Procurement', groups:[
         { label:'Procurement', items:[
@@ -7560,26 +7593,29 @@ function applyProjectContext() {
           { label:'Validate data', href:'../procurement/lns-procure-validate-data.html' },
           { label:'Other utilities', href:'../procurement/lns-procure-other-utilities.html' } ] } ] },
       { key:'contracts', icon:'pi-file', label:'Contracts', groups:[
-        { label:'Contract', items:[
-          { label:'Contracts', href:'../lift-shift_contract.html' },
+        { label:'Contracts', items:[
+          { label:'Contract', href:'../lift-shift_contract.html' },
           { label:'Instructed changes', href:'../liftandshift-contract-instruction-change.html' },
           { label:'Executed changes', href:'../liftandshift-contract-executed-changes.html' },
+          { label:'Implemented changes', href:'../liftandshift-contract-implemented-changes.html' },
+          { label:'Early warnings', href:'../liftandshift-contract-early-warnings.html' },
+          { label:'Compensation events', href:'../liftandshift-contract-compensation-events.html' },
+          { label:'Instructions', href:'../liftandshift-contract-instructions.html' },
+          { label:'Quotations', href:'../liftandshift-contract-quotations.html' },
           { label:'Settings', href:'../liftandshift-contract-setting.html' },
           { label:'Calculate totals', href:'../liftandshift-contract-calculate-totals.html' },
+          { label:'Build descriptions', href:'../liftandshift-contract-build-descriptions.html' },
+          { label:'Build group IDs', href:'../liftandshift-contract-build-group-ids.html' },
+          { label:'Replace IDs', href:'../liftandshift-contract-replace-ids.html' },
           { label:'Reports', href:'../liftandshift-contract-reports.html' },
           { label:'Lists', href:'../liftandshift-contract-lists.html' },
           { label:'Excel reports', href:'../liftandshift-contract-excel-reports.html' },
           { label:'Report writer', href:'../liftandshift-contract-report-writer.html' },
-          { label:'Import / export', href:'../liftandshift-contract-import-export.html' },
           { label:'Import contracts', href:'../liftandshift-contract-import-contracts.html' },
+          { label:'Copy contract items from RFP', href:'../liftandshift-contract-copy-contract-items-rfp.html' },
+          { label:'Import / export', href:'../liftandshift-contract-import-export.html' },
           { label:'Validate data', href:'../liftandshift-contract-validate-data.html' },
-          { label:'Other utilities', href:'../liftandshift-contract-other-utilities.html' } ] },
-        { label:'Changes', items:[
-          { label:'Compensation events', href:'../liftandshift-contract-compensation-events.html' },
-          { label:'Early warnings', href:'../liftandshift-contract-early-warnings.html' },
-          { label:'Instructions', href:'../liftandshift-contract-instructions.html' },
-          { label:'Quotations', href:'../liftandshift-contract-quotations.html' },
-          { label:'Implemented changes', href:'../liftandshift-contract-implemented-changes.html' } ] } ] },
+          { label:'Other utilities', href:'../liftandshift-contract-other-utilities.html' } ] } ] },
       { key:'prime', icon:'pi-verified', label:'Prime contract', groups:[
         { label:'Prime contract', items:[
           { label:'Prime contracts', href:'../prime-contract/lns-prime-prime-contracts.html' },
@@ -7609,19 +7645,16 @@ function applyProjectContext() {
           { label:'Validate data', href:'../invoice/lns-invoice-validate-data.html' },
           { label:'Replace IDs', href:'../invoice/lns-invoice-replace-ids.html' } ] } ] },
         { key:'schedule', icon:'pi-calendar', label:'Schedule', groups:[
-        { label:'Data entry', items:[
+        { label:'Schedule', items:[
           { label:'Activities', href:'lns-schedule-activities.html' },
           { label:'Resources', href:'lns-schedule-resources.html' },
-          { label:'Settings', href:'lns-schedule-settings.html' } ] },
-        { label:'Reports', items:[
+          { label:'Settings', href:'lns-schedule-settings.html' },
           { label:'Reports', href:'lns-schedule-reports.html' },
           { label:'Lists', href:'lns-schedule-lists.html' },
           { label:'Excel reports', href:'lns-schedule-excel-reports.html' },
-          { label:'Report writer', href:'lns-schedule-report-writer.html' } ] },
-        { label:'Import / export', items:[
+          { label:'Report writer', href:'lns-schedule-report-writer.html' },
           { label:'Import / export', href:'lns-schedule-import-export.html' },
-          { label:'Special import / export', href:'lns-schedule-special-import-export.html' } ] },
-        { label:'Utilities', items:[
+          { label:'Special import / export', href:'lns-schedule-special-import-export.html' },
           { label:'Copy dates to activities', href:'lns-schedule-copy-dates-to-activities.html' },
           { label:'Validate data', href:'lns-schedule-validate-data.html' },
           { label:'Other utilities', href:'lns-schedule-other-utilities.html' } ] } ] },
@@ -7636,7 +7669,10 @@ function applyProjectContext() {
           { label:'Form 4', href:'../change-management/lns-change-form-4.html' },
           { label:'Form 5', href:'../change-management/lns-change-form-5.html' },
           { label:'Custom form', href:'../change-management/lns-change-custom-form.html' } ] } ] },
-      { key:'reports', icon:'pi-chart-bar', label:'Reports' },
+      { key:'reports', icon:'pi-chart-bar', label:'Reports', groups:[
+        { label:'Reports', items:[
+          { label:'Overview', href:'../reports/lns-reports-overview.html' },
+          { label:'Custom reports', href:'../reports/lns-reports-custom-reports.html' } ] } ] },
       { key:'drive', icon:'pi-folder', label:'Drive' }
     ];
     (function(){
@@ -7652,12 +7688,12 @@ function applyProjectContext() {
       function snc(v){ try{ localStorage.setItem('ls-nested-cmode', v?'collapsed':'expanded'); }catch(e){} }
       function gog(){ try{ return JSON.parse(localStorage.getItem('ls-rail-groups')||'[]'); }catch(e){ return []; } }
       function sog(a){ try{ localStorage.setItem('ls-rail-groups', JSON.stringify(a)); }catch(e){} }
-      function activeKey(){ var k=null; LS_SECTIONS.forEach(function(s){(s.groups||[]).forEach(function(g){g.items.forEach(function(it){ if(fileOf(it.href)===here) k=s.key; });});}); if(!k){ var fb=LS_SECTIONS.filter(function(s){return s.groups;})[0]; k=fb?fb.key:(LS_SECTIONS[0]||{}).key; } return k; }
+      function activeKey(){ var k=null; LS_SECTIONS.forEach(function(s){(s.groups||[]).forEach(function(g){g.items.forEach(function(it){ if(fileOf(it.href)===here) k=s.key; });});}); if(!k){ var _pat=[['contracts',/^(lift-shift_contract\.html|liftandshift-contract-.+\.html)$/],['cost',/^lns-cost-.+\.html$/],['procurement',/^lns-procure-.+\.html$/],['prime',/^lns-prime-.+\.html$/],['invoices',/^lns-invoice-.+\.html$/],['schedule',/^lns-schedule-.+\.html$/],['change',/^lns-change-.+\.html$/],['reports',/^lns-reports-.+\.html$/]]; for(var _i=0;_i<_pat.length;_i++){ if(_pat[_i][1].test(here) && LS_SECTIONS.filter(function(s){return s.key===_pat[_i][0]&&s.groups;})[0]){ k=_pat[_i][0]; break; } } } if(!k){ var fb=LS_SECTIONS.filter(function(s){return s.groups;})[0]; k=fb?fb.key:(LS_SECTIONS[0]||{}).key; } return k; }
       var railSel=activeKey(), ribSel=activeKey();
 
       /* ---- RAIL (icon rail + panel) ---- */
       function panelFor(key){ var sec=LS_SECTIONS.filter(function(s){return s.key===key;})[0];
-        if(!sec||!sec.groups) return '<div style="padding:14px 20px;font-size:12px;color:var(--surface-500,#737373)">No items in this section.</div>';
+        if(!sec||!sec.groups) return '';
         var cur=sec.groups.some(function(g){return g.items.some(function(it){return fileOf(it.href)===here;});});
         var _og=gog();
         var _any=sec.groups.some(function(g){ return g.items.some(function(it){return fileOf(it.href)===here;})||_og.indexOf(key+'::'+g.label)>=0; });
@@ -7693,16 +7729,16 @@ function applyProjectContext() {
         return '<div class="lsrib"><div class="lsrib-tabs">'+tabs+'</div><div class="lsrib-groups">'+groups+'</div></div>';
       }
 
-      function scope(){ var hh=location.href, re=/^(liftandshift-contract-.+\.html|lift-shift_contract\.html|lns-procure-.+\.html|lns-prime-.+\.html|lns-change-.+\.html|lns-invoice-.+\.html|lns-cost-.+\.html|lns-schedule-.+\.html)$/;
+      function scope(){ var hh=location.href, re=/^(liftandshift-contract-.+\.html|lift-shift_contract\.html|lns-procure-.+\.html|lns-prime-.+\.html|lns-change-.+\.html|lns-invoice-.+\.html|lns-cost-.+\.html|lns-schedule-.+\.html|lns-reports-.+\.html)$/;
         Array.prototype.forEach.call(host.querySelectorAll('a[href]'),function(a){ var f=fileOf(a.getAttribute('href')); if(!re.test(f)||a.href===hh){ a.removeAttribute('href'); a.style.cursor='default'; } });
       }
-      function apply(d){ document.body.setAttribute('data-lsnav',d); if(d==='rail'){ document.body.setAttribute('data-railcm',gcm()); } else { document.body.removeAttribute('data-railcm'); }
+      function apply(d){ document.body.setAttribute('data-lsnav',d); if(d==='rail'){ document.body.setAttribute('data-railcm',gcm()); } else { document.body.removeAttribute('data-railcm'); document.body.classList.remove('railpanelless'); }
         host.innerHTML = d==='ribbon'?ribbonHTML(): d==='rail'?railHTML(): nestedHTML();
         document.body.classList.toggle('lnav-collapsed', d==='nested' && gnc());
         scope();
         var _pc=document.querySelector('.proj-content'); if(_pc){ if(d==='ribbon'){ var _rb=host.querySelector('.lsrib'); _pc.style.marginTop=(56+(_rb?_rb.offsetHeight:94))+'px'; } else { _pc.style.marginTop=''; } }
-        if(d==='nested'){ var asd=host.querySelector('#leftNav'); if(asd){ asd.addEventListener('mouseenter',function(){ if(gnc()) asd.setAttribute('data-collapsed','false'); }); asd.addEventListener('mouseleave',function(){ if(gnc()) asd.setAttribute('data-collapsed','true'); }); } }
-        if(d==='rail'){ var _rc=host.querySelector('#leftNavC'); if(_rc){ var _rail=_rc.querySelector('#lnavcRail'), _pnl=_rc.querySelector('#lnavcPanel'), _shown=railSel; _rc.addEventListener('mouseenter',function(){ if(gcm()==='collapsed') _rc.classList.add('flyout-open'); }); if(_rail&&_pnl){ _rail.addEventListener('mouseover',function(e){ var ri=e.target.closest('.lnavc-railitem'); if(!ri||!ri.dataset.rk||ri.dataset.rk===_shown) return; _shown=ri.dataset.rk; _pnl.innerHTML=panelFor(_shown); _rail.querySelectorAll('.lnavc-railitem').forEach(function(x){ x.classList.toggle('is-active', x===ri); }); }); } _rc.addEventListener('mouseleave',function(){ _rc.classList.remove('flyout-open'); if(_shown!==railSel){ _shown=railSel; if(_pnl) _pnl.innerHTML=panelFor(railSel); if(_rail) _rail.querySelectorAll('.lnavc-railitem').forEach(function(x){ x.classList.toggle('is-active', x.dataset.rk===railSel); }); } }); } }
+        if(d==='nested'){ var asd=host.querySelector('#leftNav'); if(asd){ asd.addEventListener('mouseover',function(e){ if(gnc() && e.target.closest('.lnav-link, .lnav-sublink, .lnav-icon')) asd.setAttribute('data-collapsed','false'); }); asd.addEventListener('mouseleave',function(){ if(gnc()) asd.setAttribute('data-collapsed','true'); }); } }
+        if(d==='rail'){ var _hasG=function(k){ var s0=LS_SECTIONS.filter(function(s){return s.key===k;})[0]; return !!(s0&&s0.groups); }; document.body.classList.toggle('railpanelless', !_hasG(railSel)); var _rc=host.querySelector('#leftNavC'); if(_rc){ _rc.classList.toggle('is-panelless', !_hasG(railSel)); var _rail=_rc.querySelector('#lnavcRail'), _pnl=_rc.querySelector('#lnavcPanel'), _shown=railSel; if(_rail&&_pnl){ _rail.addEventListener('mouseover',function(e){ var ri=e.target.closest('.lnavc-railitem'); if(!ri||!ri.dataset.rk) return; if(!_hasG(ri.dataset.rk)){ if(gcm()==='collapsed'){ _rc.classList.remove('flyout-open'); } else if(_shown!==railSel){ _shown=railSel; _pnl.innerHTML=panelFor(railSel); _rc.classList.toggle('is-panelless', !_hasG(railSel));  } return; } if(gcm()==='collapsed') _rc.classList.add('flyout-open'); if(ri.dataset.rk===_shown) return; _shown=ri.dataset.rk; _rc.classList.remove('is-panelless'); _pnl.innerHTML=panelFor(_shown);  }); } _rc.addEventListener('mouseleave',function(){ _rc.classList.remove('flyout-open'); if(_shown!==railSel){ _shown=railSel; if(_pnl) _pnl.innerHTML=panelFor(railSel);  } _rc.classList.toggle('is-panelless', !_hasG(railSel)); }); } }
       }
 
       host.addEventListener('click',function(e){
