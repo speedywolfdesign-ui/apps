@@ -16,7 +16,8 @@
     { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Today's record", "short_name": "Today", "url": "./index.html#/entry", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "41 Day Challenge", "short_name": "Habits", "url": "./index.html#/habit", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "BTC Activity Tracker", "short_name": "Activity", "url": "./index.html#/activity", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Export sheets", "short_name": "Export", "url": "./index.html#/export", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

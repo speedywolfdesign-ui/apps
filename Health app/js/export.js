@@ -5,7 +5,7 @@
                progress check, final results)
      Sheet 2 : Activity Tracker (daily activity, recipe tracker,
                fuel program, detox)
-     Sheet 3 : Progress photos + Before / After comparison
+     Sheet 3 : Before / After proof photos (front, right, back)
    Also produces CSV and JSON backups.
    ============================================================ */
 const Exporter = (() => {
@@ -102,18 +102,17 @@ const Exporter = (() => {
   .prog label{display:block;font-size:.6rem;margin:2px 0}
   .note{font-size:.56rem;color:#5d6f63;text-align:center;margin-top:4px;font-style:italic}
 
-  .photos{display:flex;flex-wrap:wrap;gap:8px}
-  .pcard{border:2px solid #0f5c2e;border-radius:6px;padding:4px;width:150px;text-align:center;background:#f6fbf7}
-  .pcard img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:4px;background:#ddd}
-  .pcard .cap{font-size:.56rem;font-weight:700;color:#0f5c2e;margin-top:2px}
-  .pcard .sub{font-size:.52rem;color:#5d6f63}
-  .ba{display:flex;gap:10px;justify-content:center;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap}
+  .pairs{display:flex;gap:8px;justify-content:center;align-items:flex-start;flex-wrap:wrap;margin-bottom:6px}
+  .pair{border:2px solid #0f5c2e;border-radius:6px;padding:5px;background:#f6fbf7}
+  .pair > h4{margin:0 0 4px;text-align:center;font-size:.7rem;color:#0f5c2e;background:#eaf4ec;border-radius:4px;padding:2px}
+  .ba{display:flex;gap:8px;justify-content:center;align-items:flex-start}
   .ba .side{text-align:center}
-  .ba .side img{width:210px;aspect-ratio:3/4;object-fit:cover;border:3px solid #0f5c2e;border-radius:6px;background:#ddd}
-  .ba .side h4{margin:3px 0 0;font-size:.74rem;color:#0f5c2e}
-  .ba .arrow{align-self:center;font-size:1.8rem;color:#f7c948}
-  .daygroup{margin-bottom:8px}
-  .daygroup h4{font-size:.66rem;color:#0f5c2e;border-bottom:1px solid #9cbba8;margin:0 0 4px}
+  .ba .side img{width:124px;aspect-ratio:3/4;object-fit:cover;border:2px solid #0f5c2e;border-radius:6px;background:#e3e8e4}
+  .ba .side img.none{border-style:dashed}
+  .ba .side h4{margin:3px 0 0;font-size:.68rem;color:#0f5c2e}
+  .ba .side .sub{font-size:.54rem;color:#5d6f63}
+  .ba .arrow{align-self:center;font-size:1.4rem;color:#f7c948}
+  .proofnote{font-size:.58rem;color:#5d6f63;text-align:center;font-style:italic;margin:2px 0 6px}
   .stats{display:flex;gap:6px;margin:6px 0}
   .stats div{flex:1;border:1.5px solid #9cbba8;border-radius:5px;text-align:center;padding:3px;font-size:.56rem;color:#5d6f63}
   .stats div b{display:block;font-size:.95rem;color:#0f5c2e}
@@ -143,6 +142,13 @@ const Exporter = (() => {
       <div><b>NAME (Full Name):</b> ${line(p.name)}</div>
       <div><b>CLUB NUMBER &amp; CLUB OPERATOR NAME:</b> ${line([p.clubNumber, p.clubOperator].filter(Boolean).join(' - '))}</div>
       <div><b>COACH NAME:</b> ${line(p.coach)}</div>
+    </div>
+    <div class="idrow">
+      <div><b>GENDER:</b> ${line(p.genderLabel)}</div>
+      <div><b>AGE:</b> ${line(p.age ? p.age + ' yrs' : '')}</div>
+      <div><b>HEIGHT:</b> ${line(p.height ? p.height + ' cm' : '')}</div>
+      <div><b>START WEIGHT:</b> ${line(p.startWeight ? p.startWeight + ' kg' : '')}</div>
+      <div><b>START DATE (DAY 1):</b> ${line(p.startDate)}</div>
     </div>`;
   }
 
@@ -243,7 +249,7 @@ const Exporter = (() => {
     for (let i = 0; i < days.length; i += PER_COL) chunks.push(days.slice(i, i + PER_COL));
     const actTables = chunks.map(chunk => `
       <table class="act">
-        <tr><th>DAY<br>\u0926\u093f\u0928</th><th>DATE</th><th>ACTIVITY / \u0917\u0924\u093f\u0935\u093f\u0927\u093f</th><th>%</th><th>POINTS<br>(of 10)</th>
+        <tr><th>DAY<br>दिन</th><th>DATE</th><th>ACTIVITY / गतिविधि</th><th>%</th><th>POINTS<br>(of 10)</th>
             <th>FUEL ADDED<br>(which one?)</th></tr>
         ${chunk.map(actRow).join('')}
       </table>`).join('');
@@ -306,46 +312,43 @@ const Exporter = (() => {
     </section>`;
   }
 
-  /* ---------------- Sheet 3: photos ---------------- */
+  /* ---------------- Sheet 3: before / after proof ---------------- */
   function sheetPhotos(data) {
-    const { profile, photos, before, after, range } = data;
-    if (!photos.length && !before && !after) return '';
+    const { profile, before, after, poses, range, totals } = data;
+    if (!(before || []).length && !(after || []).length) return '';
 
-    const baBlock = (before || after) ? `
-      <div class="secbar">BEFORE &amp; AFTER</div>
-      <div class="ba">
-        <div class="side">
-          <img src="${before ? before.dataURL : ''}" alt="Before" />
-          <h4>BEFORE</h4>
-          <div class="sub" style="font-size:.6rem">${before ? esc(before.date + ' · ' + before.poseLabel) : '—'}</div>
-        </div>
-        <div class="arrow">➜</div>
-        <div class="side">
-          <img src="${after ? after.dataURL : ''}" alt="After" />
-          <h4>AFTER</h4>
-          <div class="sub" style="font-size:.6rem">${after ? esc(after.date + ' · ' + after.poseLabel) : '—'}</div>
-        </div>
-      </div>` : '';
+    const find = (list, pose) => (list || []).find(p => p.pose === pose) || null;
+    const side = (p, title) => `
+      <div class="side">
+        <img class="${p ? '' : 'none'}" src="${p ? p.dataURL : ''}" alt="${esc(title)}" />
+        <h4>${esc(title)}</h4>
+        <div class="sub">${p ? esc(p.date) : 'not taken'}</div>
+      </div>`;
 
-    const byDate = {};
-    photos.forEach(p => { (byDate[p.date] = byDate[p.date] || []).push(p); });
-    const groups = Object.keys(byDate).sort().map(date => `
-      <div class="daygroup">
-        <h4>${esc(date)}${byDate[date][0].day ? ` · Day ${byDate[date][0].day}` : ''}</h4>
-        <div class="photos">
-          ${byDate[date].map(p => `
-            <div class="pcard">
-              <img src="${p.dataURL}" alt="${esc(p.poseLabel)}" />
-              <div class="cap">${esc(p.poseLabel.toUpperCase())}</div>
-              <div class="sub">${esc(p.date)}</div>
-            </div>`).join('')}
+    const pairs = (poses || []).map(po => `
+      <div class="pair">
+        <h4>${esc(po.label.toUpperCase())}</h4>
+        <div class="ba">
+          ${side(find(before, po.key), 'BEFORE')}
+          <div class="arrow">➜</div>
+          ${side(find(after, po.key), 'AFTER')}
         </div>
       </div>`).join('');
 
+    const dateOf = (list) => (list || []).length ? list[0].date : '';
     return `<section class="sheet">
-      ${header(profile, 'PROGRESS PHOTOS', `${range.from} → ${range.to}`, 'Consistency today, transformation tomorrow')}
-      ${baBlock}
-      ${groups ? `<div class="secbar">PROGRESS PHOTO LOG</div>${groups}` : ''}
+      ${header(profile, 'BEFORE & AFTER PROOF', `${range.from} → ${range.to}`,
+               'Consistency today, transformation tomorrow')}
+      <div class="secbar">BEFORE &amp; AFTER — ALL THREE POSES</div>
+      <div class="proofnote">Before photos taken at registration${dateOf(before) ? ' on ' + esc(dateOf(before)) : ''} ·
+        After photos taken at export${dateOf(after) ? ' on ' + esc(dateOf(after)) : ''}</div>
+      <div class="pairs">${pairs}</div>
+      <div class="stats">
+        <div><b>${totals.logged}</b>DAYS LOGGED</div>
+        <div><b>${totals.points}</b>HABIT POINTS</div>
+        <div><b>${totals.consistency}%</b>CONSISTENCY</div>
+        <div><b>${(before || []).length + (after || []).length}/6</b>PROOF PHOTOS</div>
+      </div>
       ${FOOT}
     </section>`;
   }
@@ -375,7 +378,7 @@ ${parts.join('\n')}
     const head = ['Date', 'Day', 'Fuel', 'Sleep', 'Water', 'Lunch', 'Steps', 'Daily Score',
       'Weight (kg)', 'Inches', 'Activity', 'Activity %', 'Activity Points', 'Fuel Program Added',
       'Healthy Recipe Tried', 'Healthy Posted', 'Laddu Recipe Tried', 'Laddu Posted',
-      'Fuel Program', 'Extra Fuels', 'Detox 2-day', 'Photos', 'Notes'];
+      'Fuel Program', 'Extra Fuels', 'Detox 2-day', 'Notes'];
     const rows = data.days.filter(d => d.record).map(d => {
       const r = d.record, h = r.habits, a = r.activity || {};
       const score = data.habits.filter(x => h[x.key]).length;
@@ -385,7 +388,7 @@ ${parts.join('\n')}
         h.lunch ? 'Y' : 'N', h.steps ? 'Y' : 'N', `${score}/5`, r.weight, r.inches,
         a.name, a.percent, a.points, a.fuelAdded,
         r.recipes.healthy.tried, r.recipes.healthy.posted, r.recipes.laddu.tried, r.recipes.laddu.posted,
-        r.fuelProgram.selected, extras, r.detox, (d.photoPoses || []).join(' '), r.notes].map(q).join(',');
+        r.fuelProgram.selected, extras, r.detox, r.notes].map(q).join(',');
     });
     return [head.map(q).join(','), ...rows].join('\r\n');
   }

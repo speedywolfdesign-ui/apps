@@ -6,11 +6,18 @@ const Photos = (() => {
 
   /* The three required poses, in the order they are shown everywhere */
   const POSES = [
-    { key: 'front', label: 'Front Facing', emoji: '🧍', hint: 'Face the camera, arms slightly away from the body.' },
-    { key: 'right', label: 'Right Facing', emoji: '🚶', hint: 'Turn to your right, full body side-on to the camera.' },
-    { key: 'back',  label: 'Back Side',    emoji: '🔙', hint: 'Turn your back to the camera, stand straight.' }
+    { key: 'front', label: 'Front', emoji: '🧍', hint: 'Face the camera, arms slightly away from the body.' },
+    { key: 'right', label: 'Side',  emoji: '🚶', hint: 'Turn side-on to the camera, full body in frame.' },
+    { key: 'back',  label: 'Back',  emoji: '🔙', hint: 'Turn your back to the camera, stand straight.' }
   ];
   const poseLabel = (k) => (POSES.find(p => p.key === k) || { label: k }).label;
+
+  /* Photos are taken twice only: at registration (before) and at export time (after) */
+  const STAGES = [
+    { key: 'before', label: 'Before', emoji: '📸', note: 'Taken when the participant registers for the challenge.' },
+    { key: 'after',  label: 'After',  emoji: '🏁', note: 'Taken at export time, as the after proof.' }
+  ];
+  const stageLabel = (k) => (STAGES.find(s => s.key === k) || { label: k }).label;
 
   /* ---------- image downscaling (keeps storage + exports light) ---------- */
   function compress(file, maxDim = 1400, quality = 0.82) {
@@ -112,14 +119,16 @@ const Photos = (() => {
    * Falls back to the device camera app when getUserMedia is unavailable
    * (e.g. iOS Safari over plain http, or permission blocked).
    */
-  async function capture(pose) {
+  async function capture(pose, stage) {
     if (!supported()) {
       const f = await pickFile({ useCamera: true });
       return f ? compress(f) : null;
     }
     const m = modal();
     const p = POSES.find(x => x.key === pose) || POSES[0];
-    document.getElementById('cameraTitle').textContent = `${p.emoji} ${p.label}`;
+    const st = STAGES.find(x => x.key === stage);
+    document.getElementById('cameraTitle').textContent =
+      `${p.emoji} ${p.label}${st ? ' · ' + st.label.toUpperCase() : ''}`;
     document.getElementById('camHint').textContent = p.hint + ' Stand 2–3 m away, full body inside the frame.';
     m.hidden = false;
 
@@ -167,5 +176,6 @@ const Photos = (() => {
     });
   }
 
-  return { POSES, poseLabel, compress, blobToDataURL, dataURLToBlob, url, dropUrl, pickFile, capture, supported };
+  return { POSES, poseLabel, STAGES, stageLabel, compress, blobToDataURL, dataURLToBlob,
+           url, dropUrl, pickFile, capture, supported };
 })();

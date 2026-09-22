@@ -3,17 +3,22 @@
    Stores
      participants : one per person being tracked (profile + weekly + final)
      recs         : daily records, key `${pid}|${date}`
-     pics         : progress photos, key `${pid}|${date}|${pose}`
+     pics         : proof photos, key `${pid}|${stage}|${pose}` where stage is
+                    "before" (taken at registration) or "after" (taken at export)
+     events       : community events (calls, meets, meetups), shared by everyone
+                    on the device and listed by upcoming date
      meta         : app level values (active participant id)
-   v1 databases (single profile) are migrated into participant "p1".
+   v1 databases (single profile) are migrated into participant "p1";
+   per-day photos from older versions are folded into before/after by
+   migrateLegacyPhotos() on start up.
    ============================================================ */
 const DB = (() => {
   const NAME = 'btc-tracker';
-  const VERSION = 2;
+  const VERSION = 3;
   let _db = null;
 
   const recKey = (pid, date) => `${pid}|${date}`;
-  const picKey = (pid, date, pose) => `${pid}|${date}|${pose}`;
+  const picKey = (pid, stage, pose) => `${pid}|${stage}|${pose}`;
 
   function open() {
     if (_db) return Promise.resolve(_db);
@@ -33,6 +38,10 @@ const DB = (() => {
           const s = db.createObjectStore('pics', { keyPath: 'id' });
           s.createIndex('byPid', 'pid');
           s.createIndex('byPidDate', ['pid', 'date']);
+        }
+        if (!db.objectStoreNames.contains('events')) {
+          const s = db.createObjectStore('events', { keyPath: 'id' });
+          s.createIndex('byDate', 'date');
         }
 
         /* ---- migrate a v1 database (single profile, unscoped stores) ---- */
@@ -63,7 +72,7 @@ const DB = (() => {
                   tx.objectStore('photos').getAll().onsuccess = (ev5) => {
                     const picsStore = tx.objectStore('pics');
                     (ev5.target.result || []).forEach(ph =>
-                      picsStore.put({ id: picKey(pid, ph.date, ph.pose), pid, date: ph.date,
+                      picsStore.put({ id: `${pid}|${ph.date}|${ph.pose}`, pid, date: ph.date,
                         pose: ph.pose, blob: ph.blob, createdAt: ph.createdAt }));
                     db.deleteObjectStore('records');   // both copies done, drop the v1 stores
                     db.deleteObjectStore('photos');
@@ -126,27 +135,63 @@ const DB = (() => {
     store('recs', 'readonly').then(s => done(s.index('byPid').getAll(IDBKeyRange.only(pid))))
       .then(list => list.sort((a, b) => (a.date < b.date ? 1 : -1)));   // newest first
 
-  /* ---------- photos ---------- */
-  const putPhoto = (pid, date, pose, blob) =>
+  /* ---------- photos: 3 poses x 2 stages per participant ---------- */
+  const putPhoto = (pid, stage, pose, blob, date) =>
     store('pics', 'readwrite').then(s => done(s.put({
-      id: picKey(pid, date, pose), pid, date, pose, blob, createdAt: Date.now()
+      id: picKey(pid, stage, pose), pid, stage, pose, blob,
+      date: date || new Date().toISOString().slice(0, 10), createdAt: Date.now()
     })));
-  const getPhoto = (pid, date, pose) => store('pics', 'readonly').then(s => done(s.get(picKey(pid, date, pose))));
-  const deletePhoto = (pid, date, pose) => store('pics', 'readwrite').then(s => done(s.delete(picKey(pid, date, pose))));
-  const photosForDate = (pid, date) =>
-    store('pics', 'readonly').then(s => done(s.index('byPidDate').getAll(IDBKeyRange.only([pid, date]))));
+  const getPhoto = (pid, stage, pose) => store('pics', 'readonly').then(s => done(s.get(picKey(pid, stage, pose))));
+  const deletePhoto = (pid, stage, pose) => store('pics', 'readwrite').then(s => done(s.delete(picKey(pid, stage, pose))));
   const photosFor = (pid) =>
-    store('pics', 'readonly').then(s => done(s.index('byPid').getAll(IDBKeyRange.only(pid))))
-      .then(list => list.sort((a, b) => (a.date < b.date ? 1 : -1)));
-  const allPhotos = () =>
-    store('pics', 'readonly').then(s => done(s.getAll()))
-      .then(list => list.sort((a, b) => (a.date < b.date ? 1 : -1)));
+    store('pics', 'readonly').then(s => done(s.index('byPid').getAll(IDBKeyRange.only(pid))));
+  const photosForStage = (pid, stage) => photosFor(pid).then(list => list.filter(p => p.stage === stage));
+  const allPhotos = () => store('pics', 'readonly').then(s => done(s.getAll()));
+
+  /* Older builds stored one photo set per day. Keep, per pose, the earliest shot
+     as "before" and the latest as "after", then drop the day-keyed rows. */
+  async function migrateLegacyPhotos() {
+    const legacy = (await allPhotos()).filter(p => !p.stage);
+    if (!legacy.length) return 0;
+    const byPidPose = {};
+    legacy.forEach(p => (byPidPose[p.pid + '|' + p.pose] = byPidPose[p.pid + '|' + p.pose] || []).push(p));
+    const db = await open();
+    await new Promise((resolve, reject) => {
+      const t = db.transaction('pics', 'readwrite');
+      const s = t.objectStore('pics');
+      Object.values(byPidPose).forEach(shots => {
+        shots.sort((a, b) => (a.date < b.date ? -1 : 1));
+        const first = shots[0], last = shots[shots.length - 1];
+        s.put({ ...first, id: picKey(first.pid, 'before', first.pose), stage: 'before' });
+        if (last !== first) s.put({ ...last, id: picKey(last.pid, 'after', last.pose), stage: 'after' });
+      });
+      legacy.forEach(p => s.delete(p.id));
+      t.oncomplete = () => resolve();
+      t.onerror = () => reject(t.error);
+    });
+    return legacy.length;
+  }
+
+  /* photos captured while adding a participant who was never saved */
+  async function purgeOrphanPhotos() {
+    const ids = new Set((await listParticipants()).map(p => p.id));
+    const orphans = (await allPhotos()).filter(p => !ids.has(p.pid));
+    for (const o of orphans) await store('pics', 'readwrite').then(s => done(s.delete(o.id)));
+    return orphans.length;
+  }
+
+  /* ---------- events ---------- */
+  const listEvents = () => store('events', 'readonly').then(s => done(s.getAll()));
+  const getEvent = (id) => store('events', 'readonly').then(s => done(s.get(id)));
+  const putEvent = (ev) => store('events', 'readwrite').then(s => done(s.put(ev)));
+  const deleteEvent = (id) => store('events', 'readwrite').then(s => done(s.delete(id)));
 
   /* ---------- wipe ---------- */
   function clearAll() {
     return open().then(db => new Promise((resolve, reject) => {
-      const t = db.transaction(['meta', 'participants', 'recs', 'pics'], 'readwrite');
-      ['meta', 'participants', 'recs', 'pics'].forEach(n => t.objectStore(n).clear());
+      const stores = ['meta', 'participants', 'recs', 'pics', 'events'];
+      const t = db.transaction(stores, 'readwrite');
+      stores.forEach(n => t.objectStore(n).clear());
       t.oncomplete = resolve;
       t.onerror = () => reject(t.error);
     }));
@@ -156,7 +201,9 @@ const DB = (() => {
     open, getMeta, setMeta,
     listParticipants, getParticipant, putParticipant, deleteParticipant,
     getRecord, putRecord, deleteRecord, recordsFor,
-    putPhoto, getPhoto, deletePhoto, photosForDate, photosFor, allPhotos,
+    putPhoto, getPhoto, deletePhoto, photosFor, photosForStage, allPhotos,
+    migrateLegacyPhotos, purgeOrphanPhotos,
+    listEvents, getEvent, putEvent, deleteEvent,
     clearAll
   };
 })();
