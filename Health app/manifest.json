@@ -1,0 +1,22 @@
+{
+  "name": "BTC 41 Days Transformation Tracker",
+  "short_name": "BTC Tracker",
+  "description": "Record daily habits, activity, recipes, fuel program and progress photos, then export the filled BTC tracker sheets.",
+  "start_url": "./index.html?src=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef4f0",
+  "theme_color": "#0f5c2e",
+  "lang": "en",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Today's record", "short_name": "Today", "url": "./index.html#/entry", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Export sheets", "short_name": "Export", "url": "./index.html#/export", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
