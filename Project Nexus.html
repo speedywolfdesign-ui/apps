@@ -109,7 +109,7 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 @keyframes ring-in{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
 .cmd-center{position:absolute;left:50%;top:50%;width:132px;height:132px;margin:-66px 0 0 -66px;border-radius:50%;border:1px solid var(--ember);background:radial-gradient(circle,rgba(255,90,36,.4),rgba(40,10,4,.9) 70%);color:#ffe2d6;font-family:var(--display);font-size:18px;letter-spacing:.3em;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 0 40px rgba(255,90,36,.45)}
 .cmd-center small{font:10px var(--mono);letter-spacing:.2em;color:#ffb99c;text-transform:uppercase}
-.cmd-opt{--a:calc(var(--i) * 72deg - 90deg);position:absolute;left:50%;top:50%;width:118px;margin:-30px 0 0 -59px;height:60px;transform:rotate(var(--a)) translate(var(--rad)) rotate(calc(-1 * var(--a)));background:var(--glass-2);border:1px solid var(--line-hi);color:var(--fg);font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.cmd-opt{--a:calc(var(--i) * 60deg - 90deg);position:absolute;left:50%;top:50%;width:118px;margin:-30px 0 0 -59px;height:60px;transform:rotate(var(--a)) translate(var(--rad)) rotate(calc(-1 * var(--a)));background:var(--glass-2);border:1px solid var(--line-hi);color:var(--fg);font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .cmd-opt b{font-family:var(--display);font-size:15px;color:var(--ice);letter-spacing:.08em}
 .cmd-opt:hover{border-color:var(--ember);background:rgba(255,90,36,.18)}
 .cmd-opt:hover b{color:var(--amber)}
@@ -168,6 +168,14 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .grant select{padding:7px 6px;font-size:12px;width:auto;min-width:0}
 .grant select:first-child{width:100%}
 
+.plus-menu{position:fixed;z-index:6;width:236px;background:var(--glass-2);border:1px solid var(--ember);box-shadow:0 0 28px rgba(255,90,36,.28);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;animation:ring-in .18s ease-out}
+.pm-head{padding:9px 12px;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plus-menu button{display:flex;align-items:center;gap:12px;background:none;border:0;color:var(--fg);padding:11px 12px;cursor:pointer;text-align:left;font:500 12.5px var(--mono)}
+.plus-menu button+button{border-top:1px solid var(--line)}
+.plus-menu button:hover,.plus-menu button:focus-visible{background:rgba(255,90,36,.16)}
+.plus-menu b{font-family:var(--display);font-size:15px;color:var(--amber);width:30px;text-align:center;flex:0 0 auto}
+.plus-menu span{display:flex;flex-direction:column;gap:2px}
+.plus-menu small{color:var(--muted);font-size:10.5px}
 #vr-ui{position:fixed;inset:0;z-index:8;touch-action:none;cursor:crosshair}
 #vr-ui.split::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:#000;pointer-events:none}
 .vr-gaze{position:absolute;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom,0px));display:flex;pointer-events:none}
@@ -220,6 +228,7 @@ body.vr .hud,body.vr .vignette,body.vr #tip{display:none!important}
   <div class="seg" role="group" aria-label="View">
     <button type="button" data-view="chamber" aria-pressed="true">Chamber</button>
     <button type="button" data-view="galaxy" aria-pressed="false">Galaxy</button>
+    <button type="button" data-view="obs" aria-pressed="false">OBS</button>
     <button type="button" id="vr-open">VR</button>
     <button type="button" class="cmd-btn" id="cmd-open">Command</button>
   </div>
@@ -238,12 +247,18 @@ body.vr .hud,body.vr .vignette,body.vr #tip{display:none!important}
     <button class="cmd-opt" style="--i:2" data-cmd="user" type="button"><b>U+</b>Add crew</button>
     <button class="cmd-opt" style="--i:3" data-cmd="team" type="button"><b>T+</b>Add team</button>
     <button class="cmd-opt" style="--i:4" data-cmd="assign" type="button"><b>⇄</b>Grant access</button>
+    <button class="cmd-opt" style="--i:5" data-cmd="unit" type="button"><b>O+</b>Add OBS unit</button>
     <button class="cmd-center" data-cmd="close" type="button">NEXUS<small>Close</small></button>
   </div>
 </div>
 
 <div class="modal" id="modal" hidden><form class="form" id="form" novalidate></form></div>
 <div id="tip" hidden></div>
+<div id="plus-menu" class="plus-menu" hidden role="menu" aria-label="Add to unit">
+  <div class="pm-head" id="pm-head"></div>
+  <button type="button" role="menuitem" data-pm="user"><b>U+</b><span>Add user<small>Person sits in this unit</small></span></button>
+  <button type="button" role="menuitem" data-pm="node"><b>O+</b><span>Add node<small>New sub-unit under this one</small></span></button>
+</div>
 <div id="vr-ui" hidden><div class="vr-gaze"><span id="vr-g1"></span><span id="vr-g2"></span></div><div class="vr-note" id="vr-note" hidden></div><button id="vr-exit" class="btn" type="button">Exit VR</button></div>
 <div id="toast" hidden></div>
 
@@ -330,7 +345,7 @@ function ensurePerms(){state.projects.forEach(p=>p.modules.forEach(m=>{if(!m.per
   m.users.forEach((u,i)=>{if(!PERMS[m.perms[u]])m.perms[u]=i===0?'admin':'edit';});
   Object.keys(m.perms).forEach(u=>{if(!m.users.includes(u))delete m.perms[u];});}));}
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.projects)&&Array.isArray(s.users)&&Array.isArray(s.teams))return s;}catch(e){}return null;}
-function save(){ensurePerms();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function save(){ensurePerms();if(typeof ensureObs==='function')ensureObs();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 let state=load()||seedWithPerms();
 ensurePerms();
 function grant(m,u,level){if(!m.users.includes(u))m.users.push(u);m.perms=m.perms||{};m.perms[u]=PERMS[level]?level:'edit';}
@@ -615,7 +630,7 @@ function rebuild(){
     pulsePoints=new THREE.Points(geo,new THREE.PointsMaterial({size:.55,map:GLOW,vertexColors:true,transparent:true,blending:ADD,depthWrite:false}));
     graph.add(pulsePoints);
   }
-  buildGalaxy();
+  buildGalaxy();buildObs();
   updateHud();applyHighlight();
 }
 
@@ -753,6 +768,7 @@ function removePlanet(){if(!planet)return;disposeGroup(planet.group);galaxyGraph
   gItems=gItems.filter(i=>i.kind==='project');gPickables=gPickables.filter(o=>o.userData.kind==='project');planet=null;}
 function camDefaults(){const narrow=innerWidth<720;
   if(view==='chamber')return{r:narrow?84:52,phi:1.22};
+  if(view==='obs')return{r:narrow?115:84,phi:1.05};
   if(gLevel==='planet')return{r:narrow?19:13,phi:1.25};
   return{r:narrow?200:150,phi:1.08};}
 function enterPlanet(pid){
@@ -763,9 +779,9 @@ function enterPlanet(pid){
 function exitPlanet(){removePlanet();gLevel='universe';planetProject=null;cam.tTarget.set(0,0,0);const d=camDefaults();cam.tR=d.r;cam.tPhi=d.phi;select(null);}
 function setView(v){
   if(view===v)return;view=v;
-  world.visible=v==='chamber';galaxyWorld.visible=v==='galaxy';scene.fog.density=v==='chamber'?.006:.0011;
+  world.visible=v==='chamber';galaxyWorld.visible=v==='galaxy';obsWorld.visible=v==='obs';scene.fog.density=v==='chamber'?.006:v==='obs'?.004:.0011;
   removePlanet();gLevel='universe';planetProject=null;
-  cam.tTarget.set(0,0,0);const d=camDefaults();cam.tR=d.r;cam.tPhi=d.phi;
+  cam.tTarget.set(0,v==='obs'?3:0,0);const d=camDefaults();cam.tR=d.r;cam.tPhi=d.phi;
   document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===v)));
   hover=null;$('#tip').hidden=true;select(null);
 }
@@ -773,6 +789,9 @@ document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',(
 $('#crumb').addEventListener('click',e=>{if(e.target.closest('[data-crumb]'))exitPlanet();});
 function updateChrome(){
   const crumb=$('#crumb'),hint=$('#hint'),legend=$('#legend');
+  if(view==='obs'){crumb.hidden=false;crumb.innerHTML=`<span>OBS</span><b>${state.obs.length} units</b>`;
+    hint.innerHTML='Drag to orbit · Scroll to zoom<br>Hexes are org units · Chips are owned projects<br>Click a <b>unit</b> to manage it';
+    legend.innerHTML='<div><i style="background:#ffb057;box-shadow:0 0 6px #ffb057"></i>Unit manager (top orb)</div><div><i style="background:var(--ice);box-shadow:0 0 6px var(--ice)"></i>Team rings · members hang below</div>';return;}
   if(view==='chamber'){crumb.hidden=true;
     hint.innerHTML='Drag to orbit · Scroll to zoom<br>Click a panel, module or crew node<br>Click the <b>core</b> to command';
     legend.innerHTML='<div><i style="background:var(--ice);box-shadow:0 0 6px var(--ice)"></i>Module ⟶ crew assignment</div><div><i style="background:var(--ember);box-shadow:0 0 6px var(--ember)"></i>Crew ⟶ core uplink</div>';
@@ -785,6 +804,149 @@ function updateChrome(){
   }
 }
 
+/* ---------- OBS (organizational breakdown structure) ---------- */
+const getUnit=id=>(state.obs||[]).find(o=>o.id===id);
+const obsChildren=id=>state.obs.filter(o=>o.parent===id);
+function obsRoot(){return state.obs.find(o=>!o.parent)||state.obs[0];}
+function subtree(id){const out=[id];for(let i=0;i<out.length;i++)obsChildren(out[i]).forEach(c=>out.push(c.id));return out;}
+function ancestors(id){const out=[];let u=getUnit(id),g=0;while(u&&u.parent&&g++<60){out.push(u.parent);u=getUnit(u.parent);}return out;}
+function unitOfUser(u){if(!u)return null;if(u.obs&&getUnit(u.obs))return u.obs;const t=getTeam(u.team);return t&&t.obs&&getUnit(t.obs)?t.obs:null;}
+function unitPeople(id,deep){const S=new Set(deep?subtree(id):[id]);const U=new Set();state.users.forEach(u=>{if(S.has(unitOfUser(u)))U.add(u.id);});state.obs.forEach(o=>{if(S.has(o.id)&&o.manager&&getUser(o.manager))U.add(o.manager);});return U;}
+function nextUnitCode(parentId){const p=getUnit(parentId);const n=obsChildren(parentId).length+1;if(!p)return 'OBS-0';return p.parent?`${p.code}.${n}`:`OBS-${n}`;}
+function ensureObs(){
+  if(!Array.isArray(state.obs)||!state.obs.length){
+    const has=id=>getUser(id)?id:null;
+    state.obs=[
+      {id:'o0',code:'OBS-0',name:'Delivery Organization',parent:null,manager:has('u1')},
+      {id:'o1',code:'OBS-1',name:'Engineering',parent:'o0',manager:has('u3')},
+      {id:'o11',code:'OBS-1.1',name:'Platform & Integrations',parent:'o1',manager:has('u2')},
+      {id:'o12',code:'OBS-1.2',name:'Data & Analytics',parent:'o1',manager:has('u4')},
+      {id:'o13',code:'OBS-1.3',name:'Mobile & Field',parent:'o1',manager:has('u7')},
+      {id:'o2',code:'OBS-2',name:'Quality & Release',parent:'o0',manager:has('u10')},
+      {id:'o3',code:'OBS-3',name:'Product & Design',parent:'o0',manager:has('u9')}];
+    const tm={t1:'o11',t2:'o12',t3:'o13',t4:'o2'},pm={p1:'o11',p2:'o12',p3:'o13',p4:'o12',p5:'o3',p6:'o11',p7:'o3',p8:'o2'};
+    state.teams.forEach(t=>{if(t.obs===undefined)t.obs=tm[t.id]||null;});
+    state.projects.forEach(p=>{if(p.obs===undefined)p.obs=pm[p.id]||'o0';});
+  }
+  const ids=new Set(state.obs.map(o=>o.id));
+  let root=state.obs.find(o=>!o.parent||!ids.has(o.parent));if(!root)root=state.obs[0];
+  root.parent=null;
+  state.obs.forEach(o=>{if(o!==root&&(!o.parent||!ids.has(o.parent)||o.parent===o.id))o.parent=root.id;});
+  state.obs.forEach(o=>{let u=o,g=0;while(u&&u.parent&&g<80){u=getUnit(u.parent);g++;}if(g>=80)o.parent=root.id;});
+  state.obs.forEach(o=>{if(o.manager&&!getUser(o.manager))o.manager=null;});
+  state.users.forEach(u=>{if(u.obs&&!ids.has(u.obs))u.obs=null;});
+  state.teams.forEach(t=>{if(t.obs&&!ids.has(t.obs))t.obs=null;if(t.obs===undefined)t.obs=null;});
+  state.projects.forEach(p=>{if(!p.obs||!ids.has(p.obs))p.obs=root.id;});
+}
+ensureObs();
+const obsWorld=new THREE.Group();obsWorld.visible=false;scene.add(obsWorld);
+{const a=[];for(let i=0;i<1400;i++){const v=new THREE.Vector3(rng()-.5,rng()-.5,rng()-.5).normalize().multiplyScalar(140+rng()*200);a.push(v.x,v.y,v.z);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(a,3));
+  obsWorld.add(new THREE.Points(g,new THREE.PointsMaterial({color:0x8fb8e8,size:1.1,map:GLOW,transparent:true,opacity:.6,blending:ADD,depthWrite:false})));}
+const obsGraph=new THREE.Group();obsWorld.add(obsGraph);
+let oItems=[],oPickables=[],oLinks=[],oPulseList=[],oPulsePoints=null,obsLayout=new Map();
+const OBS_COL=['#ff5a24','#ffb057','#5ab8ff','#8fe3c0','#b48cff'];
+function projectChip(p){const W=384,H=192,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');const st=STATUS[p.status]||STATUS.active;
+  g.fillStyle='rgba(10,22,40,.88)';g.fillRect(0,0,W,H);g.strokeStyle='rgba(120,190,255,.55)';g.lineWidth=3;g.strokeRect(3,3,W-6,H-6);
+  g.fillStyle=st.color;g.fillRect(3,3,W-6,8);
+  g.font='500 22px "JetBrains Mono", monospace';g.fillStyle='#86abcc';g.fillText(p.code,20,50);
+  g.textAlign='right';g.fillStyle=st.color;g.font='700 18px "JetBrains Mono", monospace';g.fillText(st.label.toUpperCase(),W-20,50);g.textAlign='left';
+  let s=40;do{g.font=`700 ${s}px "Chakra Petch", sans-serif`;s-=2;}while(g.measureText(p.name).width>W-40&&s>22);
+  g.fillStyle='#eef7ff';g.fillText(trunc(g,p.name,W-40),20,110);
+  g.fillStyle='rgba(120,180,255,.18)';g.fillRect(20,140,W-40,8);g.fillStyle=st.color;g.fillRect(20,140,(W-40)*p.progress/100,8);
+  g.font='500 18px "JetBrains Mono", monospace';g.fillStyle='#9ab4cc';g.fillText(`${p.progress}% · OWNED`,20,176);
+  const t=new THREE.CanvasTexture(c);t.anisotropy=MAX_ANI;return t;}
+function buildObs(){
+  disposeGroup(obsGraph);oItems=[];oPickables=[];oLinks=[];oPulseList=[];oPulsePoints=null;obsLayout=new Map();
+  const root=obsRoot();if(!root)return;
+  const leaves=id=>{const ch=obsChildren(id);return ch.length?ch.reduce((s,c)=>s+leaves(c.id),0):1;};
+  const RSTEP=12,YSTEP=8;
+  (function place(id,a0,a1,d){const a=(a0+a1)/2;obsLayout.set(id,{a,d,pos:new THREE.Vector3(d?Math.cos(a)*d*RSTEP:0,11-d*YSTEP,d?Math.sin(a)*d*RSTEP:0)});
+    const ch=obsChildren(id);const tot=ch.reduce((s,c)=>s+leaves(c.id),0);let cur=a0;ch.forEach(c=>{const sp=(a1-a0)*leaves(c.id)/tot;place(c.id,cur,cur+sp,d+1);cur+=sp;});})(root.id,-Math.PI/2,TAU-Math.PI/2,0);
+  const maxD=Math.max(...[...obsLayout.values()].map(l=>l.d));
+  for(let d=1;d<=maxD;d++){const r=ringLine(d*RSTEP,11-d*YSTEP-.2,'#5ab8ff',.12);obsGraph.add(r);}
+  state.obs.forEach(o=>{
+    const L=obsLayout.get(o.id);if(!L)return;const col=OBS_COL[Math.min(L.d,OBS_COL.length-1)];const P0=L.pos;
+    const g=new THREE.Group();g.position.copy(P0);obsGraph.add(g);
+    const hexG=new THREE.CylinderGeometry(1.8,1.8,.24,6);
+    const plat=new THREE.Mesh(hexG,new THREE.MeshBasicMaterial({color:0x0c1a2c,transparent:true,opacity:.9}));plat.userData={kind:'unit',id:o.id};
+    const edge=new THREE.LineSegments(new THREE.EdgesGeometry(hexG),lineMat(col,.95));
+    const inner=new THREE.Mesh(new THREE.CylinderGeometry(.9,.9,.3,6),new THREE.MeshBasicMaterial({color:new THREE.Color(col),transparent:true,opacity:.55,blending:ADD,depthWrite:false}));
+    const glow=glowSprite(col,5,.5);
+    const people=unitPeople(o.id,true);
+    const label=labelSprite(o.name,`${o.code} · ${people.size} people`,col);label.scale.set(7.2,1.8,1);label.position.y=2.2;
+    g.add(glow,plat,edge,inner,label);oPickables.push(plat);
+    oItems.push({kind:'unit',id:o.id,mats:[[plat.material,.9],[edge.material,.95],[inner.material,.55],[glow.material,.5],[label.material,1]],cur:1,target:1,angle:L.a,spinObj:inner,node:plat});
+    // branch from parent
+    if(o.parent&&obsLayout.has(o.parent)){const pp=obsLayout.get(o.parent).pos;
+      const curve=new THREE.CubicBezierCurve3(pp.clone().add(new THREE.Vector3(0,-.2,0)),pp.clone().add(new THREE.Vector3(0,-YSTEP*.55,0)),P0.clone().add(new THREE.Vector3(0,YSTEP*.55,0)),P0.clone().add(new THREE.Vector3(0,.2,0)));
+      const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,40,.07,6,false),new THREE.MeshBasicMaterial({color:new THREE.Color(col),transparent:true,opacity:.75,blending:ADD,depthWrite:false}));obsGraph.add(tube);
+      const LK={kind:'branch',a:o.parent,b:o.id,mats:[[tube.material,.75]],cur:1,target:1};oLinks.push(LK);
+      for(let k=0;k<2;k++)oPulseList.push({curve,link:LK,off:rng(),speed:.22+rng()*.1,color:new THREE.Color(k?'#ffc08a':'#bfe8ff')});}
+    // teams as rings, members hang below
+    const teams=state.teams.filter(t=>t.obs===o.id);
+    teams.forEach((t,ti)=>{const ring=new THREE.Mesh(new THREE.RingGeometry(2.05+ti*.28,2.17+ti*.28,6),new THREE.MeshBasicMaterial({color:new THREE.Color(t.color),transparent:true,opacity:.85,side:THREE.DoubleSide,blending:ADD,depthWrite:false}));
+      ring.rotation.x=-Math.PI/2;ring.rotation.z=Math.PI/6;g.add(ring);oItems.push({kind:'team',id:t.id,mats:[[ring.material,.85]],cur:1,target:1});});
+    const mem=state.users.filter(u=>unitOfUser(u)===o.id);
+    {const c=document.createElement('canvas');c.width=c.height=128;const gx=c.getContext('2d');gx.fillStyle='rgba(8,18,32,.9)';gx.beginPath();gx.arc(64,64,54,0,TAU);gx.fill();gx.strokeStyle='#ff7a3d';gx.lineWidth=7;gx.stroke();gx.strokeStyle='#ffe2d6';gx.lineWidth=10;gx.beginPath();gx.moveTo(64,36);gx.lineTo(64,92);gx.moveTo(36,64);gx.lineTo(92,64);gx.stroke();
+      const tx=new THREE.CanvasTexture(c);const plus=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false}));plus.scale.set(.85,.85,1);
+      const pa=L.a+Math.PI/2;plus.position.set(Math.cos(pa)*2.6,.5,Math.sin(pa)*2.6);plus.userData={kind:'addnode',id:o.id};g.add(plus);oPickables.push(plus);
+      oItems.push({kind:'unit',id:o.id,mats:[[plus.material,1]],cur:1,target:1,plus});}
+    mem.forEach((u,k)=>{const a=k/mem.length*TAU+L.a;const r=mem.length===1?0:2.3;const pos=new THREE.Vector3(Math.cos(a)*r,-2.6,Math.sin(a)*r);
+      const orb=new THREE.Mesh(new THREE.SphereGeometry(.3,16,12),new THREE.MeshBasicMaterial({color:new THREE.Color(teamColor(u)),transparent:true,opacity:1}));orb.position.copy(pos);orb.userData={kind:'user',id:u.id,unit:o.id};
+      const halo=glowSprite(teamColor(u),1.3,.7);halo.position.copy(pos);
+      const st=segs([0,-.15,0,pos.x,pos.y+.3,pos.z],teamColor(u),.35);
+      const lab=labelSprite(u.name,u.role||'',teamColor(u));lab.scale.set(2.6,.65,1);lab.position.copy(pos).add(new THREE.Vector3(0,-.75,0));lab.visible=false;
+      g.add(st,halo,orb,lab);oPickables.push(orb);
+      oItems.push({kind:'user',id:u.id,mats:[[orb.material,1],[halo.material,.7],[st.material,.35],[lab.material,1]],cur:1,target:1,node:orb,label:lab,angle:L.a});});
+    // manager badge above the platform
+    const mgr=o.manager&&getUser(o.manager);
+    if(mgr){const pos=new THREE.Vector3(0,.75,0);
+      const orb=new THREE.Mesh(new THREE.SphereGeometry(.34,18,12),new THREE.MeshBasicMaterial({color:0xffe2b8,transparent:true,opacity:1}));orb.position.copy(pos);orb.userData={kind:'user',id:mgr.id,unit:o.id,manager:true};
+      const ring=new THREE.Sprite(new THREE.SpriteMaterial({map:RING,color:new THREE.Color('#ffb057'),transparent:true,opacity:1,blending:ADD,depthWrite:false}));ring.scale.set(1.2,1.2,1);ring.position.copy(pos);
+      g.add(orb,ring);oPickables.push(orb);
+      oItems.push({kind:'user',id:mgr.id,mats:[[orb.material,1],[ring.material,1]],cur:1,target:1,node:orb,ring,angle:L.a});}
+    // owned projects as chips arcing outward
+    const owned=state.projects.filter(p=>p.obs===o.id);
+    owned.forEach((p,j)=>{const spread=L.d===0?TAU/Math.max(owned.length,1):.5;const a=L.d===0?j*spread+Math.PI/2:L.a+(j-(owned.length-1)/2)*spread;
+      const rr=L.d===0?5.5:5;const pos=new THREE.Vector3(Math.cos(a)*rr,1.4,Math.sin(a)*rr);
+      const tex=projectChip(p);
+      const f=new THREE.Mesh(new THREE.PlaneGeometry(2.8,1.4),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));
+      const b=new THREE.Mesh(new THREE.PlaneGeometry(2.8,1.4),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));
+      const holder=new THREE.Group();holder.position.copy(pos);holder.rotation.y=-a+Math.PI/2;holder.add(f,b);b.rotation.y=Math.PI;
+      f.userData=b.userData={kind:'project',id:p.id};
+      const st=STATUS[p.status]||STATUS.active;const ln=segs([0,0,0,pos.x*.82,pos.y-.7,pos.z*.82],st.color,.5);
+      g.add(holder,ln);oPickables.push(f,b);
+      oItems.push({kind:'project',id:p.id,mats:[[f.material,1],[b.material,1],[ln.material,.5]],cur:1,target:1,angle:L.d===0?a:L.a});});
+  });
+  oPulsePoints=makePulsePoints(oPulseList,.7);if(oPulsePoints)obsGraph.add(oPulsePoints);
+}
+function unitInspector(){
+  const o=getUnit(sel.id);if(!o)return null;const par=getUnit(o.parent);const kids=obsChildren(o.id);
+  const teams=state.teams.filter(t=>t.obs===o.id);const freeTeams=state.teams.filter(t=>t.obs!==o.id);
+  const owned=state.projects.filter(p=>p.obs===o.id);const others=state.projects.filter(p=>p.obs!==o.id);
+  const ppl=unitPeople(o.id,true);const S=new Set(subtree(o.id));
+  const ca=state.projects.map(p=>{const c=crewOf(p);let n=0;c.forEach(u=>{if(ppl.has(u))n++;});return{p,n,own:S.has(p.obs)};}).filter(x=>x.n||x.own).sort((a,b)=>(b.own-a.own)||(b.n-a.n));
+  return head(`OBS unit · ${esc(o.code)}`)+`<h2>${esc(o.name)}</h2>
+  <dl class="kv"><dt>Reports to</dt><dd>${par?`<button class="link" type="button" data-sel="unit:${esc(par.id)}">${esc(par.code)} · ${esc(par.name)}</button>`:'<span class="muted">Top of the structure</span>'}</dd>
+  <dt>Manager</dt><dd><select data-mgr aria-label="Unit manager" style="padding:5px 6px;font-size:12px"><option value="">No manager</option>${state.users.map(u=>`<option value="${esc(u.id)}" ${u.id===o.manager?'selected':''}>${esc(u.name)}</option>`).join('')}</select></dd>
+  <dt>Headcount</dt><dd>${ppl.size} incl. sub-units</dd></dl>
+  ${kids.length?`<h3><span>Sub-units</span><span class="muted">${kids.length}</span></h3><ul class="list">${kids.map(k=>`<li><div class="row"><button class="link" type="button" data-sel="unit:${esc(k.id)}">${esc(k.code)} · ${esc(k.name)}</button><span class="muted" style="font-size:11px">${unitPeople(k.id,true).size} people</span></div></li>`).join('')}</ul>`:''}
+  <h3><span>People in this unit</span><span class="muted">${state.users.filter(u=>unitOfUser(u)===o.id).length}</span></h3>
+  ${(()=>{const direct=state.users.filter(u=>unitOfUser(u)===o.id);return direct.length?`<ul class="list">${direct.map(u=>`<li><div class="row"><button class="link" type="button" data-sel="user:${esc(u.id)}"><span style="color:${esc(teamColor(u))}">●</span> ${esc(u.name)}</button>${u.obs===o.id?`<button class="icon-btn" style="width:26px;height:26px;font-size:13px" type="button" title="Detach from unit" aria-label="Detach ${esc(u.name)} from this unit" data-act="unit-user-rm" data-uid="${esc(u.id)}">×</button>`:'<span class="muted" style="font-size:10.5px">via team</span>'}</div><span class="muted" style="font-size:11px">${esc(u.role||'')} · ${esc((getTeam(u.team)||{}).name||'No team')}</span></li>`).join('')}</ul>`:'<div class="empty">Nobody sits directly in this unit yet.</div>';})()}
+  <div class="inline">${(()=>{const others=state.users.filter(u=>unitOfUser(u)!==o.id);return others.length?`<select id="unit-user" aria-label="Person to move into this unit">${others.map(u=>`<option value="${esc(u.id)}">${esc(u.name)}${unitOfUser(u)?' · '+esc(getUnit(unitOfUser(u)).code):''}</option>`).join('')}</select><button class="btn" type="button" data-act="unit-user">Move here</button>`:'';})()}<button class="btn primary" type="button" data-act="add-user-unit">+ New person</button></div>
+  <h3><span>Teams</span><span class="muted">${teams.length}</span></h3>
+  ${teams.length?`<div class="crew">${teams.map(t=>`<span class="tag"><span class="sw" style="background:${esc(t.color)}"></span><button class="link" style="font-size:11px" type="button" data-sel="team:${esc(t.id)}">${esc(t.name)}</button><button type="button" aria-label="Remove ${esc(t.name)} from this unit" data-act="unit-team-rm" data-tid="${esc(t.id)}">×</button></span>`).join('')}</div>`:'<div class="empty">No teams in this unit.</div>'}
+  ${freeTeams.length?`<div class="inline"><select id="unit-team" aria-label="Team to move into this unit">${freeTeams.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.obs&&getUnit(t.obs)?' · from '+esc(getUnit(t.obs).code):''}</option>`).join('')}</select><button class="btn" type="button" data-act="unit-team">Move here</button></div>`:''}
+  <h3><span>Responsible for</span><span class="muted">${owned.length}</span></h3>
+  ${owned.length?`<ul class="list">${owned.map(p=>`<li><div class="row"><button class="link" type="button" data-sel="project:${esc(p.id)}">${esc(p.code)} · ${esc(p.name)}</button><span class="pill s-${esc(p.status)}">${(STATUS[p.status]||STATUS.active).label}</span></div></li>`).join('')}</ul>`:'<div class="empty">This unit owns no projects.</div>'}
+  ${others.length?`<div class="inline"><select id="unit-proj" aria-label="Project to make this unit responsible for">${others.map(p=>`<option value="${esc(p.id)}">${esc(p.code)} · ${esc(p.name)}</option>`).join('')}</select><button class="btn" type="button" data-act="unit-proj">Take ownership</button></div>`:''}
+  <h3><span>Control accounts</span><span class="muted">project × unit</span></h3>
+  ${ca.length?`<ul class="list">${ca.map(x=>`<li><div class="row"><button class="link" type="button" data-sel="project:${esc(x.p.id)}">${esc(x.p.code)} · ${esc(x.p.name)}</button><span class="muted" style="font-size:11px;white-space:nowrap">${x.n} people${x.own?' · owner':''}</span></div></li>`).join('')}</ul>`:'<div class="empty">No project work in this branch yet.</div>'}
+  <div class="actions"><button class="btn primary" type="button" data-act="add-unit">Add sub-unit</button><button class="btn" type="button" data-act="edit-unit">Edit</button>${o.parent?'<button class="btn danger" type="button" data-act="remove">Remove</button>':''}</div>`;
+}
+const unitOpts=(v,exclude)=>{const ex=new Set(exclude||[]);const out=[];(function walk(id,d){const u=getUnit(id);if(!u)return;if(!ex.has(id))out.push(`<option value="${esc(id)}" ${id===v?'selected':''}>${'· '.repeat(d)}${esc(u.code)} ${esc(u.name)}</option>`);obsChildren(id).forEach(c=>walk(c.id,d+1));})(obsRoot().id,0);return out.join('');};
+
 /* ---------- Selection & highlight ---------- */
 let sel=null, hover=null;
 function related(s){
@@ -794,7 +956,16 @@ function related(s){
   else if(s.kind==='module'){const f=findModule(s.id);if(!f)return null;P.add(f.p.id);M.add(f.m.id);f.m.users.forEach(x=>U.add(x));}
   else if(s.kind==='user'){U.add(s.id);eachModule((p,m)=>{if(m.users.includes(s.id)){P.add(p.id);M.add(m.id);}});}
   else if(s.kind==='team'){state.users.filter(u=>u.team===s.id).forEach(u=>U.add(u.id));eachModule((p,m)=>{if(m.users.some(x=>U.has(x))){P.add(p.id);M.add(m.id);}});}
-  return{P,M,U};
+  const O=new Set(),T=new Set();
+  if(s.kind==='unit'){if(!getUnit(s.id))return null;subtree(s.id).forEach(x=>O.add(x));
+    state.teams.forEach(t=>{if(O.has(t.obs))T.add(t.id);});unitPeople(s.id,true).forEach(u=>U.add(u));
+    state.projects.forEach(p=>{if(O.has(p.obs))P.add(p.id);});eachModule((p,m)=>{if(m.users.some(x=>U.has(x))){P.add(p.id);M.add(m.id);}});
+    ancestors(s.id).forEach(a=>O.add(a));}
+  else{P.forEach(pid=>{const p=getProject(pid);if(p&&p.obs)O.add(p.obs);});
+    U.forEach(uid=>{const u=getUser(uid);if(u){if(u.team)T.add(u.team);const ou=unitOfUser(u);if(ou)O.add(ou);}state.obs.forEach(o=>{if(o.manager===uid)O.add(o.id);});});
+    if(s.kind==='team'){T.add(s.id);const t=getTeam(s.id);if(t&&t.obs)O.add(t.obs);}
+    [...O].forEach(o=>ancestors(o).forEach(a=>O.add(a)));}
+  return{P,M,U,O,T};
 }
 function applyHighlight(){
   const r=related(sel);
@@ -802,6 +973,8 @@ function applyHighlight(){
   links.forEach(l=>{const on=!r||(l.kind==='mu'?(r.M.has(l.mid)&&r.U.has(l.uid)):r.U.has(l.uid));l.target=on?(r?1.5:1):.05;});
   gItems.forEach(it=>{let on=true;if(r){if(it.kind==='project')on=r.P.has(it.id);else if(it.kind==='module')on=r.M.has(it.id);else if(it.kind==='pin')on=r.U.has(it.id)&&r.M.has(it.mid);}it.target=on?1:.14;});
   gLinks.forEach(l=>{l.target=!r?1:(r.P.has(l.a)&&r.P.has(l.b)?2.4:.12);});
+  oItems.forEach(it=>{let on=true;if(r){on=it.kind==='unit'?r.O.has(it.id):it.kind==='project'?r.P.has(it.id):it.kind==='user'?r.U.has(it.id):it.kind==='team'?r.T.has(it.id):true;}it.target=on?1:.12;});
+  oLinks.forEach(l=>{l.target=!r?1:(r.O.has(l.a)&&r.O.has(l.b)?1.6:.08);});
   if(planet){const u=planet.mat.uniforms;const on=planet.mods.map(m=>!r||r.M.has(m.id)?1:0);while(on.length<12)on.push(0);
     u.uOn.value=on;u.uAny.value=r&&!(sel.kind==='project')?1:0;
     let si=-1;if(sel&&sel.kind==='module')si=planet.mods.findIndex(m=>m.id===sel.id);u.uSel.value=si;}
@@ -837,13 +1010,15 @@ function head(eyebrow){return `<div class="ins-top"><span class="eyebrow">${eyeb
 function renderInspector(){
   if(!sel||sel.kind==='core'){insEl.hidden=true;document.body.classList.remove('has-drawer');return;}
   let h='';
-  if(sel.kind==='project'){const p=getProject(sel.id);if(!p)return closeInspector();const st=STATUS[p.status]||STATUS.active;
+  if(sel.kind==='unit'){h=unitInspector();if(!h)return closeInspector();}
+  else if(sel.kind==='project'){const p=getProject(sel.id);if(!p)return closeInspector();const st=STATUS[p.status]||STATUS.active;
     h=head(`Project · ${esc(p.code)}`)+`<h2>${esc(p.name)}</h2>
     <div class="row"><span class="pill s-${esc(p.status)}">${st.label}</span><span class="muted">${p.progress}% delivered</span></div>
     <div class="bar" style="color:${st.color}"><i style="width:${p.progress}%"></i></div>
+    <dl class="kv"><dt>Responsible unit</dt><dd>${getUnit(p.obs)?`<button class="link" type="button" data-sel="unit:${esc(p.obs)}">${esc(getUnit(p.obs).code)} · ${esc(getUnit(p.obs).name)}</button>`:'<span class="muted">None</span>'}</dd></dl>
     <h3><span>${view==='galaxy'?'Regions':'Modules'}</span><span class="muted">${p.modules.length}</span></h3>
     ${p.modules.length?'<ul class="list">'+p.modules.map(m=>`<li><button class="link" type="button" data-sel="module:${esc(m.id)}">${esc(m.name)}</button>${crewTags(m,false)}</li>`).join('')+'</ul>':'<div class="empty">No modules yet. Add the first one below.</div>'}
-    <div class="actions"><button class="btn primary" type="button" data-act="add-module">Add module</button><button class="btn" type="button" data-act="edit-project">Edit</button><button class="btn danger" type="button" data-act="remove">Remove</button></div>`;}
+    <div class="actions"><button class="btn primary" type="button" data-act="add-module">Add module</button><button class="btn" type="button" data-act="add-user-project">+ Person</button><button class="btn" type="button" data-act="edit-project">Edit</button><button class="btn danger" type="button" data-act="remove">Remove</button></div>`;}
   else if(sel.kind==='module'){const f=findModule(sel.id);if(!f)return closeInspector();const {p,m}=f;
     const avail=state.users.filter(u=>!m.users.includes(u.id));
     const cnt={admin:0,edit:0,view:0};m.users.forEach(u=>cnt[permOf(m,u)]++);
@@ -854,12 +1029,12 @@ function renderInspector(){
       return `<li><div class="perm-row"><button class="link" type="button" data-sel="user:${esc(u.id)}"><span style="color:${esc(teamColor(u))}">●</span> ${esc(u.name)}</button>${permSelect(m.id,u.id,lv,u.name)}<button class="icon-btn" style="width:28px;height:28px;font-size:13px" type="button" title="Revoke access" aria-label="Revoke ${esc(u.name)}'s access" data-act="unassign" data-mid="${esc(m.id)}" data-uid="${esc(u.id)}">×</button></div><span class="muted" style="font-size:11px">${esc(u.role||'')} · ${esc(t?t.name:'No team')}</span></li>`;}).join('')+'</ul>':'<div class="empty">Nobody has access yet. Grant it below.</div>'}
     ${avail.length?`<div class="grant"><select id="assign-user" aria-label="Person to grant access">${avail.map(u=>`<option value="${esc(u.id)}">${esc(u.name)} · ${esc((getTeam(u.team)||{}).name||'No team')}</option>`).join('')}</select><select id="assign-level" aria-label="Permission level">${levelOpts('edit')}</select><button class="btn" type="button" data-act="assign-user">Grant</button></div>`:''}
     <div class="perm-key">${PERM_KEYS.map(k=>`<span><span class="perm perm-${k}">${PERMS[k].label}</span>${PERMS[k].desc}</span>`).join('')}</div>
-    <div class="actions"><button class="btn danger" type="button" data-act="remove">Remove module</button></div>`;}
+    <div class="actions"><button class="btn primary" type="button" data-act="add-user-module">+ New person</button><button class="btn danger" type="button" data-act="remove">Remove module</button></div>`;}
   else if(sel.kind==='user'){const u=getUser(sel.id);if(!u)return closeInspector();const t=getTeam(u.team);
     const mine=[];eachModule((p,m)=>{if(m.users.includes(u.id))mine.push({p,m});});
     const opts=moduleOptions(u.id);const np=new Set(mine.map(x=>x.p.id)).size;
     h=head('Crew member')+`<h2>${esc(u.name)}</h2>
-    <dl class="kv"><dt>Role</dt><dd>${esc(u.role||'—')}</dd><dt>Team</dt><dd>${t?`<button class="link" type="button" data-sel="team:${esc(t.id)}"><span style="color:${esc(t.color)}">●</span> ${esc(t.name)}</button>`:'<span class="muted">Unassigned</span>'}</dd><dt>Reach</dt><dd>${mine.length} region${mine.length===1?'':'s'} across ${np} project${np===1?'':'s'}</dd></dl>
+    <dl class="kv"><dt>Role</dt><dd>${esc(u.role||'—')}</dd><dt>OBS unit</dt><dd><select data-uobs aria-label="OBS unit for ${esc(u.name)}" style="padding:5px 6px;font-size:12px"><option value="">Follow team${(()=>{const t=getTeam(u.team);return t&&getUnit(t.obs)?' ('+esc(getUnit(t.obs).code)+')':'';})()}</option>${unitOpts(u.obs||'')}</select></dd><dt>Team</dt><dd>${t?`<button class="link" type="button" data-sel="team:${esc(t.id)}"><span style="color:${esc(t.color)}">●</span> ${esc(t.name)}</button>`:'<span class="muted">Unassigned</span>'}</dd><dt>Reach</dt><dd>${mine.length} region${mine.length===1?'':'s'} across ${np} project${np===1?'':'s'}</dd></dl>
     <h3><span>Access by module</span></h3>
     ${mine.length?'<ul class="list">'+mine.map(({p,m})=>`<li><div class="perm-row"><button class="link" type="button" data-sel="module:${esc(m.id)}">${esc(m.name)}</button>${permSelect(m.id,u.id,permOf(m,u.id),m.name)}<button class="icon-btn" style="width:28px;height:28px;font-size:13px" type="button" title="Revoke access" aria-label="Revoke access to ${esc(m.name)}" data-act="unassign" data-mid="${esc(m.id)}" data-uid="${esc(u.id)}">×</button></div><span class="muted" style="font-size:11px">${esc(p.code)} · ${esc(p.name)}</span></li>`).join('')+'</ul>':'<div class="empty">No access to any module yet.</div>'}
     ${opts?`<div class="grant"><select id="assign-module" aria-label="Module to grant">${opts}</select><select id="assign-level" aria-label="Permission level">${levelOpts('edit')}</select><button class="btn" type="button" data-act="assign-module">Grant</button></div>`:''}
@@ -867,14 +1042,16 @@ function renderInspector(){
   else if(sel.kind==='team'){const t=getTeam(sel.id);if(!t)return closeInspector();const mem=state.users.filter(u=>u.team===t.id);
     const r=related(sel);
     h=head('Team')+`<h2><span style="color:${esc(t.color)}">●</span> ${esc(t.name)}</h2>
-    <dl class="kv"><dt>Members</dt><dd>${mem.length}</dd><dt>Reach</dt><dd>${r.M.size} modules · ${r.P.size} projects</dd></dl>
+    <dl class="kv"><dt>OBS unit</dt><dd>${getUnit(t.obs)?`<button class="link" type="button" data-sel="unit:${esc(t.obs)}">${esc(getUnit(t.obs).code)} · ${esc(getUnit(t.obs).name)}</button>`:'<span class="muted">Unassigned</span>'}</dd><dt>Members</dt><dd>${mem.length}</dd><dt>Reach</dt><dd>${r.M.size} modules · ${r.P.size} projects</dd></dl>
     <h3><span>Members</span></h3>
     ${mem.length?'<ul class="list">'+mem.map(u=>`<li><div class="row"><button class="link" type="button" data-sel="user:${esc(u.id)}">${esc(u.name)}</button><span class="muted" style="font-size:11px">${esc(u.role||'')}</span></div></li>`).join('')+'</ul>':'<div class="empty">No members yet.</div>'}
     <div class="actions"><button class="btn primary" type="button" data-act="add-user-team">Add crew</button><button class="btn danger" type="button" data-act="remove">Remove team</button></div>`;}
   ins.innerHTML=h;insEl.hidden=false;document.body.classList.add('has-drawer');
 }
 function closeInspector(){select(null);}
-ins.addEventListener('change',e=>{const s=e.target.closest('[data-perm]');if(!s)return;const f=findModule(s.dataset.mid);if(!f)return;
+ins.addEventListener('change',e=>{const uo=e.target.closest('[data-uobs]');if(uo){const u=getUser(sel&&sel.id);if(u){u.obs=uo.value||null;commit('Unit updated');}return;}
+  const mg=e.target.closest('[data-mgr]');if(mg){const o=getUnit(sel&&sel.id);if(o){o.manager=mg.value||null;commit('Manager updated');}return;}
+  const s=e.target.closest('[data-perm]');if(!s)return;const f=findModule(s.dataset.mid);if(!f)return;
   grant(f.m,s.dataset.uid,s.value);commit(`${PERMS[s.value].label} access set`);});
 ins.addEventListener('click',e=>{
   const s=e.target.closest('[data-sel]');if(s){const [kind,id]=s.dataset.sel.split(':');select({kind,id},true);return;}
@@ -883,6 +1060,16 @@ ins.addEventListener('click',e=>{
   if(act==='add-module')return openForm('module',{projectId:sel.id});
   if(act==='edit-project')return openForm('edit-project',{projectId:sel.id});
   if(act==='add-user-team')return openForm('user',{teamId:sel.id});
+  if(act==='add-unit')return openForm('unit',{parentId:sel.id});
+  if(act==='edit-unit')return openForm('edit-unit',{unitId:sel.id});
+  if(act==='add-user-unit')return openForm('user',{unitId:sel.id});
+  if(act==='add-user-project'){const p=getProject(sel.id);return openForm('user',{unitId:p&&p.obs,moduleIds:p?p.modules.map(m=>m.id):[]});}
+  if(act==='add-user-module'){const f=findModule(sel.id);return openForm('user',{unitId:f&&f.p.obs,moduleIds:[sel.id]});}
+  if(act==='unit-user'){const u=getUser($('#unit-user').value);if(u){u.obs=sel.id;commit('Person moved');}return;}
+  if(act==='unit-user-rm'){const u=getUser(b.dataset.uid);if(u){u.obs=null;commit('Detached from unit');}return;}
+  if(act==='unit-team'){const t=getTeam($('#unit-team').value);if(t){t.obs=sel.id;commit('Team moved');}return;}
+  if(act==='unit-team-rm'){const t=getTeam(b.dataset.tid);if(t){t.obs=null;commit('Team removed from unit');}return;}
+  if(act==='unit-proj'){const p=getProject($('#unit-proj').value);if(p){p.obs=sel.id;commit('Ownership assigned');}return;}
   if(act==='unassign'){const f=findModule(b.dataset.mid);if(f){revoke(f.m,b.dataset.uid);commit('Access revoked');}return;}
   if(act==='assign-user'){const v=$('#assign-user').value;const f=findModule(sel.id);if(f&&v){grant(f.m,v,$('#assign-level').value);commit('Access granted');}return;}
   if(act==='assign-module'){const v=$('#assign-module').value;const f=findModule(v);if(f){grant(f.m,sel.id,$('#assign-level').value);commit('Access granted');}return;}
@@ -892,6 +1079,7 @@ ins.addEventListener('click',e=>{
     if(k==='project')state.projects=state.projects.filter(p=>p.id!==id);
     if(k==='module'){const f=findModule(id);if(f)f.p.modules=f.p.modules.filter(m=>m.id!==id);}
     if(k==='user'){state.users=state.users.filter(u=>u.id!==id);eachModule((p,m)=>{m.users=m.users.filter(x=>x!==id);});}
+    if(k==='unit'){const o=getUnit(id);if(o&&o.parent){obsChildren(id).forEach(c=>c.parent=o.parent);state.teams.forEach(t=>{if(t.obs===id)t.obs=o.parent;});state.users.forEach(u=>{if(u.obs===id)u.obs=o.parent;});state.projects.forEach(p=>{if(p.obs===id)p.obs=o.parent;});state.obs=state.obs.filter(x=>x.id!==id);}}
     if(k==='team'){state.teams=state.teams.filter(t=>t.id!==id);state.users.forEach(u=>{if(u.team===id)u.team=null;});}
     sel=null;commit('Removed');
   }
@@ -904,7 +1092,7 @@ function openCmd(){cmdEl.hidden=false;setTimeout(()=>cmdEl.querySelector('.cmd-o
 function closeCmd(){cmdEl.hidden=true;}
 cmdEl.addEventListener('click',e=>{const b=e.target.closest('[data-cmd]');if(!b){if(e.target===cmdEl)closeCmd();return;}const c=b.dataset.cmd;closeCmd();if(c!=='close')openForm(c,{});});
 function userChecks(selected){let h='';const groups=[...state.teams,{id:null,name:'No team'}];groups.forEach(t=>{const us=state.users.filter(u=>(u.team||null)===t.id);if(!us.length)return;h+=`<div class="grp">${esc(t.name)}</div>`+us.map(u=>`<label><input type="checkbox" name="users" value="${esc(u.id)}" ${selected&&selected.includes(u.id)?'checked':''}> ${esc(u.name)} <span class="muted">· ${esc(u.role||'')}</span></label>`).join('');});return h||'<span class="muted">No crew yet</span>';}
-function moduleChecks(){let h='';state.projects.forEach(p=>{if(!p.modules.length)return;h+=`<div class="grp">${esc(p.code)} · ${esc(p.name)}</div>`+p.modules.map(m=>`<label><input type="checkbox" name="modules" value="${esc(m.id)}"> ${esc(m.name)}</label>`).join('');});return h||'<span class="muted">No modules yet</span>';}
+function moduleChecks(selected){const S=new Set(selected||[]);let h='';state.projects.forEach(p=>{if(!p.modules.length)return;h+=`<div class="grp">${esc(p.code)} · ${esc(p.name)}</div>`+p.modules.map(m=>`<label><input type="checkbox" name="modules" value="${esc(m.id)}" ${S.has(m.id)?'checked':''}> ${esc(m.name)}</label>`).join('');});return h||'<span class="muted">No modules yet</span>';}
 const statusOpts=v=>Object.keys(STATUS).map(k=>`<option value="${k}" ${k===v?'selected':''}>${STATUS[k].label}</option>`).join('');
 let formKind=null,formCtx={};
 function openForm(kind,ctx){
@@ -913,6 +1101,7 @@ function openForm(kind,ctx){
     h=`<h2>${p?'Edit project':'Add project'}</h2>
     <div class="field"><label for="f-name">Project name</label><input type="text" id="f-name" name="name" value="${esc(p?p.name:'')}" placeholder="e.g. Contract Ledger" autocomplete="off"></div>
     <div class="field"><label for="f-code">Code</label><input type="text" id="f-code" name="code" value="${esc(p?p.code:nextCode())}"></div>
+    <div class="field"><label for="f-obs">Responsible OBS unit</label><select id="f-obs" name="obs">${unitOpts(p?p.obs:(getUnit(ctx.unitId)?ctx.unitId:obsRoot().id))}</select></div>
     <div class="field"><label for="f-status">Status</label><select id="f-status" name="status">${statusOpts(p?p.status:'planning')}</select></div>
     <div class="field"><label for="f-progress">Delivery progress</label><div class="range-row"><input type="range" id="f-progress" name="progress" min="0" max="100" step="1" value="${p?p.progress:0}"><output id="f-progress-out">${p?p.progress:0}%</output></div></div>
     ${p?'':`<div class="field"><label for="f-mods">Starting modules · one per line</label><textarea id="f-mods" name="mods" placeholder="Intake API&#10;Review Queue&#10;Reporting"></textarea></div>`}`;}
@@ -922,17 +1111,27 @@ function openForm(kind,ctx){
     <div class="field"><label for="f-proj">Project</label><select id="f-proj" name="project">${state.projects.map(p=>`<option value="${esc(p.id)}" ${p.id===ctx.projectId?'selected':''}>${esc(p.code)} · ${esc(p.name)}</option>`).join('')}</select></div>
     <div class="field"><label for="f-name">Module name</label><input type="text" id="f-name" name="name" placeholder="e.g. Approval Rules" autocomplete="off"></div>
     <div class="field"><span class="lbl">Assign crew</span><div class="checks">${userChecks([])}</div></div>`;}
-  else if(kind==='user'){
-    h=`<h2>Add crew member</h2>
+  else if(kind==='user'){const un=getUnit(ctx.unitId);
+    h=`<h2>Add person${un?` to ${esc(un.name)}`:''}</h2>
     <div class="field"><label for="f-name">Name</label><input type="text" id="f-name" name="name" placeholder="e.g. Jordan Reyes" autocomplete="off"></div>
     <div class="field"><label for="f-role">Role</label><input type="text" id="f-role" name="role" placeholder="e.g. Frontend Engineer" autocomplete="off"></div>
     <div class="field"><label for="f-team">Team</label><select id="f-team" name="team"><option value="">No team</option>${state.teams.map(t=>`<option value="${esc(t.id)}" ${t.id===ctx.teamId?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div>
-    <div class="field"><span class="lbl">Assign to modules</span><div class="checks">${moduleChecks()}</div></div>`;}
+    <div class="field"><label for="f-uobs">OBS unit</label><select id="f-uobs" name="obs"><option value="">Follow team’s unit</option>${unitOpts(un?un.id:'')}</select></div>
+    <div class="field"><span class="lbl">Access to modules</span><div class="checks">${moduleChecks(ctx.moduleIds)}</div></div>
+    <div class="field"><label for="f-ulevel">Permission on those modules</label><select id="f-ulevel" name="level">${levelOpts('edit')}</select></div>`;}
   else if(kind==='team'){const used=new Set(state.teams.map(t=>t.color));const def=TEAM_COLORS.find(c=>!used.has(c))||TEAM_COLORS[0];
     h=`<h2>Add team</h2>
     <div class="field"><label for="f-name">Team name</label><input type="text" id="f-name" name="name" placeholder="e.g. Orbit Integrations" autocomplete="off"></div>
     <div class="field"><span class="lbl">Signal color</span><div class="swatches">${TEAM_COLORS.map((c,i)=>`<label title="${c}"><input type="radio" name="color" id="f-color-${i}" value="${c}" ${c===def?'checked':''}><span style="color:${c}"></span></label>`).join('')}</div></div>
+    <div class="field"><label for="f-tobs">OBS unit</label><select id="f-tobs" name="obs"><option value="">Unassigned</option>${unitOpts(ctx.unitId||'')}</select></div>
     <div class="field"><span class="lbl">Move crew into this team</span><div class="checks">${userChecks([])}</div></div>`;}
+  else if(kind==='unit'||kind==='edit-unit'){const o=kind==='edit-unit'?getUnit(ctx.unitId):null;const par=o?o.parent:(ctx.parentId&&getUnit(ctx.parentId)?ctx.parentId:obsRoot().id);
+    h=`<h2>${o?'Edit OBS unit':'Add OBS unit'}</h2>
+    <div class="field"><label for="f-name">Unit name</label><input type="text" id="f-name" name="name" value="${esc(o?o.name:'')}" placeholder="e.g. Cost Engineering" autocomplete="off"></div>
+    <div class="field"><label for="f-code">Code</label><input type="text" id="f-code" name="code" value="${esc(o?o.code:nextUnitCode(par))}"></div>
+    ${o&&!o.parent?'':`<div class="field"><label for="f-parent">Reports to</label><select id="f-parent" name="parent">${unitOpts(par,o?subtree(o.id):[])}</select></div>`}
+    <div class="field"><label for="f-mgr">Manager</label><select id="f-mgr" name="manager"><option value="">No manager</option>${state.users.map(u=>`<option value="${esc(u.id)}" ${o&&u.id===o.manager?'selected':''}>${esc(u.name)} · ${esc(u.role||'')}</option>`).join('')}</select></div>
+    ${o?'':`<div class="field"><span class="lbl">Move teams into this unit</span><div class="checks">${state.teams.map(t=>`<label><input type="checkbox" name="teams" value="${esc(t.id)}"> <span style="color:${esc(t.color)}">●</span> ${esc(t.name)}</label>`).join('')||'<span class="muted">No teams yet</span>'}</div></div>`}`;}
   else if(kind==='assign'){
     if(!state.users.length||!state.projects.some(p=>p.modules.length)){toast('Add crew and modules first');return;}
     h=`<h2>Grant access</h2>
@@ -940,7 +1139,7 @@ function openForm(kind,ctx){
     <div class="field"><label for="f-module">Module</label><select id="f-module" name="module">${moduleOptions()}</select></div>
     <div class="field"><label for="f-level">Permission</label><select id="f-level" name="level">${levelOpts('edit')}</select></div>
     <div class="perm-key">${PERM_KEYS.map(k=>`<span><span class="perm perm-${k}">${PERMS[k].label}</span>${PERMS[k].desc}</span>`).join('')}</div>`;}
-  h+=`<div class="err" id="f-err" role="alert"></div><div class="actions"><button class="btn ghost" type="button" data-close>Cancel</button><button class="btn primary" type="submit">${kind==='edit-project'?'Save changes':kind==='assign'?'Grant access':'Add to grid'}</button></div>`;
+  h+=`<div class="err" id="f-err" role="alert"></div><div class="actions"><button class="btn ghost" type="button" data-close>Cancel</button><button class="btn primary" type="submit">${kind==='edit-project'||kind==='edit-unit'?'Save changes':kind==='assign'?'Grant access':'Add to grid'}</button></div>`;
   form.innerHTML=h;modal.hidden=false;
   const pr=$('#f-progress');if(pr)pr.addEventListener('input',()=>$('#f-progress-out').textContent=pr.value+'%');
   const first=form.querySelector('input[type=text],select');if(first)setTimeout(()=>first.focus(),30);
@@ -952,7 +1151,7 @@ form.addEventListener('submit',e=>{
   let newSel=null,msg='';
   if(formKind==='project'||formKind==='edit-project'){
     if(!name){err.textContent='Give the project a name.';return;}
-    const data={name,code:String(fd.get('code')||'').trim()||nextCode(),status:fd.get('status'),progress:+fd.get('progress')||0};
+    const data={name,code:String(fd.get('code')||'').trim()||nextCode(),status:fd.get('status'),progress:+fd.get('progress')||0,obs:fd.get('obs')||obsRoot().id};
     if(formKind==='edit-project'){const p=getProject(formCtx.projectId);Object.assign(p,data);newSel={kind:'project',id:p.id};msg='Project updated';}
     else{const mods=String(fd.get('mods')||'').split(/\n|,/).map(s=>s.trim()).filter(Boolean).map(n=>({id:uid('m'),name:n,users:[]}));
       const p=Object.assign({id:uid('p'),modules:mods},data);state.projects.push(p);newSel={kind:'project',id:p.id};msg='Project online';}
@@ -961,12 +1160,17 @@ form.addEventListener('submit',e=>{
     const p=getProject(fd.get('project'));const m={id:uid('m'),name,users:[],perms:{}};fd.getAll('users').forEach((u,i)=>grant(m,u,i===0?'admin':'edit'));p.modules.push(m);newSel={kind:'module',id:m.id};msg='Module added';
   }else if(formKind==='user'){
     if(!name){err.textContent='Add the crew member’s name.';return;}
-    const u={id:uid('u'),name,role:String(fd.get('role')||'').trim()||'Crew',team:fd.get('team')||null};state.users.push(u);
-    fd.getAll('modules').forEach(mid=>{const f=findModule(mid);if(f)grant(f.m,u.id,'edit');});newSel={kind:'user',id:u.id};msg='Crew member linked';
+    const u={id:uid('u'),name,role:String(fd.get('role')||'').trim()||'Crew',team:fd.get('team')||null,obs:fd.get('obs')||null};state.users.push(u);
+    fd.getAll('modules').forEach(mid=>{const f=findModule(mid);if(f)grant(f.m,u.id,fd.get('level')||'edit');});newSel={kind:'user',id:u.id};msg='Person added';
   }else if(formKind==='team'){
     if(!name){err.textContent='Give the team a name.';return;}
-    const t={id:uid('t'),name,color:fd.get('color')||TEAM_COLORS[0]};state.teams.push(t);
+    const t={id:uid('t'),name,color:fd.get('color')||TEAM_COLORS[0],obs:fd.get('obs')||null};state.teams.push(t);
     fd.getAll('users').forEach(id=>{const u=getUser(id);if(u)u.team=t.id;});newSel={kind:'team',id:t.id};msg='Team created';
+  }else if(formKind==='unit'||formKind==='edit-unit'){
+    if(!name){err.textContent='Give the unit a name.';return;}
+    if(formKind==='edit-unit'){const o=getUnit(formCtx.unitId);o.name=name;o.code=String(fd.get('code')||'').trim()||o.code;if(fd.get('parent'))o.parent=fd.get('parent');o.manager=fd.get('manager')||null;newSel={kind:'unit',id:o.id};msg='Unit updated';}
+    else{const par=fd.get('parent')||obsRoot().id;const o={id:uid('o'),name,code:String(fd.get('code')||'').trim()||nextUnitCode(par),parent:par,manager:fd.get('manager')||null};state.obs.push(o);
+      fd.getAll('teams').forEach(id=>{const t=getTeam(id);if(t)t.obs=o.id;});newSel={kind:'unit',id:o.id};msg='Unit added';}
   }else if(formKind==='assign'){
     const f=findModule(fd.get('module'));const u=fd.get('user');if(!f||!u){err.textContent='Pick a crew member and a module.';return;}
     const had=f.m.users.includes(u);grant(f.m,u,fd.get('level'));newSel={kind:'module',id:f.m.id};msg=had?'Access updated':'Access granted';
@@ -975,7 +1179,7 @@ form.addEventListener('submit',e=>{
 });
 const resetBtn=$('#reset');
 resetBtn.addEventListener('click',()=>{if(!resetBtn.dataset.armed){resetBtn.dataset.armed='1';resetBtn.textContent='Confirm reset';setTimeout(()=>{delete resetBtn.dataset.armed;resetBtn.textContent='Reset sample';},3500);return;}
-  delete resetBtn.dataset.armed;resetBtn.textContent='Reset sample';state=seedWithPerms();regionCache.clear();sel=null;save();rebuild();renderInspector();toast('Sample grid restored');});
+  delete resetBtn.dataset.armed;resetBtn.textContent='Reset sample';state=seedWithPerms();ensureObs();regionCache.clear();sel=null;save();rebuild();renderInspector();toast('Sample grid restored');});
 addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(vr.on)return exitVR();if(!modal.hidden)closeForm();else if(!cmdEl.hidden)closeCmd();else if(sel)select(null);else if(view==='galaxy'&&gLevel==='planet')exitPlanet();});
 $('#cmd-open').addEventListener('click',openCmd);
 
@@ -985,7 +1189,7 @@ cam.tTheta=cam.theta;cam.tPhi=cam.phi;cam.tR=cam.r;
 let lastInteract=performance.now();
 const pointers=new Map();let drag=null,pinchD=0;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function zoomLim(){if(view==='chamber')return[24,130];if(gLevel==='planet')return[6,45];return[30,340];}
+function zoomLim(){if(view==='chamber')return[24,130];if(view==='obs')return[18,180];if(gLevel==='planet')return[6,45];return[30,340];}
 function zoomTo(r){const [a,b]=zoomLim();cam.tR=clamp(r,a,b);}
 canvasEl.addEventListener('pointerdown',e=>{canvasEl.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
   if(pointers.size===1)drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false};
@@ -1010,19 +1214,31 @@ function pickAt(x,y){return pickNdc(x/innerWidth*2-1,-(y/innerHeight)*2+1);}
 function pickNdc(nx,ny){
   ndc.set(nx,ny);ray.setFromCamera(ndc,camera);
   let list=pickables;
+  if(view==='obs')list=oPickables;
   if(view==='galaxy')list=gPickables.filter(o=>!(gLevel==='planet'&&o.userData.kind==='project'&&o.userData.id===planetProject));
   const hits=ray.intersectObjects(list,false);if(!hits.length)return null;
-  const h=hits.find(h=>h.object.userData.kind==='module'||h.object.userData.kind==='user')||hits.find(h=>h.object.userData.kind==='planet')||hits[0];
+  const h=hits.find(h=>h.object.userData.kind==='addnode')||hits.find(h=>h.object.userData.kind==='module'||h.object.userData.kind==='user')||hits.find(h=>h.object.userData.kind==='planet')||hits[0];
   const ud=h.object.userData;
   if(ud.kind==='planet'){if(!planet||!h.uv)return null;const rm=planet.rm;
     const col=Math.min(rm.W-1,Math.floor(h.uv.x*rm.W)),row=Math.min(rm.H-1,Math.floor(h.uv.y*rm.H));
     const m=planet.mods[rm.ids[row*rm.W+col]];return m?{kind:'module',id:m.id,region:true}:null;}
   return ud;
 }
+const pm=$('#plus-menu');let pmUnit=null;
+function openPlusMenu(unitId,x,y){const o=getUnit(unitId);if(!o)return;pmUnit=unitId;
+  $('#pm-head').textContent=`${o.code} · ${o.name}`;pm.hidden=false;tip.hidden=true;
+  const w=pm.offsetWidth,h=pm.offsetHeight;pm.style.left=Math.max(12,Math.min(x+12,innerWidth-w-12))+'px';pm.style.top=Math.max(12,Math.min(y-h/2,innerHeight-h-12))+'px';
+  setTimeout(()=>pm.querySelector('button').focus(),20);}
+function closePlusMenu(){pm.hidden=true;pmUnit=null;}
+pm.addEventListener('click',e=>{const b=e.target.closest('[data-pm]');if(!b||!pmUnit)return;const id=pmUnit;closePlusMenu();
+  if(b.dataset.pm==='user')openForm('user',{unitId:id});else openForm('unit',{parentId:id});});
+addEventListener('pointerdown',e=>{if(!pm.hidden&&!e.target.closest('#plus-menu'))closePlusMenu();},true);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!pm.hidden){e.stopImmediatePropagation();closePlusMenu();}},true);
 function handleClick(x,y){
   const hit=pickAt(x,y);
   if(!hit){if(sel)select(null);return;}
   if(hit.kind==='core'){openCmd();return;}
+  if(hit.kind==='addnode'){openPlusMenu(hit.id,x,y);return;}
   select({kind:hit.kind,id:hit.id},true,hit.mid);
 }
 function select(s,focus,mid){
@@ -1033,7 +1249,7 @@ function select(s,focus,mid){
   }
   sel=s;applyHighlight();renderInspector();updateHud();
   if(s&&focus){
-    if(view==='chamber'){const it=items.find(i=>i.kind===s.kind&&i.id===s.id);if(it&&it.angle!=null){let d=it.angle-cam.tTheta;d=Math.atan2(Math.sin(d),Math.cos(d));cam.tTheta+=d;}}
+    if(view==='chamber'||view==='obs'){const it=(view==='obs'?oItems:items).find(i=>i.kind===s.kind&&i.id===s.id&&i.angle!=null);if(it&&it.angle!=null){let d=it.angle-cam.tTheta;d=Math.atan2(Math.sin(d),Math.cos(d));cam.tTheta+=d;}}
     else if(gLevel==='planet'&&planet){
       const target=s.kind==='module'?s.id:mid;const idx=planet.mods.findIndex(m=>m.id===target);
       if(idx>=0){const d=planet.rm.centers[idx].clone().applyAxisAngle(new THREE.Vector3(0,1,0),planet.body.rotation.y);
@@ -1053,6 +1269,9 @@ function updateHover(){
   if(h.kind==='core'){t='Nexus core';s='Click for commands';}
   else if(h.kind==='project'){const p=getProject(h.id);if(p){t=p.name;s=view==='galaxy'?`${p.code} · ${p.modules.length} regions · click to land`:`${p.code} · ${(STATUS[p.status]||{}).label} · ${p.progress}%`;}}
   else if(h.kind==='module'){const f=findModule(h.id);if(f){t=f.m.name;s=view==='galaxy'?`Region · ${f.m.users.length} with access`:`${f.p.code} · ${f.m.users.length} crew`;}}
+  else if(h.kind==='addnode'){const o=getUnit(h.id);t='Add user or node';s=o?`to ${o.code} · ${o.name}`:'';}
+  else if(h.kind==='unit'){const o=getUnit(h.id);if(o){t=o.name;s=`${o.code} · ${unitPeople(o.id,true).size} people · ${state.projects.filter(p=>p.obs===o.id).length} owned`;}}
+  else if(h.kind==='user'&&h.unit){const u=getUser(h.id);if(u){t=u.name;s=h.manager?`Manager · ${(getUnit(h.unit)||{}).name||''}`:`${u.role||''} · ${(getTeam(u.team)||{}).name||''}`;}}
   else if(h.kind==='user'){const u=getUser(h.id);if(u){t=u.name;
     if(h.mid){const f=findModule(h.mid);s=f?`${PERMS[permOf(f.m,u.id)].label} · ${f.m.name}`:'';}else s=`${u.role||''} · ${(getTeam(u.team)||{}).name||'No team'}`;}}
   tip.innerHTML=`<b>${esc(t)}</b><span>${esc(s)}</span>`;tip.hidden=false;
@@ -1080,15 +1299,18 @@ function btnTex(label){const c=document.createElement('canvas');c.width=512;c.he
   g.font='600 58px "Chakra Petch", sans-serif';g.fillStyle='#eef7ff';g.textAlign='center';g.textBaseline='middle';g.fillText(label.toUpperCase(),256,84);
   const t=new THREE.CanvasTexture(c);t.anisotropy=MAX_ANI;return t;}
 const vrMenu=new THREE.Group();vrMenu.visible=false;scene.add(vrMenu);
-const vrBtns=[['chamber','Chamber'],['galaxy','Galaxy'],['back','Back'],['exit','Exit VR']].map(([id,label],i)=>{
+const vrBtns=[['chamber','Chamber'],['galaxy','Galaxy'],['obs','OBS'],['back','Back'],['exit','Exit VR']].map(([id,label],i)=>{
   const m=new THREE.Mesh(new THREE.PlaneGeometry(1.5,.47),new THREE.MeshBasicMaterial({map:btnTex(label),transparent:true,depthWrite:false,side:THREE.DoubleSide}));
-  const a=(i-1.5)*.4;m.position.set(Math.sin(a)*3.2,-3.3,-Math.cos(a)*3.2);m.rotation.set(-.8,-a,0,'YXZ');m.userData={kind:'vrbtn',id};vrMenu.add(m);return m;});
+  const a=(i-2)*.4;m.position.set(Math.sin(a)*3.2,-3.3,-Math.cos(a)*3.2);m.rotation.set(-.8,-a,0,'YXZ');m.userData={kind:'vrbtn',id};vrMenu.add(m);return m;});
 let vrCard=null;
 function hideCard(){if(!vrCard)return;scene.remove(vrCard);vrCard.geometry.dispose();vrCard.material.map.dispose();vrCard.material.dispose();vrCard=null;}
 function cardInfo(core){
   if(core){let mc=0;eachModule(()=>mc++);return{eyebrow:'Nexus core',title:'Delivery grid',sub:`${state.projects.length} projects · ${mc} modules · ${state.users.length} crew`,
     rows:Object.keys(STATUS).map(k=>[STATUS[k].label,String(state.projects.filter(p=>p.status===k).length),STATUS[k].color])};}
   if(!sel)return null;
+  if(sel.kind==='unit'){const o=getUnit(sel.id);if(!o)return null;const mg=getUser(o.manager);
+    return{eyebrow:`OBS unit · ${o.code}`,title:o.name,sub:`${mg?'Manager '+mg.name:'No manager'} · ${unitPeople(o.id,true).size} people`,subColor:'#ffb057',
+      rows:[...obsChildren(o.id).map(c=>[c.name,'Sub-unit','#5ab8ff']),...state.teams.filter(t=>t.obs===o.id).map(t=>[t.name,'Team',t.color]),...state.projects.filter(p=>p.obs===o.id).map(p=>[p.name,'Owns',(STATUS[p.status]||STATUS.active).color])]};}
   if(sel.kind==='project'){const p=getProject(sel.id);if(!p)return null;const st=STATUS[p.status]||STATUS.active;
     return{eyebrow:`Project · ${p.code}`,title:p.name,sub:`${st.label} · ${p.progress}% delivered`,subColor:st.color,rows:p.modules.map(m=>[m.name,`${m.users.length} with access`,'#9ab4cc'])};}
   if(sel.kind==='module'){const f=findModule(sel.id);if(!f)return null;
@@ -1125,21 +1347,25 @@ function showCard(core){
 function vrPlace(force){
   const k=view+':'+gLevel+':'+(planetProject||'');if(!force&&k===vr.key)return;vr.key=k;
   if(view==='chamber')vr.pos.set(0,1,13.5);
+  else if(view==='obs')vr.pos.set(0,-1,0);
   else if(gLevel==='planet'){const g=galaxyPos.get(planetProject)||new THREE.Vector3();vr.pos.copy(g).add(new THREE.Vector3(0,.6,9.5));}
   else vr.pos.set(0,3,0);
   vrMenu.position.copy(vr.pos);vr.yaw=0;vr.pitch=0;vr.recenter=true;hideCard();
 }
-function gazeName(h){if(!h)return'';if(h.kind==='vrbtn')return({chamber:'Chamber view',galaxy:'Galaxy view',back:'Back',exit:'Exit VR'})[h.id];
+function gazeName(h){if(!h)return'';if(h.kind==='vrbtn')return({chamber:'Chamber view',galaxy:'Galaxy view',obs:'OBS view',back:'Back',exit:'Exit VR'})[h.id];
+  if(h.kind==='addnode'){const o=getUnit(h.id);return o?`Add to ${o.name}`:'';}
+  if(h.kind==='unit'){const o=getUnit(h.id);return o?`${o.code} · ${o.name}`:'';}
   if(h.kind==='core')return'Nexus core';if(h.kind==='project'){const p=getProject(h.id);return p?p.name:'';}
   if(h.kind==='module'){const f=findModule(h.id);return f?f.m.name:'';}
   if(h.kind==='user'){const u=getUser(h.id);if(!u)return'';if(h.mid){const f=findModule(h.mid);if(f)return `${u.name} · ${PERMS[permOf(f.m,u.id)].label}`;}return u.name;}return'';}
 function vrPick(){camera.updateMatrixWorld(true);ray.setFromCamera(new THREE.Vector2(0,0),camera);
   const bh=ray.intersectObjects(vrBtns,false);if(bh.length)return bh[0].object.userData;return pickNdc(0,0);}
-function dwellable(h){return h&&(h.kind==='vrbtn'||h.kind==='user'||(h.kind==='module'&&!h.region)||(h.kind==='project'&&view==='galaxy'&&gLevel==='universe'));}
+function dwellable(h){return h&&(h.kind==='vrbtn'||h.kind==='unit'||h.kind==='user'||(h.kind==='module'&&!h.region)||(h.kind==='project'&&view==='galaxy'&&gLevel==='universe'));}
 function vrActivate(h){
   if(!h){if(vrCard||sel){select(null);hideCard();}else{const d=new THREE.Vector3();camera.getWorldDirection(d);vr.pos.addScaledVector(d,4);vrMenu.position.copy(vr.pos);}return;}
   if(h.kind==='vrbtn'){if(h.id==='exit')return exitVR();if(h.id==='back'){if(view==='galaxy'&&gLevel==='planet')exitPlanet();else{select(null);hideCard();vrPlace(true);}return;}setView(h.id);return;}
   if(h.kind==='core'){showCard(true);return;}
+  if(h.kind==='addnode'){exitVR();openPlusMenu(h.id,innerWidth/2,innerHeight/2);return;}
   select({kind:h.kind,id:h.id},false,h.mid);vrPlace(false);showCard(false);
 }
 const qS=new THREE.Quaternion(),qY=new THREE.Quaternion(),q0=new THREE.Quaternion(),qX=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5)),eul=new THREE.Euler(),ZEE=new THREE.Vector3(0,0,1),YAX=new THREE.Vector3(0,1,0);
@@ -1231,6 +1457,15 @@ function frame(){
       if(it.kind==='user'&&it.node){const hv=hover&&hover.kind==='user'&&hover.id===it.id,sl=sel&&sel.kind==='user'&&sel.id===it.id;it.node.scale.setScalar(hv||sl?1.35:1);it.ring.material.rotation=t*.6*motion;}
     });
     fade(items,.12);fade(links,.12);runPulses(pulsePoints,pulseList,t,motion);
+  }else if(view==='obs'){
+    oItems.forEach(it=>{it.cur+=(it.target-it.cur)*.1;it.mats.forEach(([m,b])=>{m.opacity=Math.min(1,b*it.cur);});
+      if(it.spinObj)it.spinObj.rotation.y+=dt*.6*motion;
+      if(it.ring)it.ring.material.rotation=t*.7*motion;
+      if(it.kind==='user'&&it.node){const hv=hover&&hover.kind==='user'&&hover.id===it.id;it.node.scale.setScalar(hv?1.4:1);if(it.label)it.label.visible=hv||!!(sel&&sel.kind!=='project'&&it.target===1&&sel.kind!=='module');}
+      if(it.plus){const hv=hover&&hover.kind==='addnode'&&hover.id===it.id;it.plus.scale.setScalar(hv?1.15:.85);}
+      if(it.kind==='unit'&&it.node){const hv=hover&&hover.kind==='unit'&&hover.id===it.id,sl=sel&&sel.kind==='unit'&&sel.id===it.id;it.node.scale.setScalar(hv||sl?1.12:1);}
+    });
+    fade(oLinks,.1);runPulses(oPulsePoints,oPulseList,t,motion);
   }else{
     gItems.forEach(it=>{
       const host=(onPlanet&&it.kind==='project'&&it.id===planetProject)?.2:1;
