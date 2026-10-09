@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Project Nexus</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -145,7 +145,43 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .reset[data-armed]{color:var(--crit)}
 #nogl{position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
 
+/* View switch + breadcrumb */
+.views{top:calc(16px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px}
+.seg{display:flex;border:1px solid var(--line-hi);background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.seg button{background:none;border:0;color:var(--muted);font:500 11px var(--mono);letter-spacing:.18em;text-transform:uppercase;padding:9px 16px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed="true"]{color:#fff;background:rgba(90,184,255,.18);box-shadow:inset 0 -2px 0 var(--ice)}
+.seg .cmd-btn{color:#ffcdb8}
+.seg .cmd-btn:hover{background:rgba(255,90,36,.2);color:#fff}
+.crumb{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--glass);border:1px solid var(--line);padding:6px 10px}
+.crumb button{background:none;border:0;color:var(--ice);font:inherit;letter-spacing:inherit;cursor:pointer;padding:0}
+.crumb button:hover{color:var(--ice-hi);text-decoration:underline;text-underline-offset:3px}
+.crumb b{color:var(--fg);font-weight:500}
+.perm-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center}
+.perm-row select{width:auto;padding:5px 6px;font-size:11.5px}
+.perm{display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border:1px solid currentColor}
+.perm-admin{color:#ffb057}.perm-edit{color:#5ab8ff}.perm-view{color:#8fe3c0}
+.perm-key{display:grid;gap:4px;font-size:11px;color:var(--muted)}
+.perm-key span{display:flex;gap:8px;align-items:baseline}
+.grant{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px}
+.grant select{padding:7px 6px;font-size:12px;width:auto;min-width:0}
+.grant select:first-child{width:100%}
+
+#vr-ui{position:fixed;inset:0;z-index:8;touch-action:none;cursor:crosshair}
+#vr-ui.split::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:#000;pointer-events:none}
+.vr-gaze{position:absolute;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom,0px));display:flex;pointer-events:none}
+.vr-gaze span{flex:1;min-width:0;text-align:center;font:600 13px var(--display);letter-spacing:.14em;text-transform:uppercase;color:#ffd9c9;text-shadow:0 0 10px #000,0 0 3px #000;padding-inline:12px}
+#vr-ui:not(.split) #vr-g2{display:none}
+#vr-exit{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:12px;background:rgba(8,16,28,.75)}
+.vr-note{position:absolute;left:50%;top:22%;transform:translateX(-50%);max-width:min(420px,calc(100% - 32px));text-align:center;background:var(--glass-2);border:1px solid var(--line-hi);padding:10px 14px;font-size:12px;letter-spacing:.06em;pointer-events:none}
+body.vr .hud,body.vr .vignette,body.vr #tip{display:none!important}
+.vr-choices{display:grid;gap:8px}
+.vr-choices .btn{padding:14px 12px;font-size:12px}
+
 @media (max-width:720px){
+  .views{top:auto;bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .seg button{padding:8px 11px;letter-spacing:.1em}
   .brand h1{font-size:18px}
   .stats{width:auto;right:16px;grid-template-columns:repeat(4,minmax(0,1fr));top:calc(64px + env(safe-area-inset-top,0px))}
   .stat{padding:7px 8px}.stat b{font-size:19px}.stat span{font-size:9px;letter-spacing:.1em}
@@ -177,14 +213,21 @@ input[type=range]{width:100%;accent-color:var(--ember)}
   <div class="stat"><b id="st-u">0</b><span>Crew</span></div>
   <div class="stat"><b id="st-t">0</b><span>Teams</span></div>
   <div class="stat health" id="health"></div>
-  <div class="stat legend">
-    <div><i style="background:var(--ice);box-shadow:0 0 6px var(--ice)"></i>Module ⟶ crew assignment</div>
-    <div><i style="background:var(--ember);box-shadow:0 0 6px var(--ember)"></i>Crew ⟶ core uplink</div>
-  </div>
+  <div class="stat legend" id="legend"></div>
 </section>
 
+<div class="hud views">
+  <div class="seg" role="group" aria-label="View">
+    <button type="button" data-view="chamber" aria-pressed="true">Chamber</button>
+    <button type="button" data-view="galaxy" aria-pressed="false">Galaxy</button>
+    <button type="button" id="vr-open">VR</button>
+    <button type="button" class="cmd-btn" id="cmd-open">Command</button>
+  </div>
+  <div class="crumb" id="crumb" hidden></div>
+</div>
+
 <nav class="hud teams" id="teams" aria-label="Filter by team"></nav>
-<div class="hud hint">Drag to orbit · Scroll to zoom<br>Click a panel, module or crew node<br>Click the <b>core</b> to command</div>
+<div class="hud hint" id="hint"></div>
 
 <aside class="hud drawer" id="inspector" hidden aria-live="polite"><div class="ins-body" id="ins"></div></aside>
 
@@ -194,13 +237,14 @@ input[type=range]{width:100%;accent-color:var(--ember)}
     <button class="cmd-opt" style="--i:1" data-cmd="module" type="button"><b>M+</b>Add module</button>
     <button class="cmd-opt" style="--i:2" data-cmd="user" type="button"><b>U+</b>Add crew</button>
     <button class="cmd-opt" style="--i:3" data-cmd="team" type="button"><b>T+</b>Add team</button>
-    <button class="cmd-opt" style="--i:4" data-cmd="assign" type="button"><b>⇄</b>Assign</button>
+    <button class="cmd-opt" style="--i:4" data-cmd="assign" type="button"><b>⇄</b>Grant access</button>
     <button class="cmd-center" data-cmd="close" type="button">NEXUS<small>Close</small></button>
   </div>
 </div>
 
 <div class="modal" id="modal" hidden><form class="form" id="form" novalidate></form></div>
 <div id="tip" hidden></div>
+<div id="vr-ui" hidden><div class="vr-gaze"><span id="vr-g1"></span><span id="vr-g2"></span></div><div class="vr-note" id="vr-note" hidden></div><button id="vr-exit" class="btn" type="button">Exit VR</button></div>
 <div id="toast" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -269,9 +313,29 @@ function seed(){
     ]
   };
 }
+const PERMS={
+  admin:{label:'Admin',color:'#ffb057',desc:'Manages the region and who can access it'},
+  edit:{label:'Editor',color:'#5ab8ff',desc:'Changes content inside the region'},
+  view:{label:'Viewer',color:'#8fe3c0',desc:'Reads the region, no changes'}
+};
+const PERM_KEYS=['admin','edit','view'];
+function seedWithPerms(){
+  const s=seed();
+  const extraViewers={m1:['u9'],m4:['u12'],m6:['u1'],m8:['u10'],m11:['u2'],m14:['u5'],m17:['u11'],m20:['u1','u4'],m23:['u12']};
+  s.projects.forEach(p=>p.modules.forEach(m=>{m.perms={};m.users.forEach((u,i)=>m.perms[u]=i===0?'admin':'edit');
+    (extraViewers[m.id]||[]).forEach(u=>{if(!m.users.includes(u)){m.users.push(u);m.perms[u]='view';}});}));
+  return s;
+}
+function ensurePerms(){state.projects.forEach(p=>p.modules.forEach(m=>{if(!m.perms||typeof m.perms!=='object')m.perms={};
+  m.users.forEach((u,i)=>{if(!PERMS[m.perms[u]])m.perms[u]=i===0?'admin':'edit';});
+  Object.keys(m.perms).forEach(u=>{if(!m.users.includes(u))delete m.perms[u];});}));}
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.projects)&&Array.isArray(s.users)&&Array.isArray(s.teams))return s;}catch(e){}return null;}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
-let state=load()||seed();
+function save(){ensurePerms();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+let state=load()||seedWithPerms();
+ensurePerms();
+function grant(m,u,level){if(!m.users.includes(u))m.users.push(u);m.perms=m.perms||{};m.perms[u]=PERMS[level]?level:'edit';}
+function revoke(m,u){m.users=m.users.filter(x=>x!==u);if(m.perms)delete m.perms[u];}
+const permOf=(m,u)=>(m.perms&&m.perms[u])||'edit';
 const uid=p=>p+Math.random().toString(36).slice(2,8);
 const getTeam=id=>state.teams.find(t=>t.id===id);
 const getUser=id=>state.users.find(u=>u.id===id);
@@ -296,7 +360,7 @@ stage.appendChild(renderer.domElement);
 const canvasEl=renderer.domElement;
 const scene=new THREE.Scene();
 scene.fog=new THREE.FogExp2(0x03050a,0.006);
-const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,0.1,600);
+const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,0.05,2000);
 let composer=null,bloom=null;
 if(THREE.EffectComposer&&THREE.RenderPass&&THREE.UnrealBloomPass){
   try{
@@ -551,7 +615,174 @@ function rebuild(){
     pulsePoints=new THREE.Points(geo,new THREE.PointsMaterial({size:.55,map:GLOW,vertexColors:true,transparent:true,blending:ADD,depthWrite:false}));
     graph.add(pulsePoints);
   }
+  buildGalaxy();
   updateHud();applyHighlight();
+}
+
+/* ---------- Galaxy view ---------- */
+function hashStr(s){let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+const galaxyWorld=new THREE.Group();galaxyWorld.visible=false;scene.add(galaxyWorld);
+{
+  const a=[],c=[];for(let i=0;i<3000;i++){const v=new THREE.Vector3(rng()-.5,rng()-.5,rng()-.5).normalize().multiplyScalar(300+rng()*450);a.push(v.x,v.y,v.z);const col=new THREE.Color().setHSL(.55+rng()*.18,.55,.55+rng()*.35);c.push(col.r,col.g,col.b);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(a,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));
+  galaxyWorld.add(new THREE.Points(g,new THREE.PointsMaterial({size:2.2,map:GLOW,vertexColors:true,transparent:true,opacity:.85,blending:ADD,depthWrite:false})));
+  [['#3b2a9a',0],['#7a1e3a',1],['#12407a',2],['#5a1a6a',3],['#0f5a5a',4]].forEach(([col,i])=>{const s=glowSprite(col,300,.3);s.position.set(Math.cos(i*1.7)*220,Math.sin(i*2.3)*90,Math.sin(i*1.7)*220);galaxyWorld.add(s);});
+}
+const galaxyGraph=new THREE.Group();galaxyWorld.add(galaxyGraph);
+let gItems=[],gLinks=[],gPickables=[],gPulseList=[],gPulsePoints=null,galaxyPos=new Map();
+let view='chamber',gLevel='universe',planetProject=null,planet=null;
+const REGION_COLS=['#2f8cff','#21d4b4','#9b6bff','#ff8f3d','#e6c84a','#ff5c8a','#4fd36b','#38c6ff','#c47bff','#ff6f4f','#7fd1a0','#5a7bff'];
+const PLANET_R=3.2,MAXR=12;
+
+function buildGalaxy(){
+  disposeGroup(galaxyGraph);gItems=[];gLinks=[];gPickables=[];gPulseList=[];gPulsePoints=null;galaxyPos=new Map();planet=null;
+  state.projects.forEach((p,i)=>{
+    const pr=mulberry32(hashStr(p.id));
+    const ang=i*2.39996+.6,rad=18+11*Math.sqrt(i+1);
+    const pos=new THREE.Vector3(Math.cos(ang)*rad,Math.sin(i*1.9)*10,Math.sin(ang)*rad);
+    galaxyPos.set(p.id,pos);
+    const g=new THREE.Group();g.position.copy(pos);galaxyGraph.add(g);
+    const tilt=new THREE.Group();tilt.rotation.set((pr()-.5)*1.1,0,(pr()-.5)*.9);g.add(tilt);
+    const spin=new THREE.Group();tilt.add(spin);
+    const nm=Math.min(p.modules.length,10);
+    const R=4.6+nm*.38,arms=2+(p.modules.length%3),N=1500+nm*140;
+    const base=new THREE.Color((STATUS[p.status]||STATUS.active).color),coreC=new THREE.Color('#fff0dc'),dust=new THREE.Color('#6a7cff');
+    const ps=[],cs=[];
+    for(let k=0;k<N;k++){const arm=k%arms;const r=Math.pow(pr(),1.7)*R;const a=arm/arms*TAU+r*1.2+(pr()-.5)*(1.0/(1+r*.45));
+      const sp=(pr()-.5)*.4*(1+r*.12);
+      ps.push(Math.cos(a)*r+sp,(pr()-.5)*(.55*(1-r/R)+.08),Math.sin(a)*r+sp*.7);
+      const cc=coreC.clone().lerp(base,Math.min(1,r/R*1.7));if(pr()<.12)cc.lerp(dust,.6);const b=.5+pr()*.5;cs.push(cc.r*b,cc.g*b,cc.b*b);}
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(ps,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(cs,3));
+    const pts=new THREE.Points(geo,new THREE.PointsMaterial({size:.34,map:GLOW,vertexColors:true,transparent:true,opacity:.95,blending:ADD,depthWrite:false}));
+    spin.add(pts);
+    const coreS=glowSprite('#ffe2c4',3.4,.95);spin.add(coreS);
+    const halo=glowSprite((STATUS[p.status]||STATUS.active).color,R*2.8,.22);g.add(halo);
+    const label=labelSprite(p.name,`${p.code} · ${p.modules.length} region${p.modules.length===1?'':'s'}`,(STATUS[p.status]||STATUS.active).color);
+    label.scale.set(11,2.75,1);label.position.y=-R*.5-2.6;g.add(label);
+    const hit=new THREE.Mesh(new THREE.SphereGeometry(R*.85,12,8),new THREE.MeshBasicMaterial({visible:false}));hit.userData={kind:'project',id:p.id};g.add(hit);gPickables.push(hit);
+    gItems.push({kind:'project',id:p.id,mats:[[pts.material,.95],[coreS.material,.95],[halo.material,.22],[label.material,1]],cur:1,target:1,spin,speed:.05+pr()*.07,label});
+  });
+  // arcs between projects that share crew
+  const ps=state.projects;
+  for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){
+    const A=crewOf(ps[i]),B=crewOf(ps[j]);let n=0;A.forEach(u=>{if(B.has(u))n++;});if(!n)continue;
+    const a=galaxyPos.get(ps[i].id),b=galaxyPos.get(ps[j].id);
+    const mid=a.clone().add(b).multiplyScalar(.5);mid.y+=a.distanceTo(b)*.18;
+    const curve=new THREE.QuadraticBezierCurve3(a.clone(),mid,b.clone());
+    const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(64)),lineMat('#5ab8ff',Math.min(.5,.12+n*.08)));
+    galaxyGraph.add(line);
+    const L={a:ps[i].id,b:ps[j].id,n,mats:[[line.material,line.material.opacity]],cur:1,target:1};gLinks.push(L);
+    for(let k=0;k<Math.min(3,n);k++)gPulseList.push({curve,link:L,off:rng(),speed:.06+rng()*.05,color:new THREE.Color(k%2?'#ffb057':'#bfe8ff')});
+  }
+  gPulsePoints=makePulsePoints(gPulseList,1.4);if(gPulsePoints)galaxyGraph.add(gPulsePoints);
+  if(gLevel==='planet'){if(getProject(planetProject))buildPlanet();else{gLevel='universe';planetProject=null;}}
+}
+function makePulsePoints(list,size){if(!list.length)return null;const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(list.length*3),3));geo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(list.length*3),3));
+  return new THREE.Points(geo,new THREE.PointsMaterial({size,map:GLOW,vertexColors:true,transparent:true,blending:ADD,depthWrite:false}));}
+
+const regionCache=new Map();
+function regionMap(p){
+  const mods=p.modules.slice(0,MAXR);const key=p.id+':'+mods.map(m=>m.id).join('|');
+  if(regionCache.has(key))return regionCache.get(key);
+  const n=Math.max(1,mods.length),pr=mulberry32(hashStr(key));
+  const centers=[];for(let i=0;i<n;i++){const y=n===1?.3:1-(i+.5)/n*2;const r=Math.sqrt(Math.max(0,1-y*y));const a=i*2.39996+pr()*.5;centers.push(new THREE.Vector3(Math.cos(a)*r,y*.9,Math.sin(a)*r).normalize());}
+  const W=512,H=256,data=new Uint8Array(W*H*4),ids=new Uint8Array(W*H);
+  const s1=pr()*10,s2=pr()*10;
+  for(let row=0;row<H;row++){const v=(row+.5)/H,th=(1-v)*Math.PI,st=Math.sin(th),ct=Math.cos(th);
+    for(let col=0;col<W;col++){const ph=(col+.5)/W*TAU;const x=-Math.cos(ph)*st,y=ct,z=Math.sin(ph)*st;
+      const nx=x+.16*Math.sin(5.1*y+s1)*Math.cos(4.3*z),ny=y+.16*Math.sin(4.7*z+s2)*Math.cos(5.3*x),nz=z+.16*Math.sin(5.9*x+s1)*Math.cos(3.7*y);
+      let b1=-9,b2=-9,id=0;for(let k=0;k<n;k++){const c=centers[k];const d=nx*c.x+ny*c.y+nz*c.z;if(d>b1){b2=b1;b1=d;id=k;}else if(d>b2)b2=d;}
+      const gap=b1-b2,border=n>1&&gap<.03?Math.round(255*(1-gap/.03)):0;
+      const terr=.5+.25*Math.sin(9*x+s2)*Math.sin(8*y+s1)+.25*Math.sin(17*z+3*y)*Math.cos(13*x);
+      const o=(row*W+col)*4;data[o]=id*16;data[o+1]=border;data[o+2]=Math.max(0,Math.min(255,terr*255));data[o+3]=255;ids[row*W+col]=id;}}
+  const tex=new THREE.DataTexture(data,W,H,THREE.RGBAFormat);tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestFilter;tex.needsUpdate=true;
+  const out={tex,ids,centers,W,H};regionCache.set(key,out);return out;
+}
+const planetFS=`uniform sampler2D uMap;uniform vec3 uCols[12];uniform float uOn[12];uniform float uSel;uniform float uAny;uniform float uTime;
+varying vec2 vUv;varying vec3 vN;varying vec3 vV;
+void main(){vec4 d=texture2D(uMap,vUv);float id=floor(d.r*255.0/16.0+.5);vec3 c=vec3(.3);float on=1.0;
+for(int i=0;i<12;i++){if(abs(float(i)-id)<.5){c=uCols[i];on=uOn[i];}}
+float lat=abs(fract(vUv.y*18.0)-.5),lon=abs(fract(vUv.x*36.0)-.5);
+float grid=(smoothstep(.46,.5,lat)+smoothstep(.46,.5,lon))*.3;
+float isSel=abs(id-uSel)<.5?1.0:0.0;
+float dim=mix(1.0,.25,uAny*(1.0-on));
+vec3 col=c*(.07+.26*d.b)*dim+c*grid*.6*dim;
+col+=d.g*mix(vec3(.4,.75,1.0),c*1.2,.5)*(.45+isSel*1.6)*dim;
+col+=isSel*c*(.3+.18*sin(uTime*3.0));
+float fres=pow(1.0-max(dot(vN,vV),0.0),2.4);col+=fres*vec3(.2,.45,1.0)*.6;
+gl_FragColor=vec4(col,1.0);}`;
+function buildPlanet(){
+  const p=getProject(planetProject);if(!p)return;
+  const rm=regionMap(p),gp=galaxyPos.get(p.id);
+  const group=new THREE.Group();group.position.copy(gp);galaxyGraph.add(group);
+  const body=new THREE.Group();group.add(body);
+  const cols=REGION_COLS.map(h=>{const c=new THREE.Color(h);return new THREE.Vector3(c.r,c.g,c.b);});
+  const mat=new THREE.ShaderMaterial({uniforms:{uMap:{value:rm.tex},uCols:{value:cols},uOn:{value:new Array(12).fill(1)},uSel:{value:-1},uAny:{value:0},uTime:coreTime},vertexShader:coreVS,fragmentShader:planetFS});
+  const sphere=new THREE.Mesh(new THREE.SphereGeometry(PLANET_R,96,64),mat);sphere.userData={kind:'planet',id:p.id};body.add(sphere);gPickables.push(sphere);
+  const atmo=glowSprite('#3d8cff',PLANET_R*4,.3);group.add(atmo);
+  const r1=ringLine(PLANET_R*1.75,0,'#5ab8ff',.35);r1.rotation.set(.35,0,.2);group.add(r1);
+  const r2=ringLine(PLANET_R*2.3,0,'#ff5a24',.18);r2.rotation.set(-.25,0,-.3);group.add(r2);
+  const mods=p.modules.slice(0,MAXR);
+  mods.forEach((m,i)=>{
+    const c=rm.centers[i],hex=REGION_COLS[i];
+    const surf=c.clone().multiplyScalar(PLANET_R*1.003),tip=c.clone().multiplyScalar(PLANET_R*1.5);
+    const stem=segs([surf.x,surf.y,surf.z,tip.x,tip.y,tip.z],hex,.75);body.add(stem);
+    const beacon=glowSprite(hex,.7,1);beacon.position.copy(surf);body.add(beacon);
+    const label=labelSprite(m.name,`${m.users.length} with access`,hex);label.scale.set(3.4,.85,1);label.position.copy(tip).add(c.clone().multiplyScalar(.3));body.add(label);
+    gItems.push({kind:'module',id:m.id,mats:[[stem.material,.75],[beacon.material,1],[label.material,1]],cur:1,target:1});
+    const up=Math.abs(c.y)>.95?new THREE.Vector3(1,0,0):new THREE.Vector3(0,1,0);
+    const t1=new THREE.Vector3().crossVectors(c,up).normalize(),t2=new THREE.Vector3().crossVectors(c,t1);
+    const nU=m.users.length;
+    m.users.forEach((uid,k)=>{const u=getUser(uid);if(!u)return;const lv=permOf(m,uid),pc=PERMS[lv].color;
+      const a=k/nU*TAU,rr2=nU===1?.09:.12+.018*nU;
+      const dir=c.clone().add(t1.clone().multiplyScalar(Math.cos(a)*rr2)).add(t2.clone().multiplyScalar(Math.sin(a)*rr2)).normalize();
+      const base=dir.clone().multiplyScalar(PLANET_R),pos=dir.clone().multiplyScalar(PLANET_R*1.1);
+      const orb=new THREE.Mesh(new THREE.SphereGeometry(.085,14,10),new THREE.MeshBasicMaterial({color:new THREE.Color(teamColor(u)),transparent:true,opacity:1}));
+      orb.position.copy(pos);orb.userData={kind:'user',id:uid,mid:m.id};
+      const ring=new THREE.Sprite(new THREE.SpriteMaterial({map:RING,color:new THREE.Color(pc),transparent:true,opacity:.95,blending:ADD,depthWrite:false}));ring.scale.set(.36,.36,1);ring.position.copy(pos);
+      const st=segs([base.x,base.y,base.z,pos.x,pos.y,pos.z],pc,.6);
+      const lab=labelSprite(u.name,PERMS[lv].label,pc);lab.scale.set(2.4,.6,1);lab.position.copy(pos).add(dir.clone().multiplyScalar(.32));lab.visible=false;
+      body.add(st,orb,ring,lab);gPickables.push(orb);
+      gItems.push({kind:'pin',id:uid,mid:m.id,mats:[[orb.material,1],[ring.material,.95],[st.material,.6],[lab.material,1]],cur:1,target:1,node:orb,ring,label:lab});
+    });
+  });
+  planet={group,body,sphere,mat,rm,projectId:p.id,mods};
+}
+function removePlanet(){if(!planet)return;disposeGroup(planet.group);galaxyGraph.remove(planet.group);
+  gItems=gItems.filter(i=>i.kind==='project');gPickables=gPickables.filter(o=>o.userData.kind==='project');planet=null;}
+function camDefaults(){const narrow=innerWidth<720;
+  if(view==='chamber')return{r:narrow?84:52,phi:1.22};
+  if(gLevel==='planet')return{r:narrow?19:13,phi:1.25};
+  return{r:narrow?200:150,phi:1.08};}
+function enterPlanet(pid){
+  if(planetProject!==pid){removePlanet();planetProject=pid;}
+  gLevel='planet';if(!planet)buildPlanet();
+  cam.tTarget.copy(galaxyPos.get(pid)||new THREE.Vector3());const d=camDefaults();cam.tR=d.r;cam.tPhi=d.phi;
+}
+function exitPlanet(){removePlanet();gLevel='universe';planetProject=null;cam.tTarget.set(0,0,0);const d=camDefaults();cam.tR=d.r;cam.tPhi=d.phi;select(null);}
+function setView(v){
+  if(view===v)return;view=v;
+  world.visible=v==='chamber';galaxyWorld.visible=v==='galaxy';scene.fog.density=v==='chamber'?.006:.0011;
+  removePlanet();gLevel='universe';planetProject=null;
+  cam.tTarget.set(0,0,0);const d=camDefaults();cam.tR=d.r;cam.tPhi=d.phi;
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===v)));
+  hover=null;$('#tip').hidden=true;select(null);
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+$('#crumb').addEventListener('click',e=>{if(e.target.closest('[data-crumb]'))exitPlanet();});
+function updateChrome(){
+  const crumb=$('#crumb'),hint=$('#hint'),legend=$('#legend');
+  if(view==='chamber'){crumb.hidden=true;
+    hint.innerHTML='Drag to orbit · Scroll to zoom<br>Click a panel, module or crew node<br>Click the <b>core</b> to command';
+    legend.innerHTML='<div><i style="background:var(--ice);box-shadow:0 0 6px var(--ice)"></i>Module ⟶ crew assignment</div><div><i style="background:var(--ember);box-shadow:0 0 6px var(--ember)"></i>Crew ⟶ core uplink</div>';
+  }else{
+    legend.innerHTML=(gLevel==='planet'?PERM_KEYS.map(k=>`<div><i style="background:${PERMS[k].color};box-shadow:0 0 6px ${PERMS[k].color}"></i>${PERMS[k].label} access</div>`).join(''):'<div><i style="background:var(--ice);box-shadow:0 0 6px var(--ice)"></i>Projects sharing crew</div><div><i style="background:var(--ok);box-shadow:0 0 6px var(--ok)"></i>Galaxy color = project status</div>');
+    if(gLevel==='planet'){const p=getProject(planetProject);crumb.hidden=false;crumb.innerHTML=`<button type="button" data-crumb>Galaxy</button><span>›</span><b>${esc(p?p.name:'')}</b>`;
+      hint.innerHTML='Regions are modules · Pins are people<br>Pin ring color shows permission<br>Click a <b>region</b> to manage access';}
+    else{crumb.hidden=false;crumb.innerHTML=`<span>Galaxy</span><b>${state.projects.length} systems</b>`;
+      hint.innerHTML='Drag to orbit · Scroll to zoom<br>Each galaxy is a project<br>Click a <b>galaxy</b> to land on its planet';}
+  }
 }
 
 /* ---------- Selection & highlight ---------- */
@@ -569,6 +800,11 @@ function applyHighlight(){
   const r=related(sel);
   items.forEach(it=>{const on=!r||(it.kind==='project'?r.P.has(it.id):it.kind==='module'?r.M.has(it.id):r.U.has(it.id));it.target=on?1:.14;});
   links.forEach(l=>{const on=!r||(l.kind==='mu'?(r.M.has(l.mid)&&r.U.has(l.uid)):r.U.has(l.uid));l.target=on?(r?1.5:1):.05;});
+  gItems.forEach(it=>{let on=true;if(r){if(it.kind==='project')on=r.P.has(it.id);else if(it.kind==='module')on=r.M.has(it.id);else if(it.kind==='pin')on=r.U.has(it.id)&&r.M.has(it.mid);}it.target=on?1:.14;});
+  gLinks.forEach(l=>{l.target=!r?1:(r.P.has(l.a)&&r.P.has(l.b)?2.4:.12);});
+  if(planet){const u=planet.mat.uniforms;const on=planet.mods.map(m=>!r||r.M.has(m.id)?1:0);while(on.length<12)on.push(0);
+    u.uOn.value=on;u.uAny.value=r&&!(sel.kind==='project')?1:0;
+    let si=-1;if(sel&&sel.kind==='module')si=planet.mods.findIndex(m=>m.id===sel.id);u.uSel.value=si;}
 }
 
 /* ---------- HUD ---------- */
@@ -580,6 +816,7 @@ function updateHud(){
   const tc={};state.users.forEach(u=>tc[u.team]=(tc[u.team]||0)+1);
   $('#teams').innerHTML=`<button class="chip" type="button" data-team="" aria-pressed="${!sel||sel.kind!=='team'}">All teams</button>`+
     state.teams.map(t=>`<button class="chip" type="button" data-team="${esc(t.id)}" aria-pressed="${!!(sel&&sel.kind==='team'&&sel.id===t.id)}"><span class="dot" style="color:${esc(t.color)}"></span>${esc(t.name)} <small>${tc[t.id]||0}</small></button>`).join('');
+  updateChrome();
 }
 $('#teams').addEventListener('click',e=>{const b=e.target.closest('[data-team]');if(!b)return;const id=b.dataset.team;select(id?{kind:'team',id}:null);});
 setInterval(()=>{$('#clock').textContent=new Date().toLocaleTimeString([], {hour12:false});},1000);
@@ -594,6 +831,8 @@ function crewTags(m,removable){
   return '<div class="crew">'+m.users.map(id=>{const u=getUser(id);if(!u)return'';return `<span class="tag"><span class="sw" style="background:${esc(teamColor(u))}"></span><button class="link" style="font-size:11px" data-sel="user:${esc(u.id)}" type="button">${esc(u.name)}</button>${removable?`<button type="button" title="Unassign ${esc(u.name)}" aria-label="Unassign ${esc(u.name)}" data-act="unassign" data-mid="${esc(m.id)}" data-uid="${esc(u.id)}">×</button>`:''}</span>`;}).join('')+'</div>';
 }
 function moduleOptions(excludeUser){let h='';state.projects.forEach(p=>{const ms=p.modules.filter(m=>!excludeUser||!m.users.includes(excludeUser));if(!ms.length)return;h+=`<optgroup label="${esc(p.code+' · '+p.name)}">`+ms.map(m=>`<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('')+'</optgroup>';});return h;}
+const levelOpts=v=>PERM_KEYS.map(k=>`<option value="${k}" ${k===v?'selected':''}>${PERMS[k].label}</option>`).join('');
+function permSelect(mid,uid,lv,who){return `<select data-perm data-mid="${esc(mid)}" data-uid="${esc(uid)}" aria-label="Permission for ${esc(who)}" style="color:${PERMS[lv].color}">${levelOpts(lv)}</select>`;}
 function head(eyebrow){return `<div class="ins-top"><span class="eyebrow">${eyebrow}</span><button class="icon-btn" type="button" data-act="close" aria-label="Close inspector">×</button></div>`;}
 function renderInspector(){
   if(!sel||sel.kind==='core'){insEl.hidden=true;document.body.classList.remove('has-drawer');return;}
@@ -602,24 +841,28 @@ function renderInspector(){
     h=head(`Project · ${esc(p.code)}`)+`<h2>${esc(p.name)}</h2>
     <div class="row"><span class="pill s-${esc(p.status)}">${st.label}</span><span class="muted">${p.progress}% delivered</span></div>
     <div class="bar" style="color:${st.color}"><i style="width:${p.progress}%"></i></div>
-    <h3><span>Modules</span><span class="muted">${p.modules.length}</span></h3>
+    <h3><span>${view==='galaxy'?'Regions':'Modules'}</span><span class="muted">${p.modules.length}</span></h3>
     ${p.modules.length?'<ul class="list">'+p.modules.map(m=>`<li><button class="link" type="button" data-sel="module:${esc(m.id)}">${esc(m.name)}</button>${crewTags(m,false)}</li>`).join('')+'</ul>':'<div class="empty">No modules yet. Add the first one below.</div>'}
     <div class="actions"><button class="btn primary" type="button" data-act="add-module">Add module</button><button class="btn" type="button" data-act="edit-project">Edit</button><button class="btn danger" type="button" data-act="remove">Remove</button></div>`;}
   else if(sel.kind==='module'){const f=findModule(sel.id);if(!f)return closeInspector();const {p,m}=f;
     const avail=state.users.filter(u=>!m.users.includes(u.id));
-    h=head('Module')+`<h2>${esc(m.name)}</h2>
-    <dl class="kv"><dt>Project</dt><dd><button class="link" type="button" data-sel="project:${esc(p.id)}">${esc(p.code)} · ${esc(p.name)}</button></dd><dt>Crew</dt><dd>${m.users.length}</dd></dl>
-    <h3><span>Assigned crew</span></h3>${crewTags(m,true)}
-    ${avail.length?`<div class="inline"><select id="assign-user" aria-label="Crew member to assign">${avail.map(u=>`<option value="${esc(u.id)}">${esc(u.name)} · ${esc((getTeam(u.team)||{}).name||'No team')}</option>`).join('')}</select><button class="btn" type="button" data-act="assign-user">Assign</button></div>`:''}
+    const cnt={admin:0,edit:0,view:0};m.users.forEach(u=>cnt[permOf(m,u)]++);
+    h=head(view==='galaxy'?'Region · module':'Module')+`<h2>${esc(m.name)}</h2>
+    <dl class="kv"><dt>Project</dt><dd><button class="link" type="button" data-sel="project:${esc(p.id)}">${esc(p.code)} · ${esc(p.name)}</button></dd><dt>Access</dt><dd>${PERM_KEYS.map(k=>`<span class="perm perm-${k}">${cnt[k]} ${PERMS[k].label}</span>`).join(' ')}</dd></dl>
+    <h3><span>People with access</span><span class="muted">${m.users.length}</span></h3>
+    ${m.users.length?'<ul class="list">'+m.users.map(uid=>{const u=getUser(uid);if(!u)return'';const lv=permOf(m,uid);const t=getTeam(u.team);
+      return `<li><div class="perm-row"><button class="link" type="button" data-sel="user:${esc(u.id)}"><span style="color:${esc(teamColor(u))}">●</span> ${esc(u.name)}</button>${permSelect(m.id,u.id,lv,u.name)}<button class="icon-btn" style="width:28px;height:28px;font-size:13px" type="button" title="Revoke access" aria-label="Revoke ${esc(u.name)}'s access" data-act="unassign" data-mid="${esc(m.id)}" data-uid="${esc(u.id)}">×</button></div><span class="muted" style="font-size:11px">${esc(u.role||'')} · ${esc(t?t.name:'No team')}</span></li>`;}).join('')+'</ul>':'<div class="empty">Nobody has access yet. Grant it below.</div>'}
+    ${avail.length?`<div class="grant"><select id="assign-user" aria-label="Person to grant access">${avail.map(u=>`<option value="${esc(u.id)}">${esc(u.name)} · ${esc((getTeam(u.team)||{}).name||'No team')}</option>`).join('')}</select><select id="assign-level" aria-label="Permission level">${levelOpts('edit')}</select><button class="btn" type="button" data-act="assign-user">Grant</button></div>`:''}
+    <div class="perm-key">${PERM_KEYS.map(k=>`<span><span class="perm perm-${k}">${PERMS[k].label}</span>${PERMS[k].desc}</span>`).join('')}</div>
     <div class="actions"><button class="btn danger" type="button" data-act="remove">Remove module</button></div>`;}
   else if(sel.kind==='user'){const u=getUser(sel.id);if(!u)return closeInspector();const t=getTeam(u.team);
     const mine=[];eachModule((p,m)=>{if(m.users.includes(u.id))mine.push({p,m});});
-    const opts=moduleOptions(u.id);
+    const opts=moduleOptions(u.id);const np=new Set(mine.map(x=>x.p.id)).size;
     h=head('Crew member')+`<h2>${esc(u.name)}</h2>
-    <dl class="kv"><dt>Role</dt><dd>${esc(u.role||'—')}</dd><dt>Team</dt><dd>${t?`<button class="link" type="button" data-sel="team:${esc(t.id)}"><span style="color:${esc(t.color)}">●</span> ${esc(t.name)}</button>`:'<span class="muted">Unassigned</span>'}</dd><dt>Load</dt><dd>${mine.length} module${mine.length===1?'':'s'} across ${new Set(mine.map(x=>x.p.id)).size} project${new Set(mine.map(x=>x.p.id)).size===1?'':'s'}</dd></dl>
-    <h3><span>Modules</span></h3>
-    ${mine.length?'<ul class="list">'+mine.map(({p,m})=>`<li><div class="row"><button class="link" type="button" data-sel="module:${esc(m.id)}">${esc(m.name)}</button><button class="icon-btn" style="width:24px;height:24px;font-size:13px" type="button" title="Unassign" aria-label="Unassign from ${esc(m.name)}" data-act="unassign" data-mid="${esc(m.id)}" data-uid="${esc(u.id)}">×</button></div><span class="muted" style="font-size:11px">${esc(p.code)} · ${esc(p.name)}</span></li>`).join('')+'</ul>':'<div class="empty">Not on any module yet.</div>'}
-    ${opts?`<div class="inline"><select id="assign-module" aria-label="Module to assign">${opts}</select><button class="btn" type="button" data-act="assign-module">Assign</button></div>`:''}
+    <dl class="kv"><dt>Role</dt><dd>${esc(u.role||'—')}</dd><dt>Team</dt><dd>${t?`<button class="link" type="button" data-sel="team:${esc(t.id)}"><span style="color:${esc(t.color)}">●</span> ${esc(t.name)}</button>`:'<span class="muted">Unassigned</span>'}</dd><dt>Reach</dt><dd>${mine.length} region${mine.length===1?'':'s'} across ${np} project${np===1?'':'s'}</dd></dl>
+    <h3><span>Access by module</span></h3>
+    ${mine.length?'<ul class="list">'+mine.map(({p,m})=>`<li><div class="perm-row"><button class="link" type="button" data-sel="module:${esc(m.id)}">${esc(m.name)}</button>${permSelect(m.id,u.id,permOf(m,u.id),m.name)}<button class="icon-btn" style="width:28px;height:28px;font-size:13px" type="button" title="Revoke access" aria-label="Revoke access to ${esc(m.name)}" data-act="unassign" data-mid="${esc(m.id)}" data-uid="${esc(u.id)}">×</button></div><span class="muted" style="font-size:11px">${esc(p.code)} · ${esc(p.name)}</span></li>`).join('')+'</ul>':'<div class="empty">No access to any module yet.</div>'}
+    ${opts?`<div class="grant"><select id="assign-module" aria-label="Module to grant">${opts}</select><select id="assign-level" aria-label="Permission level">${levelOpts('edit')}</select><button class="btn" type="button" data-act="assign-module">Grant</button></div>`:''}
     <div class="actions"><button class="btn danger" type="button" data-act="remove">Remove crew member</button></div>`;}
   else if(sel.kind==='team'){const t=getTeam(sel.id);if(!t)return closeInspector();const mem=state.users.filter(u=>u.team===t.id);
     const r=related(sel);
@@ -631,6 +874,8 @@ function renderInspector(){
   ins.innerHTML=h;insEl.hidden=false;document.body.classList.add('has-drawer');
 }
 function closeInspector(){select(null);}
+ins.addEventListener('change',e=>{const s=e.target.closest('[data-perm]');if(!s)return;const f=findModule(s.dataset.mid);if(!f)return;
+  grant(f.m,s.dataset.uid,s.value);commit(`${PERMS[s.value].label} access set`);});
 ins.addEventListener('click',e=>{
   const s=e.target.closest('[data-sel]');if(s){const [kind,id]=s.dataset.sel.split(':');select({kind,id},true);return;}
   const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act;
@@ -638,9 +883,9 @@ ins.addEventListener('click',e=>{
   if(act==='add-module')return openForm('module',{projectId:sel.id});
   if(act==='edit-project')return openForm('edit-project',{projectId:sel.id});
   if(act==='add-user-team')return openForm('user',{teamId:sel.id});
-  if(act==='unassign'){const f=findModule(b.dataset.mid);if(f){f.m.users=f.m.users.filter(x=>x!==b.dataset.uid);commit('Crew unassigned');}return;}
-  if(act==='assign-user'){const v=$('#assign-user').value;const f=findModule(sel.id);if(f&&v&&!f.m.users.includes(v)){f.m.users.push(v);commit('Crew assigned');}return;}
-  if(act==='assign-module'){const v=$('#assign-module').value;const f=findModule(v);if(f&&!f.m.users.includes(sel.id)){f.m.users.push(sel.id);commit('Crew assigned');}return;}
+  if(act==='unassign'){const f=findModule(b.dataset.mid);if(f){revoke(f.m,b.dataset.uid);commit('Access revoked');}return;}
+  if(act==='assign-user'){const v=$('#assign-user').value;const f=findModule(sel.id);if(f&&v){grant(f.m,v,$('#assign-level').value);commit('Access granted');}return;}
+  if(act==='assign-module'){const v=$('#assign-module').value;const f=findModule(v);if(f){grant(f.m,sel.id,$('#assign-level').value);commit('Access granted');}return;}
   if(act==='remove'){
     if(!b.dataset.armed){b.dataset.armed='1';b.textContent='Click again to confirm';setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent='Remove';}},3500);return;}
     const k=sel.kind,id=sel.id;
@@ -690,10 +935,12 @@ function openForm(kind,ctx){
     <div class="field"><span class="lbl">Move crew into this team</span><div class="checks">${userChecks([])}</div></div>`;}
   else if(kind==='assign'){
     if(!state.users.length||!state.projects.some(p=>p.modules.length)){toast('Add crew and modules first');return;}
-    h=`<h2>Assign crew</h2>
+    h=`<h2>Grant access</h2>
     <div class="field"><label for="f-user">Crew member</label><select id="f-user" name="user">${state.users.map(u=>`<option value="${esc(u.id)}">${esc(u.name)} · ${esc(u.role||'')}</option>`).join('')}</select></div>
-    <div class="field"><label for="f-module">Module</label><select id="f-module" name="module">${moduleOptions()}</select></div>`;}
-  h+=`<div class="err" id="f-err" role="alert"></div><div class="actions"><button class="btn ghost" type="button" data-close>Cancel</button><button class="btn primary" type="submit">${kind==='edit-project'?'Save changes':kind==='assign'?'Assign':'Add to grid'}</button></div>`;
+    <div class="field"><label for="f-module">Module</label><select id="f-module" name="module">${moduleOptions()}</select></div>
+    <div class="field"><label for="f-level">Permission</label><select id="f-level" name="level">${levelOpts('edit')}</select></div>
+    <div class="perm-key">${PERM_KEYS.map(k=>`<span><span class="perm perm-${k}">${PERMS[k].label}</span>${PERMS[k].desc}</span>`).join('')}</div>`;}
+  h+=`<div class="err" id="f-err" role="alert"></div><div class="actions"><button class="btn ghost" type="button" data-close>Cancel</button><button class="btn primary" type="submit">${kind==='edit-project'?'Save changes':kind==='assign'?'Grant access':'Add to grid'}</button></div>`;
   form.innerHTML=h;modal.hidden=false;
   const pr=$('#f-progress');if(pr)pr.addEventListener('input',()=>$('#f-progress-out').textContent=pr.value+'%');
   const first=form.querySelector('input[type=text],select');if(first)setTimeout(()=>first.focus(),30);
@@ -711,40 +958,42 @@ form.addEventListener('submit',e=>{
       const p=Object.assign({id:uid('p'),modules:mods},data);state.projects.push(p);newSel={kind:'project',id:p.id};msg='Project online';}
   }else if(formKind==='module'){
     if(!name){err.textContent='Give the module a name.';return;}
-    const p=getProject(fd.get('project'));const m={id:uid('m'),name,users:fd.getAll('users')};p.modules.push(m);newSel={kind:'module',id:m.id};msg='Module added';
+    const p=getProject(fd.get('project'));const m={id:uid('m'),name,users:[],perms:{}};fd.getAll('users').forEach((u,i)=>grant(m,u,i===0?'admin':'edit'));p.modules.push(m);newSel={kind:'module',id:m.id};msg='Module added';
   }else if(formKind==='user'){
     if(!name){err.textContent='Add the crew member’s name.';return;}
     const u={id:uid('u'),name,role:String(fd.get('role')||'').trim()||'Crew',team:fd.get('team')||null};state.users.push(u);
-    fd.getAll('modules').forEach(mid=>{const f=findModule(mid);if(f)f.m.users.push(u.id);});newSel={kind:'user',id:u.id};msg='Crew member linked';
+    fd.getAll('modules').forEach(mid=>{const f=findModule(mid);if(f)grant(f.m,u.id,'edit');});newSel={kind:'user',id:u.id};msg='Crew member linked';
   }else if(formKind==='team'){
     if(!name){err.textContent='Give the team a name.';return;}
     const t={id:uid('t'),name,color:fd.get('color')||TEAM_COLORS[0]};state.teams.push(t);
     fd.getAll('users').forEach(id=>{const u=getUser(id);if(u)u.team=t.id;});newSel={kind:'team',id:t.id};msg='Team created';
   }else if(formKind==='assign'){
     const f=findModule(fd.get('module'));const u=fd.get('user');if(!f||!u){err.textContent='Pick a crew member and a module.';return;}
-    if(f.m.users.includes(u)){err.textContent='That crew member is already on this module.';return;}
-    f.m.users.push(u);newSel={kind:'module',id:f.m.id};msg='Crew assigned';
+    const had=f.m.users.includes(u);grant(f.m,u,fd.get('level'));newSel={kind:'module',id:f.m.id};msg=had?'Access updated':'Access granted';
   }
   closeForm();save();rebuild();select(newSel,true);toast(msg);
 });
 const resetBtn=$('#reset');
 resetBtn.addEventListener('click',()=>{if(!resetBtn.dataset.armed){resetBtn.dataset.armed='1';resetBtn.textContent='Confirm reset';setTimeout(()=>{delete resetBtn.dataset.armed;resetBtn.textContent='Reset sample';},3500);return;}
-  delete resetBtn.dataset.armed;resetBtn.textContent='Reset sample';state=seed();sel=null;save();rebuild();renderInspector();toast('Sample grid restored');});
-addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!modal.hidden)closeForm();else if(!cmdEl.hidden)closeCmd();else if(sel)select(null);});
+  delete resetBtn.dataset.armed;resetBtn.textContent='Reset sample';state=seedWithPerms();regionCache.clear();sel=null;save();rebuild();renderInspector();toast('Sample grid restored');});
+addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(vr.on)return exitVR();if(!modal.hidden)closeForm();else if(!cmdEl.hidden)closeCmd();else if(sel)select(null);else if(view==='galaxy'&&gLevel==='planet')exitPlanet();});
+$('#cmd-open').addEventListener('click',openCmd);
 
 /* ---------- Camera / orbit ---------- */
-const cam={theta:-Math.PI/2+.55,phi:1.22,r:innerWidth<720?84:52};
+const cam={theta:-Math.PI/2+.55,phi:1.22,r:innerWidth<720?84:52,target:new THREE.Vector3(),tTarget:new THREE.Vector3()};
 cam.tTheta=cam.theta;cam.tPhi=cam.phi;cam.tR=cam.r;
 let lastInteract=performance.now();
 const pointers=new Map();let drag=null,pinchD=0;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function zoomLim(){if(view==='chamber')return[24,130];if(gLevel==='planet')return[6,45];return[30,340];}
+function zoomTo(r){const [a,b]=zoomLim();cam.tR=clamp(r,a,b);}
 canvasEl.addEventListener('pointerdown',e=>{canvasEl.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
   if(pointers.size===1)drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false};
   else{if(drag)drag.moved=true;const p=[...pointers.values()];pinchD=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}});
 canvasEl.addEventListener('pointermove',e=>{
-  mouse.x=e.clientX;mouse.y=e.clientY;mouse.dirty=true;
+  mouse.x=e.clientX;mouse.y=e.clientY;mouse.dirty=true;mouse.out=false;
   if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
-  if(pointers.size===2){const p=[...pointers.values()];const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(pinchD)cam.tR=clamp(cam.tR*pinchD/d,24,130);pinchD=d;return;}
+  if(pointers.size===2){const p=[...pointers.values()];const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(pinchD)zoomTo(cam.tR*pinchD/d);pinchD=d;return;}
   if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;
     if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>5){drag.moved=true;canvasEl.classList.add('dragging');}
     cam.tTheta+=dx*.006;cam.tPhi=clamp(cam.tPhi-dy*.005,.32,2.45);}
@@ -753,25 +1002,44 @@ function endPointer(e){const wasClick=drag&&!drag.moved&&pointers.size===1;point
   if(pointers.size===0){canvasEl.classList.remove('dragging');if(wasClick&&e.type==='pointerup')handleClick(e.clientX,e.clientY);drag=null;}}
 canvasEl.addEventListener('pointerup',endPointer);canvasEl.addEventListener('pointercancel',endPointer);
 canvasEl.addEventListener('pointerleave',()=>{mouse.out=true;mouse.dirty=true;});
-canvasEl.addEventListener('wheel',e=>{e.preventDefault();cam.tR=clamp(cam.tR*(1+Math.sign(e.deltaY)*Math.min(Math.abs(e.deltaY),120)*.0012),24,130);lastInteract=performance.now();},{passive:false});
+canvasEl.addEventListener('wheel',e=>{e.preventDefault();zoomTo(cam.tR*(1+Math.sign(e.deltaY)*Math.min(Math.abs(e.deltaY),120)*.0012));lastInteract=performance.now();},{passive:false});
 
 /* ---------- Picking ---------- */
 const ray=new THREE.Raycaster();const ndc=new THREE.Vector2();const mouse={x:0,y:0,dirty:false,out:true};
-function pickAt(x,y){
-  ndc.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCamera(ndc,camera);
-  const hits=ray.intersectObjects(pickables,false);if(!hits.length)return null;
-  const small=hits.find(h=>h.object.userData.kind==='module'||h.object.userData.kind==='user');
-  return (small||hits[0]).object.userData;
+function pickAt(x,y){return pickNdc(x/innerWidth*2-1,-(y/innerHeight)*2+1);}
+function pickNdc(nx,ny){
+  ndc.set(nx,ny);ray.setFromCamera(ndc,camera);
+  let list=pickables;
+  if(view==='galaxy')list=gPickables.filter(o=>!(gLevel==='planet'&&o.userData.kind==='project'&&o.userData.id===planetProject));
+  const hits=ray.intersectObjects(list,false);if(!hits.length)return null;
+  const h=hits.find(h=>h.object.userData.kind==='module'||h.object.userData.kind==='user')||hits.find(h=>h.object.userData.kind==='planet')||hits[0];
+  const ud=h.object.userData;
+  if(ud.kind==='planet'){if(!planet||!h.uv)return null;const rm=planet.rm;
+    const col=Math.min(rm.W-1,Math.floor(h.uv.x*rm.W)),row=Math.min(rm.H-1,Math.floor(h.uv.y*rm.H));
+    const m=planet.mods[rm.ids[row*rm.W+col]];return m?{kind:'module',id:m.id,region:true}:null;}
+  return ud;
 }
 function handleClick(x,y){
   const hit=pickAt(x,y);
   if(!hit){if(sel)select(null);return;}
   if(hit.kind==='core'){openCmd();return;}
-  select({kind:hit.kind,id:hit.id},true);
+  select({kind:hit.kind,id:hit.id},true,hit.mid);
 }
-function select(s,focus){
+function select(s,focus,mid){
+  if(view==='galaxy'&&s){
+    if(s.kind==='project')enterPlanet(s.id);
+    else if(s.kind==='module'){const f=findModule(s.id);if(f&&f.p.id!==planetProject)enterPlanet(f.p.id);}
+    else if(s.kind==='user'&&mid){const f=findModule(mid);if(f&&f.p.id!==planetProject)enterPlanet(f.p.id);}
+  }
   sel=s;applyHighlight();renderInspector();updateHud();
-  if(s&&focus){const it=items.find(i=>i.kind===s.kind&&i.id===s.id);if(it&&it.angle!=null){let d=it.angle-cam.tTheta;d=Math.atan2(Math.sin(d),Math.cos(d));cam.tTheta+=d;}}
+  if(s&&focus){
+    if(view==='chamber'){const it=items.find(i=>i.kind===s.kind&&i.id===s.id);if(it&&it.angle!=null){let d=it.angle-cam.tTheta;d=Math.atan2(Math.sin(d),Math.cos(d));cam.tTheta+=d;}}
+    else if(gLevel==='planet'&&planet){
+      const target=s.kind==='module'?s.id:mid;const idx=planet.mods.findIndex(m=>m.id===target);
+      if(idx>=0){const d=planet.rm.centers[idx].clone().applyAxisAngle(new THREE.Vector3(0,1,0),planet.body.rotation.y);
+        let dt=Math.atan2(d.z,d.x)-cam.tTheta;dt=Math.atan2(Math.sin(dt),Math.cos(dt));cam.tTheta+=dt;cam.tPhi=clamp(Math.acos(clamp(d.y,-1,1)),.45,2.6);}
+    }
+  }
   lastInteract=performance.now();
 }
 const tip=$('#tip');
@@ -783,37 +1051,202 @@ function updateHover(){
   canvasEl.classList.add('pointing');
   let t='',s='';
   if(h.kind==='core'){t='Nexus core';s='Click for commands';}
-  else if(h.kind==='project'){const p=getProject(h.id);if(p){t=p.name;s=`${p.code} · ${(STATUS[p.status]||{}).label} · ${p.progress}%`;}}
-  else if(h.kind==='module'){const f=findModule(h.id);if(f){t=f.m.name;s=`${f.p.code} · ${f.m.users.length} crew`;}}
-  else if(h.kind==='user'){const u=getUser(h.id);if(u){t=u.name;s=`${u.role||''} · ${(getTeam(u.team)||{}).name||'No team'}`;}}
+  else if(h.kind==='project'){const p=getProject(h.id);if(p){t=p.name;s=view==='galaxy'?`${p.code} · ${p.modules.length} regions · click to land`:`${p.code} · ${(STATUS[p.status]||{}).label} · ${p.progress}%`;}}
+  else if(h.kind==='module'){const f=findModule(h.id);if(f){t=f.m.name;s=view==='galaxy'?`Region · ${f.m.users.length} with access`:`${f.p.code} · ${f.m.users.length} crew`;}}
+  else if(h.kind==='user'){const u=getUser(h.id);if(u){t=u.name;
+    if(h.mid){const f=findModule(h.mid);s=f?`${PERMS[permOf(f.m,u.id)].label} · ${f.m.name}`:'';}else s=`${u.role||''} · ${(getTeam(u.team)||{}).name||'No team'}`;}}
   tip.innerHTML=`<b>${esc(t)}</b><span>${esc(s)}</span>`;tip.hidden=false;
   const w=tip.offsetWidth;tip.style.left=Math.min(mouse.x,innerWidth-w-30)+'px';tip.style.top=Math.min(mouse.y,innerHeight-70)+'px';
 }
 canvasEl.addEventListener('pointerenter',()=>{mouse.out=false;});
 
+/* ---------- VR mode ---------- */
+const vrUi=$('#vr-ui');
+const vr={on:false,split:true,yaw:0,pitch:0,yawOff:0,sensor:false,evt:null,recenter:false,pos:new THREE.Vector3(),key:'',gazeKey:'',gazeT:0,fired:false,progStep:-1};
+scene.add(camera);
+const eyeL=new THREE.PerspectiveCamera(80,1,.05,2000),eyeR=new THREE.PerspectiveCamera(80,1,.05,2000);camera.add(eyeL,eyeR);
+const reticle=new THREE.Group();reticle.position.z=-2.5;reticle.visible=false;camera.add(reticle);
+const retMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.9,depthTest:false,depthWrite:false});
+const retRing=new THREE.Mesh(new THREE.RingGeometry(.02,.03,32),retMat);retRing.renderOrder=999;reticle.add(retRing);
+const retDot=new THREE.Mesh(new THREE.CircleGeometry(.006,12),retMat);retDot.renderOrder=999;reticle.add(retDot);
+const progMat=new THREE.MeshBasicMaterial({color:0xff5a24,transparent:true,depthTest:false,depthWrite:false});
+let progMesh=null;
+function setProg(p){const step=Math.round(p*24);if(step===vr.progStep)return;vr.progStep=step;
+  if(progMesh){reticle.remove(progMesh);progMesh.geometry.dispose();progMesh=null;}
+  if(step>0){progMesh=new THREE.Mesh(new THREE.RingGeometry(.036,.05,32,1,Math.PI/2,step/24*TAU),progMat);progMesh.renderOrder=1000;reticle.add(progMesh);}}
+function btnTex(label){const c=document.createElement('canvas');c.width=512;c.height=160;const g=c.getContext('2d');
+  g.fillStyle='rgba(8,18,32,.88)';g.fillRect(0,0,512,160);g.strokeStyle='#5ab8ff';g.lineWidth=4;g.strokeRect(4,4,504,152);
+  g.strokeStyle='#ff5a24';g.lineWidth=6;g.beginPath();g.moveTo(4,40);g.lineTo(4,4);g.lineTo(40,4);g.stroke();
+  g.font='600 58px "Chakra Petch", sans-serif';g.fillStyle='#eef7ff';g.textAlign='center';g.textBaseline='middle';g.fillText(label.toUpperCase(),256,84);
+  const t=new THREE.CanvasTexture(c);t.anisotropy=MAX_ANI;return t;}
+const vrMenu=new THREE.Group();vrMenu.visible=false;scene.add(vrMenu);
+const vrBtns=[['chamber','Chamber'],['galaxy','Galaxy'],['back','Back'],['exit','Exit VR']].map(([id,label],i)=>{
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.5,.47),new THREE.MeshBasicMaterial({map:btnTex(label),transparent:true,depthWrite:false,side:THREE.DoubleSide}));
+  const a=(i-1.5)*.4;m.position.set(Math.sin(a)*3.2,-3.3,-Math.cos(a)*3.2);m.rotation.set(-.8,-a,0,'YXZ');m.userData={kind:'vrbtn',id};vrMenu.add(m);return m;});
+let vrCard=null;
+function hideCard(){if(!vrCard)return;scene.remove(vrCard);vrCard.geometry.dispose();vrCard.material.map.dispose();vrCard.material.dispose();vrCard=null;}
+function cardInfo(core){
+  if(core){let mc=0;eachModule(()=>mc++);return{eyebrow:'Nexus core',title:'Delivery grid',sub:`${state.projects.length} projects · ${mc} modules · ${state.users.length} crew`,
+    rows:Object.keys(STATUS).map(k=>[STATUS[k].label,String(state.projects.filter(p=>p.status===k).length),STATUS[k].color])};}
+  if(!sel)return null;
+  if(sel.kind==='project'){const p=getProject(sel.id);if(!p)return null;const st=STATUS[p.status]||STATUS.active;
+    return{eyebrow:`Project · ${p.code}`,title:p.name,sub:`${st.label} · ${p.progress}% delivered`,subColor:st.color,rows:p.modules.map(m=>[m.name,`${m.users.length} with access`,'#9ab4cc'])};}
+  if(sel.kind==='module'){const f=findModule(sel.id);if(!f)return null;
+    return{eyebrow:`Region · ${f.p.name}`,title:f.m.name,sub:`${f.m.users.length} people with access`,rows:f.m.users.map(u=>{const x=getUser(u);const lv=permOf(f.m,u);return[x?x.name:'Unknown',PERMS[lv].label,PERMS[lv].color];})};}
+  if(sel.kind==='user'){const u=getUser(sel.id);if(!u)return null;const rows=[];eachModule((p,m)=>{if(m.users.includes(u.id)){const lv=permOf(m,u.id);rows.push([`${m.name} · ${p.code}`,PERMS[lv].label,PERMS[lv].color]);}});
+    return{eyebrow:'Crew member',title:u.name,sub:`${u.role||''} · ${(getTeam(u.team)||{}).name||'No team'}`,subColor:teamColor(u),rows};}
+  if(sel.kind==='team'){const t=getTeam(sel.id);if(!t)return null;return{eyebrow:'Team',title:t.name,sub:'Members',subColor:t.color,rows:state.users.filter(u=>u.team===t.id).map(u=>[u.name,u.role||'',t.color])};}
+  return null;
+}
+function showCard(core){
+  hideCard();const info=cardInfo(core);if(!info)return;
+  const W=1024,H=680,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  g.fillStyle='rgba(6,14,26,.9)';g.fillRect(0,0,W,H);g.strokeStyle='rgba(110,190,255,.6)';g.lineWidth=3;g.strokeRect(6,6,W-12,H-12);
+  g.strokeStyle='#ff5a24';g.lineWidth=7;g.beginPath();g.moveTo(6,60);g.lineTo(6,6);g.lineTo(60,6);g.stroke();g.beginPath();g.moveTo(W-6,H-60);g.lineTo(W-6,H-6);g.lineTo(W-60,H-6);g.stroke();
+  g.textBaseline='alphabetic';g.textAlign='left';
+  g.font='500 26px "JetBrains Mono", monospace';g.fillStyle='#86abcc';g.fillText(trunc(g,info.eyebrow.toUpperCase(),W-100),48,70);
+  let s=62;do{g.font=`700 ${s}px "Chakra Petch", sans-serif`;s-=2;}while(g.measureText(info.title).width>W-96&&s>30);
+  g.fillStyle='#eef7ff';g.fillText(trunc(g,info.title,W-96),48,142);
+  g.font='500 26px "JetBrains Mono", monospace';g.fillStyle=info.subColor||'#9ab4cc';g.fillText(trunc(g,info.sub,W-96),48,188);
+  g.setLineDash([5,7]);g.strokeStyle='rgba(120,190,255,.4)';g.lineWidth=2;g.beginPath();g.moveTo(48,214);g.lineTo(W-48,214);g.stroke();g.setLineDash([]);
+  const rows=info.rows.slice(0,7);
+  rows.forEach(([l,r,col],i)=>{const y=262+i*52;g.font='500 28px "JetBrains Mono", monospace';g.fillStyle='#d8e8f6';g.textAlign='left';g.fillText(trunc(g,l,620),48,y);
+    g.textAlign='right';g.fillStyle=col;g.font='700 24px "JetBrains Mono", monospace';g.fillText(String(r).toUpperCase(),W-48,y);});
+  g.textAlign='left';g.font='500 22px "JetBrains Mono", monospace';g.fillStyle='#6f8aa5';
+  if(info.rows.length>7)g.fillText(`+${info.rows.length-7} more`,48,262+7*52-10);
+  if(!rows.length){g.fillStyle='#6f8aa5';g.font='500 26px "JetBrains Mono", monospace';g.fillText('Nothing linked yet',48,262);}
+  g.fillStyle='#6f8aa5';g.font='500 21px "JetBrains Mono", monospace';g.fillText('TAP EMPTY SPACE TO CLOSE · EXIT VR TO EDIT ACCESS',48,H-36);
+  const t=new THREE.CanvasTexture(c);t.anisotropy=MAX_ANI;
+  vrCard=new THREE.Mesh(new THREE.PlaneGeometry(3.6,2.39),new THREE.MeshBasicMaterial({map:t,transparent:true,depthTest:false,depthWrite:false,side:THREE.DoubleSide}));
+  vrCard.renderOrder=900;
+  const dir=new THREE.Vector3();camera.getWorldDirection(dir);dir.y=Math.max(-.3,Math.min(.3,dir.y));dir.normalize();
+  vrCard.position.copy(vr.pos).addScaledVector(dir,4.6).add(new THREE.Vector3(0,.2,0));vrCard.lookAt(vr.pos);scene.add(vrCard);
+}
+function vrPlace(force){
+  const k=view+':'+gLevel+':'+(planetProject||'');if(!force&&k===vr.key)return;vr.key=k;
+  if(view==='chamber')vr.pos.set(0,1,13.5);
+  else if(gLevel==='planet'){const g=galaxyPos.get(planetProject)||new THREE.Vector3();vr.pos.copy(g).add(new THREE.Vector3(0,.6,9.5));}
+  else vr.pos.set(0,3,0);
+  vrMenu.position.copy(vr.pos);vr.yaw=0;vr.pitch=0;vr.recenter=true;hideCard();
+}
+function gazeName(h){if(!h)return'';if(h.kind==='vrbtn')return({chamber:'Chamber view',galaxy:'Galaxy view',back:'Back',exit:'Exit VR'})[h.id];
+  if(h.kind==='core')return'Nexus core';if(h.kind==='project'){const p=getProject(h.id);return p?p.name:'';}
+  if(h.kind==='module'){const f=findModule(h.id);return f?f.m.name:'';}
+  if(h.kind==='user'){const u=getUser(h.id);if(!u)return'';if(h.mid){const f=findModule(h.mid);if(f)return `${u.name} · ${PERMS[permOf(f.m,u.id)].label}`;}return u.name;}return'';}
+function vrPick(){camera.updateMatrixWorld(true);ray.setFromCamera(new THREE.Vector2(0,0),camera);
+  const bh=ray.intersectObjects(vrBtns,false);if(bh.length)return bh[0].object.userData;return pickNdc(0,0);}
+function dwellable(h){return h&&(h.kind==='vrbtn'||h.kind==='user'||(h.kind==='module'&&!h.region)||(h.kind==='project'&&view==='galaxy'&&gLevel==='universe'));}
+function vrActivate(h){
+  if(!h){if(vrCard||sel){select(null);hideCard();}else{const d=new THREE.Vector3();camera.getWorldDirection(d);vr.pos.addScaledVector(d,4);vrMenu.position.copy(vr.pos);}return;}
+  if(h.kind==='vrbtn'){if(h.id==='exit')return exitVR();if(h.id==='back'){if(view==='galaxy'&&gLevel==='planet')exitPlanet();else{select(null);hideCard();vrPlace(true);}return;}setView(h.id);return;}
+  if(h.kind==='core'){showCard(true);return;}
+  select({kind:h.kind,id:h.id},false,h.mid);vrPlace(false);showCard(false);
+}
+const qS=new THREE.Quaternion(),qY=new THREE.Quaternion(),q0=new THREE.Quaternion(),qX=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5)),eul=new THREE.Euler(),ZEE=new THREE.Vector3(0,0,1),YAX=new THREE.Vector3(0,1,0);
+function onOri(e){if(e.alpha==null&&e.beta==null&&e.gamma==null)return;vr.evt={a:e.alpha||0,b:e.beta||0,g:e.gamma||0};if(!vr.sensor){vr.sensor=true;vr.recenter=true;vrNote('');}}
+function vrNote(msg){const n=$('#vr-note');n.textContent=msg;n.hidden=!msg;if(msg)setTimeout(()=>{if(n.textContent===msg)n.hidden=true;},5000);}
+function enterVR(split){
+  try{if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')DeviceOrientationEvent.requestPermission().catch(()=>{});}catch(e){}
+  addEventListener('deviceorientation',onOri);
+  try{const el=document.documentElement;if(el.requestFullscreen)el.requestFullscreen().then(()=>{try{screen.orientation.lock('landscape').catch(()=>{});}catch(e){}}).catch(()=>{});}catch(e){}
+  vr.on=true;vr.split=split;vr.sensor=false;vr.evt=null;vr.gazeKey='';vr.fired=false;
+  document.body.classList.add('vr');vrUi.hidden=false;vrUi.classList.toggle('split',split);
+  closeCmd();tip.hidden=true;reticle.visible=true;vrMenu.visible=true;hover=null;
+  vrPlace(true);if(sel)showCard(false);
+  vrNote(split?'Turn your phone sideways and place it in your viewer':'Move your phone to look around');
+  setTimeout(()=>{if(vr.on&&!vr.sensor)vrNote('Motion sensors are blocked here. Drag to look around.');},2200);
+}
+function exitVR(){
+  vr.on=false;removeEventListener('deviceorientation',onOri);
+  try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
+  try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}catch(e){}
+  document.body.classList.remove('vr');vrUi.hidden=true;reticle.visible=false;vrMenu.visible=false;hideCard();setProg(0);
+  camera.fov=42;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setViewport(0,0,innerWidth,innerHeight);
+  hover=null;renderInspector();
+}
+function vrUpdate(dt){
+  vrPlace(false);
+  camera.position.copy(vr.pos);
+  if(vr.sensor&&vr.evt){const d=Math.PI/180;const so=((screen.orientation&&screen.orientation.angle)||window.orientation||0)*d;
+    eul.set(vr.evt.b*d,vr.evt.a*d,-vr.evt.g*d,'YXZ');qS.setFromEuler(eul);qS.multiply(qX);qS.multiply(q0.setFromAxisAngle(ZEE,-so));
+    if(vr.recenter){eul.setFromQuaternion(qS,'YXZ');vr.yawOff=-eul.y;vr.recenter=false;}
+    qY.setFromAxisAngle(YAX,vr.yawOff+vr.yaw);camera.quaternion.copy(qY).multiply(qS);}
+  else camera.quaternion.setFromEuler(eul.set(vr.pitch,vr.yaw,0,'YXZ'));
+  const h=vrPick();hover=h&&h.kind!=='vrbtn'?h:null;
+  const key=h?`${h.kind}:${h.id}:${h.mid||''}`:'';
+  if(key!==vr.gazeKey){vr.gazeKey=key;vr.gazeT=0;vr.fired=false;const n=gazeName(h);$('#vr-g1').textContent=n;$('#vr-g2').textContent=n;}
+  if(dwellable(h)&&!vr.fired){vr.gazeT+=dt;if(vr.gazeT>1.6){vr.fired=true;vrActivate(h);}}
+  setProg(dwellable(h)&&!vr.fired?Math.min(1,vr.gazeT/1.6):0);
+  retMat.color.set(h?'#ffb08a':'#ffffff');retRing.scale.setScalar(h?1.4:1);
+}
+function vrRender(){
+  const W=innerWidth,H=innerHeight;
+  if(vr.split){const sep=.1;eyeL.position.set(-sep/2,0,0);eyeR.position.set(sep/2,0,0);
+    [eyeL,eyeR].forEach(e=>{e.aspect=(W/2)/H;e.fov=80;e.updateProjectionMatrix();});camera.updateMatrixWorld(true);
+    renderer.setScissorTest(true);
+    renderer.setViewport(0,0,W/2,H);renderer.setScissor(0,0,W/2,H);renderer.render(scene,eyeL);
+    renderer.setViewport(W/2,0,W/2,H);renderer.setScissor(W/2,0,W/2,H);renderer.render(scene,eyeR);
+    renderer.setScissorTest(false);renderer.setViewport(0,0,W,H);}
+  else{camera.fov=72;camera.aspect=W/H;camera.updateProjectionMatrix();if(composer)composer.render();else renderer.render(scene,camera);}
+}
+let vd=null;
+vrUi.addEventListener('pointerdown',e=>{if(e.target.closest('#vr-exit'))return;vd={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false};try{vrUi.setPointerCapture(e.pointerId);}catch(_){}});
+vrUi.addEventListener('pointermove',e=>{if(!vd)return;const dx=e.clientX-vd.x,dy=e.clientY-vd.y;vd.x=e.clientX;vd.y=e.clientY;
+  if(Math.hypot(e.clientX-vd.sx,e.clientY-vd.sy)>8)vd.moved=true;
+  vr.yaw+=dx*.005;if(!vr.sensor)vr.pitch=clamp(vr.pitch+dy*.004,-1.45,1.45);});
+vrUi.addEventListener('pointerup',e=>{if(vd&&!vd.moved){const h=vrPick();vr.fired=true;vrActivate(h);}vd=null;});
+vrUi.addEventListener('pointercancel',()=>{vd=null;});
+$('#vr-exit').addEventListener('click',exitVR);
+$('#vr-open').addEventListener('click',()=>{
+  formKind='vr';form.innerHTML=`<h2>Enter VR</h2>
+  <p class="muted" style="margin:0;line-height:1.65">Aim the ring in the middle of your view at a panel, galaxy, region or person. Hold it there to select, or tap the screen. Tap empty space to fly forward. Look down for the menu.</p>
+  <div class="vr-choices"><button class="btn primary" type="button" data-vrmode="split">Headset · split view</button><button class="btn" type="button" data-vrmode="mono">Handheld · single view</button></div>
+  <div class="actions"><button class="btn ghost" type="button" data-close>Cancel</button></div>`;modal.hidden=false;});
+form.addEventListener('click',e=>{const b=e.target.closest('[data-vrmode]');if(!b)return;const split=b.dataset.vrmode==='split';closeForm();enterVR(split);});
+
 /* ---------- Loop ---------- */
 const clock=new THREE.Clock();const tmp=new THREE.Vector3();
+function runPulses(pts,list,t,motion){if(!pts)return;const pa=pts.geometry.attributes.position,ca=pts.geometry.attributes.color;
+  list.forEach((p,i)=>{const u=(p.off+t*p.speed*motion)%1;p.curve.getPointAt(u,tmp);pa.setXYZ(i,tmp.x,tmp.y,tmp.z);const k=Math.min(1.4,p.link.cur)*Math.sin(u*Math.PI);ca.setXYZ(i,p.color.r*k,p.color.g*k,p.color.b*k);});
+  pa.needsUpdate=true;ca.needsUpdate=true;}
+function fade(list,rate){list.forEach(l=>{l.cur+=(l.target-l.cur)*rate;l.mats.forEach(([m,b])=>{m.opacity=Math.min(1,b*l.cur);});});}
 function frame(){
   requestAnimationFrame(frame);
   const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
   const motion=reduceMotion?.25:1;
-  if(!reduceMotion&&!sel&&!drag&&cmdEl.hidden&&modal.hidden&&performance.now()-lastInteract>3500)cam.tTheta+=dt*.045;
-  cam.theta+=(cam.tTheta-cam.theta)*.08;cam.phi+=(cam.tPhi-cam.phi)*.08;cam.r+=(cam.tR-cam.r)*.08;
-  camera.position.set(cam.r*Math.sin(cam.phi)*Math.cos(cam.theta),cam.r*Math.cos(cam.phi),cam.r*Math.sin(cam.phi)*Math.sin(cam.theta));
-  camera.lookAt(0,0,0);
+  const onPlanet=view==='galaxy'&&gLevel==='planet';
+  if(!reduceMotion&&!sel&&!drag&&!onPlanet&&cmdEl.hidden&&modal.hidden&&performance.now()-lastInteract>3500)cam.tTheta+=dt*(view==='galaxy'?.03:.045);
+  cam.theta+=(cam.tTheta-cam.theta)*.08;cam.phi+=(cam.tPhi-cam.phi)*.08;cam.r+=(cam.tR-cam.r)*.07;cam.target.lerp(cam.tTarget,.07);
+  if(vr.on)vrUpdate(dt);else{
+  camera.position.set(cam.target.x+cam.r*Math.sin(cam.phi)*Math.cos(cam.theta),cam.target.y+cam.r*Math.cos(cam.phi),cam.target.z+cam.r*Math.sin(cam.phi)*Math.sin(cam.theta));
+  camera.lookAt(cam.target);}
   coreTime.value=t*motion;
-  const coreHot=(hover&&hover.kind==='core')||!cmdEl.hidden;
-  const boost=coreMat.uniforms.uBoost;boost.value+=((coreHot?1.7:1)+Math.sin(t*2)*.08-boost.value)*.1;
-  baseFlare.material.opacity=.8+Math.sin(t*1.7)*.15;midFlare.scale.setScalar(5+Math.sin(t*1.3)*.6);
-  coreInner.material.opacity=.5+Math.sin(t*3.1)*.12;
-  items.forEach(it=>{it.cur+=(it.target-it.cur)*.12;it.mats.forEach(([m,b])=>{m.opacity=Math.min(1,b*it.cur);});
-    if(it.kind==='module'&&it.node){it.node.rotation.y=t*1.2*motion+it.spin;const hv=hover&&hover.kind==='module'&&hover.id===it.id,sl=sel&&sel.kind==='module'&&sel.id===it.id;it.node.scale.setScalar(hv||sl?1.7:1);}
-    if(it.kind==='user'&&it.node){const hv=hover&&hover.kind==='user'&&hover.id===it.id,sl=sel&&sel.kind==='user'&&sel.id===it.id;it.node.scale.setScalar(hv||sl?1.35:1);it.ring.material.rotation=t*.6*motion;}
-  });
-  links.forEach(l=>{l.cur+=(l.target-l.cur)*.12;l.mats.forEach(([m,b])=>{m.opacity=Math.min(1,b*l.cur);});});
-  if(pulsePoints){const pa=pulsePoints.geometry.attributes.position,ca=pulsePoints.geometry.attributes.color;
-    pulseList.forEach((p,i)=>{const u=(p.off+t*p.speed*motion)%1;p.curve.getPointAt(u,tmp);pa.setXYZ(i,tmp.x,tmp.y,tmp.z);const k=Math.min(1.4,p.link.cur)*Math.sin(u*Math.PI);ca.setXYZ(i,p.color.r*k,p.color.g*k,p.color.b*k);});
-    pa.needsUpdate=true;ca.needsUpdate=true;}
+  if(view==='chamber'){
+    const coreHot=(hover&&hover.kind==='core')||!cmdEl.hidden;
+    const boost=coreMat.uniforms.uBoost;boost.value+=((coreHot?1.7:1)+Math.sin(t*2)*.08-boost.value)*.1;
+    baseFlare.material.opacity=.8+Math.sin(t*1.7)*.15;midFlare.scale.setScalar(5+Math.sin(t*1.3)*.6);
+    coreInner.material.opacity=.5+Math.sin(t*3.1)*.12;
+    items.forEach(it=>{
+      if(it.kind==='module'&&it.node){it.node.rotation.y=t*1.2*motion+it.spin;const hv=hover&&hover.kind==='module'&&hover.id===it.id,sl=sel&&sel.kind==='module'&&sel.id===it.id;it.node.scale.setScalar(hv||sl?1.7:1);}
+      if(it.kind==='user'&&it.node){const hv=hover&&hover.kind==='user'&&hover.id===it.id,sl=sel&&sel.kind==='user'&&sel.id===it.id;it.node.scale.setScalar(hv||sl?1.35:1);it.ring.material.rotation=t*.6*motion;}
+    });
+    fade(items,.12);fade(links,.12);runPulses(pulsePoints,pulseList,t,motion);
+  }else{
+    gItems.forEach(it=>{
+      const host=(onPlanet&&it.kind==='project'&&it.id===planetProject)?.2:1;
+      it.cur+=(it.target*host-it.cur)*.1;it.mats.forEach(([m,b])=>{m.opacity=Math.min(1,b*it.cur);});
+      if(it.spin)it.spin.rotation.y+=dt*it.speed*motion;
+      if(it.kind==='project'&&it.label)it.label.visible=!onPlanet||it.id!==planetProject;
+      if(it.kind==='pin'){const hv=hover&&hover.kind==='user'&&hover.id===it.id&&hover.mid===it.mid;
+        it.node.scale.setScalar(hv?1.7:1);it.ring.material.rotation=t*.8*motion;
+        it.label.visible=hv||!!(sel&&(sel.kind==='module'||sel.kind==='user')&&it.target===1);}
+    });
+    gLinks.forEach(l=>{const tg=onPlanet?l.target*.35:l.target;l.cur+=(tg-l.cur)*.1;l.mats.forEach(([m,b])=>{m.opacity=Math.min(1,b*l.cur);});});
+    runPulses(gPulsePoints,gPulseList,t,motion);
+    if(planet&&!(sel&&(sel.kind==='module'||sel.kind==='user')))planet.body.rotation.y+=dt*.05*motion;
+  }
+  if(bloom){const gs=onPlanet?.5:.95,gt=onPlanet?.42:.2;bloom.strength+=(gs-bloom.strength)*.08;bloom.threshold+=(gt-bloom.threshold)*.08;}
+  if(vr.on){vrRender();return;}
   updateHover();
   if(composer)composer.render();else renderer.render(scene,camera);
 }
