@@ -119,8 +119,96 @@ select{font:500 13.5px var(--body);color:var(--ink);background:var(--surface);bo
 
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);font:600 13px var(--body);padding:10px 16px;border:2px solid var(--line);box-shadow:3px 3px 0 var(--shadow);z-index:20;max-width:calc(100% - 32px)}
 
-@media (max-width:900px){.bench{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:480px){.top h1{font-size:22px}.style-row{grid-auto-columns:128px}.stage{padding:10px;min-height:220px}}
+
+/* Range sliders: big touch-friendly thumbs */
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;height:32px;margin:0;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:8px;background:var(--sunk);border:2px solid var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-10px;background:var(--accent);border:2px solid var(--line);box-shadow:2px 2px 0 var(--shadow)}
+input[type=range]::-moz-range-track{height:4px;background:var(--sunk);border:2px solid var(--line)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:0;background:var(--accent);border:2px solid var(--line);box-shadow:2px 2px 0 var(--shadow)}
+input[type=range]:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.range-wrap{display:grid;grid-template-columns:36px minmax(0,1fr) 36px;gap:8px;align-items:center}
+.step{width:36px;height:36px;display:grid;place-items:center;background:var(--surface);color:var(--ink);border:2px solid var(--line);font:700 18px var(--mono);cursor:pointer;line-height:1;padding:0}
+.step:active{background:var(--accent);color:var(--accent-ink)}
+.tabbar,.sheet-chrome,.only-land{display:none}
+
+/* Desktop / tablet landscape */
+@media (min-width:900px){.sheet-chrome{display:none!important}}
+@media (max-width:899px){.bench{grid-template-columns:minmax(0,1fr)}}
+
+/* Phone and small tablet: app shell with live preview on top, tools in a bottom sheet */
+@media (max-width:899px){
+  :root{--tabh:62px;--sheeth:min(46dvh,440px);--chromeh:46px}
+  html,body{height:100%}
+  body{padding:0;overflow:hidden;font-size:16px}
+  .wrap{height:100dvh;height:100vh;height:100dvh;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 8px)}
+  body.sheet-open .wrap{padding-bottom:calc(var(--tabh) + var(--sheeth) + var(--chromeh) + env(safe-area-inset-bottom,0px) + 8px)}
+  .top{flex-wrap:nowrap;gap:10px}
+  .brand{gap:10px;min-width:0}
+  .logo-mark{width:30px;height:30px}
+  .top h1{font-size:18px}
+  .top p{display:none}
+  .top .btn{padding:9px 12px;min-height:44px}
+  .bench{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;align-items:stretch}
+  .left{flex:1;min-height:0;gap:0}
+  .left>.card:first-child{flex:1;min-height:0;display:flex;flex-direction:column;box-shadow:3px 3px 0 var(--shadow)}
+  .stage-bar{padding:6px 8px;gap:6px;flex-wrap:nowrap}
+  .stage-bar .name{font-size:14px;flex:1 1 auto}
+  .stage-bar .btn.small{min-height:36px;padding:5px 9px}
+  .tag{display:none}
+  .stage{flex:1;min-height:0;padding:8px;overflow:auto;place-items:safe center;-webkit-overflow-scrolling:touch}
+  .stage-foot{padding:6px 10px;gap:12px;font-size:12px}
+  .stage-foot .f-style{display:none}
+  .split span{width:40px;height:40px;left:-21px;margin-top:-20px;font-size:15px}
+  .panel{display:contents}
+  /* sheets */
+  [data-sheet]{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px));height:var(--sheeth);overflow-y:auto;overscroll-behavior:contain;z-index:30;
+    background:var(--surface);border:0;border-top:1px dashed var(--line);box-shadow:none;margin:0;padding:14px 16px 20px;display:none}
+  body[data-tab="styles"] [data-sheet="styles"],body[data-tab="pixels"] [data-sheet="pixels"],body[data-tab="colours"] [data-sheet="colours"],
+  body[data-tab="adjust"] [data-sheet="adjust"],body[data-tab="palette"] [data-sheet="palette"],body[data-tab="export"] [data-sheet="export"]{display:flex;flex-direction:column;gap:14px}
+  [data-sheet]>h2,.styles>h2,.pal-head h2{display:none}
+  .group+.group{border-top:0}
+  .style-row{grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));grid-auto-columns:auto;overflow:visible;padding:2px 2px 4px}
+  .style-card{padding:6px;min-height:44px}
+  .style-card span{display:none}
+  .swatches{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}
+  .sw .chip{height:40px}
+  .pal-head{margin-bottom:4px}
+  select{font-size:16px;min-height:44px}
+  .seg button{min-height:44px;font-size:14px}
+  .toggle{min-height:44px}
+  .toggle input{width:24px;height:24px}
+  .reset-link{min-height:44px;font-size:14px}
+  #widthchips .btn{min-height:40px;font-size:14px}
+  .export-row{grid-template-columns:1fr}
+  .export-row .btn{min-height:48px;font-size:16px}
+  .sheet-chrome{display:flex;position:fixed;left:0;right:0;z-index:31;bottom:calc(var(--tabh) + var(--sheeth) + env(safe-area-inset-bottom,0px));height:var(--chromeh);
+    align-items:center;justify-content:space-between;gap:8px;padding:0 6px 0 16px;background:var(--surface);border-top:2px solid var(--line);box-shadow:0 -6px 14px rgba(0,0,0,.12);touch-action:none}
+  .sheet-chrome h2{font-size:14px}
+  .sheet-chrome::before{content:"";position:absolute;left:50%;top:6px;width:40px;height:4px;margin-left:-20px;background:var(--line);opacity:.5}
+  .sheet-close{width:44px;height:44px;background:none;border:0;color:var(--ink);font:700 22px var(--mono);cursor:pointer}
+  .tabbar{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:32;height:calc(var(--tabh) + env(safe-area-inset-bottom,0px));
+    padding-bottom:env(safe-area-inset-bottom,0px);background:var(--surface);border-top:2px solid var(--line)}
+  .tabbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:0;color:var(--muted);font:600 11px var(--body);cursor:pointer;padding:4px 0;min-width:0}
+  .tabbar button+button{border-left:1px dashed var(--line)}
+  .tabbar svg{width:22px;height:22px;image-rendering:pixelated}
+  .tabbar button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+  .drop{inset:4px;font-size:15px}
+}
+@media (max-width:899px) and (orientation:landscape) and (max-height:520px){
+  :root{--tabh:50px;--chromeh:42px;--sidew:min(380px,46vw)}
+  .top{display:none}
+  .only-land{display:inline-flex}
+  .tabbar svg{width:18px;height:18px}
+  .tabbar button{flex-direction:row;gap:6px}
+  body.sheet-open .wrap{padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 8px);padding-right:calc(var(--sidew) + 12px)}
+  [data-sheet]{left:auto;right:0;width:var(--sidew);top:calc(var(--chromeh) + env(safe-area-inset-top,0px));height:auto;border-top:0;border-left:2px solid var(--line)}
+  .sheet-chrome{left:auto;right:0;width:var(--sidew);top:env(safe-area-inset-top,0px);bottom:auto;border-top:0;border-left:2px solid var(--line);border-bottom:2px solid var(--line);box-shadow:none}
+  .sheet-chrome::before{display:none}
+}
+@media (max-width:380px){.tabbar button{font-size:10px}.stage-bar .name{display:none}}
+
+@media (max-width:899px){#toast{bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 12px);z-index:40}body.sheet-open #toast{bottom:calc(var(--tabh) + var(--sheeth) + var(--chromeh) + env(safe-area-inset-bottom,0px) + 12px)}}
 @media (prefers-reduced-motion:reduce){.btn,.style-card{transition:none}}
 </style>
 </head>
@@ -138,7 +226,7 @@ select{font:500 13.5px var(--body);color:var(--ink);background:var(--surface);bo
     </div>
   </header>
 
-  <section class="styles" aria-labelledby="styles-h">
+  <section class="styles" aria-labelledby="styles-h" data-sheet="styles" id="sheet-styles">
     <h2 id="styles-h">Choose a style <small>Each card is a live preview of your image</small></h2>
     <div class="style-row" id="styles" role="group" aria-label="Pixel art styles"></div>
   </section>
@@ -148,8 +236,10 @@ select{font:500 13.5px var(--body);color:var(--ink);background:var(--surface);bo
       <div class="card">
         <div class="stage-bar">
           <span class="name" id="srcname">Sample landscape</span><span class="tag" id="sampletag">Sample</span>
+          <label class="btn small only-land" for="file">Upload</label>
           <button class="btn small" id="compare" type="button" aria-pressed="false">Compare</button>
           <button class="btn small" id="gridbtn" type="button" aria-pressed="true">Grid</button>
+          <button class="btn small" id="zoom" type="button" aria-label="Zoom level">Fit</button>
         </div>
         <div class="stage" id="stage">
           <div class="canvas-box" id="cbox"><canvas id="view" width="10" height="10" aria-label="Pixel art preview"></canvas>
@@ -157,17 +247,17 @@ select{font:500 13.5px var(--body);color:var(--ink);background:var(--surface);bo
           </div>
           <div class="drop" id="drop" hidden>Drop to convert</div>
         </div>
-        <div class="stage-foot"><span>Grid <b class="mono" id="f-size">–</b></span><span>Colours <b class="mono" id="f-cols">–</b></span><span>Pixels <b class="mono" id="f-px">–</b></span><span>Style <b id="f-style">–</b></span></div>
+        <div class="stage-foot"><span>Grid <b class="mono" id="f-size">–</b></span><span>Colours <b class="mono" id="f-cols">–</b></span><span>Pixels <b class="mono" id="f-px">–</b></span><span class="f-style">Style <b id="f-style">–</b></span></div>
       </div>
 
-      <div class="card palette">
+      <div class="card palette" data-sheet="palette" id="sheet-palette">
         <div class="pal-head"><h2>Palette</h2><span class="muted grow" style="font-size:13px">Click a colour to swap it everywhere it appears</span><button class="reset-link" id="resetcols" type="button" hidden>Reset swapped colours</button></div>
         <div class="swatches" id="swatches"></div>
       </div>
     </div>
 
     <aside class="card panel" aria-label="Controls">
-      <div class="group">
+      <div class="group" data-sheet="pixels" id="sheet-pixels">
         <h2>Pixels</h2>
         <div class="ctl"><div class="ctl-row"><label for="c-width">Width in pixels</label><output id="o-width" class="mono"></output></div>
           <input type="range" id="c-width" min="12" max="256" step="1"></div>
@@ -175,7 +265,7 @@ select{font:500 13.5px var(--body);color:var(--ink);background:var(--surface);bo
         <div class="ctl"><span class="ctl-row">Sampling</span>
           <div class="seg" id="c-sampling"><button type="button" data-v="average">Smooth</button><button type="button" data-v="nearest">Sharp</button></div></div>
       </div>
-      <div class="group">
+      <div class="group" data-sheet="colours" id="sheet-colours">
         <h2>Colours</h2>
         <div class="ctl"><label class="ctl-row" for="c-source">Palette</label>
           <select id="c-source"><option value="style">Style palette</option><option value="auto">Built from my image</option></select></div>
@@ -186,7 +276,7 @@ select{font:500 13.5px var(--body);color:var(--ink);background:var(--surface);bo
         <div class="ctl" id="amt-ctl"><div class="ctl-row"><label for="c-amt">Dither strength</label><output id="o-amt" class="mono"></output></div>
           <input type="range" id="c-amt" min="0" max="100" step="1"></div>
       </div>
-      <div class="group">
+      <div class="group" data-sheet="adjust" id="sheet-adjust">
         <h2>Adjust</h2>
         <div class="ctl"><div class="ctl-row"><label for="c-bright">Brightness</label><output id="o-bright" class="mono"></output></div><input type="range" id="c-bright" min="-100" max="100" step="1"></div>
         <div class="ctl"><div class="ctl-row"><label for="c-contrast">Contrast</label><output id="o-contrast" class="mono"></output></div><input type="range" id="c-contrast" min="-100" max="100" step="1"></div>
@@ -194,7 +284,7 @@ select{font:500 13.5px var(--body);color:var(--ink);background:var(--surface);bo
         <label class="toggle" for="c-outline">Ink outline around shapes<input type="checkbox" id="c-outline"></label>
         <button class="reset-link" id="resetadj" type="button" style="align-self:flex-start">Reset adjustments</button>
       </div>
-      <div class="group">
+      <div class="group" data-sheet="export" id="sheet-export">
         <h2>Export</h2>
         <div class="export-row">
           <div class="ctl"><label class="ctl-row" for="c-scale">Scale</label><select id="c-scale"></select></div>
@@ -205,6 +295,8 @@ select{font:500 13.5px var(--body);color:var(--ink);background:var(--surface);bo
     </aside>
   </section>
 </div>
+<div class="sheet-chrome" id="sheet-chrome" hidden><h2 id="sheet-title">Styles</h2><button class="sheet-close" id="sheet-close" type="button" aria-label="Close panel">×</button></div>
+<nav class="tabbar" role="tablist" aria-label="Tools"><button type="button" role="tab" data-tab="styles" aria-controls="sheet-styles" aria-selected="false"><svg viewBox="0 0 8 8" aria-hidden="true" fill="currentColor"><rect x="0" y="0" width="3" height="3"/><rect x="5" y="0" width="3" height="3"/><rect x="0" y="5" width="3" height="3"/><rect x="5" y="5" width="3" height="3"/></svg><span>Styles</span></button><button type="button" role="tab" data-tab="pixels" aria-controls="sheet-pixels" aria-selected="false"><svg viewBox="0 0 8 8" aria-hidden="true" fill="currentColor"><rect x="0" y="0" width="2" height="2"/><rect x="3" y="0" width="2" height="2"/><rect x="6" y="0" width="2" height="2"/><rect x="0" y="3" width="2" height="2"/><rect x="3" y="3" width="2" height="2"/><rect x="6" y="3" width="2" height="2"/><rect x="0" y="6" width="2" height="2"/><rect x="3" y="6" width="2" height="2"/><rect x="6" y="6" width="2" height="2"/></svg><span>Pixels</span></button><button type="button" role="tab" data-tab="colours" aria-controls="sheet-colours" aria-selected="false"><svg viewBox="0 0 8 8" aria-hidden="true" fill="currentColor"><rect x="2" y="0" width="4" height="1"/><rect x="1" y="1" width="6" height="1"/><rect x="0" y="2" width="8" height="4"/><rect x="1" y="6" width="6" height="1"/><rect x="2" y="7" width="4" height="1"/></svg><span>Colours</span></button><button type="button" role="tab" data-tab="adjust" aria-controls="sheet-adjust" aria-selected="false"><svg viewBox="0 0 8 8" aria-hidden="true" fill="currentColor"><rect x="1" y="0" width="1" height="8"/><rect x="0" y="2" width="3" height="2"/><rect x="6" y="0" width="1" height="8"/><rect x="5" y="4" width="3" height="2"/><rect x="3.5" y="0" width="1" height="8"/><rect x="2.5" y="5" width="3" height="2"/></svg><span>Adjust</span></button><button type="button" role="tab" data-tab="palette" aria-controls="sheet-palette" aria-selected="false"><svg viewBox="0 0 8 8" aria-hidden="true" fill="currentColor"><rect x="0" y="0" width="8" height="2"/><rect x="0" y="3" width="8" height="2"/><rect x="0" y="6" width="8" height="2"/></svg><span>Palette</span></button><button type="button" role="tab" data-tab="export" aria-controls="sheet-export" aria-selected="false"><svg viewBox="0 0 8 8" aria-hidden="true" fill="currentColor"><rect x="3" y="0" width="2" height="5"/><rect x="1" y="3" width="6" height="1"/><rect x="2" y="4" width="4" height="1"/><rect x="0" y="6" width="8" height="2"/></svg><span>Save</span></button></nav>
 <div id="toast" hidden role="status"></div>
 
 <script>
@@ -230,7 +322,7 @@ const STYLES=[
   {id:'auto',name:'True colour',note:'Palette built from your image',pal:null,width:128,colors:32,dither:'none',amt:40},
   {id:'hd',name:'HD pixel',note:'Fine detail, 64 colours',pal:null,width:192,colors:64,dither:'fs',amt:35}
 ];
-const S={style:'pico8',width:96,colors:16,source:'style',dither:'none',amt:40,sampling:'average',bright:0,contrast:0,sat:0,outline:false,grid:true,compare:false,split:.5,scale:8,overrides:{}};
+const S={style:'pico8',width:96,colors:16,source:'style',dither:'none',amt:40,sampling:'average',bright:0,contrast:0,sat:0,outline:false,grid:true,compare:false,split:.5,scale:8,zoom:1,overrides:{}};
 let src=null,srcSmall=null,srcName='Sample landscape',isSample=true,result=null;
 
 /* ---------- Image processing ---------- */
@@ -312,6 +404,7 @@ function makeSample(){const c=document.createElement('canvas');c.width=640;c.hei
   return c;}
 
 /* ---------- UI ---------- */
+const MQ=matchMedia('(max-width:899px)');
 const view=$('#view'),vg=view.getContext('2d'),toastEl=$('#toast');let toastT;
 function toast(m){toastEl.textContent=m;toastEl.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>toastEl.hidden=true,2400);}
 function setSource(img,name,sample){
@@ -340,7 +433,7 @@ function renderStyles(){
   markStyle();}
 function markStyle(){[...$('#styles').children].forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.style===S.style)));}
 $('#styles').addEventListener('click',e=>{const c=e.target.closest('[data-style]');if(!c)return;const st=STYLES.find(s=>s.id===c.dataset.style);
-  Object.assign(S,{style:st.id,width:st.width,colors:st.colors,source:st.pal?'style':'auto',dither:st.dither,amt:st.amt,overrides:{}});syncControls();markStyle();schedule();});
+  Object.assign(S,{style:st.id,width:st.width,colors:st.colors,source:st.pal?'style':'auto',dither:st.dither,amt:st.amt,overrides:{}});syncControls();markStyle();schedule();if(MQ.matches)toast(st.name+' applied');});
 
 const ctl={width:$('#c-width'),colors:$('#c-colors'),amt:$('#c-amt'),bright:$('#c-bright'),contrast:$('#c-contrast'),sat:$('#c-sat')};
 const fmt={width:v=>v+' px',colors:v=>String(v),amt:v=>v+'%',bright:v=>(v>0?'+':'')+v,contrast:v=>(v>0?'+':'')+v,sat:v=>(v>0?'+':'')+v};
@@ -371,8 +464,8 @@ function run(){if(!src)return;result=convert(src,S,S.width);draw();renderPalette
   $('#f-style').textContent=(STYLES.find(s=>s.id===S.style)||{}).name||'';}
 const small=document.createElement('canvas');
 function draw(){if(!result)return;const r=result;small.width=r.W;small.height=r.H;small.getContext('2d').putImageData(toImageData(r,S.overrides),0,0);
-  const avail=Math.max(120,stage.clientWidth-36),availH=Math.max(220,Math.min(720,window.innerHeight*.7));
-  const sc=Math.max(1,Math.floor(Math.min(avail/r.W,availH/r.H)));
+  const mob=MQ.matches;const avail=Math.max(60,stage.clientWidth-(mob?16:36)),availH=mob?Math.max(60,stage.clientHeight-16):Math.max(220,Math.min(720,window.innerHeight*.7));
+  const sc=Math.max(1,Math.floor(Math.min(avail/r.W,availH/r.H)))*S.zoom;view.style.maxWidth=S.zoom>1?'none':'';view.style.touchAction=S.compare?'none':'';
   view.width=r.W*sc;view.height=r.H*sc;vg.imageSmoothingEnabled=false;vg.clearRect(0,0,view.width,view.height);vg.drawImage(small,0,0,view.width,view.height);
   if(S.grid&&sc>=5){vg.strokeStyle='rgba(0,0,0,.16)';vg.lineWidth=1;vg.beginPath();for(let x=1;x<r.W;x++){vg.moveTo(x*sc+.5,0);vg.lineTo(x*sc+.5,view.height);}for(let y=1;y<r.H;y++){vg.moveTo(0,y*sc+.5);vg.lineTo(view.width,y*sc+.5);}vg.stroke();}
   if(S.compare){const sx=Math.round(view.width*S.split);vg.save();vg.beginPath();vg.rect(sx,0,view.width-sx,view.height);vg.clip();vg.imageSmoothingEnabled=true;vg.imageSmoothingQuality='high';vg.clearRect(sx,0,view.width-sx,view.height);vg.drawImage(src,0,0,view.width,view.height);vg.restore();
@@ -387,6 +480,8 @@ split.addEventListener('pointerup',()=>dragging=false);
 view.addEventListener('pointerdown',e=>{if(S.compare){setSplit(e);dragging=true;view.setPointerCapture(e.pointerId);}});
 view.addEventListener('pointermove',e=>{if(dragging)setSplit(e);});view.addEventListener('pointerup',()=>dragging=false);
 addEventListener('resize',()=>draw());
+let roRaf=0;if(window.ResizeObserver)new ResizeObserver(()=>{if(roRaf)return;roRaf=requestAnimationFrame(()=>{roRaf=0;draw();});}).observe(stage);
+$('#zoom').addEventListener('click',()=>{S.zoom=S.zoom===1?2:S.zoom===2?4:1;$('#zoom').textContent=S.zoom===1?'Fit':S.zoom+'×';draw();toast(S.zoom===1?'Fit to screen':`Zoom ${S.zoom}× · drag to pan`);});
 
 function renderPalette(){const r=result;const total=r.counts.reduce((a,b)=>a+b,0)||1;
   const order=r.P.map((c,i)=>({c,i,n:r.counts[i]})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
@@ -409,7 +504,26 @@ $('#save').addEventListener('click',()=>{if(!result)return;const k=S.scale;const
 /* ---------- Boot ---------- */
 (function logo(){const c=$('#logo'),g=c.getContext('2d');const m=['0011111100','0122222210','1223333221','1233443321','1234554321','1234554321','1233443321','1223333221','0122222210','0011111100'];const cols=['','#14171f','#2f6bff','#ff5a7a','#ffcf33','#ffffff'];
   m.forEach((row,y)=>[...row].forEach((v,x)=>{if(v!=='0'){g.fillStyle=cols[+v];g.fillRect(x,y,1,1);}}));})();
+/* ---------- Mobile shell ---------- */
+const TITLES={styles:'Choose a style',pixels:'Pixels',colours:'Colours',adjust:'Adjust',palette:'Palette',export:'Save PNG'};
+const tabBtns=[...document.querySelectorAll('.tabbar [data-tab]')];
+function setTab(t){const b=document.body;if(t){b.dataset.tab=t;b.classList.add('sheet-open');$('#sheet-title').textContent=TITLES[t];}else{delete b.dataset.tab;b.classList.remove('sheet-open');}
+  $('#sheet-chrome').hidden=!t;tabBtns.forEach(x=>x.setAttribute('aria-selected',String(x.dataset.tab===t)));requestAnimationFrame(()=>draw());}
+tabBtns.forEach(x=>x.addEventListener('click',()=>setTab(document.body.dataset.tab===x.dataset.tab?'':x.dataset.tab)));
+$('#sheet-close').addEventListener('click',()=>setTab(''));
+{let y0=null;const ch=$('#sheet-chrome');ch.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;y0=e.clientY;});
+  ch.addEventListener('pointerup',e=>{if(y0!==null&&e.clientY-y0>40)setTab('');y0=null;});ch.addEventListener('pointercancel',()=>y0=null);}
+addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.dataset.tab&&MQ.matches)setTab('');});
+MQ.addEventListener?MQ.addEventListener('change',()=>draw()):MQ.addListener(()=>draw());
+// −/+ steppers for every slider
+const STEP={width:4,colors:1,amt:5,bright:5,contrast:5,sat:5};
+document.querySelectorAll('.ctl input[type=range]').forEach(r=>{const k=r.id.replace('c-','');const w=document.createElement('div');w.className='range-wrap';
+  const lab=(r.labels&&r.labels[0]?r.labels[0].textContent:k).trim();
+  const mk=(sign)=>{const b=document.createElement('button');b.type='button';b.className='step';b.textContent=sign<0?'−':'+';b.setAttribute('aria-label',(sign<0?'Decrease ':'Increase ')+lab.toLowerCase());
+    b.addEventListener('click',()=>{r.value=Math.max(+r.min,Math.min(+r.max,+r.value+sign*(STEP[k]||1)));r.dispatchEvent(new Event('input',{bubbles:true}));});return b;};
+  r.parentNode.insertBefore(w,r);w.append(mk(-1),r,mk(1));});
 syncControls();
+if(MQ.matches)setTab('styles');
 setSource(makeSample(),'Sample landscape',true);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>draw());
 })();
