@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WCAG 2.0 Accessibility Checker</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #ca8a04;
+      --bg: #f9fafb;
+      --card: #fff;
+      --border: #e5e7eb;
+      --text: #1e293b;
+      --muted: #64748b;
+    }
+    html {
+      font-size: 18px;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 1.5rem 0;
+      text-align: center;
+    }
+    main {
+      max-width: 1024px;
+      margin: 2rem auto;
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      padding: 2rem;
+      border: 1px solid var(--border);
+    }
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: end;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    input[type="url"], input[type="file"] {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 1rem;
+      background: #fff;
+    }
+    input[type="file"] {
+      padding: 0.3rem 0.5rem;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      grid-column: 1 / -1;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.75rem 1.25rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.secondary {
+      background: #0f172a;
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+    button:focus, button:hover {
+      background: #1d4ed8;
+      outline: 2px solid #1d4ed8;
+      outline-offset: 2px;
+    }
+    button.ghost:focus, button.ghost:hover {
+      color: #fff;
+    }
+    .split {
+      position: relative;
+      display: inline-flex;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--primary);
+    }
+    .split button {
+      border-radius: 0;
+      border: none;
+      background: var(--primary);
+    }
+    .split button.menu {
+      width: 2.25rem;
+      padding: 0.75rem 0;
+      border-left: 1px solid rgba(255,255,255,0.4);
+    }
+    .menu-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-width: 220px;
+      padding: 0.25rem 0;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      z-index: 10;
+    }
+    .menu-list[hidden] { display: none; }
+    .menu-item {
+      padding: 0.6rem 0.9rem;
+      display: block;
+      color: var(--text);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .menu-item:hover, .menu-item:focus { background: #f1f5f9; outline: none; }
+
+    section[aria-labelledby] { margin-top: 2.5rem; }
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .card {
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+    }
+    .indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .badge {
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .icon { width: 1.2em; height: 1.2em; display: inline-block; }
+    .progress-bar { width: 100%; height: 0.7em; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin-top: 0.3em; }
+    .progress { height: 100%; border-radius: 4px; transition: width 0.3s; width: 0%; }
+    .progress.success { background: var(--success); }
+    .progress.danger { background: var(--danger); }
+    .issues { margin: 0.5rem 0 0; padding-left: 1rem; max-height: 200px; overflow: auto; }
+    .issues li { margin: 0.25rem 0; color: #111827; }
+
+    .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    th, td { text-align: left; padding: 0.75rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 0.95rem; }
+    thead th { background: #eef2ff; position: sticky; top: 0; z-index: 1; }
+    .status-pass { color: #16a34a; font-weight: 600; }
+    .status-partial { color: #ca8a04; font-weight: 600; }
+    .status-fail { color: #dc2626; font-weight: 600; }
+    .status-na { color: var(--muted); font-weight: 600; }
+
+    .traffic { display: inline-flex; gap: 6px; align-items: center; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #e5e7eb; border: 1px solid #cbd5e1; }
+    .dot.green { background: #22c55e; border-color: #16a34a; }
+    .dot.yellow { background: #f59e0b; border-color: #d97706; }
+    .dot.red { background: #ef4444; border-color: #dc2626; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+    @media (max-width: 1024px) {
+      .dashboard { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      main { padding: 1rem; }
+      form { grid-template-columns: 1fr; }
+      .dashboard { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WCAG 2.0 Accessibility Checker</h1>
+    <p>Check your website or document for accessibility compliance</p>
+  </header>
+  <main>
+    <form aria-label="Accessibility Check Form" id="a11y-form">
+      <div class="form-row">
+        <label for="url-input">Website URL</label>
+        <input type="url" id="url-input" name="url" placeholder="https://example.com" autocomplete="url" aria-describedby="url-hint">
+        <div class="hint" id="url-hint">Optional. If provided, the page will be fetched and analyzed.</div>
+      </div>
+      <div class="form-row">
+        <label for="file-upload">Upload files (HTML, PDF, DOCX, Images)</label>
+        <input type="file" id="file-upload" name="files" accept=".html,.htm,.pdf,.docx,.png,.jpg,.jpeg,.gif,.webp,.svg" aria-describedby="file-desc" multiple>
+        <div class="hint" id="file-desc">You can select multiple files. Large files may take longer to process.</div>
+      </div>
+      <div class="actions">
+        <button type="submit" id="check-btn">Check Accessibility</button>
+        <button type="button" id="reset-btn" class="secondary">Reset</button>
+        <div class="split" role="group" aria-label="Download report options">
+          <button type="button" id="download-main">Download Report</button>
+          <button type="button" id="download-menu-btn" class="menu" aria-haspopup="menu" aria-expanded="false" aria-controls="download-menu" aria-label="More download options">▾</button>
+          <div id="download-menu" class="menu-list" role="menu" hidden>
+            <button role="menuitem" class="menu-item" id="action-download-vpat">Download VPAT (HTML)</button>
+            <button role="menuitem" class="menu-item" id="action-download-full">Download Full Report (HTML)</button>
+          </div>
+        </div>
+        <span id="status" class="hint" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+
+    <section aria-labelledby="results-title">
+      <h2 id="results-title">Accessibility Report</h2>
+      <div class="dashboard" role="region" aria-live="polite">
+        <div class="card" aria-labelledby="perceivable-title">
+          <div class="indicator">
+            <div>
+              <span class="icon" aria-hidden="true" style="color: var(--success);">&#x2714;</span>
+              <span id="perceivable-title">Perceivable</span>
+            </div>
+            <span class="badge" id="perceivable-score">0%</span>
+          </div>
+          <div class="progress-bar" aria-label="Perceivable compliance">
+            <div class="progress success" id="perceivable-progress"></div>
+          </div>
+          <ul class="issues" id="perceivable-issues" aria-label="Perceivable issues"></ul>
+        </div>
+        <div class="card" aria-labelledby="operable-title">
+          <div class="indicator">
+            <div>
+              <span class="icon" aria-hidden="true" style="color: var(--danger);">&#x2716;</span>
+              <span id="operable-title">Operable</span>
+            </div>
+            <span class="badge" id="operable-score">0%</span>
+          </div>
+          <div class="progress-bar" aria-label="Operable compliance">
+            <div class="progress danger" id="operable-progress"></div>
+          </div>
+          <ul class="issues" id="operable-issues" aria-label="Operable issues"></ul>
+        </div>
+        <div class="card" aria-labelledby="understandable-title">
+          <div class="indicator">
+            <div>
+              <span class="icon" aria-hidden="true" style="color: var(--success);">&#x2714;</span>
+              <span id="understandable-title">Understandable</span>
+            </div>
+            <span class="badge" id="understandable-score">0%</span>
+          </div>
+          <div class="progress-bar" aria-label="Understandable compliance">
+            <div class="progress success" id="understandable-progress"></div>
+          </div>
+          <ul class="issues" id="understandable-issues" aria-label="Understandable issues"></ul>
+        </div>
+        <div class="card" aria-labelledby="robust-title">
+          <div class="indicator">
+            <div>
+              <span class="icon" aria-hidden="true" style="color: var(--danger);">&#x2716;</span>
+              <span id="robust-title">Robust</span>
+            </div>
+            <span class="badge" id="robust-score">0%</span>
+          </div>
+          <div class="progress-bar" aria-label="Robust compliance">
+            <div class="progress danger" id="robust-progress"></div>
+          </div>
+          <ul class="issues" id="robust-issues" aria-label="Robust issues"></ul>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:1rem;" id="note">* This is a heuristic report. For full conformance, use automated and manual testing.</p>
+    </section>
+
+    <section aria-labelledby="auto-title">
+      <h2 id="auto-title">Automated Scan Results</h2>
+      <div class="table-wrap">
+        <table aria-describedby="auto-note">
+          <thead>
+            <tr>
+              <th scope="col">Element</th>
+              <th scope="col">Issue</th>
+              <th scope="col">Guideline (WCAG 2.1 AA)</th>
+            </tr>
+          </thead>
+          <tbody id="auto-body"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="auto-note">Detected failures from automated checks. Some criteria require manual review.</p>
+    </section>
+
+    <section aria-labelledby="manual-title">
+      <h2 id="manual-title">Assisted / Manual Review Flags</h2>
+      <ul class="issues" id="manual-list"></ul>
+    </section>
+
+    <section aria-labelledby="quant-title">
+      <h2 id="quant-title">Quantitative Summary</h2>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><th scope="row">Total tests run</th><td id="sum-total">0</td></tr>
+            <tr><th scope="row">Passes</th><td id="sum-passes">0</td></tr>
+            <tr><th scope="row">Fails</th><td id="sum-fails">0</td></tr>
+            <tr><th scope="row">Manual checks</th><td id="sum-manual">0</td></tr>
+            <tr><th scope="row">Pass rate</th><td id="sum-rate">0%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="outcome-title">
+      <h2 id="outcome-title">Outcome Narrative</h2>
+      <p id="outcome-text" class="hint"></p>
+      <div class="traffic" aria-label="Overall risk">
+        <span class="dot" id="light-green" aria-hidden="true"></span>
+        <span class="dot" id="light-yellow" aria-hidden="true"></span>
+        <span class="dot" id="light-red" aria-hidden="true"></span>
+        <span class="sr-only" id="light-label"></span>
+      </div>
+    </section>
+
+    <section aria-labelledby="details-title">
+      <h2 id="details-title">Detailed Findings and Fix Guidance</h2>
+      <div class="table-wrap">
+        <table aria-describedby="details-note">
+          <thead>
+            <tr>
+              <th scope="col">WCAG 2.1 Criteria</th>
+              <th scope="col">Principle</th>
+              <th scope="col">Status</th>
+              <th scope="col">Instances</th>
+              <th scope="col">What is missing</th>
+              <th scope="col">How to fix</th>
+            </tr>
+          </thead>
+          <tbody id="details-body"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="details-note">Statuses approximate VPAT terminology: Supports, Partially Supports, Does Not Support, Not Applicable.</p>
+    </section>
+  </main>
+  <script src="https://unpkg.com/mammoth/mammoth.browser.min.js" integrity="sha384-6jXy9fXPuFQk8R0Q+5xH8Q2s6Hc8d7J+Z+1f5m1n7Cw9uY8m3w+6R7nqz7Q1n0f0" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+  <script>
+    (function() {
+      const form = document.getElementById('a11y-form');
+      const urlInput = document.getElementById('url-input');
+      const fileInput = document.getElementById('file-upload');
+      const resetBtn = document.getElementById('reset-btn');
+      const statusEl = document.getElementById('status');
+
+      const downloadMain = document.getElementById('download-main');
+      const menuBtn = document.getElementById('download-menu-btn');
+      const menu = document.getElementById('download-menu');
+      const actionVPAT = document.getElementById('action-download-vpat');
+      const actionFull = document.getElementById('action-download-full');
+
+      const ui = {
+        perceivable: { progress: document.getElementById('perceivable-progress'), score: document.getElementById('perceivable-score'), list: document.getElementById('perceivable-issues') },
+        operable: { progress: document.getElementById('operable-progress'), score: document.getElementById('operable-score'), list: document.getElementById('operable-issues') },
+        understandable: { progress: document.getElementById('understandable-progress'), score: document.getElementById('understandable-score'), list: document.getElementById('understandable-issues') },
+        robust: { progress: document.getElementById('robust-progress'), score: document.getElementById('robust-score'), list: document.getElementById('robust-issues') },
+        detailsBody: document.getElementById('details-body'),
+        autoBody: document.getElementById('auto-body'),
+        manualList: document.getElementById('manual-list'),
+        sum: {
+          total: document.getElementById('sum-total'),
+          passes: document.getElementById('sum-passes'),
+          fails: document.getElementById('sum-fails'),
+          manual: document.getElementById('sum-manual'),
+          rate: document.getElementById('sum-rate')
+        },
+        outcomeText: document.getElementById('outcome-text'),
+        light: { green: document.getElementById('light-green'), yellow: document.getElementById('light-yellow'), red: document.getElementById('light-red'), label: document.getElementById('light-label') }
+      };
+
+      function setStatus(msg) { statusEl.textContent = msg; }
+
+      function clearResults() {
+        ['perceivable','operable','understandable','robust'].forEach(k => {
+          ui[k].progress.style.width = '0%';
+          ui[k].score.textContent = '0%';
+          ui[k].list.innerHTML = '';
+        });
+        ui.detailsBody.innerHTML = '';
+        ui.autoBody.innerHTML = '';
+        ui.manualList.innerHTML = '';
+        ui.sum.total.textContent = '0';
+        ui.sum.passes.textContent = '0';
+        ui.sum.fails.textContent = '0';
+        ui.sum.manual.textContent = '0';
+        ui.sum.rate.textContent = '0%';
+        Object.values(ui.light).forEach(el => { if (el.classList) el.classList.remove('green','yellow','red'); });
+        ui.outcomeText.textContent = '';
+        window.__lastReport = null;
+      }
+
+      function renderCategory(categoryKey, compliance, issues) {
+        const pct = Math.max(0, Math.min(100, Math.round(compliance)));
+        ui[categoryKey].progress.style.width = pct + '%';
+        ui[categoryKey].score.textContent = pct + '%';
+        ui[categoryKey].list.innerHTML = '';
+        if (!issues || issues.length === 0) {
+          const li = document.createElement('li');
+          li.textContent = 'No issues found.';
+          li.style.color = '#16a34a';
+          ui[categoryKey].list.appendChild(li);
+        } else {
+          issues.slice(0, 100).forEach(issue => {
+            const li = document.createElement('li');
+            li.textContent = issue;
+            ui[categoryKey].list.appendChild(li);
+          });
+        }
+      }
+
+      function computeCompliance(total, failures) {
+        const denom = Math.max(1, total);
+        const passed = Math.max(0, denom - failures);
+        return (passed / denom) * 100;
+      }
+
+      function elementLabel(el) {
+        if (!el || !el.tagName) return '';
+        const tag = el.tagName.toLowerCase();
+        const id = el.id ? '#' + el.id : '';
+        const cls = (el.className && typeof el.className === 'string') ? '.' + el.className.trim().replace(/\s+/g, '.') : '';
+        return (tag + id + cls).slice(0, 120);
+      }
+
+      function getAccessibleName(el) {
+        const labelledby = el.getAttribute('aria-labelledby');
+        if (labelledby) {
+          const ids = labelledby.split(/\s+/);
+          const label = ids.map(id => el.ownerDocument.getElementById(id)?.textContent?.trim() || '').join(' ').trim();
+          if (label) return label;
+        }
+        const ariaLabel = el.getAttribute('aria-label');
+        if (ariaLabel) return ariaLabel.trim();
+        const text = (el.textContent || '').trim();
+        if (text) return text;
+        if (el.getAttribute('alt')) return el.getAttribute('alt').trim();
+        return '';
+      }
+
+      function emptyRuleResults() {
+        const out = {};
+        Object.keys(RULES_META).forEach(k => {
+          out[k] = { total: 0, fail: 0, messages: [], items: [] };
+        });
+        return out;
+      }
+
+      function parseColor(s) {
+        if (!s) return null;
+        s = s.trim();
+        if (s.startsWith('#')) {
+          const hex = s.slice(1);
+          if (hex.length === 3) {
+            const r = parseInt(hex[0]+hex[0], 16), g = parseInt(hex[1]+hex[1], 16), b = parseInt(hex[2]+hex[2], 16);
+            return [r,g,b];
+          }
+          if (hex.length === 6) {
+            const r = parseInt(hex.slice(0,2), 16), g = parseInt(hex.slice(2,4), 16), b = parseInt(hex.slice(4,6), 16);
+            return [r,g,b];
+          }
+          return null;
+        }
+        const m = s.match(/rgba?\(([^)]+)\)/i);
+        if (m) {
+          const parts = m[1].split(',').map(p => p.trim());
+          const r = parseFloat(parts[0]);
+          const g = parseFloat(parts[1]);
+          const b = parseFloat(parts[2]);
+          const a = parts[3] !== undefined ? parseFloat(parts[3]) : 1;
+          if (isNaN(r) || isNaN(g) || isNaN(b) || a === 0) return null;
+          return [r,g,b];
+        }
+        return null;
+      }
+      function relLuminance([r,g,b]) {
+        const srgb = [r,g,b].map(v => v/255).map(v => v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4));
+        return 0.2126*srgb[0] + 0.7152*srgb[1] + 0.0722*srgb[2];
+      }
+      function contrastRatio(c1, c2) {
+        const L1 = relLuminance(c1), L2 = relLuminance(c2);
+        const lighter = Math.max(L1, L2), darker = Math.min(L1, L2);
+        return (lighter + 0.05) / (darker + 0.05);
+      }
+      function getInlineColor(el) {
+        const s = el.getAttribute('style') || '';
+        const m = s.match(/color\s*:\s*([^;]+)/i);
+        return m ? parseColor(m[1]) : null;
+      }
+      function getInlineBackground(el) {
+        const s = el.getAttribute('style') || '';
+        const m = s.match(/background(?:-color)?\s*:\s*([^;]+)/i);
+        return m ? parseColor(m[1]) : null;
+      }
+
+      const RULES_META = {
+        IMG_ALT: { wcag: '1.1.1 Non-text Content (Level A)', principle: 'Perceivable', fix: 'Provide meaningful alt text for informative images; use empty alt for decorative images or role="presentation".', missing: 'Images without alt text or descriptive equivalents.' },
+        VIDEO_CAPTIONS: { wcag: '1.2.2 Captions (Prerecorded) (Level A)', principle: 'Perceivable', fix: 'Add <track kind="captions"> or subtitles for prerecorded videos.', missing: 'Videos without captions or subtitles track.' },
+        CONTRAST_MIN: { wcag: '1.4.3 Contrast (Minimum) (Level AA)', principle: 'Perceivable', fix: 'Ensure text has at least 4.5:1 contrast (3:1 for large text). Adjust text or background colors.', missing: 'Text with insufficient color contrast (heuristic on inline styles).' },
+        INTERACTIVE_NAME: { wcag: '4.1.2 Name, Role, Value (Level A)', principle: 'Robust', fix: 'Ensure links and controls have accessible names via text, aria-label, or associated label.', missing: 'Interactive elements without accessible names.' },
+        CLICKABLE_FOCUS: { wcag: '2.1.1 Keyboard (Level A)', principle: 'Operable', fix: 'Make custom clickable elements keyboard focusable (tabindex="0") and operable with Enter/Space.', missing: 'Clickable elements not reachable by keyboard.' },
+        SKIP_LINK: { wcag: '2.4.1 Bypass Blocks (Level A)', principle: 'Operable', fix: 'Add a visible-on-focus skip link to main content (e.g., <a class="skip-link" href="#main">Skip to main content</a>).', missing: 'No skip link detected for bypassing repetitive content.' },
+        HTML_LANG: { wcag: '3.1.1 Language of Page (Level A)', principle: 'Understandable', fix: 'Add a valid lang attribute to the <html> element (e.g., <html lang="en">).', missing: 'Missing or empty lang attribute on <html>.' },
+        PAGE_TITLE: { wcag: '2.4.2 Page Titled (Level A)', principle: 'Understandable', fix: 'Provide a unique, descriptive <title> for each page.', missing: 'Missing or empty page title.' },
+        FORM_LABELS: { wcag: '3.3.2 Labels or Instructions (Level A)', principle: 'Understandable', fix: 'Associate form fields with <label for> or aria-label/aria-labelledby.', missing: 'Form inputs without associated labels.' },
+        HEADINGS_STRUCTURE: { wcag: '2.4.6 Headings and Labels (Level AA)', principle: 'Understandable', fix: 'Use one <h1> and increase heading levels by one without skipping levels (e.g., h2 after h1).', missing: 'Improper heading structure (missing h1 or skipped levels).' },
+        DUPLICATE_ID: { wcag: '4.1.1 Parsing (Level A)', principle: 'Robust', fix: 'Ensure all id attributes are unique within the page.', missing: 'Duplicate id attributes found.' },
+        UNKNOWN_ARIA: { wcag: '4.1.2 Name, Role, Value (Level A)', principle: 'Robust', fix: 'Use valid ARIA attributes only and according to specification.', missing: 'Unknown or invalid ARIA attributes used.' },
+        PDF_TEXT: { wcag: '1.1.1 Non-text Content (Level A)', principle: 'Perceivable', fix: 'Ensure PDFs contain real text (not image-only); use OCR or export accessible PDFs.', missing: 'PDF appears to be image-only without selectable text.' },
+        PDF_TITLE: { wcag: '2.4.2 Page Titled (Level A)', principle: 'Understandable', fix: 'Set the PDF document Title in metadata.', missing: 'PDF metadata title missing.' }
+      };
+
+      function analyzeHTMLString(htmlString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        return analyzeHTMLDocument(doc);
+      }
+
+      function analyzeHTMLDocument(doc) {
+        const categories = { perceivable: { total: 0, fail: 0, issues: [] }, operable: { total: 0, fail: 0, issues: [] }, understandable: { total: 0, fail: 0, issues: [] }, robust: { total: 0, fail: 0, issues: [] } };
+        const rules = emptyRuleResults();
+        const manual = [];
+
+        // Images alt
+        const imgs = Array.from(doc.querySelectorAll('img'));
+        categories.perceivable.total += imgs.length || 1; rules.IMG_ALT.total += imgs.length || 1;
+        imgs.forEach((img, i) => {
+          const alt = img.getAttribute('alt');
+          const role = (img.getAttribute('role') || '').toLowerCase();
+          const ariaHidden = img.getAttribute('aria-hidden') === 'true';
+          if ((alt === null || alt === undefined) && role !== 'presentation' && !ariaHidden) {
+            categories.perceivable.fail += 1; categories.perceivable.issues.push(`Image ${i+1} missing alt text.`);
+            rules.IMG_ALT.fail += 1; rules.IMG_ALT.messages.push('Image missing alt text.'); rules.IMG_ALT.items.push({ element: elementLabel(img), message: 'Missing alt text' });
+          }
+        });
+
+        // Videos captions
+        const videos = Array.from(doc.querySelectorAll('video'));
+        categories.perceivable.total += videos.length; rules.VIDEO_CAPTIONS.total += videos.length;
+        videos.forEach((v, i) => {
+          const hasCaptions = v.querySelector('track[kind="captions"], track[kind="subtitles"]');
+          if (!hasCaptions) {
+            categories.perceivable.fail += 1; categories.perceivable.issues.push(`Video ${i+1} missing captions track.`);
+            rules.VIDEO_CAPTIONS.fail += 1; rules.VIDEO_CAPTIONS.messages.push('Video missing captions track.'); rules.VIDEO_CAPTIONS.items.push({ element: elementLabel(v), message: 'No captions/subtitles track' });
+          }
+        });
+
+        // Contrast (heuristic for inline styles only)
+        const textEls = Array.from(doc.querySelectorAll('p, a, li, span, strong, em, h1, h2, h3, h4, h5, h6, button, label'));
+        textEls.forEach(el => {
+          const fg = getInlineColor(el);
+          const bg = getInlineBackground(el) || getInlineBackground(el.parentElement);
+          if (!fg || !bg) return; // only check when both present inline
+          const ratio = contrastRatio(fg, bg);
+          const isLarge = /^(H1|H2|H3)$/.test(el.tagName) || (el.style && el.style.fontSize && parseFloat(el.style.fontSize) >= 18);
+          const required = isLarge ? 3.0 : 4.5;
+          rules.CONTRAST_MIN.total += 1; categories.perceivable.total += 1;
+          if (ratio < required) {
+            rules.CONTRAST_MIN.fail += 1; rules.CONTRAST_MIN.messages.push(`Contrast ${ratio.toFixed(2)}:1 below ${required}:1`);
+            rules.CONTRAST_MIN.items.push({ element: elementLabel(el), message: `Contrast ${ratio.toFixed(2)}:1` });
+            categories.perceivable.fail += 1; categories.perceivable.issues.push(`Low contrast text (${ratio.toFixed(2)}:1)`);
+          }
+        });
+        // Flag manual contrast verification for general cases
+        manual.push({ title: 'Contrast verification', desc: 'Many elements lack inline colors; verify color contrast across the site including hover/focus states.', wcag: '1.4.3 (AA), 1.4.11 (AA)' });
+
+        // Actionables must have names
+        const actionables = Array.from(doc.querySelectorAll('a, button, [role="button"], [onclick]'));
+        categories.operable.total += actionables.length || 1; rules.INTERACTIVE_NAME.total += actionables.length || 1;
+        actionables.forEach((el, i) => {
+          const name = getAccessibleName(el);
+          if (!name) {
+            categories.operable.fail += 1; const tag = el.tagName.toLowerCase();
+            categories.operable.issues.push(`${tag} element ${i+1} has no accessible name.`);
+            rules.INTERACTIVE_NAME.fail += 1; rules.INTERACTIVE_NAME.messages.push(`${tag} element has no accessible name.`); rules.INTERACTIVE_NAME.items.push({ element: elementLabel(el), message: 'No accessible name' });
+          }
+          const txt = (el.textContent || '').trim().toLowerCase();
+          if (txt && ['click here','read more','learn more','more','here'].includes(txt)) {
+            manual.push({ title: 'Link purpose clarity', desc: `Link with generic text "${txt}"; ensure purpose is clear from link text or context.`, wcag: '2.4.4 (A)' });
+          }
+        });
+
+        // Clickable elements should be focusable
+        const clickable = Array.from(doc.querySelectorAll('[onclick]'));
+        categories.operable.total += clickable.length; rules.CLICKABLE_FOCUS.total += clickable.length;
+        clickable.forEach((el, i) => {
+          const tag = el.tagName.toLowerCase();
+          const isFocusableNative = ['a','button','input','select','textarea'].includes(tag);
+          const tabindex = el.getAttribute('tabindex');
+          if (!isFocusableNative && (tabindex === null || tabindex === undefined)) {
+            categories.operable.fail += 1; categories.operable.issues.push(`Clickable element ${i+1} not keyboard focusable (add tabindex="0").`);
+            rules.CLICKABLE_FOCUS.fail += 1; rules.CLICKABLE_FOCUS.messages.push('Clickable element not keyboard focusable.'); rules.CLICKABLE_FOCUS.items.push({ element: elementLabel(el), message: 'Not keyboard focusable' });
+          }
+        });
+        manual.push({ title: 'Focus visible', desc: 'Ensure all interactive controls show a visible focus indicator.', wcag: '2.4.7 (AA)' });
+
+        // Skip link
+        categories.operable.total += 1; rules.SKIP_LINK.total += 1;
+        const hasSkipLink = !!doc.querySelector('a[href^="#main"], a[href^="#content"], a.skip-link');
+        if (!hasSkipLink) {
+          categories.operable.fail += 1; categories.operable.issues.push('No skip link to main content detected.');
+          rules.SKIP_LINK.fail += 1; rules.SKIP_LINK.messages.push('No skip link to main content detected.'); rules.SKIP_LINK.items.push({ element: 'document', message: 'Missing skip link' });
+        }
+
+        // Understandable: lang and title
+        categories.understandable.total += 2;
+        const htmlEl = doc.documentElement; const lang = (htmlEl.getAttribute('lang') || '').trim();
+        rules.HTML_LANG.total += 1; if (!lang) { categories.understandable.fail += 1; categories.understandable.issues.push('Missing lang attribute on <html>.'); rules.HTML_LANG.fail += 1; rules.HTML_LANG.messages.push('Missing lang attribute on <html>.'); rules.HTML_LANG.items.push({ element: 'html', message: 'Missing lang' }); }
+        const title = (doc.querySelector('title')?.textContent || '').trim();
+        rules.PAGE_TITLE.total += 1; if (!title) { categories.understandable.fail += 1; categories.understandable.issues.push('Missing or empty <title>.'); rules.PAGE_TITLE.fail += 1; rules.PAGE_TITLE.messages.push('Missing or empty <title>.'); rules.PAGE_TITLE.items.push({ element: 'title', message: 'Missing/empty title' }); }
+
+        // Form labels
+        const inputs = Array.from(doc.querySelectorAll('input, textarea, select'));
+        categories.understandable.total += inputs.length; rules.FORM_LABELS.total += inputs.length;
+        const labelsMap = new Map();
+        doc.querySelectorAll('label[for]').forEach(l => labelsMap.set(l.getAttribute('for'), true));
+        inputs.forEach((el, i) => {
+          const id = el.getAttribute('id');
+          const hasLabel = (id && labelsMap.has(id)) || el.closest('label') || el.getAttribute('aria-label') || el.getAttribute('aria-labelledby');
+          if (!hasLabel) {
+            categories.understandable.fail += 1; const tag = el.tagName.toLowerCase();
+            categories.understandable.issues.push(`${tag} input ${i+1} lacks an associated label.`);
+            rules.FORM_LABELS.fail += 1; rules.FORM_LABELS.messages.push('Form control lacks an associated label.'); rules.FORM_LABELS.items.push({ element: elementLabel(el), message: 'Missing label' });
+          }
+        });
+
+        // Headings structure
+        const headings = Array.from(doc.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+        rules.HEADINGS_STRUCTURE.total += Math.max(1, headings.length);
+        categories.understandable.total += Math.max(1, headings.length);
+        const h1count = headings.filter(h => h.tagName.toLowerCase() === 'h1').length;
+        if (h1count === 0) {
+          categories.understandable.fail += 1; categories.understandable.issues.push('No <h1> heading present.');
+          rules.HEADINGS_STRUCTURE.fail += 1; rules.HEADINGS_STRUCTURE.messages.push('No <h1> heading present.'); rules.HEADINGS_STRUCTURE.items.push({ element: 'document', message: 'Missing h1' });
+        }
+        let last = 0;
+        headings.forEach((h, idx) => {
+          const level = parseInt(h.tagName.substring(1), 10) || 0;
+          if (last && level > last + 1) {
+            categories.understandable.fail += 1; categories.understandable.issues.push(`Heading level jumps from h${last} to h${level} at position ${idx+1}.`);
+            rules.HEADINGS_STRUCTURE.fail += 1; rules.HEADINGS_STRUCTURE.messages.push(`Heading jump h${last} -> h${level}.`); rules.HEADINGS_STRUCTURE.items.push({ element: elementLabel(h), message: `Heading jump h${last} -> h${level}` });
+          }
+          if (!last && level > 1) {
+            categories.understandable.fail += 1; categories.understandable.issues.push(`First heading is h${level}; consider starting at h1.`);
+            rules.HEADINGS_STRUCTURE.fail += 1; rules.HEADINGS_STRUCTURE.messages.push(`First heading is h${level}.`); rules.HEADINGS_STRUCTURE.items.push({ element: elementLabel(h), message: `First heading is h${level}` });
+          }
+          last = level;
+        });
+
+        // Robust: duplicate IDs
+        const allWithId = Array.from(doc.querySelectorAll('[id]'));
+        categories.robust.total += allWithId.length || 1; rules.DUPLICATE_ID.total += allWithId.length || 1;
+        const seen = new Set(); const dupes = new Set();
+        allWithId.forEach(el => { const id = el.id; if (seen.has(id)) dupes.add(id); else seen.add(id); });
+        dupes.forEach(id => { categories.robust.fail += 1; categories.robust.issues.push(`Duplicate id "${id}" found.`); rules.DUPLICATE_ID.fail += 1; rules.DUPLICATE_ID.messages.push(`Duplicate id "${id}" found.`); rules.DUPLICATE_ID.items.push({ element: `#${id}`, message: 'Duplicate id' }); });
+
+        // Robust: unknown ARIA attributes
+        const allowedAria = new Set(['aria-label','aria-labelledby','aria-describedby','aria-hidden','aria-expanded','aria-controls','aria-current','aria-live','aria-pressed','aria-checked','aria-selected','aria-required','aria-invalid']);
+        const ariaElements = Array.from(doc.querySelectorAll('*'));
+        let ariaTotal = 0;
+        ariaElements.forEach(el => {
+          for (const attr of el.getAttributeNames ? el.getAttributeNames() : []) {
+            if (attr.startsWith('aria-')) {
+              ariaTotal += 1;
+              if (!allowedAria.has(attr)) {
+                categories.robust.fail += 1; categories.robust.issues.push(`Unknown or uncommon ARIA attribute "${attr}".`);
+                rules.UNKNOWN_ARIA.fail += 1; rules.UNKNOWN_ARIA.messages.push(`Unknown ARIA attribute "${attr}".`); rules.UNKNOWN_ARIA.items.push({ element: elementLabel(el), message: `Unknown ${attr}` });
+              }
+            }
+          }
+        });
+        categories.robust.total += ariaTotal; rules.UNKNOWN_ARIA.total += ariaTotal;
+
+        // Additional manual flags
+        manual.push({ title: 'ARIA usage', desc: 'Verify ARIA roles, states and properties match semantics and are not misused.', wcag: '4.1.2 (A)' });
+        manual.push({ title: 'Link purpose (in context)', desc: 'Confirm each link’s purpose is clear from its text and surrounding context.', wcag: '2.4.4 (A)' });
+        manual.push({ title: 'Reflow and zoom', desc: 'Verify content reflows without loss when zoomed to 200% and on narrow viewports.', wcag: '1.4.10 (AA)' });
+
+        return { categories, rules, manual };
+      }
+
+      async function fetchHTMLFromURL(url) {
+        try {
+          const res = await fetch(url, { credentials: 'omit' });
+          if (!res.ok) throw new Error('Network error');
+          return await res.text();
+        } catch (e) {
+          try {
+            const normalized = url.replace(/^https?:\/\//i, '');
+            const proxyUrl = 'https://r.jina.ai/http://' + normalized;
+            const res2 = await fetch(proxyUrl, { credentials: 'omit' });
+            if (!res2.ok) throw new Error('Proxy network error');
+            return await res2.text();
+          } catch (e2) { throw e2; }
+        }
+      }
+
+      async function analyzeDOCX(file) { const arrayBuffer = await file.arrayBuffer(); const result = await window.mammoth.convertToHtml({ arrayBuffer }); return analyzeHTMLString(result.value || ''); }
+
+      async function analyzePDF(file) {
+        try {
+          const mod = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+          const loadingTask = mod.getDocument({ data: await file.arrayBuffer() });
+          const pdf = await loadingTask.promise;
+          let textItems = 0; const pagesToScan = Math.min(pdf.numPages, 3);
+          for (let p = 1; p <= pagesToScan; p++) { const page = await pdf.getPage(p); const tc = await page.getTextContent(); textItems += (tc.items || []).length; }
+          const categories = { perceivable: { total: 1, fail: 0, issues: [] }, operable: { total: 1, fail: 0, issues: [] }, understandable: { total: 1, fail: 0, issues: [] }, robust: { total: 1, fail: 0, issues: [] } };
+          const rules = emptyRuleResults(); const manual = [];
+          rules.PDF_TEXT.total += 1; if (textItems === 0) { categories.perceivable.fail += 1; categories.perceivable.issues.push('PDF appears to be image-only (no selectable text).'); rules.PDF_TEXT.fail += 1; rules.PDF_TEXT.messages.push('PDF appears to be image-only.'); rules.PDF_TEXT.items.push({ element: file.name, message: 'Image-only PDF suspected' }); }
+          try { const meta = await pdf.getMetadata(); const title = (meta?.info?.Title || '').trim(); rules.PDF_TITLE.total += 1; if (!title) { categories.understandable.total += 1; categories.understandable.fail += 1; categories.understandable.issues.push('PDF metadata title is missing.'); rules.PDF_TITLE.fail += 1; rules.PDF_TITLE.messages.push('PDF metadata title is missing.'); rules.PDF_TITLE.items.push({ element: file.name, message: 'Missing PDF Title metadata' }); } else { categories.understandable.total += 1; } } catch {}
+          manual.push({ title: 'PDF tags and structure', desc: 'Verify PDF has proper tags, reading order, bookmarks, and selectable text.', wcag: '1.3.1 (A), 1.3.2 (A)' });
+          return { categories, rules, manual };
+        } catch (e) {
+          const rules = emptyRuleResults(); rules.PDF_TEXT.total += 1; rules.PDF_TEXT.fail += 1; rules.PDF_TEXT.messages.push('Unable to analyze PDF (viewer not available).'); rules.PDF_TEXT.items.push({ element: file.name, message: 'PDF analysis failed' });
+          return { categories: { perceivable: { total: 1, fail: 1, issues: ['Unable to analyze PDF (viewer not available).'] }, operable: { total: 1, fail: 0, issues: [] }, understandable: { total: 1, fail: 0, issues: [] }, robust: { total: 1, fail: 0, issues: [] } }, rules, manual: [] };
+        }
+      }
+
+      async function analyzeImage(file) { return { categories: { perceivable: { total: 1, fail: 0, issues: ['Standalone image cannot be fully assessed for alt text outside HTML context.'] }, operable: { total: 1, fail: 0, issues: [] }, understandable: { total: 1, fail: 0, issues: [] }, robust: { total: 1, fail: 0, issues: [] } }, rules: emptyRuleResults(), manual: [] }; }
+      async function analyzeHTMLFile(file) { const text = await file.text(); return analyzeHTMLString(text); }
+
+      function mergeCategories(a, b) { const out = a || { perceivable:{total:0,fail:0,issues:[]}, operable:{total:0,fail:0,issues:[]}, understandable:{total:0,fail:0,issues:[]}, robust:{total:0,fail:0,issues:[]} }; ['perceivable','operable','understandable','robust'].forEach(k => { out[k].total += b[k].total; out[k].fail += b[k].fail; out[k].issues = out[k].issues.concat(b[k].issues || []); }); return out; }
+      function mergeRules(a, b) { const out = a || emptyRuleResults(); Object.keys(RULES_META).forEach(k => { const r = b[k] || { total: 0, fail: 0, messages: [], items: [] }; out[k].total += r.total; out[k].fail += r.fail; out[k].messages = out[k].messages.concat(r.messages || []); out[k].items = out[k].items.concat(r.items || []); }); return out; }
+      function mergeManual(a, b) { const out = a || []; return out.concat(b || []); }
+
+      function renderResults(aggregate) {
+        const categories = aggregate.categories; const keys = ['perceivable','operable','understandable','robust'];
+        keys.forEach(k => { const compliance = computeCompliance(categories[k].total, categories[k].fail); renderCategory(k, compliance, categories[k].issues); });
+        renderDetailedReport(aggregate.rules);
+        renderAutomatedFailures(aggregate.rules);
+        renderManualFlags(aggregate.manual);
+        renderSummaryAndOutcome(aggregate.rules, aggregate.manual);
+      }
+
+      function statusForRule(total, fail) { if (!total) return { label: 'Not Applicable', cls: 'status-na' }; if (fail === 0) return { label: 'Supports', cls: 'status-pass' }; if (fail >= total) return { label: 'Does Not Support', cls: 'status-fail' }; return { label: 'Partially Supports', cls: 'status-partial' }; }
+
+      function renderDetailedReport(rulesAgg) {
+        const tbody = ui.detailsBody; tbody.innerHTML = '';
+        Object.entries(RULES_META).forEach(([key, meta]) => {
+          const r = rulesAgg[key] || { total: 0, fail: 0, messages: [] };
+          const st = statusForRule(r.total, r.fail);
+          const tr = document.createElement('tr');
+          const messages = (r.messages || []).slice(0, 5);
+          tr.innerHTML = `
+            <td>${meta.wcag}</td>
+            <td>${meta.principle}</td>
+            <td class="${st.cls}">${st.label}</td>
+            <td>${r.fail}/${r.total}</td>
+            <td>${r.fail > 0 ? (messages.map(m => `<div>- ${m}</div>`).join('')) : '—'}</td>
+            <td>${meta.fix}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function renderAutomatedFailures(rulesAgg) {
+        const tbody = ui.autoBody; tbody.innerHTML = '';
+        Object.entries(RULES_META).forEach(([key, meta]) => {
+          const r = rulesAgg[key]; if (!r || r.fail === 0) return;
+          const items = r.items && r.items.length ? r.items : (r.messages || []).map(m => ({ element: 'document', message: m }));
+          items.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${item.element||'—'}</td><td>${item.message||meta.missing}</td><td>${meta.wcag}</td>`;
+            tbody.appendChild(tr);
+          });
+        });
+      }
+
+      function renderManualFlags(flags) {
+        const ul = ui.manualList; ul.innerHTML = '';
+        if (!flags || flags.length === 0) { const li = document.createElement('li'); li.textContent = 'No manual checks flagged.'; ul.appendChild(li); return; }
+        flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = `<strong>Needs Human Check:</strong> ${f.title} — ${f.desc} <em>(${f.wcag})</em>`; ul.appendChild(li); });
+      }
+
+      function computeTotals(rulesAgg) {
+        let total = 0, fail = 0;
+        Object.values(rulesAgg).forEach(r => { total += (r?.total || 0); fail += (r?.fail || 0); });
+        const passes = Math.max(0, total - fail);
+        const rate = total ? Math.round((passes / total) * 100) : 0;
+        return { total, fail, passes, rate };
+      }
+
+      function renderSummaryAndOutcome(rulesAgg, manual) {
+        const t = computeTotals(rulesAgg);
+        ui.sum.total.textContent = String(t.total);
+        ui.sum.passes.textContent = String(t.passes);
+        ui.sum.fails.textContent = String(t.fail);
+        ui.sum.manual.textContent = String(manual?.length || 0);
+        ui.sum.rate.textContent = t.rate + '%';
+        const light = ui.light; Object.values(light).forEach(el => { if (el.classList) el.classList.remove('green','yellow','red'); });
+        let label = 'Needs Review'; let color = 'yellow';
+        if (t.rate >= 90) { label = 'Accessible'; color = 'green'; }
+        else if (t.rate < 60) { label = 'High Risk'; color = 'red'; }
+        light[color].classList.add(color);
+        light.label.textContent = label;
+        const narrative = [];
+        if (t.fail === 0) narrative.push('Strong accessibility health detected in automated checks.');
+        else narrative.push(`Automated checks found ${t.fail} issues across criteria.`);
+        // priority hints
+        const topHints = [];
+        if ((rulesAgg.IMG_ALT?.fail||0) > 0) topHints.push('Add descriptive alt text to images.');
+        if ((rulesAgg.FORM_LABELS?.fail||0) > 0) topHints.push('Associate labels with all form fields.');
+        if ((rulesAgg.CONTRAST_MIN?.fail||0) > 0) topHints.push('Fix low color contrast for text.');
+        if ((rulesAgg.HEADINGS_STRUCTURE?.fail||0) > 0) topHints.push('Correct heading levels and include a single h1.');
+        if ((rulesAgg.INTERACTIVE_NAME?.fail||0) > 0) topHints.push('Provide accessible names for links and controls.');
+        if (topHints.length) narrative.push('Priority fixes: ' + topHints.join(' '));
+        narrative.push('Follow up with manual checks for contrast, focus visibility, link purpose, ARIA usage, and reflow.');
+        ui.outcomeText.textContent = narrative.join(' ');
+      }
+
+      function buildVPATHTML(data) {
+        const now = new Date().toISOString().slice(0, 10);
+        const rows = Object.entries(RULES_META).map(([key, meta]) => {
+          const r = data.aggregateRules[key] || { total: 0, fail: 0, messages: [] };
+          const st = statusForRule(r.total, r.fail).label;
+          const remarks = r.fail > 0 ? (`Issues (${r.fail}/${r.total}): ` + (r.messages||[]).slice(0, 10).map(m => `- ${m}`).join(' ')) : 'No known issues found by heuristic checks.';
+          return `
+            <tr>
+              <td>${meta.wcag}</td>
+              <td>${st}</td>
+              <td>${remarks}<br/><strong>Recommended Fix:</strong> ${meta.fix}</td>
+            </tr>
+          `;
+        }).join('');
+        const sources = (data.sources || []).map(s => `<li>${s.name} (${s.type})</li>`).join('');
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VPAT Report - ${now}</title>
+<style>
+  body { font-family: Arial, sans-serif; line-height: 1.6; color: #111827; }
+  h1, h2 { color: #0f172a; }
+  .muted { color: #6b7280; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
+  thead th { background: #eef2ff; }
+  .meta { margin: 1rem 0; }
+</style>
+</head>
+<body>
+  <h1>Voluntary Product Accessibility Template (VPAT) - WCAG 2.1</h1>
+  <div class="meta">
+    <div><strong>Product Name:</strong> <span class="muted">Your Product</span></div>
+    <div><strong>Version/Date:</strong> ${now}</div>
+    <div><strong>Evaluation Methods Used:</strong> Heuristic client-side checks using HTML/ARIA inspection, pdf.js and mammoth.js. Manual verification recommended.</div>
+    <div><strong>Evaluated Sources:</strong> <ul>${sources}</ul></div>
+  </div>
+  <h2>Conformance Table</h2>
+  <table>
+    <thead>
+      <tr><th>WCAG 2.1 Criteria</th><th>Conformance</th><th>Remarks and Explanations</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <p class="muted">Note: This VPAT is generated from heuristic checks and does not replace comprehensive accessibility testing.</p>
+</body>
+</html>`;
+      }
+
+      function buildFullReportHTML(data) {
+        const now = new Date().toISOString().slice(0, 10);
+        const totals = computeTotals(data.aggregateRules);
+        const autoRows = Object.entries(RULES_META).map(([key, meta]) => {
+          const r = data.aggregateRules[key]; if (!r || r.fail === 0) return '';
+          const items = r.items && r.items.length ? r.items : (r.messages||[]).map(m => ({ element: 'document', message: m }));
+          return items.map(it => `<tr><td>${it.element||'—'}</td><td>${it.message||meta.missing}</td><td>${meta.wcag}</td></tr>`).join('');
+        }).join('');
+        const manualList = (data.manual||[]).map(f => `<li><strong>Needs Human Check:</strong> ${f.title} — ${f.desc} <em>(${f.wcag})</em></li>`).join('');
+        const vpatTable = Object.entries(RULES_META).map(([key, meta]) => {
+          const r = data.aggregateRules[key] || { total:0, fail:0, messages:[] };
+          const st = statusForRule(r.total, r.fail).label;
+          const remarks = r.fail > 0 ? (`Issues (${r.fail}/${r.total}): ` + (r.messages||[]).slice(0, 10).map(m => `- ${m}`).join(' ')) : 'No known issues found by heuristic checks.';
+          return `<tr><td>${meta.wcag}</td><td>${st}</td><td>${remarks}<br/><strong>Recommended Fix:</strong> ${meta.fix}</td></tr>`;
+        }).join('');
+        const outcome = (() => { let color = 'yellow', label = 'Needs Review'; if (totals.rate >= 90) { color = 'green'; label = 'Accessible'; } else if (totals.rate < 60) { color = 'red'; label = 'High Risk'; } return { color, label }; })();
+        const sources = (data.sources || []).map(s => `<li>${s.name} (${s.type})</li>`).join('');
+        return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Accessibility Report - ${now}</title>
+<style>
+  body { font-family: Arial, sans-serif; line-height: 1.6; color: #111827; }
+  h1, h2 { color: #0f172a; }
+  .muted { color: #6b7280; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
+  thead th { background: #eef2ff; }
+  .traffic { display: inline-flex; gap: 6px; align-items: center; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: #e5e7eb; border: 1px solid #cbd5e1; }
+  .green { background: #22c55e !important; border-color: #16a34a !important; }
+  .yellow { background: #f59e0b !important; border-color: #d97706 !important; }
+  .red { background: #ef4444 !important; border-color: #dc2626 !important; }
+</style></head>
+<body>
+  <h1>Automated Accessibility Report (WCAG 2.1 AA)</h1>
+  <div><strong>Date:</strong> ${now}</div>
+  <div><strong>Evaluated Sources:</strong> <ul>${sources}</ul></div>
+  <h2>Quantitative Summary</h2>
+  <table><tbody>
+    <tr><th>Total tests run</th><td>${totals.total}</td></tr>
+    <tr><th>Passes</th><td>${totals.passes}</td></tr>
+    <tr><th>Fails</th><td>${totals.fail}</td></tr>
+    <tr><th>Manual checks</th><td>${(data.manual||[]).length}</td></tr>
+    <tr><th>Pass rate</th><td>${totals.rate}%</td></tr>
+  </tbody></table>
+  <h2>Outcome Narrative</h2>
+  <div class="traffic"><span class="dot ${outcome.color}"></span> <strong>${outcome.label}</strong></div>
+  <p class="muted">This summary is based on heuristic automated checks; follow up with manual verification.</p>
+  <h2>Automated Scan Results</h2>
+  <table><thead><tr><th>Element</th><th>Issue</th><th>Guideline</th></tr></thead><tbody>${autoRows}</tbody></table>
+  <h2>Assisted / Manual Review Flags</h2>
+  <ul>${manualList}</ul>
+  <h2>VPAT-style Summary</h2>
+  <table><thead><tr><th>WCAG 2.1 Criteria</th><th>Conformance</th><th>Remarks</th></tr></thead><tbody>${vpatTable}</tbody></table>
+</body></html>`;
+      }
+
+      function download(filename, content, type = 'text/html') { const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove(); }
+
+      function openMenu() { menu.hidden = false; menuBtn.setAttribute('aria-expanded', 'true'); }
+      function closeMenu() { menu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); }
+
+      document.addEventListener('click', (e) => { if (!menu.contains(e.target) && e.target !== menuBtn) closeMenu(); });
+      menuBtn.addEventListener('click', () => { if (menu.hidden) openMenu(); else closeMenu(); });
+      downloadMain.addEventListener('click', () => { if (!window.__lastReport) { setStatus('Run an analysis first to download.'); return; } const html = buildFullReportHTML(window.__lastReport); download('accessibility-full-report.html', html); setStatus('Full report downloaded.'); });
+
+      actionVPAT.addEventListener('click', () => { if (!window.__lastReport) { setStatus('Run an analysis first to generate a VPAT.'); return; } const html = buildVPATHTML(window.__lastReport); download('vpat-wcag21-report.html', html); setStatus('VPAT downloaded.'); closeMenu(); });
+      actionFull.addEventListener('click', () => { if (!window.__lastReport) { setStatus('Run an analysis first to download.'); return; } const html = buildFullReportHTML(window.__lastReport); download('accessibility-full-report.html', html); setStatus('Full report downloaded.'); closeMenu(); });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault(); clearResults(); setStatus('Analyzing...');
+        let aggregate = { categories: null, rules: emptyRuleResults(), manual: [] };
+        const sources = [];
+        const url = (urlInput.value || '').trim();
+        try {
+          if (url) {
+            const html = await fetchHTMLFromURL(url);
+            const res = analyzeHTMLString(html);
+            aggregate.categories = mergeCategories(aggregate.categories, res.categories);
+            aggregate.rules = mergeRules(aggregate.rules, res.rules);
+            aggregate.manual = mergeManual(aggregate.manual, res.manual);
+            sources.push({ name: url, type: 'URL' });
+          }
+        } catch (err) {
+          const errCategories = { perceivable:{total:1,fail:0,issues:[]}, operable:{total:1,fail:1,issues:[`Failed to fetch URL: ${err?.message || 'CORS or network error'}`]}, understandable:{total:1,fail:0,issues:[]}, robust:{total:1,fail:0,issues:[]} };
+          aggregate.categories = mergeCategories(aggregate.categories, errCategories);
+        }
+
+        const files = Array.from(fileInput.files || []);
+        for (const file of files) {
+          const name = file.name.toLowerCase();
+          try {
+            let res;
+            if (name.endsWith('.docx')) res = await analyzeDOCX(file);
+            else if (name.endsWith('.pdf')) res = await analyzePDF(file);
+            else if (name.endsWith('.html') || name.endsWith('.htm')) res = await analyzeHTMLFile(file);
+            else if (name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.gif') || name.endsWith('.webp') || name.endsWith('.svg')) res = await analyzeImage(file);
+            else res = { categories: { perceivable:{total:1,fail:0,issues:[`Unsupported file type: ${file.type || name}`]}, operable:{total:1,fail:0,issues:[]}, understandable:{total:1,fail:0,issues:[]}, robust:{total:1,fail:0,issues:[]} }, rules: emptyRuleResults(), manual: [] };
+            aggregate.categories = mergeCategories(aggregate.categories, res.categories);
+            aggregate.rules = mergeRules(aggregate.rules, res.rules);
+            aggregate.manual = mergeManual(aggregate.manual, res.manual);
+            sources.push({ name: file.name, type: 'File' });
+          } catch (err) {
+            const errCat = { perceivable:{total:1,fail:0,issues:[]}, operable:{total:1,fail:1,issues:[`Failed to analyze ${file.name}`]}, understandable:{total:1,fail:0,issues:[]}, robust:{total:1,fail:0,issues:[]} };
+            aggregate.categories = mergeCategories(aggregate.categories, errCat);
+          }
+        }
+
+        if (!aggregate.categories) { setStatus('Please provide a URL or upload files to analyze.'); return; }
+
+        renderResults(aggregate);
+        const summary = computeTotals(aggregate.rules);
+        const overall = summary.rate >= 90 ? 'green' : (summary.rate < 60 ? 'red' : 'yellow');
+        window.__lastReport = { aggregateRules: aggregate.rules, sources, manual: aggregate.manual, generatedAt: new Date().toISOString(), summary, overall };
+        setStatus('Analysis complete.');
+      });
+
+      resetBtn.addEventListener('click', () => { form.reset(); clearResults(); setStatus(''); });
+    })();
+  </script>
+</body>
+</html> 
