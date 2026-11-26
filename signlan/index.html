@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#100e1c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>SignBridge</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤟</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -31,9 +33,13 @@
     <section id="sign2text" class="panel active">
       <div class="grid2">
         <div class="card camera-card">
-          <div class="video-wrap">
+          <div class="video-wrap mirror" id="videoWrap">
             <video id="video" playsinline muted></video>
             <canvas id="overlay"></canvas>
+            <button id="switchCam" class="switch-cam" hidden aria-label="Switch between front and back camera" title="Switch camera">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 13a3 3 0 0 1 5.2-2M15 13a3 3 0 0 1-5.2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14.5 9.2v2h-2M9.5 16.8v-2h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div id="liveCaption" class="live-caption" hidden></div>
             <div id="camPlaceholder" class="cam-placeholder">
               <div class="big">📷</div>
               <p>Turn on your camera and fingerspell with one hand.</p>
@@ -55,7 +61,7 @@
             </label>
             <span id="camStatus" class="status">Camera off</span>
           </div>
-          <p class="tip">Hold a sign steady until the ring fills to type it. To repeat a letter, drop your hand briefly. Open hand (5) = space.</p>
+          <p class="tip">Hold a sign steady until the ring fills to type it. To repeat a letter, drop your hand briefly. Open hand (5) = space. For <b>J</b> and <b>Z</b>, draw the movement, then lower your hand.</p>
         </div>
 
         <div class="card output-card">

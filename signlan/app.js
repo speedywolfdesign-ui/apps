@@ -67,6 +67,9 @@
   let message = '';
   function render() {
     $('outText').textContent = message;
+    const tail = message.length > 32 ? '…' + message.slice(-32) : message;
+    $('liveCaption').textContent = tail;
+    $('liveCaption').hidden = !message;
   }
   function lastWord() {
     const words = message.trim().split(/\s+/);
@@ -148,18 +151,56 @@
     return landmarker;
   }
 
+  let facing = 'user'; // 'user' = front camera, 'environment' = back camera
+
+  async function openStream() {
+    stream?.getTracks().forEach((t) => t.stop());
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 960 }, height: { ideal: 720 }, facingMode: { ideal: facing } },
+      audio: false,
+    });
+    video.srcObject = stream;
+    await video.play();
+    // mirror only the selfie camera, so it behaves like a mirror
+    $('videoWrap').classList.toggle('mirror', facing === 'user');
+    // match the frame to the camera's real shape (portrait on phones)
+    if (video.videoWidth) $('videoWrap').style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;
+    resetTracking();
+    // offer the switch button only when there is more than one camera
+    try {
+      const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+      $('switchCam').hidden = cams.length < 2;
+    } catch { /* keep hidden */ }
+  }
+
+  async function switchCamera() {
+    if (!stream) return;
+    const prev = facing;
+    facing = facing === 'user' ? 'environment' : 'user';
+    $('switchCam').disabled = true;
+    try {
+      await openStream();
+      toast(facing === 'user' ? 'Front camera' : 'Back camera');
+    } catch (err) {
+      console.error(err);
+      facing = prev;
+      toast('Could not switch camera.');
+      await openStream().catch(() => stopCamera());
+    } finally {
+      $('switchCam').disabled = false;
+    }
+  }
+  $('switchCam').onclick = switchCamera;
+
   async function startCamera() {
     if (!navigator.mediaDevices?.getUserMedia) {
       return toast('Camera is not available. Open the app via http://localhost or https.');
     }
     $('startCam').disabled = true;
+    // iOS only allows speech after a tap: prime it now so later words can be spoken
+    if (synth) synth.speak(new SpeechSynthesisUtterance(''));
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 960 }, height: { ideal: 720 }, facingMode: 'user' },
-        audio: false,
-      });
-      video.srcObject = stream;
-      await video.play();
+      await openStream();
       $('camPlaceholder').classList.add('hidden');
       await loadLandmarker();
       running = true;
@@ -183,6 +224,7 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     $('camPlaceholder').classList.remove('hidden');
     $('stopCam').disabled = true;
+    $('switchCam').hidden = true;
     setStatus('Camera off');
     showDetected(null, 0);
   }
@@ -237,17 +279,30 @@
     const i = ext(8, 6), m = ext(12, 10), r = ext(16, 14), k = ext(20, 18);
     const thumbOut = dist(p[4], p[5]) > 0.62 * hs && dist(p[4], p[17]) > dist(p[3], p[17]);
 
+    // which way the index finger points on screen (for G/H sideways, P/Q downward)
+    const dx = p[8].x - p[5].x, dy = p[8].y - p[5].y;
+    const down = dy > Math.abs(dx) * 0.8;
+    const sideways = !down && Math.abs(dx) > Math.abs(dy) * 1.3;
+
     if (i && m && r && k) return thumbOut ? 'SPACE' : 'B';
     if (!i && m && r && k && near(4, 8, 0.38)) return 'F';
     if (i && m && r && !k) return 'W';
     if (i && !m && !r && k && thumbOut) return 'ILY';
     if (!i && !m && !r && k) return thumbOut ? 'Y' : 'I';
     if (i && m && !r && !k) {
+      if (down) return 'P';
+      if (sideways) return 'H';
       const crossed = (p[8].x - p[12].x) * (p[5].x - p[9].x) < 0;
       if (crossed) return 'R';
+      // K: thumb pushed up between index and middle fingers
+      if (proj(p[4]) > proj(p[5]) + 0.1 && (near(4, 10, 0.4) || near(4, 6, 0.4))) return 'K';
       return dist(p[8], p[12]) < 0.3 * hs ? 'U' : 'V';
     }
-    if (i && !m && !r && !k) return thumbOut ? 'L' : 'D';
+    if (i && !m && !r && !k) {
+      if (down) return 'Q';
+      if (sideways) return 'G';
+      return thumbOut ? 'L' : 'D';
+    }
 
     // curved shapes: O and C (fingers not straight but not folded into palm)
     const openness = dist(W, p[12]) / hs;
@@ -257,19 +312,79 @@
     }
 
     if (!i && !m && !r && !k) {
-      // closed fist: A / S / E
+      // X: index raised at the middle joint but hooked at the tip
+      if (proj(p[6]) > proj(p[10]) + 0.25 && proj(p[7]) > proj(p[10])) return 'X';
+
+      // closed fist: E / A / S / T / N / M
       const tipsProj = (proj(p[8]) + proj(p[12]) + proj(p[16])) / 3;
       if (tipsProj > proj(p[4]) + 0.08 && near(4, 12, 0.55)) return 'E';
-      const dIdx = dist(p[4], p[6]), dMid = dist(p[4], p[10]), dRing = dist(p[4], p[14]);
-      if (Math.min(dMid, dRing) < dIdx) return 'S';
-      return 'A';
+      // where the thumb tip sits across the knuckles: 0 = index side, 1 = pinky side
+      const kx = p[17].x - p[5].x, ky = p[17].y - p[5].y;
+      const lat = ((p[4].x - p[5].x) * kx + (p[4].y - p[5].y) * ky) / (kx * kx + ky * ky);
+      if (lat < 0.1) return 'A';
+      // thumb tucked under the fingers (further from the camera) → T / N / M
+      const fingerZ = (p[6].z + p[10].z + p[14].z) / 3;
+      if (p[4].z > fingerZ) return lat < 0.4 ? 'T' : lat < 0.7 ? 'N' : 'M';
+      return 'S';
     }
     return null;
   }
 
+  /* ---------- motion letters: J and Z ---------- */
+  const track = []; // recent frames: shape + index tip + pinky tip
+  const TRACK_MS = 1500;
+
+  function pathLen(key) {
+    let L = 0;
+    for (let j = 1; j < track.length; j++) L += dist(track[j][key], track[j - 1][key]);
+    return L / track[track.length - 1].hs;
+  }
+  function share(shapes) {
+    return track.filter((f) => shapes.includes(f.shape)).length / track.length;
+  }
+  // count left/right direction changes of a fingertip (ignores small jitter)
+  function reversals(key) {
+    const hs = track[track.length - 1].hs;
+    let dir = 0, extreme = track[0][key].x, n = 0;
+    for (const f of track) {
+      const x = f[key].x;
+      if (dir >= 0 && x < extreme - 0.25 * hs) { if (dir > 0) n++; dir = -1; extreme = x; }
+      else if (dir <= 0 && x > extreme + 0.25 * hs) { if (dir < 0) n++; dir = 1; extreme = x; }
+      else if ((dir > 0 && x > extreme) || (dir < 0 && x < extreme)) extreme = x;
+    }
+    return n;
+  }
+  function detectMotion(now) {
+    while (track.length && now - track[0].t > TRACK_MS) track.shift();
+    if (track.length < 10) return null;
+    // Z: pointing index finger draws a zig-zag
+    if (share(['D', 'L', 'G', 'Q', 'X']) > 0.6 && pathLen('ix') > 2 && reversals('ix') >= 2) return 'Z';
+    // J: little finger (I handshape) swoops down and curls
+    if (share(['I', 'Y']) > 0.6 && pathLen('px') > 1.1) {
+      const net = dist(track[0].px, track[track.length - 1].px) / track[track.length - 1].hs;
+      if (net > 0.5) return 'J';
+    }
+    return null;
+  }
+  // is the hand moving? then don't count it as holding a still sign
+  function isMoving() {
+    const n = track.length;
+    if (n < 4) return false;
+    const a = track[n - 4], b = track[n - 1];
+    const dt = (b.t - a.t) / 1000 || 1;
+    return Math.max(dist(a.ix, b.ix), dist(a.px, b.px)) / b.hs / dt > 1.5;
+  }
+
   /* ---------- stabilising & typing ---------- */
   const history = [];
-  let candidate = null, candStart = 0, committed = null;
+  let candidate = null, candStart = 0, committed = null, motionLock = false;
+
+  function resetTracking() {
+    history.length = 0;
+    track.length = 0;
+    candidate = committed = null;
+    motionLock = false;
+  }
 
   function vote(sign) {
     history.push(sign);
@@ -283,23 +398,36 @@
 
   function onResults(res) {
     const vw = video.videoWidth, vh = video.videoHeight;
-    if (canvas.width !== vw) { canvas.width = vw; canvas.height = vh; }
+    if (canvas.width !== vw || canvas.height !== vh) { canvas.width = vw; canvas.height = vh; }
     ctx.clearRect(0, 0, vw, vh);
+    const now = performance.now();
 
     let raw = null;
     if (res.landmarks && res.landmarks.length) {
-      const pts = res.landmarks[0].map((l) => ({ x: l.x * vw, y: l.y * vh }));
+      const pts = res.landmarks[0].map((l) => ({ x: l.x * vw, y: l.y * vh, z: l.z * vw }));
       drawHand(pts);
       raw = classify(pts);
+      track.push({ t: now, shape: raw, ix: pts[8], px: pts[20], hs: dist(pts[0], pts[9]) });
+    } else {
+      track.length = 0;
     }
     const sign = vote(raw);
-    const now = performance.now();
 
     if (sign !== candidate) { candidate = sign; candStart = now; }
-    if (!sign) committed = null; // lowering the hand allows a repeat
+    if (!sign) { committed = null; motionLock = false; } // lowering the hand allows a repeat
+
+    const motion = detectMotion(now);
+    if (motion) {
+      commit(motion);
+      track.length = 0;
+      motionLock = true; // don't also type the still handshape until the hand drops
+      showDetected(motion, 1);
+      return;
+    }
+    if (isMoving()) candStart = now;
 
     let progress = 0;
-    if (sign && sign !== committed) {
+    if (sign && sign !== committed && !motionLock) {
       progress = Math.min(1, (now - candStart) / holdMs);
       if (progress >= 1) { commit(sign); committed = sign; }
     } else if (sign) progress = 1;

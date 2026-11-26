@@ -89,8 +89,22 @@ main { max-width: 1240px; margin: 0 auto; padding: 10px 16px 40px; }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 
 /* ---------- camera ---------- */
-.video-wrap { position: relative; aspect-ratio: 4 / 3; border-radius: 16px; overflow: hidden; background: #0c0a16; }
-.video-wrap video, .video-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.video-wrap { position: relative; aspect-ratio: 4 / 3; max-height: 72vh; margin: 0 auto; border-radius: 16px; overflow: hidden; background: #0c0a16; }
+.video-wrap video, .video-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.video-wrap.mirror video, .video-wrap.mirror canvas { transform: scaleX(-1); }
+.switch-cam {
+  position: absolute; top: 14px; left: 14px; width: 48px; height: 48px; border-radius: 50%; border: 0; cursor: pointer;
+  display: grid; place-items: center; color: #fff; background: rgba(16, 12, 34, 0.72); backdrop-filter: blur(6px);
+}
+.switch-cam[hidden] { display: none; }
+.switch-cam svg { width: 26px; height: 26px; }
+.switch-cam:active { transform: scale(0.92); }
+.live-caption {
+  position: absolute; left: 12px; right: 12px; bottom: 12px; padding: 10px 14px; border-radius: 12px;
+  background: rgba(16, 12, 34, 0.75); backdrop-filter: blur(6px); color: #fff; font-weight: 700; font-size: 1.15rem;
+  letter-spacing: 0.03em; white-space: pre; overflow: hidden; text-overflow: ellipsis;
+}
+.live-caption[hidden] { display: none; }
 .cam-placeholder { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; color: #cfc9ee; text-align: center; padding: 20px; }
 .cam-placeholder .big { font-size: 52px; }
 .cam-placeholder.hidden { display: none; }
@@ -191,3 +205,64 @@ select { background: var(--bg); border: 1px solid var(--border); border-radius: 
   transition: 0.3s; max-width: calc(100% - 32px); text-align: center;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- touch & mobile ---------- */
+button, .alpha, .mini, select, input { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+@media (max-width: 640px) {
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .topbar { padding: 14px 16px 6px; }
+  .logo { width: 40px; height: 40px; font-size: 22px; border-radius: 12px; }
+  .brand h1 { font-size: 1.2rem; }
+
+  /* tabs become a bottom navigation bar */
+  .tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; border-radius: 0; border-width: 1px 0 0;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+  }
+  .tab { padding: 10px 4px; font-size: 0.78rem; line-height: 1.25; white-space: normal; }
+
+  main { padding: 6px 12px 24px; }
+  .card { padding: 14px; border-radius: 16px; margin-bottom: 14px; }
+  .grid2 { gap: 14px; }
+
+  .video-wrap { border-radius: 12px; max-height: 62vh; }
+  .detect-badge { width: 70px; height: 70px; top: 10px; right: 10px; }
+  .detect-badge span { font-size: 1.5rem; }
+  .detect-badge span.small { font-size: 0.75rem; }
+  .switch-cam { top: 10px; left: 10px; width: 52px; height: 52px; }
+  .cam-controls { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  .cam-controls .range { grid-column: 1 / -1; grid-row: 2; }
+  .range input { width: auto; flex: 1; min-width: 0; }
+  .status { margin-left: 0; justify-self: end; }
+
+  .output { font-size: 1.35rem; min-height: 100px; padding: 14px; }
+  .btn { padding: 12px 10px; min-height: 46px; }
+  .btn-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .btn-row .btn { font-size: 0.85rem; }
+  .voice-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .voice-row > label { justify-content: space-between; min-width: 0; }
+  .voice-row select { flex: 1; width: 0; max-width: none; min-width: 0; }
+  .voice-row .range input { flex: 1; }
+
+  .legend { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
+  .mini { font-size: 0.68rem; }
+
+  .mic-row { gap: 12px; }
+  .mic { width: 60px; height: 60px; font-size: 24px; flex-shrink: 0; }
+  .mic-row select { width: 100%; max-width: none; }
+  .text-form input { padding: 12px; font-size: 16px; } /* 16px stops iOS zooming on focus */
+  .stage { gap: 14px; }
+  .stage-sign { width: 200px; }
+  .stage-letter { font-size: 3.2rem; }
+  .stage-word { font-size: 1.1rem; }
+  .sign-strip { gap: 8px; margin-top: 16px; }
+  .word-group { padding: 6px; gap: 4px; }
+  .word-group .mini { width: 50px; }
+
+  .alpha-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+  .alpha { padding: 6px 4px 8px; border-radius: 12px; }
+  .alpha strong { font-size: 1rem; }
+  .card-head h2 { font-size: 1.05rem; }
+  .toast { bottom: calc(86px + env(safe-area-inset-bottom)); }
+}

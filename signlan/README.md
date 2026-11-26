@@ -36,8 +36,9 @@ If the site asks visitors to sign in, turn off **Use unique domain** / set Pages
 ## Features
 
 - **Sign → Speech**: webcam + MediaPipe Hand Landmarker (loaded from CDN). A rule-based classifier
-  reads finger positions and types ASL letters: A B C D E F I L O R S U V W Y, plus
-  🤟 "I love you" and open hand (5) = space. Hold a sign until the ring fills. Each word is spoken
+  reads finger positions and types all 26 ASL letters (J and Z by tracking the movement), plus
+  🤟 "I love you" and open hand (5) = space. On phones, a button over the video switches between
+  the front and back camera. Hold a sign until the ring fills. Each word is spoken
   when you add a space; **Speak** reads the whole message.
 - **Speech → Sign**: speak into the mic (Web Speech API) or type. The text is fingerspelled as
   animated hand drawings; "I love you" uses its own sign.
@@ -52,5 +53,6 @@ If the site asks visitors to sign in, turn off **Use unique domain** / set Pages
 
 ## Tuning detection
 
-Thresholds live in `classify()` in `app.js`. Letters needing motion (J, Z) or similar fist shapes
-(M, N, T vs S) are hard to read from a single frame, so they are shown but not detected.
+Thresholds live in `classify()` in `app.js`; J and Z are in `detectMotion()`. The closed-fist
+letters (A, S, T, N, M, E) differ only in where the thumb sits, so they are the least reliable —
+good lighting and facing the palm square to the camera help.

@@ -171,7 +171,7 @@
     hasSign: (k) => !!DEF[k],
     LETTERS: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
     // handshapes the camera classifier can recognise
-    DETECTABLE: ['A', 'B', 'C', 'D', 'E', 'F', 'I', 'L', 'O', 'R', 'S', 'U', 'V', 'W', 'Y', 'ILY', 'SPACE'],
+    DETECTABLE: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'ILY', 'SPACE'],
     NAMES: { ILY: 'I love you', SPACE: 'Space (open hand)' },
   };
 })();
