@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SignBridge</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤟</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">🤟</span>
+      <div>
+        <h1>SignBridge</h1>
+        <p>Sign language ⇄ Text ⇄ Speech</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" role="tab" data-tab="sign2text">✋ Sign → Speech</button>
+      <button class="tab" role="tab" data-tab="speech2sign">🎙️ Speech → Sign</button>
+      <button class="tab" role="tab" data-tab="alphabet">🔤 Alphabet</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============ SIGN → TEXT + SPEECH ============ -->
+    <section id="sign2text" class="panel active">
+      <div class="grid2">
+        <div class="card camera-card">
+          <div class="video-wrap">
+            <video id="video" playsinline muted></video>
+            <canvas id="overlay"></canvas>
+            <div id="camPlaceholder" class="cam-placeholder">
+              <div class="big">📷</div>
+              <p>Turn on your camera and fingerspell with one hand.</p>
+              <button id="startCam" class="btn primary">Start camera</button>
+            </div>
+            <div class="detect-badge" id="detectBadge">
+              <svg viewBox="0 0 100 100" class="ring">
+                <circle cx="50" cy="50" r="44" class="ring-bg" />
+                <circle cx="50" cy="50" r="44" class="ring-fg" id="ringFg" />
+              </svg>
+              <span id="detectLetter">–</span>
+            </div>
+          </div>
+          <div class="cam-controls">
+            <button id="stopCam" class="btn" disabled>Stop camera</button>
+            <label class="range">Hold time
+              <input type="range" id="holdTime" min="400" max="2000" step="100" value="900" />
+              <span id="holdVal">0.9s</span>
+            </label>
+            <span id="camStatus" class="status">Camera off</span>
+          </div>
+          <p class="tip">Hold a sign steady until the ring fills to type it. To repeat a letter, drop your hand briefly. Open hand (5) = space.</p>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-head">
+            <h2>Message</h2>
+            <label class="switch"><input type="checkbox" id="autoSpeak" checked /><span></span>Speak each word</label>
+          </div>
+          <div id="output" class="output" aria-live="polite"><span id="outText"></span><span class="caret"></span></div>
+          <div class="btn-row">
+            <button id="speakBtn" class="btn primary">🔊 Speak</button>
+            <button id="spaceBtn" class="btn">␣ Space</button>
+            <button id="backBtn" class="btn">⌫ Delete</button>
+            <button id="clearBtn" class="btn danger">Clear</button>
+          </div>
+          <div class="voice-row">
+            <label>Voice <select id="voiceSelect"></select></label>
+            <label class="range">Rate <input type="range" id="rate" min="0.6" max="1.6" step="0.1" value="1" /></label>
+          </div>
+          <h3>Signs the camera recognises</h3>
+          <div id="legend" class="legend"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SPEECH → SIGN ============ -->
+    <section id="speech2sign" class="panel">
+      <div class="card">
+        <div class="mic-row">
+          <button id="micBtn" class="mic" aria-label="Start listening"><span>🎙️</span></button>
+          <div class="mic-text">
+            <h2>Speak or type</h2>
+            <p id="micStatus">Tap the mic and start talking.</p>
+          </div>
+          <select id="lang" aria-label="Speech language">
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="en-IN">English (India)</option>
+            <option value="en-AU">English (Australia)</option>
+          </select>
+        </div>
+        <form id="textForm" class="text-form">
+          <input id="textIn" autocomplete="off" placeholder="…or type a sentence, e.g. hello how are you" />
+          <button class="btn primary" type="submit">Translate</button>
+        </form>
+        <div id="transcript" class="transcript"><span class="muted">Your words will appear here.</span></div>
+      </div>
+
+      <div class="card stage-card">
+        <div class="stage">
+          <div id="stageSign" class="stage-sign"></div>
+          <div class="stage-info">
+            <div id="stageLetter" class="stage-letter">–</div>
+            <div id="stageWord" class="stage-word">Nothing to sign yet</div>
+            <div class="stage-controls">
+              <button id="playBtn" class="btn primary" disabled>▶ Play</button>
+              <button id="replayBtn" class="btn" disabled>↺ Replay</button>
+              <label class="range">Speed
+                <input type="range" id="speed" min="300" max="1600" step="100" value="900" />
+                <span id="speedVal">0.9s</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div id="signStrip" class="sign-strip"></div>
+      </div>
+    </section>
+
+    <!-- ============ ALPHABET ============ -->
+    <section id="alphabet" class="panel">
+      <div class="card">
+        <div class="card-head">
+          <h2>ASL fingerspelling alphabet</h2>
+          <span class="pill"><span class="dot"></span> Camera can detect</span>
+        </div>
+        <div id="alphaGrid" class="alpha-grid"></div>
+      </div>
+    </section>
+
+    <p class="footnote">Fingerspelling uses the American Sign Language (ASL) alphabet. Full ASL has its own grammar and word signs; this app spells words letter by letter. Works best in Chrome or Edge.</p>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="signs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
